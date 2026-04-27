@@ -1,7 +1,9 @@
-import { Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { useRequestStore } from "../../stores/useRequestStore";
+import { useResponseStore } from "../../stores/useResponseStore";
 import { MethodSelect } from "../shared/MethodSelect";
 import { buildQueryString, parseQueryString, splitUrl } from "../../lib/url";
+import { uid } from "../../lib/id";
 import type { KeyValue } from "../../types/request";
 
 export function UrlBar({ onSend }: { onSend?: () => void }) {
@@ -10,6 +12,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const params = useRequestStore((s) => s.params);
   const setMethod = useRequestStore((s) => s.setMethod);
   const setUrl = useRequestStore((s) => s.setUrl);
+  const isLoading = useResponseStore((s) => s.isLoading);
 
   const displayed = url + buildQueryString(params);
 
@@ -34,7 +37,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
             e.preventDefault();
-            onSend?.();
+            if (!isLoading) onSend?.();
           }
         }}
         spellCheck={false}
@@ -45,17 +48,27 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       <button
         type="button"
         onClick={onSend}
-        className="h-[36px] px-4 bg-violet hover:bg-violet-hover active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all"
+        disabled={isLoading}
+        className="h-[36px] px-4 bg-violet hover:bg-violet-hover active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all"
       >
-        <Send size={14} />
-        <span>Send</span>
+        {isLoading ? (
+          <>
+            <Loader2 size={14} className="animate-spin" />
+            <span>Sending</span>
+          </>
+        ) : (
+          <>
+            <Send size={14} />
+            <span>Send</span>
+          </>
+        )}
       </button>
     </div>
   );
 }
 
 const emptyRow = (): KeyValue => ({
-  id: `kv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+  id: uid("kv"),
   key: "",
   value: "",
   enabled: true,
