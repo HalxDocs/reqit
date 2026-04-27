@@ -1,0 +1,18 @@
+# Build artifacts
+flux/flux.exe
+flux/flux
+flux/build/bin/
+flux/frontend/dist/
+
+# Dependencies
+node_modules/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

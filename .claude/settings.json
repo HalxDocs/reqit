@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go version *)",
+      "Bash(wails version *)",
+      "Bash(git config *)",
+      "Bash(wails init *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(npm view *)",
+      "Bash(git add *)",
+      "Bash(git rm *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\USER\\Desktop\\falkam\\client"
+    ]
+  }
+}
