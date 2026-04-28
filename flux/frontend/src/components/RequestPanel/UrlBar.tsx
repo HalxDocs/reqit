@@ -32,6 +32,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       <MethodSelect value={method} onChange={setMethod} />
 
       <input
+        id="flux-url-bar"
         type="text"
         value={displayed}
         placeholder="https://api.example.com/endpoint"

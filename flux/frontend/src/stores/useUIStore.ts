@@ -13,8 +13,14 @@ type UIStore = {
   openSaveModal: () => void;
   closeSaveModal: () => void;
 
-  // Tracks which saved request is currently loaded (so the Save modal can
-  // offer "Update existing" vs. "Save as new").
+  envModalOpen: boolean;
+  openEnvModal: () => void;
+  closeEnvModal: () => void;
+
+  importModalOpen: boolean;
+  openImportModal: () => void;
+  closeImportModal: () => void;
+
   loadedRequestID: string | null;
   setLoadedRequestID: (id: string | null) => void;
 };
@@ -28,6 +34,14 @@ export const useUIStore = create<UIStore>((set) => ({
   saveModalOpen: false,
   openSaveModal: () => set({ saveModalOpen: true }),
   closeSaveModal: () => set({ saveModalOpen: false }),
+
+  envModalOpen: false,
+  openEnvModal: () => set({ envModalOpen: true }),
+  closeEnvModal: () => set({ envModalOpen: false }),
+
+  importModalOpen: false,
+  openImportModal: () => set({ importModalOpen: true }),
+  closeImportModal: () => set({ importModalOpen: false }),
 
   loadedRequestID: null,
   setLoadedRequestID: (loadedRequestID) => set({ loadedRequestID }),

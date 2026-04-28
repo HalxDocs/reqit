@@ -3,7 +3,7 @@ import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useRequestStore } from "../../stores/useRequestStore";
-import { buildPayload } from "../../lib/buildPayload";
+import { buildPayloadLiteral } from "../../lib/buildPayload";
 
 const NEW_COLLECTION_VALUE = "__new__";
 
@@ -47,7 +47,7 @@ export function SaveRequestModal() {
         const created = await createCollection(newCollName.trim());
         targetID = created.id;
       }
-      const payload = buildPayload(useRequestStore.getState());
+      const payload = buildPayloadLiteral(useRequestStore.getState());
       await addRequest(targetID, name.trim(), payload);
       close();
     } catch (e) {
