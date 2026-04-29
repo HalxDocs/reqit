@@ -316,3 +316,32 @@ export namespace profile {
 
 }
 
+export namespace workspaces {
+	
+	export class Info {
+	    id: string;
+	    name: string;
+	    description: string;
+	    color: string;
+	    dataDir: string;
+	    createdAt: string;
+	    lastOpenedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Info(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.color = source["color"];
+	        this.dataDir = source["dataDir"];
+	        this.createdAt = source["createdAt"];
+	        this.lastOpenedAt = source["lastOpenedAt"];
+	    }
+	}
+
+}
+

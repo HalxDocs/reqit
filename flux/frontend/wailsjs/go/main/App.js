@@ -26,6 +26,10 @@ export function CreateEnvironment(arg1) {
   return window['go']['main']['App']['CreateEnvironment'](arg1);
 }
 
+export function CreateWorkspace(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CreateWorkspace'](arg1, arg2, arg3);
+}
+
 export function DeleteCollection(arg1) {
   return window['go']['main']['App']['DeleteCollection'](arg1);
 }
@@ -36,6 +40,14 @@ export function DeleteEnvironment(arg1) {
 
 export function DeleteSavedRequest(arg1) {
   return window['go']['main']['App']['DeleteSavedRequest'](arg1);
+}
+
+export function DeleteWorkspace(arg1) {
+  return window['go']['main']['App']['DeleteWorkspace'](arg1);
+}
+
+export function GetActiveWorkspace() {
+  return window['go']['main']['App']['GetActiveWorkspace']();
 }
 
 export function GetCollections() {
@@ -54,20 +66,40 @@ export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
 }
 
+export function GetWorkspaces() {
+  return window['go']['main']['App']['GetWorkspaces']();
+}
+
 export function ImportPostman(arg1, arg2) {
   return window['go']['main']['App']['ImportPostman'](arg1, arg2);
+}
+
+export function OpenWorkspaceFromFolder(arg1) {
+  return window['go']['main']['App']['OpenWorkspaceFromFolder'](arg1);
 }
 
 export function PickFile(arg1, arg2) {
   return window['go']['main']['App']['PickFile'](arg1, arg2);
 }
 
+export function PickFolder(arg1) {
+  return window['go']['main']['App']['PickFolder'](arg1);
+}
+
 export function ReadFileText(arg1) {
   return window['go']['main']['App']['ReadFileText'](arg1);
 }
 
+export function RelocateWorkspace(arg1, arg2) {
+  return window['go']['main']['App']['RelocateWorkspace'](arg1, arg2);
+}
+
 export function RenameCollection(arg1, arg2) {
   return window['go']['main']['App']['RenameCollection'](arg1, arg2);
+}
+
+export function RenameWorkspace(arg1, arg2) {
+  return window['go']['main']['App']['RenameWorkspace'](arg1, arg2);
 }
 
 export function SendRequest(arg1) {
@@ -76,6 +108,10 @@ export function SendRequest(arg1) {
 
 export function SetActiveEnvironment(arg1) {
   return window['go']['main']['App']['SetActiveEnvironment'](arg1);
+}
+
+export function SwitchWorkspace(arg1) {
+  return window['go']['main']['App']['SwitchWorkspace'](arg1);
 }
 
 export function UpdateEnvironment(arg1, arg2, arg3) {

@@ -91,6 +91,7 @@ type TabsStore = {
   syncFromActiveStores: () => void;
   markActiveSaved: (savedRequestID: string, title: string) => void;
   refreshTitleFromUrl: () => void;
+  resetTabs: () => void;
 };
 
 function persist(state: { tabs: Tab[]; activeID: string }) {
@@ -247,5 +248,12 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
           : t,
       ),
     }));
+  },
+
+  resetTabs: () => {
+    const fresh = newTab();
+    localStorage.removeItem(STORAGE_KEY);
+    set({ tabs: [fresh], activeID: fresh.id });
+    useRequestStore.getState().reset();
   },
 }));

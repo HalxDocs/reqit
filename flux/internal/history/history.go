@@ -22,18 +22,19 @@ type wrapper struct {
 
 type Store struct {
 	mu      sync.Mutex
+	dir     string
 	entries []models.HistoryEntry
 	loaded  bool
 }
 
-func NewStore() *Store { return &Store{} }
+func NewStore(dir string) *Store { return &Store{dir: dir} }
 
 func (s *Store) load() error {
 	if s.loaded {
 		return nil
 	}
 	w := wrapper{}
-	if err := storage.Load(fileName, &w); err != nil {
+	if err := storage.LoadFrom(s.dir, fileName, &w); err != nil {
 		return err
 	}
 	if w.Entries == nil {
@@ -45,7 +46,7 @@ func (s *Store) load() error {
 }
 
 func (s *Store) save() error {
-	return storage.Save(fileName, wrapper{Entries: s.entries})
+	return storage.SaveTo(s.dir, fileName, wrapper{Entries: s.entries})
 }
 
 // Append prepends a new entry and trims to the most recent Cap entries.

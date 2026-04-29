@@ -22,12 +22,13 @@ type wrapper struct {
 
 type Store struct {
 	mu          sync.Mutex
+	dir         string
 	collections []models.Collection
 	loaded      bool
 }
 
-func NewStore() *Store {
-	return &Store{}
+func NewStore(dir string) *Store {
+	return &Store{dir: dir}
 }
 
 func (s *Store) load() error {
@@ -35,7 +36,7 @@ func (s *Store) load() error {
 		return nil
 	}
 	w := wrapper{}
-	if err := storage.Load(fileName, &w); err != nil {
+	if err := storage.LoadFrom(s.dir, fileName, &w); err != nil {
 		return err
 	}
 	if w.Collections == nil {
@@ -47,7 +48,7 @@ func (s *Store) load() error {
 }
 
 func (s *Store) save() error {
-	return storage.Save(fileName, wrapper{Collections: s.collections})
+	return storage.SaveTo(s.dir, fileName, wrapper{Collections: s.collections})
 }
 
 // GetAll returns the full set of collections (with their requests).

@@ -46,6 +46,12 @@ func Load(name string, out any) error {
 	if err != nil {
 		return err
 	}
+	return LoadFrom(dir, name, out)
+}
+
+// LoadFrom reads and JSON-decodes the named file from the given directory.
+// Returns nil if the file does not exist (out is left untouched).
+func LoadFrom(dir, name string, out any) error {
 	path := filepath.Join(dir, name)
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -61,11 +67,20 @@ func Load(name string, out any) error {
 }
 
 // Save JSON-encodes value and atomically writes it to the named file in the
-// app dir (write to <name>.tmp then rename, so a crash mid-write cannot
-// truncate the prior file).
+// app dir.
 func Save(name string, value any) error {
 	dir, err := AppDir()
 	if err != nil {
+		return err
+	}
+	return SaveTo(dir, name, value)
+}
+
+// SaveTo JSON-encodes value and atomically writes it to the named file in the
+// given directory (write to <name>.tmp then rename so a crash mid-write
+// cannot truncate the prior file).
+func SaveTo(dir, name string, value any) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(value, "", "  ")

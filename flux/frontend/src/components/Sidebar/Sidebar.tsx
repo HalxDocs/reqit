@@ -1,5 +1,6 @@
-import { Download, Folder, History as HistoryIcon, Settings, Terminal, User } from "lucide-react";
+import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User } from "lucide-react";
 import fluxLogo from "../../assets/images/fluxloo.jpeg";
+import { useWorkspaceStore } from "../../stores/useWorkspaceStore";
 import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
@@ -7,17 +8,29 @@ import { SearchBar } from "./SearchBar";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
 
-export function Sidebar() {
+export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openImport = useUIStore((s) => s.openImportModal);
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
   const profile = useProfileStore((s) => s.profile);
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const activeID = useWorkspaceStore((s) => s.activeID);
+  const activeWs = workspaces.find((w) => w.id === activeID);
 
   return (
     <aside className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
-      <div className="h-[48px] px-4 flex items-center justify-between border-b border-border">
-        <img src={fluxLogo} alt="Flux" className="h-[28px] w-auto object-contain" />
-      </div>
+      <button
+        type="button"
+        onClick={onGoHome}
+        className="h-[48px] px-4 flex items-center gap-2 border-b border-border hover:bg-cardHover transition-colors text-left group"
+        title="All workspaces"
+      >
+        <img src={fluxLogo} alt="Flux" className="h-[22px] w-auto object-contain shrink-0" />
+        <span className="flex-1 text-12 font-semibold text-text truncate min-w-0">
+          {activeWs?.name ?? "Workspace"}
+        </span>
+        <ChevronDown size={12} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
+      </button>
 
       <div className="px-3 py-2 border-b border-border flex flex-col gap-2">
         <EnvSwitcher />

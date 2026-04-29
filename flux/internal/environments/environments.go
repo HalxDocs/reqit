@@ -23,19 +23,20 @@ type wrapper struct {
 
 type Store struct {
 	mu     sync.Mutex
+	dir    string
 	envs   []models.Environment
 	active string
 	loaded bool
 }
 
-func NewStore() *Store { return &Store{} }
+func NewStore(dir string) *Store { return &Store{dir: dir} }
 
 func (s *Store) load() error {
 	if s.loaded {
 		return nil
 	}
 	w := wrapper{}
-	if err := storage.Load(fileName, &w); err != nil {
+	if err := storage.LoadFrom(s.dir, fileName, &w); err != nil {
 		return err
 	}
 	if w.Environments == nil {
@@ -48,7 +49,7 @@ func (s *Store) load() error {
 }
 
 func (s *Store) save() error {
-	return storage.Save(fileName, wrapper{Active: s.active, Environments: s.envs})
+	return storage.SaveTo(s.dir, fileName, wrapper{Active: s.active, Environments: s.envs})
 }
 
 type Snapshot struct {
