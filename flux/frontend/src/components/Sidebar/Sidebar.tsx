@@ -1,4 +1,5 @@
 import { Download, Folder, History as HistoryIcon, Settings, Terminal, User } from "lucide-react";
+import fluxLogo from "../../assets/images/fluxloo.jpeg";
 import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
@@ -15,7 +16,7 @@ export function Sidebar() {
   return (
     <aside className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
       <div className="h-[48px] px-4 flex items-center justify-between border-b border-border">
-        <span className="font-extrabold text-20 text-blue tracking-tight">FLUX</span>
+        <img src={fluxLogo} alt="Flux" className="h-[28px] w-auto object-contain" />
       </div>
 
       <div className="px-3 py-2 border-b border-border flex flex-col gap-2">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
+import fluxLogo from "../../assets/images/fluxloo.jpeg";
 
 export function WelcomeModal() {
   const profile = useProfileStore((s) => s.profile);
@@ -35,7 +36,8 @@ export function WelcomeModal() {
 
   return (
     <Modal open={open} onClose={closeWelcome} title="Welcome to Flux">
-      <div className="flex flex-col gap-4 w-[400px] max-w-[90vw]">
+      <div className="flex flex-col gap-4 w-[400px] max-w-full">
+        <img src={fluxLogo} alt="Flux" className="h-[40px] w-auto object-contain self-start" />
         <p className="text-12 text-subtext">
           Flux is local-first: nothing leaves your machine. We just want to know
           what to call you. Both fields are optional and only stored locally.
