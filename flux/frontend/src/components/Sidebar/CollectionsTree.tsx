@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Copy, Download, MoreVertical, Plus, Trash2 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, Copy, Download, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { useTabsStore } from "../../stores/useTabsStore";
@@ -19,6 +19,7 @@ export function CollectionsTree() {
   const renameCollection = useCollectionStore((s) => s.renameCollection);
   const deleteCollection = useCollectionStore((s) => s.deleteCollection);
   const deleteRequest = useCollectionStore((s) => s.deleteRequest);
+  const renameRequest = useCollectionStore((s) => s.renameRequest);
   const duplicateRequest = useCollectionStore((s) => s.duplicateRequest);
   const newTab = useTabsStore((s) => s.newTab);
   const setLoadedRequestID = useUIStore((s) => s.setLoadedRequestID);
@@ -27,8 +28,11 @@ export function CollectionsTree() {
 
   const [renamingID, setRenamingID] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [renamingReqID, setRenamingReqID] = useState<string | null>(null);
+  const [renameReqValue, setRenameReqValue] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const renameReqRef = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -59,6 +63,12 @@ export function CollectionsTree() {
     const trimmed = renameValue.trim();
     if (trimmed) await renameCollection(id, trimmed);
     setRenamingID(null);
+  };
+
+  const handleRenameReq = async (id: string) => {
+    const trimmed = renameReqValue.trim();
+    if (trimmed) await renameRequest(id, trimmed);
+    setRenamingReqID(null);
   };
 
   const loadRequest = (req: models.SavedRequest) => {
@@ -189,13 +199,43 @@ export function CollectionsTree() {
                     "hover:bg-cardHover",
                     loadedRequestID === req.id && "bg-card",
                   )}
-                  onClick={() => loadRequest(req)}
+                  onClick={() => renamingReqID === req.id ? undefined : loadRequest(req)}
                 >
                   {loadedRequestID === req.id && (
                     <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-blue" />
                   )}
                   <MethodBadge method={(req.payload.method as HttpMethod) || "GET"} />
-                  <span className="flex-1 text-12 text-text truncate">{req.name}</span>
+                  {renamingReqID === req.id ? (
+                    <input
+                      ref={renameReqRef}
+                      autoFocus
+                      value={renameReqValue}
+                      onChange={(e) => setRenameReqValue(e.target.value)}
+                      onBlur={() => handleRenameReq(req.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleRenameReq(req.id);
+                        if (e.key === "Escape") setRenamingReqID(null);
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 h-[20px] px-1 bg-surface border border-blue rounded-sm text-12 text-text outline-none"
+                    />
+                  ) : (
+                    <span className="flex-1 text-12 text-text truncate">{req.name}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRenameReqValue(req.name);
+                      setRenamingReqID(req.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all"
+                    aria-label="Rename request"
+                    title="Rename"
+                  >
+                    <Pencil size={12} />
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -204,7 +244,7 @@ export function CollectionsTree() {
                     }}
                     className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all"
                     aria-label="Duplicate request"
-                    title="Duplicate request"
+                    title="Duplicate"
                   >
                     <Copy size={12} />
                   </button>
@@ -218,6 +258,7 @@ export function CollectionsTree() {
                     }}
                     className="opacity-0 group-hover:opacity-100 text-subtext hover:text-danger transition-all"
                     aria-label="Delete request"
+                    title="Delete"
                   >
                     <Trash2 size={12} />
                   </button>

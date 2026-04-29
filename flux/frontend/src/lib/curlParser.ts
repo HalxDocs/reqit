@@ -291,5 +291,8 @@ export function parseCurl(input: string): RequestState {
       out.authType === "basic" && out.authValue.includes(":")
         ? out.authValue.slice(out.authValue.indexOf(":") + 1)
         : "",
+    authKeyName: "X-API-Key",
+    authKeyValue: "",
+    authKeyIn: "header",
   };
 }

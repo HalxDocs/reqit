@@ -169,6 +169,21 @@ func applyAuth(req *http.Request, authType, authValue string) {
 			encoded := base64.StdEncoding.EncodeToString([]byte(authValue))
 			req.Header.Set("Authorization", "Basic "+encoded)
 		}
+	case "apikey":
+		// authValue is "header:HeaderName:value" or "query:paramName:value"
+		parts := strings.SplitN(authValue, ":", 3)
+		if len(parts) != 3 || parts[2] == "" {
+			return
+		}
+		in, name, val := parts[0], parts[1], parts[2]
+		switch in {
+		case "header":
+			req.Header.Set(name, val)
+		case "query":
+			q := req.URL.Query()
+			q.Set(name, val)
+			req.URL.RawQuery = q.Encode()
+		}
 	}
 }
 

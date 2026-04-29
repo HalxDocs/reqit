@@ -1,4 +1,5 @@
 import type {
+  ApiKeyIn,
   AuthType,
   BodyType,
   HttpMethod,
@@ -55,6 +56,10 @@ export function decodePayload(p: WirePayload): RequestState {
   let authToken = "";
   let authUser = "";
   let authPass = "";
+  let authKeyName = "X-API-Key";
+  let authKeyValue = "";
+  let authKeyIn: ApiKeyIn = "header";
+
   if (authType === "bearer") {
     authToken = p.authValue ?? "";
   } else if (authType === "basic") {
@@ -65,6 +70,15 @@ export function decodePayload(p: WirePayload): RequestState {
     } else {
       authUser = raw.slice(0, idx);
       authPass = raw.slice(idx + 1);
+    }
+  } else if (authType === "apikey") {
+    // format: "header:KeyName:value" or "query:paramName:value"
+    const raw = p.authValue ?? "";
+    const parts = raw.split(":");
+    if (parts.length >= 3) {
+      authKeyIn = (parts[0] === "query" ? "query" : "header") as ApiKeyIn;
+      authKeyName = parts[1];
+      authKeyValue = parts.slice(2).join(":");
     }
   }
 
@@ -80,5 +94,8 @@ export function decodePayload(p: WirePayload): RequestState {
     authToken,
     authUser,
     authPass,
+    authKeyName,
+    authKeyValue,
+    authKeyIn,
   };
 }

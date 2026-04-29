@@ -32,6 +32,9 @@ const emptyRequest = (): RequestState => ({
   authToken: "",
   authUser: "",
   authPass: "",
+  authKeyName: "X-API-Key",
+  authKeyValue: "",
+  authKeyIn: "header",
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -58,6 +61,9 @@ const pickRequestState = (): RequestState => {
     authToken: s.authToken,
     authUser: s.authUser,
     authPass: s.authPass,
+    authKeyName: s.authKeyName,
+    authKeyValue: s.authKeyValue,
+    authKeyIn: s.authKeyIn,
   };
 };
 

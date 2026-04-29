@@ -29,6 +29,7 @@ type CollectionStore = {
     payload: WirePayload,
   ) => Promise<models.SavedRequest>;
   updateRequest: (reqID: string, name: string, payload: WirePayload) => Promise<void>;
+  renameRequest: (reqID: string, name: string) => Promise<void>;
   deleteRequest: (reqID: string) => Promise<void>;
   duplicateRequest: (reqID: string) => Promise<void>;
 };
@@ -75,6 +76,17 @@ export const useCollectionStore = create<CollectionStore>((set, get) => ({
   updateRequest: async (reqID, name, payload) => {
     await UpdateSavedRequest(reqID, name, payload as never);
     await get().load();
+  },
+
+  renameRequest: async (reqID, name) => {
+    const colls = get().collections;
+    for (const c of colls) {
+      const req = c.requests.find((r) => r.id === reqID);
+      if (!req) continue;
+      await UpdateSavedRequest(reqID, name, req.payload as never);
+      await get().load();
+      return;
+    }
   },
 
   deleteRequest: async (reqID) => {

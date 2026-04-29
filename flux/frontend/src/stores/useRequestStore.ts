@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type {
+  ApiKeyIn,
   AuthType,
   BodyType,
   HttpMethod,
@@ -29,6 +30,9 @@ const initialState: RequestState = {
   authToken: "",
   authUser: "",
   authPass: "",
+  authKeyName: "X-API-Key",
+  authKeyValue: "",
+  authKeyIn: "header",
 };
 
 type RequestStore = RequestState & {
@@ -53,6 +57,9 @@ type RequestStore = RequestState & {
   setAuthToken: (s: string) => void;
   setAuthUser: (s: string) => void;
   setAuthPass: (s: string) => void;
+  setAuthKeyName: (s: string) => void;
+  setAuthKeyValue: (s: string) => void;
+  setAuthKeyIn: (v: ApiKeyIn) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -100,6 +107,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setAuthToken: (authToken) => set({ authToken }),
   setAuthUser: (authUser) => set({ authUser }),
   setAuthPass: (authPass) => set({ authPass }),
+  setAuthKeyName: (authKeyName) => set({ authKeyName }),
+  setAuthKeyValue: (authKeyValue) => set({ authKeyValue }),
+  setAuthKeyIn: (authKeyIn) => set({ authKeyIn }),
 
   reset: () =>
     set({
@@ -114,6 +124,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
       authToken: "",
       authUser: "",
       authPass: "",
+      authKeyName: "X-API-Key",
+      authKeyValue: "",
+      authKeyIn: "header",
     }),
 
   loadState: (s) => set({ ...s }),

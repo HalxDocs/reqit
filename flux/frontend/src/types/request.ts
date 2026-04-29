@@ -18,7 +18,8 @@ export interface KeyValue {
 }
 
 export type BodyType = "none" | "json" | "form" | "urlencoded";
-export type AuthType = "none" | "bearer" | "basic";
+export type AuthType = "none" | "bearer" | "basic" | "apikey";
+export type ApiKeyIn = "header" | "query";
 
 export interface RequestState {
   method: HttpMethod;
@@ -32,6 +33,9 @@ export interface RequestState {
   authToken: string;
   authUser: string;
   authPass: string;
+  authKeyName: string;
+  authKeyValue: string;
+  authKeyIn: ApiKeyIn;
 }
 
 export interface ResponseResult {
