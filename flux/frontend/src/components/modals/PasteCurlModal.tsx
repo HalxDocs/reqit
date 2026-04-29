@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useTabsStore, deriveTitle } from "../../stores/useTabsStore";
@@ -37,7 +37,7 @@ export function PasteCurlModal() {
 
   return (
     <Modal open={open} onClose={close} title="Paste cURL command">
-      <div className="flex flex-col gap-3 w-[640px] max-w-[90vw]">
+      <div className="flex flex-col gap-3 w-[600px] max-w-full">
         <p className="text-12 text-subtext">
           Paste a cURL command from your browser DevTools or API docs.
           Method, URL, headers, body, and Bearer/Basic auth are imported.

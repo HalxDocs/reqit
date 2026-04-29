@@ -26,8 +26,8 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-card border border-border rounded-lg shadow-2xl w-[440px] max-w-[90vw] flex flex-col">
-        <div className="h-[44px] px-4 flex items-center justify-between border-b border-border">
+      <div className="relative bg-card border border-border rounded-lg shadow-2xl w-auto max-w-[92vw] flex flex-col max-h-[90vh]">
+        <div className="h-[44px] px-4 flex items-center justify-between border-b border-border shrink-0">
           <h2 className="text-13 font-semibold text-text">{title}</h2>
           <button
             type="button"
@@ -38,7 +38,7 @@ export function Modal({
             <X size={16} />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

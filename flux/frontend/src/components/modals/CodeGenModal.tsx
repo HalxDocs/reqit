@@ -42,7 +42,7 @@ export function CodeGenModal() {
 
   return (
     <Modal open={open} onClose={close} title="Generate code">
-      <div className="flex flex-col gap-3 w-[640px] max-w-[90vw]">
+      <div className="flex flex-col gap-3 w-[600px] max-w-full">
         <div className="flex items-center gap-1 border-b border-border">
           {LANGS.map((l) => (
             <button

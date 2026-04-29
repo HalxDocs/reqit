@@ -114,7 +114,7 @@ export function EnvironmentsModal() {
 
   return (
     <Modal open={open} onClose={close} title="Manage environments">
-      <div className="grid grid-cols-[160px_1fr] gap-4 min-h-[320px]">
+      <div className="grid grid-cols-[160px_1fr] gap-4 min-h-[280px] w-[520px] max-w-full">
         <aside className="flex flex-col border-r border-border pr-3 -ml-1">
           <button
             type="button"

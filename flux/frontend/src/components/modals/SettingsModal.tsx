@@ -37,7 +37,7 @@ export function SettingsModal() {
 
   return (
     <Modal open={open} onClose={close} title="Settings">
-      <div className="flex flex-col gap-5 w-[480px] max-w-[90vw]">
+      <div className="flex flex-col gap-5 w-[440px] max-w-full">
         <Section title="Profile">
           <Field label="Name">
             <input
