@@ -10,6 +10,8 @@ import { ImportPostmanModal } from "./components/modals/ImportPostmanModal";
 import { CodeGenModal } from "./components/modals/CodeGenModal";
 import { SettingsModal } from "./components/modals/SettingsModal";
 import { WelcomeModal } from "./components/modals/WelcomeModal";
+import { PasteCurlModal } from "./components/modals/PasteCurlModal";
+import { ToastHost } from "./components/shared/ToastHost";
 import { useSendRequest } from "./hooks/useSendRequest";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useResizablePanel } from "./hooks/useResizablePanel";
@@ -58,6 +60,8 @@ export default function App() {
       <CodeGenModal />
       <SettingsModal />
       <WelcomeModal />
+      <PasteCurlModal />
+      <ToastHost />
     </div>
   );
 }

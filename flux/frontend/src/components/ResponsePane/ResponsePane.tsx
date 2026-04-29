@@ -38,7 +38,10 @@ export function ResponsePane() {
         {!isLoading && response && response.error && <ErrorState message={response.error} />}
 
         {!isLoading && response && !response.error && responseTab === "body" && (
-          <BodyView body={response.body} />
+          <BodyView
+            body={response.body}
+            contentType={response.headers["Content-Type"] ?? response.headers["content-type"] ?? ""}
+          />
         )}
         {!isLoading && response && !response.error && responseTab === "headers" && (
           <HeadersView headers={response.headers} />

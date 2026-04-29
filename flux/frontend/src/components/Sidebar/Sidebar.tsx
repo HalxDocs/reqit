@@ -1,4 +1,4 @@
-import { Download, Folder, History as HistoryIcon, Settings, User } from "lucide-react";
+import { Download, Folder, History as HistoryIcon, Settings, Terminal, User } from "lucide-react";
 import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
@@ -8,6 +8,7 @@ import { useProfileStore } from "../../stores/useProfileStore";
 
 export function Sidebar() {
   const openImport = useUIStore((s) => s.openImportModal);
+  const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
   const profile = useProfileStore((s) => s.profile);
 
@@ -27,15 +28,26 @@ export function Sidebar() {
           icon={<Folder size={12} />}
           label="Collections"
           action={
-            <button
-              type="button"
-              onClick={openImport}
-              className="text-subtext hover:text-blue transition-colors p-1 rounded-sm"
-              aria-label="Import Postman collection"
-              title="Import Postman v2.1 collection"
-            >
-              <Download size={12} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={openPasteCurl}
+                className="text-subtext hover:text-blue transition-colors p-1 rounded-sm"
+                aria-label="Paste cURL"
+                title="Paste cURL command"
+              >
+                <Terminal size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={openImport}
+                className="text-subtext hover:text-blue transition-colors p-1 rounded-sm"
+                aria-label="Import Postman collection"
+                title="Import Postman v2.1 collection"
+              >
+                <Download size={12} />
+              </button>
+            </div>
           }
         >
           <CollectionsTree />

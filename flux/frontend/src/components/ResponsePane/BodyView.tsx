@@ -4,34 +4,31 @@ import { json } from "@codemirror/lang-json";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { CopyButton } from "./CopyButton";
-import { tryPrettyJSON } from "../../lib/format";
+import { tryPretty } from "../../lib/format";
+import { fluxCmTheme } from "../../lib/cmTheme";
 import { cn } from "../../lib/cn";
 
-const fluxTheme = EditorView.theme({
-  "&": {
-    backgroundColor: "#0D0D0D",
-    fontSize: "12px",
-    fontFamily:
-      "'JetBrains Mono', ui-monospace, Menlo, monospace",
-    height: "100%",
-  },
-  ".cm-gutters": {
-    backgroundColor: "#0D0D0D",
-    color: "#888888",
-    border: "none",
-  },
-  ".cm-content": {
-    caretColor: "#3B82F6",
-  },
-  ".cm-activeLine": { backgroundColor: "#141414" },
-  ".cm-activeLineGutter": { backgroundColor: "#141414" },
-  ".cm-scroller": { overflow: "auto" },
-});
-
-export function BodyView({ body }: { body: string }) {
+export function BodyView({
+  body,
+  contentType,
+}: {
+  body: string;
+  contentType: string;
+}) {
   const [raw, setRaw] = useState(false);
-  const { pretty, ok } = useMemo(() => tryPrettyJSON(body), [body]);
+  const { pretty, ok, kind } = useMemo(
+    () => tryPretty(body, contentType),
+    [body, contentType],
+  );
   const value = raw || !ok ? body : pretty;
+
+  // CodeMirror only highlights JSON natively in our deps. For XML/HTML/text we
+  // still benefit from the editor's gutter/fold/find-with-Cmd-F but skip the
+  // language extension.
+  const extensions = useMemo(() => {
+    const base = [fluxCmTheme, EditorView.lineWrapping];
+    return kind === "json" ? [json(), ...base] : base;
+  }, [kind]);
 
   return (
     <div className="flex flex-col h-full">
@@ -60,6 +57,12 @@ export function BodyView({ body }: { body: string }) {
           >
             Raw
           </button>
+          <span className="ml-2 text-11 text-subtext uppercase tracking-wider">
+            {kind}
+          </span>
+          <span className="ml-2 text-11 text-subtext hidden sm:inline">
+            Press <kbd className="font-mono bg-card px-1 rounded-sm">⌘F</kbd> to search
+          </span>
         </div>
         <CopyButton text={body} />
       </div>
@@ -69,13 +72,14 @@ export function BodyView({ body }: { body: string }) {
           <CodeMirror
             value={value}
             theme={oneDark}
-            extensions={[json(), fluxTheme, EditorView.lineWrapping]}
+            extensions={extensions}
             editable={false}
             basicSetup={{
               lineNumbers: true,
               foldGutter: true,
               highlightActiveLine: true,
               highlightActiveLineGutter: true,
+              searchKeymap: true,
             }}
             height="100%"
             className="h-full"

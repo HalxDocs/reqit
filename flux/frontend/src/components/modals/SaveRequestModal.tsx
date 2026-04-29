@@ -5,6 +5,7 @@ import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useRequestStore } from "../../stores/useRequestStore";
 import { useTabsStore } from "../../stores/useTabsStore";
 import { buildPayloadLiteral } from "../../lib/buildPayload";
+import { toast } from "../../stores/useToastStore";
 
 const NEW_COLLECTION_VALUE = "__new__";
 
@@ -53,6 +54,7 @@ export function SaveRequestModal() {
       const saved = await addRequest(targetID, name.trim(), payload);
       markActiveSaved(saved.id, name.trim());
       useUIStore.getState().setLoadedRequestID(saved.id);
+      toast.success(`Saved "${name.trim()}"`);
       close();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));

@@ -33,6 +33,10 @@ type UIStore = {
   openWelcomeModal: () => void;
   closeWelcomeModal: () => void;
 
+  pasteCurlModalOpen: boolean;
+  openPasteCurlModal: () => void;
+  closePasteCurlModal: () => void;
+
   loadedRequestID: string | null;
   setLoadedRequestID: (id: string | null) => void;
 
@@ -69,6 +73,10 @@ export const useUIStore = create<UIStore>((set) => ({
   welcomeModalOpen: false,
   openWelcomeModal: () => set({ welcomeModalOpen: true }),
   closeWelcomeModal: () => set({ welcomeModalOpen: false }),
+
+  pasteCurlModalOpen: false,
+  openPasteCurlModal: () => set({ pasteCurlModalOpen: true }),
+  closePasteCurlModal: () => set({ pasteCurlModalOpen: false }),
 
   loadedRequestID: null,
   setLoadedRequestID: (loadedRequestID) => set({ loadedRequestID }),

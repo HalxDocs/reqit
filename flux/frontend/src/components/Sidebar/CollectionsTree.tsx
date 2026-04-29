@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Copy, MoreVertical, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Download, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { useTabsStore } from "../../stores/useTabsStore";
 import { decodePayload } from "../../lib/loadPayload";
 import { MethodBadge } from "../shared/MethodBadge";
 import { cn } from "../../lib/cn";
+import { downloadText, safeFilename } from "../../lib/download";
+import { toast } from "../../stores/useToastStore";
 import type { models } from "../../../wailsjs/go/models";
 import type { HttpMethod } from "../../types/request";
 
@@ -153,9 +155,22 @@ export function CollectionsTree() {
                   setRenameValue(c.name);
                   setRenamingID(c.id);
                 }}
+                onExport={() => {
+                  const payload = JSON.stringify(
+                    {
+                      schema: "flux/collection/v1",
+                      exportedAt: new Date().toISOString(),
+                      collection: c,
+                    },
+                    null,
+                    2,
+                  );
+                  downloadText(payload, `${safeFilename(c.name)}.flux.json`);
+                  toast.success(`Exported "${c.name}"`);
+                }}
                 onDelete={() => {
                   if (confirm(`Delete collection "${c.name}" and all its requests?`)) {
-                    deleteCollection(c.id);
+                    deleteCollection(c.id).then(() => toast.success(`Deleted "${c.name}"`));
                   }
                 }}
               />
@@ -217,9 +232,11 @@ export function CollectionsTree() {
 
 function CollectionMenu({
   onRename,
+  onExport,
   onDelete,
 }: {
   onRename: () => void;
+  onExport: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -240,7 +257,7 @@ function CollectionMenu({
             className="fixed inset-0 z-10"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[120px]">
+          <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[140px]">
             <button
               type="button"
               onClick={() => {
@@ -251,6 +268,18 @@ function CollectionMenu({
             >
               Rename
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onExport();
+              }}
+              className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+            >
+              <Download size={12} />
+              <span>Export as JSON</span>
+            </button>
+            <div className="border-t border-border my-1" />
             <button
               type="button"
               onClick={() => {

@@ -3,6 +3,7 @@ import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useCollectionStore } from "../../stores/useCollectionStore";
 import { ImportPostman } from "../../../wailsjs/go/main/App";
+import { toast } from "../../stores/useToastStore";
 
 const NEW_COLLECTION = "__new__";
 
@@ -54,6 +55,7 @@ export function ImportPostmanModal() {
       const count = await ImportPostman(targetID, text);
       await reload();
       setImported(count);
+      toast.success(`Imported ${count} request${count === 1 ? "" : "s"}`);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {

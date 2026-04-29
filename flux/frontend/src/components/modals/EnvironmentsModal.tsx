@@ -8,6 +8,7 @@ import { cn } from "../../lib/cn";
 import { uid } from "../../lib/id";
 import type { KeyValue } from "../../types/request";
 import type { models } from "../../../wailsjs/go/models";
+import { toast } from "../../stores/useToastStore";
 
 interface DraftEnv {
   id: string;
@@ -93,6 +94,7 @@ export function EnvironmentsModal() {
     setBusy(true);
     try {
       await update(draft.id, draft.name.trim() || "Untitled", toVars(draft.rows));
+      toast.success(`Saved "${draft.name.trim() || "Untitled"}"`);
     } finally {
       setBusy(false);
     }
