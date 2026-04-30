@@ -1,0 +1,147 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Windows ────────────────────────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: flux/go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend deps
+        working-directory: flux/frontend
+        run: npm install --include=dev
+
+      - name: Build (Windows/amd64 + NSIS installer)
+        working-directory: flux
+        run: wails build -platform windows/amd64 -nsis -o flux
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          for f in flux/build/bin/*.exe; do
+            name=$(basename "$f" .exe)
+            cp "$f" "release-artifacts/${name}-windows-amd64.exe"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: release-artifacts/
+
+  # ── macOS ──────────────────────────────────────────────────────────────────
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: flux/go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend deps
+        working-directory: flux/frontend
+        run: npm install --include=dev
+
+      - name: Build (macOS universal)
+        working-directory: flux
+        run: wails build -platform darwin/universal -o flux
+
+      - name: Package as zip
+        run: |
+          mkdir -p release-artifacts
+          cd flux/build/bin
+          zip -r "../../../release-artifacts/flux-macos-universal.zip" flux.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: release-artifacts/
+
+  # ── Linux ──────────────────────────────────────────────────────────────────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: flux/go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend deps
+        working-directory: flux/frontend
+        run: npm install --include=dev
+
+      - name: Build (Linux/amd64)
+        working-directory: flux
+        run: wails build -platform linux/amd64 -o flux
+
+      - name: Rename artifact
+        run: |
+          mkdir -p release-artifacts
+          cp flux/build/bin/flux release-artifacts/flux-linux-amd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: release-artifacts/
+
+  # ── Create GitHub Release ──────────────────────────────────────────────────
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: release-artifacts
+
+      - name: List artifacts
+        run: ls -lh release-artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-artifacts/**

@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm install --include=dev --prefix flux/frontend && npm run build:web --prefix flux/frontend",
+  "outputDirectory": "flux/frontend/dist-web",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/web.html" }]
+}

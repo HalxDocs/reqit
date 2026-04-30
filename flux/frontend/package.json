@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build:web": "tsc --noEmit && vite build --mode web",
+    "preview": "vite preview",
+    "preview:web": "vite preview --mode web --outDir dist-web"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
@@ -27,6 +29,7 @@
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "^2.0.1",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^10.1.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "typescript": "^4.6.4",
