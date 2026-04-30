@@ -16,6 +16,16 @@ import (
 
 const defaultTimeout = 30 * time.Second
 
+// httpClient is reused across all requests so the underlying transport can
+// pool TCP connections and reuse TLS sessions.
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
+
 // Execute runs the given RequestPayload under the supplied context (so callers
 // can cancel mid-flight) and returns a fully-populated ResponseResult. Any
 // transport-level failure is returned in the Error field rather than as a Go
@@ -54,8 +64,7 @@ func Execute(ctx context.Context, payload models.RequestPayload) models.Response
 	}
 	applyAuth(req, payload.AuthType, payload.AuthValue)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return errResult(errors.New("request canceled"), time.Since(start))

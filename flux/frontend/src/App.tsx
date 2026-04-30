@@ -103,7 +103,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <UrlBar onSend={send} />
         <UrlPreview />
         <div className="flex-1 flex min-h-0">
-          <RequestPanel onSend={send} width={width} />
+          <RequestPanel width={width} />
           <Splitter onResize={onResize} />
           <ResponsePane />
         </div>

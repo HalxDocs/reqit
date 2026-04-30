@@ -42,6 +42,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
             e.preventDefault();
+            e.stopPropagation(); // prevent double-fire with global Ctrl+Enter listener
             if (!isLoading) onSend?.();
           }
         }}

@@ -12,13 +12,7 @@ const TABS: TabItem<RequestTab>[] = [
   { id: "auth", label: "Auth" },
 ];
 
-export function RequestPanel({
-  onSend,
-  width,
-}: {
-  onSend?: () => void;
-  width: number;
-}) {
+export function RequestPanel({ width }: { width: number }) {
   const requestTab = useUIStore((s) => s.requestTab);
   const setRequestTab = useUIStore((s) => s.setRequestTab);
 
