@@ -5,6 +5,7 @@ import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
 import { SearchBar } from "./SearchBar";
+import { GitPanel } from "./GitPanel";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
 
@@ -71,6 +72,8 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
           <HistoryList />
         </Section>
       </nav>
+
+      <GitPanel />
 
       <button
         type="button"

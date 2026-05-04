@@ -10,12 +10,15 @@ import (
 
 	"flux/internal/collections"
 	"flux/internal/environments"
+	gitpkg "flux/internal/git"
 	"flux/internal/history"
+	"flux/internal/locks"
 	"flux/internal/models"
 	"flux/internal/postman"
 	"flux/internal/profile"
 	"flux/internal/requester"
 	"flux/internal/storage"
+	"flux/internal/watcher"
 	"flux/internal/workspaces"
 )
 
@@ -26,6 +29,9 @@ type App struct {
 	history      *history.Store
 	environments *environments.Store
 	profile      *profile.Store
+	git          *gitpkg.Store
+	locks        *locks.Store
+	fsWatcher    *watcher.Watcher
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -57,6 +63,30 @@ func (a *App) mountWorkspace(dir string) {
 	a.collections = collections.NewStore(dir)
 	a.history = history.NewStore(dir)
 	a.environments = environments.NewStore(dir)
+	a.locks = locks.New(dir)
+
+	// Stop previous watcher if any.
+	if a.fsWatcher != nil {
+		a.fsWatcher.Close()
+		a.fsWatcher = nil
+	}
+
+	// Start file watcher — emits workspace:changed so the frontend can reload.
+	if w, err := watcher.New(func(filename string) {
+		runtime.EventsEmit(a.ctx, "workspace:changed", filename)
+	}); err == nil {
+		_ = w.Watch(dir)
+		a.fsWatcher = w
+	}
+
+	// Open git repo if one exists; don't error if it doesn't.
+	if gitpkg.IsRepo(dir) {
+		if gs, err := gitpkg.Open(dir); err == nil {
+			a.git = gs
+		}
+	} else {
+		a.git = nil
+	}
 }
 
 // --- Workspaces ---
@@ -331,6 +361,142 @@ func (a *App) UpdateProfile(name, email string) error {
 
 func (a *App) AppDataDir() (string, error) {
 	return storage.AppDir()
+}
+
+// --- Git ---
+
+type GitStatus struct {
+	Initialised   bool   `json:"initialised"`
+	HasChanges    bool   `json:"hasChanges"`
+	CurrentBranch string `json:"currentBranch"`
+	RemoteURL     string `json:"remoteUrl"`
+}
+
+func (a *App) GetGitStatus() GitStatus {
+	if a.git == nil {
+		return GitStatus{}
+	}
+	return GitStatus{
+		Initialised:   true,
+		HasChanges:    a.git.HasChanges(),
+		CurrentBranch: a.git.CurrentBranch(),
+		RemoteURL:     a.git.GetRemote(),
+	}
+}
+
+// InitGit initialises (or opens) a git repo in the active workspace,
+// saves the remote URL and PAT, and adds the remote.
+func (a *App) InitGit(remoteURL, pat string) error {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return errors.New("no active workspace")
+	}
+	gs, err := gitpkg.Open(dir)
+	if err != nil {
+		return err
+	}
+	a.git = gs
+	if remoteURL != "" {
+		if err := gs.SetRemote(remoteURL); err != nil {
+			return err
+		}
+	}
+	return gitpkg.SaveConfig(dir, remoteURL, pat)
+}
+
+func (a *App) CommitAndPush(message string) error {
+	if a.git == nil {
+		return errors.New("git not initialised for this workspace")
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	cfg, _ := gitpkg.LoadConfig(dir)
+	p, err := a.profile.Get()
+	if err != nil {
+		return err
+	}
+	if err := a.git.CommitAll(message, p.Name, p.Email); err != nil {
+		return err
+	}
+	if cfg.PAT != "" {
+		return a.git.Push(cfg.PAT)
+	}
+	return nil
+}
+
+func (a *App) GitPull() error {
+	if a.git == nil {
+		return errors.New("git not initialised for this workspace")
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	cfg, _ := gitpkg.LoadConfig(dir)
+	if err := a.git.Pull(cfg.PAT); err != nil {
+		return err
+	}
+	runtime.EventsEmit(a.ctx, "git:pull:complete", nil)
+	return nil
+}
+
+func (a *App) GetBranches() ([]string, error) {
+	if a.git == nil {
+		return nil, errors.New("git not initialised")
+	}
+	return a.git.GetBranches()
+}
+
+func (a *App) SwitchBranch(name string) error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.SwitchBranch(name)
+}
+
+func (a *App) CreateBranch(name string) error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.CreateBranch(name)
+}
+
+func (a *App) GetGitLog(limit int) ([]gitpkg.CommitInfo, error) {
+	if a.git == nil {
+		return nil, errors.New("git not initialised")
+	}
+	return a.git.GetLog(limit)
+}
+
+// --- Locks ---
+
+func (a *App) LockCollection(id string) error {
+	if a.locks == nil {
+		return errors.New("no active workspace")
+	}
+	p, err := a.profile.Get()
+	if err != nil {
+		return err
+	}
+	if err := a.locks.Lock(id, p.Name, p.Email); err != nil {
+		return err
+	}
+	runtime.EventsEmit(a.ctx, "lock:changed", id)
+	return nil
+}
+
+func (a *App) UnlockCollection(id string) error {
+	if a.locks == nil {
+		return errors.New("no active workspace")
+	}
+	if err := a.locks.Unlock(id); err != nil {
+		return err
+	}
+	runtime.EventsEmit(a.ctx, "lock:changed", id)
+	return nil
+}
+
+func (a *App) GetLocks() (map[string]locks.LockInfo, error) {
+	if a.locks == nil {
+		return map[string]locks.LockInfo{}, nil
+	}
+	return a.locks.GetAll()
 }
 
 var _ = uuid.NewString

@@ -66,3 +66,25 @@ export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvV
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
+
+export function GetGitStatus():Promise<{initialised:boolean,hasChanges:boolean,currentBranch:string,remoteUrl:string}>;
+
+export function InitGit(arg1:string,arg2:string):Promise<void>;
+
+export function CommitAndPush(arg1:string):Promise<void>;
+
+export function GitPull():Promise<void>;
+
+export function GetBranches():Promise<Array<string>>;
+
+export function SwitchBranch(arg1:string):Promise<void>;
+
+export function CreateBranch(arg1:string):Promise<void>;
+
+export function GetGitLog(arg1:number):Promise<Array<{hash:string,message:string,author:string,when:string}>>;
+
+export function LockCollection(arg1:string):Promise<void>;
+
+export function UnlockCollection(arg1:string):Promise<void>;
+
+export function GetLocks():Promise<Record<string,{user:string,email:string,since:string}>>;

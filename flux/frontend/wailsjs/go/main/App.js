@@ -125,3 +125,47 @@ export function UpdateProfile(arg1, arg2) {
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
 }
+
+export function GetGitStatus() {
+  return window['go']['main']['App']['GetGitStatus']();
+}
+
+export function InitGit(arg1, arg2) {
+  return window['go']['main']['App']['InitGit'](arg1, arg2);
+}
+
+export function CommitAndPush(arg1) {
+  return window['go']['main']['App']['CommitAndPush'](arg1);
+}
+
+export function GitPull() {
+  return window['go']['main']['App']['GitPull']();
+}
+
+export function GetBranches() {
+  return window['go']['main']['App']['GetBranches']();
+}
+
+export function SwitchBranch(arg1) {
+  return window['go']['main']['App']['SwitchBranch'](arg1);
+}
+
+export function CreateBranch(arg1) {
+  return window['go']['main']['App']['CreateBranch'](arg1);
+}
+
+export function GetGitLog(arg1) {
+  return window['go']['main']['App']['GetGitLog'](arg1);
+}
+
+export function LockCollection(arg1) {
+  return window['go']['main']['App']['LockCollection'](arg1);
+}
+
+export function UnlockCollection(arg1) {
+  return window['go']['main']['App']['UnlockCollection'](arg1);
+}
+
+export function GetLocks() {
+  return window['go']['main']['App']['GetLocks']();
+}
