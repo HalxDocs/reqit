@@ -18,7 +18,7 @@ import {
   PlusSignIcon,
   Download02Icon,
 } from "@hugeicons/core-free-icons";
-import reqitLogo from "../assets/images/reqit-logo.svg";
+import reqitLogo from "../assets/images/reqitloo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/flux";
 const RELEASES_URL = "https://github.com/HalxDocs/flux/releases/latest";

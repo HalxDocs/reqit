@@ -37,6 +37,10 @@ type UIStore = {
   openPasteCurlModal: () => void;
   closePasteCurlModal: () => void;
 
+  teamModalOpen: boolean;
+  openTeamModal: () => void;
+  closeTeamModal: () => void;
+
   loadedRequestID: string | null;
   setLoadedRequestID: (id: string | null) => void;
 
@@ -77,6 +81,10 @@ export const useUIStore = create<UIStore>((set) => ({
   pasteCurlModalOpen: false,
   openPasteCurlModal: () => set({ pasteCurlModalOpen: true }),
   closePasteCurlModal: () => set({ pasteCurlModalOpen: false }),
+
+  teamModalOpen: false,
+  openTeamModal: () => set({ teamModalOpen: true }),
+  closeTeamModal: () => set({ teamModalOpen: false }),
 
   loadedRequestID: null,
   setLoadedRequestID: (loadedRequestID) => set({ loadedRequestID }),

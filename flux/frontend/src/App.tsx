@@ -13,6 +13,7 @@ import { CodeGenModal } from "./components/modals/CodeGenModal";
 import { SettingsModal } from "./components/modals/SettingsModal";
 import { WelcomeModal } from "./components/modals/WelcomeModal";
 import { PasteCurlModal } from "./components/modals/PasteCurlModal";
+import { TeamModal } from "./components/modals/TeamModal";
 import { ToastHost } from "./components/shared/ToastHost";
 import { HomeScreen } from "./screens/HomeScreen";
 import { useSendRequest } from "./hooks/useSendRequest";
@@ -100,7 +101,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       {/* Mobile: show a "use desktop" message instead of the full app UI */}
       <div className="md:hidden fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center gap-5 p-8 text-center">
         <div className="w-[64px] h-[64px] rounded-2xl bg-blue/10 flex items-center justify-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
           </svg>
         </div>
@@ -138,6 +139,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <SettingsModal />
       <WelcomeModal />
       <PasteCurlModal />
+      <TeamModal />
       <ToastHost />
     </div>
   );

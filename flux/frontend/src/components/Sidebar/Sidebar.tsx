@@ -1,22 +1,29 @@
-import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User } from "lucide-react";
-import reqitLogo from "../../assets/images/reqit-logo.svg";
+import { useEffect, useState } from "react";
+import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users } from "lucide-react";
+import reqitLogo from "../../assets/images/reqitloo.jpeg";
 import { useWorkspaceStore } from "../../stores/useWorkspaceStore";
 import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
 import { SearchBar } from "./SearchBar";
-import { GitPanel } from "./GitPanel";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
+import { GetGitStatus } from "../../../wailsjs/go/main/App";
 
 export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openImport = useUIStore((s) => s.openImportModal);
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
+  const openTeam = useUIStore((s) => s.openTeamModal);
   const profile = useProfileStore((s) => s.profile);
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const activeID = useWorkspaceStore((s) => s.activeID);
   const activeWs = workspaces.find((w) => w.id === activeID);
+
+  const [hasChanges, setHasChanges] = useState(false);
+  useEffect(() => {
+    GetGitStatus().then((s: { hasChanges: boolean }) => setHasChanges(s.hasChanges)).catch(() => {});
+  }, []);
 
   return (
     <aside className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
@@ -73,7 +80,22 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         </Section>
       </nav>
 
-      <GitPanel />
+      {/* Team button */}
+      <button
+        type="button"
+        onClick={openTeam}
+        className="border-t border-border h-[40px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
+        title="Team — invite members, sync, commit"
+      >
+        <div className="w-[24px] h-[24px] rounded-full bg-blue/15 flex items-center justify-center text-blue shrink-0 relative">
+          <Users size={12} />
+          {hasChanges && (
+            <span className="absolute -top-0.5 -right-0.5 w-[7px] h-[7px] rounded-full bg-amber-400 border border-surface" />
+          )}
+        </div>
+        <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
+        <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
+      </button>
 
       <button
         type="button"

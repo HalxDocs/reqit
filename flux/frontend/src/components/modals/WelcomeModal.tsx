@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
-import reqitLogo from "../../assets/images/reqit-logo.svg";
+import reqitLogo from "../../assets/images/reqitloo.jpeg";
 
 export function WelcomeModal() {
   const profile = useProfileStore((s) => s.profile);
