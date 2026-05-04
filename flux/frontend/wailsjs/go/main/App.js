@@ -18,6 +18,14 @@ export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
 
+export function CommitAndPush(arg1) {
+  return window['go']['main']['App']['CommitAndPush'](arg1);
+}
+
+export function CreateBranch(arg1) {
+  return window['go']['main']['App']['CreateBranch'](arg1);
+}
+
 export function CreateCollection(arg1) {
   return window['go']['main']['App']['CreateCollection'](arg1);
 }
@@ -46,8 +54,16 @@ export function DeleteWorkspace(arg1) {
   return window['go']['main']['App']['DeleteWorkspace'](arg1);
 }
 
+export function GetActiveContributors() {
+  return window['go']['main']['App']['GetActiveContributors']();
+}
+
 export function GetActiveWorkspace() {
   return window['go']['main']['App']['GetActiveWorkspace']();
+}
+
+export function GetBranches() {
+  return window['go']['main']['App']['GetBranches']();
 }
 
 export function GetCollections() {
@@ -58,8 +74,20 @@ export function GetEnvironments() {
   return window['go']['main']['App']['GetEnvironments']();
 }
 
+export function GetGitLog(arg1) {
+  return window['go']['main']['App']['GetGitLog'](arg1);
+}
+
+export function GetGitStatus() {
+  return window['go']['main']['App']['GetGitStatus']();
+}
+
 export function GetHistory() {
   return window['go']['main']['App']['GetHistory']();
+}
+
+export function GetLocks() {
+  return window['go']['main']['App']['GetLocks']();
 }
 
 export function GetProfile() {
@@ -70,8 +98,20 @@ export function GetWorkspaces() {
   return window['go']['main']['App']['GetWorkspaces']();
 }
 
+export function GitPull() {
+  return window['go']['main']['App']['GitPull']();
+}
+
 export function ImportPostman(arg1, arg2) {
   return window['go']['main']['App']['ImportPostman'](arg1, arg2);
+}
+
+export function InitGit(arg1, arg2) {
+  return window['go']['main']['App']['InitGit'](arg1, arg2);
+}
+
+export function LockCollection(arg1) {
+  return window['go']['main']['App']['LockCollection'](arg1);
 }
 
 export function OpenWorkspaceFromFolder(arg1) {
@@ -110,8 +150,16 @@ export function SetActiveEnvironment(arg1) {
   return window['go']['main']['App']['SetActiveEnvironment'](arg1);
 }
 
+export function SwitchBranch(arg1) {
+  return window['go']['main']['App']['SwitchBranch'](arg1);
+}
+
 export function SwitchWorkspace(arg1) {
   return window['go']['main']['App']['SwitchWorkspace'](arg1);
+}
+
+export function UnlockCollection(arg1) {
+  return window['go']['main']['App']['UnlockCollection'](arg1);
 }
 
 export function UpdateEnvironment(arg1, arg2, arg3) {
@@ -124,48 +172,4 @@ export function UpdateProfile(arg1, arg2) {
 
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
-}
-
-export function GetGitStatus() {
-  return window['go']['main']['App']['GetGitStatus']();
-}
-
-export function InitGit(arg1, arg2) {
-  return window['go']['main']['App']['InitGit'](arg1, arg2);
-}
-
-export function CommitAndPush(arg1) {
-  return window['go']['main']['App']['CommitAndPush'](arg1);
-}
-
-export function GitPull() {
-  return window['go']['main']['App']['GitPull']();
-}
-
-export function GetBranches() {
-  return window['go']['main']['App']['GetBranches']();
-}
-
-export function SwitchBranch(arg1) {
-  return window['go']['main']['App']['SwitchBranch'](arg1);
-}
-
-export function CreateBranch(arg1) {
-  return window['go']['main']['App']['CreateBranch'](arg1);
-}
-
-export function GetGitLog(arg1) {
-  return window['go']['main']['App']['GetGitLog'](arg1);
-}
-
-export function LockCollection(arg1) {
-  return window['go']['main']['App']['LockCollection'](arg1);
-}
-
-export function UnlockCollection(arg1) {
-  return window['go']['main']['App']['UnlockCollection'](arg1);
-}
-
-export function GetLocks() {
-  return window['go']['main']['App']['GetLocks']();
 }

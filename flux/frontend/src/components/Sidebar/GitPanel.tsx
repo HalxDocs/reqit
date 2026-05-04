@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GitBranch, GitCommit, RefreshCw, Upload, Settings, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { GitBranch, GitCommit, RefreshCw, Upload, Settings, ChevronDown, ChevronRight, Plus, Users } from "lucide-react";
 import {
   GetGitStatus,
   InitGit,
@@ -9,6 +9,7 @@ import {
   SwitchBranch,
   CreateBranch,
   GetGitLog,
+  GetActiveContributors,
 } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
 import { useToastStore } from "../../stores/useToastStore";
@@ -27,11 +28,32 @@ interface CommitInfo {
   when: string;
 }
 
+interface Contributor {
+  name: string;
+  email: string;
+  commits: number;
+  lastSeen: string;
+}
+
+function initials(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
 export function GitPanel() {
   const toast = useToastStore((s) => s.push);
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   const [log, setLog] = useState<CommitInfo[]>([]);
+  const [contributors, setContributors] = useState<Contributor[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [showLog, setShowLog] = useState(false);
@@ -46,8 +68,9 @@ export function GitPanel() {
       const s = await GetGitStatus();
       setStatus(s as GitStatus);
       if ((s as GitStatus).initialised) {
-        const b = await GetBranches();
+        const [b, c] = await Promise.all([GetBranches(), GetActiveContributors()]);
         setBranches(b ?? []);
+        setContributors((c ?? []) as Contributor[]);
       }
     } catch {
       // not a git repo yet
@@ -312,6 +335,30 @@ export function GitPanel() {
                       <span className="text-10 text-subtext">
                         {c.author} · <code className="text-blue">{c.hash}</code>
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Active contributors (last 24h) */}
+              {contributors.length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <div className="flex items-center gap-1.5 text-11 text-subtext font-semibold uppercase tracking-wider">
+                    <Users size={10} />
+                    <span>Active today</span>
+                    <span className="ml-auto bg-blue/15 text-blue text-10 font-bold px-1.5 rounded-full">
+                      {contributors.length}
+                    </span>
+                  </div>
+                  {contributors.map((c) => (
+                    <div key={c.email} className="flex items-center gap-2">
+                      <div className="w-[22px] h-[22px] rounded-full bg-blue/20 flex items-center justify-center text-blue text-10 font-bold shrink-0">
+                        {initials(c.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-11 text-text truncate">{c.name}</div>
+                        <div className="text-10 text-subtext">{c.commits} commit{c.commits !== 1 ? "s" : ""} · {timeAgo(c.lastSeen)}</div>
+                      </div>
                     </div>
                   ))}
                 </div>

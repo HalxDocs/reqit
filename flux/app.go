@@ -79,10 +79,18 @@ func (a *App) mountWorkspace(dir string) {
 		a.fsWatcher = w
 	}
 
-	// Open git repo if one exists; don't error if it doesn't.
+	// Open git repo if one exists; auto-pull if remote is configured.
 	if gitpkg.IsRepo(dir) {
 		if gs, err := gitpkg.Open(dir); err == nil {
 			a.git = gs
+			// Auto-pull on workspace mount so users start with latest changes.
+			go func() {
+				pat := gitpkg.LoadPAT(dir)
+				if gs.GetRemote() != "" {
+					_ = gs.Pull(pat)
+					runtime.EventsEmit(a.ctx, "git:pull:complete", nil)
+				}
+			}()
 		}
 	} else {
 		a.git = nil
@@ -409,7 +417,6 @@ func (a *App) CommitAndPush(message string) error {
 		return errors.New("git not initialised for this workspace")
 	}
 	dir, _ := a.workspaces.ActiveDir()
-	cfg, _ := gitpkg.LoadConfig(dir)
 	p, err := a.profile.Get()
 	if err != nil {
 		return err
@@ -417,8 +424,9 @@ func (a *App) CommitAndPush(message string) error {
 	if err := a.git.CommitAll(message, p.Name, p.Email); err != nil {
 		return err
 	}
-	if cfg.PAT != "" {
-		return a.git.Push(cfg.PAT)
+	pat := gitpkg.LoadPAT(dir)
+	if pat != "" {
+		return a.git.Push(pat)
 	}
 	return nil
 }
@@ -428,8 +436,8 @@ func (a *App) GitPull() error {
 		return errors.New("git not initialised for this workspace")
 	}
 	dir, _ := a.workspaces.ActiveDir()
-	cfg, _ := gitpkg.LoadConfig(dir)
-	if err := a.git.Pull(cfg.PAT); err != nil {
+	pat := gitpkg.LoadPAT(dir)
+	if err := a.git.Pull(pat); err != nil {
 		return err
 	}
 	runtime.EventsEmit(a.ctx, "git:pull:complete", nil)
@@ -497,6 +505,13 @@ func (a *App) GetLocks() (map[string]locks.LockInfo, error) {
 		return map[string]locks.LockInfo{}, nil
 	}
 	return a.locks.GetAll()
+}
+
+func (a *App) GetActiveContributors() ([]gitpkg.Contributor, error) {
+	if a.git == nil {
+		return []gitpkg.Contributor{}, nil
+	}
+	return a.git.GetActiveContributors()
 }
 
 var _ = uuid.NewString

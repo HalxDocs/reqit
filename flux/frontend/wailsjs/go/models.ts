@@ -35,6 +35,70 @@ export namespace environments {
 
 }
 
+export namespace git {
+	
+	export class CommitInfo {
+	    hash: string;
+	    message: string;
+	    author: string;
+	    when: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CommitInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hash = source["hash"];
+	        this.message = source["message"];
+	        this.author = source["author"];
+	        this.when = source["when"];
+	    }
+	}
+	export class Contributor {
+	    name: string;
+	    email: string;
+	    commits: number;
+	    lastSeen: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Contributor(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.email = source["email"];
+	        this.commits = source["commits"];
+	        this.lastSeen = source["lastSeen"];
+	    }
+	}
+
+}
+
+export namespace main {
+	
+	export class GitStatus {
+	    initialised: boolean;
+	    hasChanges: boolean;
+	    currentBranch: string;
+	    remoteUrl: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GitStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.initialised = source["initialised"];
+	        this.hasChanges = source["hasChanges"];
+	        this.currentBranch = source["currentBranch"];
+	        this.remoteUrl = source["remoteUrl"];
+	    }
+	}
+
+}
+
 export namespace models {
 	
 	export class Header {

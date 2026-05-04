@@ -3,6 +3,7 @@ package git
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,7 +13,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/zalando/go-keyring"
 )
+
+const keyringSvc = "flux-git"
 
 type CommitInfo struct {
 	Hash    string `json:"hash"`
@@ -21,9 +25,15 @@ type CommitInfo struct {
 	When    string `json:"when"`
 }
 
+type Contributor struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Commits int    `json:"commits"`
+	LastSeen string `json:"lastSeen"`
+}
+
 type GitConfig struct {
 	RemoteURL string `json:"remoteUrl"`
-	PAT       string `json:"pat"`
 }
 
 type Store struct {
@@ -207,14 +217,63 @@ func (s *Store) HasChanges() bool {
 	return !status.IsClean()
 }
 
-// SaveConfig persists remote URL and PAT to a gitignored file in the workspace.
+// GetActiveContributors returns unique authors who committed within the last 24 hours.
+func (s *Store) GetActiveContributors() ([]Contributor, error) {
+	iter, err := s.repo.Log(&gogit.LogOptions{})
+	if err != nil {
+		return nil, err
+	}
+	cutoff := time.Now().Add(-24 * time.Hour)
+	seen := map[string]*Contributor{}
+	_ = iter.ForEach(func(c *object.Commit) error {
+		if c.Author.When.Before(cutoff) {
+			return errors.New("stop")
+		}
+		key := c.Author.Email
+		if existing, ok := seen[key]; ok {
+			existing.Commits++
+		} else {
+			seen[key] = &Contributor{
+				Name:     c.Author.Name,
+				Email:    c.Author.Email,
+				Commits:  1,
+				LastSeen: c.Author.When.Format(time.RFC3339),
+			}
+		}
+		return nil
+	})
+	result := make([]Contributor, 0, len(seen))
+	for _, c := range seen {
+		result = append(result, *c)
+	}
+	return result, nil
+}
+
+// SaveConfig persists remote URL (only) to a file; PAT goes to OS keychain.
 func SaveConfig(dir, remoteURL, pat string) error {
-	cfg := GitConfig{RemoteURL: remoteURL, PAT: pat}
+	// Store PAT in OS keychain keyed by workspace dir.
+	if pat != "" {
+		if err := keyring.Set(keyringSvc, dir, pat); err != nil {
+			return fmt.Errorf("keychain: %w", err)
+		}
+	}
+	cfg := GitConfig{RemoteURL: remoteURL}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(filepath.Join(dir, ".flux-git.json"), data, 0600)
+}
+
+// LoadPAT retrieves the PAT for a workspace from the OS keychain.
+func LoadPAT(dir string) string {
+	pat, _ := keyring.Get(keyringSvc, dir)
+	return pat
+}
+
+// DeletePAT removes the stored PAT from the OS keychain.
+func DeletePAT(dir string) {
+	_ = keyring.Delete(keyringSvc, dir)
 }
 
 // LoadConfig reads the stored git config for a workspace.
