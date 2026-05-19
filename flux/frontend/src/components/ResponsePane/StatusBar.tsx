@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useResponseStore } from "../../stores/useResponseStore";
 import { cn } from "../../lib/cn";
 import { formatSize, formatTiming, statusColor } from "../../lib/format";
+import { ContractBadge } from "./ContractBadge";
 
 export function StatusBar() {
   const response = useResponseStore((s) => s.response);
@@ -62,6 +63,7 @@ export function StatusBar() {
         <span className="text-subtext text-11 uppercase tracking-wider">Size</span>
         <span className="text-text font-mono">{formatSize(response.sizeBytes)}</span>
       </span>
+      <ContractBadge validation={response.validation} />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { SendRequest } from "../../wailsjs/go/main/App";
 import { useRequestStore } from "../stores/useRequestStore";
 import { useResponseStore } from "../stores/useResponseStore";
 import { useHistoryStore } from "../stores/useHistoryStore";
+import { useCollectionStore } from "../stores/useCollectionStore";
+import { useUIStore } from "../stores/useUIStore";
 import { buildPayload } from "../lib/buildPayload";
 import type { ResponseResult } from "../types/request";
 
@@ -27,9 +29,23 @@ export function useSendRequest() {
       return;
     }
 
+    // Resolve spec path from the loaded request's collection (for contract testing).
+    const loadedID = useUIStore.getState().loadedRequestID;
+    let specPath: string | undefined;
+    if (loadedID) {
+      const colls = useCollectionStore.getState().collections;
+      for (const col of colls) {
+        if (col.requests.some((r) => r.id === loadedID) && col.spec) {
+          specPath = col.spec;
+          break;
+        }
+      }
+    }
+
     setLoading(true);
     try {
       const payload = buildPayload(requestState);
+      if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
       const result = (await SendRequest(payload as never)) as ResponseResult;
       setResponse(result);
     } catch (err) {
@@ -44,8 +60,6 @@ export function useSendRequest() {
         cookies: [],
       });
     } finally {
-      // Refresh history so the Sidebar list reflects the new entry that the
-      // Go side persisted in app.go SendRequest.
       refreshHistory().catch(() => undefined);
     }
   }, [setLoading, setResponse, refreshHistory]);

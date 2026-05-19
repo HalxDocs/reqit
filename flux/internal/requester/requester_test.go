@@ -31,7 +31,7 @@ func TestExecute_GETWithParamsAndHeaders(t *testing.T) {
 		URL:    ts.URL,
 		Params: []models.Header{{Key: "foo", Value: "bar", Enabled: true}, {Key: "skipped", Value: "x", Enabled: false}},
 		Headers: []models.Header{{Key: "X-Test", Value: "abc", Enabled: true}},
-	})
+	}, nil)
 
 	if res.Error != "" {
 		t.Fatalf("unexpected error: %s", res.Error)
@@ -65,7 +65,7 @@ func TestExecute_PostJSONBody(t *testing.T) {
 		URL:      ts.URL,
 		BodyType: "json",
 		Body:     `{"a":1}`,
-	})
+	}, nil)
 
 	if res.StatusCode != 201 {
 		t.Fatalf("expected 201, got %d (err=%s)", res.StatusCode, res.Error)
@@ -88,7 +88,7 @@ func TestExecute_BasicAuth(t *testing.T) {
 		URL:       ts.URL,
 		AuthType:  "basic",
 		AuthValue: "alice:secret",
-	})
+	}, nil)
 	if res.StatusCode != 200 {
 		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
 	}
@@ -108,7 +108,7 @@ func TestExecute_BearerAuth(t *testing.T) {
 		URL:       ts.URL,
 		AuthType:  "bearer",
 		AuthValue: "xyz",
-	})
+	}, nil)
 	if res.StatusCode != 200 {
 		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
 	}
@@ -132,14 +132,14 @@ func TestExecute_FormBody(t *testing.T) {
 		URL:      ts.URL,
 		BodyType: "urlencoded",
 		BodyForm: []models.Header{{Key: "name", Value: "alice", Enabled: true}},
-	})
+	}, nil)
 	if res.StatusCode != 200 {
 		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
 	}
 }
 
 func TestExecute_EmptyURLReturnsError(t *testing.T) {
-	res := Execute(context.Background(), models.RequestPayload{Method: "GET", URL: ""})
+	res := Execute(context.Background(), models.RequestPayload{Method: "GET", URL: ""}, nil)
 	if res.Error == "" {
 		t.Fatalf("expected error for empty URL, got result %+v", res)
 	}

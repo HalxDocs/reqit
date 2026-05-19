@@ -47,6 +47,34 @@ export interface CookieSummary {
   secure: boolean;
 }
 
+export interface ValidationError {
+  layer: string;
+  field: string;
+  message: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+  skipReason: string;
+  endpoint: string;
+  method: string;
+}
+
+export interface SavedResponse {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: string;
+  capturedAt: string;
+}
+
+export interface MockOverride {
+  enabled: boolean;
+  statusCode: number;
+  delayMs: number;
+  body: string;
+}
+
 export interface ResponseResult {
   status: string;
   statusCode: number;
@@ -56,4 +84,5 @@ export interface ResponseResult {
   sizeBytes: number;
   error: string;
   cookies: CookieSummary[];
+  validation?: ValidationResult;
 }

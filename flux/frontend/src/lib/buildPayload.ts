@@ -11,6 +11,7 @@ export interface WirePayload {
   bodyForm: { key: string; value: string; enabled: boolean }[];
   authType: string;
   authValue: string;
+  specPath?: string;
 }
 
 const stripId = (kv: KeyValue) => ({

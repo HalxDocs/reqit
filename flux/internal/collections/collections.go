@@ -176,3 +176,59 @@ func (s *Store) DeleteRequest(reqID string) error {
 	}
 	return errors.New("request not found")
 }
+
+// SetSpec links an OpenAPI spec file path (relative to workspace) to a collection.
+func (s *Store) SetSpec(collID, specPath string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		if s.collections[i].ID == collID {
+			s.collections[i].SpecPath = specPath
+			return s.save()
+		}
+	}
+	return errors.New("collection not found")
+}
+
+// SetSavedResponse stores a captured response on a saved request for mock replay.
+func (s *Store) SetSavedResponse(colID, reqID string, resp models.SavedResponse) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		if s.collections[i].ID == colID {
+			for j := range s.collections[i].Requests {
+				if s.collections[i].Requests[j].ID == reqID {
+					s.collections[i].Requests[j].SavedResponse = &resp
+					return s.save()
+				}
+			}
+		}
+	}
+	return errors.New("request not found")
+}
+
+// SetMockOverride updates the mock override settings for a saved request.
+func (s *Store) SetMockOverride(colID, reqID string, o models.MockOverride) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		if s.collections[i].ID == colID {
+			for j := range s.collections[i].Requests {
+				if s.collections[i].Requests[j].ID == reqID {
+					s.collections[i].Requests[j].MockOverride = &o
+					return s.save()
+				}
+			}
+		}
+	}
+	return errors.New("request not found")
+}

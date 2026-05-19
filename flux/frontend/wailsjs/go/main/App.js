@@ -189,3 +189,31 @@ export function UpdateProfile(arg1, arg2) {
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
 }
+
+export function LinkCollectionSpec(arg1, arg2) {
+  return window['go']['main']['App']['LinkCollectionSpec'](arg1, arg2);
+}
+
+export function InvalidateSpec(arg1) {
+  return window['go']['main']['App']['InvalidateSpec'](arg1);
+}
+
+export function StartMockServer(arg1) {
+  return window['go']['main']['App']['StartMockServer'](arg1);
+}
+
+export function StopMockServer() {
+  return window['go']['main']['App']['StopMockServer']();
+}
+
+export function GetMockStatus() {
+  return window['go']['main']['App']['GetMockStatus']();
+}
+
+export function SetRouteOverride(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetRouteOverride'](arg1, arg2, arg3);
+}
+
+export function SaveCapturedResponse(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveCapturedResponse'](arg1, arg2, arg3);
+}

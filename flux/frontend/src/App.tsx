@@ -16,6 +16,7 @@ import { PasteCurlModal } from "./components/modals/PasteCurlModal";
 import { TeamModal } from "./components/modals/TeamModal";
 import { ToastHost } from "./components/shared/ToastHost";
 import { UpdateBanner } from "./components/shared/UpdateBanner";
+import { MockPanel } from "./components/shared/MockPanel";
 import { HomeScreen } from "./screens/HomeScreen";
 import { useSendRequest } from "./hooks/useSendRequest";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -127,6 +128,9 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <UpdateBanner />
         <TabBar />
         <UrlBar onSend={send} />
+        <div className="flex items-center px-3 py-1 border-b border-border relative">
+          <MockPanel />
+        </div>
         <UrlPreview />
         <div className="flex-1 flex min-h-0">
           <RequestPanel width={width} />

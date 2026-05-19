@@ -101,3 +101,17 @@ export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvV
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
+
+export function LinkCollectionSpec(arg1:string,arg2:string):Promise<void>;
+
+export function InvalidateSpec(arg1:string):Promise<void>;
+
+export function StartMockServer(arg1:number):Promise<main.MockStatus>;
+
+export function StopMockServer():Promise<void>;
+
+export function GetMockStatus():Promise<main.MockStatus>;
+
+export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
+
+export function SaveCapturedResponse(arg1:string,arg2:string,arg3:models.SavedResponse):Promise<void>;

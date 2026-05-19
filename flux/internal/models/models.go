@@ -16,6 +16,7 @@ type RequestPayload struct {
 	BodyForm  []Header `json:"bodyForm"`  // for form / urlencoded modes
 	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"
 	AuthValue string   `json:"authValue"` // token or "user:pass"
+	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
 }
 
 type CookieSummary struct {
@@ -27,6 +28,20 @@ type CookieSummary struct {
 	Secure   bool   `json:"secure"`
 }
 
+type ValidationError struct {
+	Layer   string `json:"layer"`
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+type ValidationResult struct {
+	Valid      bool              `json:"valid"`
+	Errors     []ValidationError `json:"errors"`
+	SkipReason string            `json:"skipReason"`
+	Endpoint   string            `json:"endpoint"`
+	Method     string            `json:"method"`
+}
+
 type ResponseResult struct {
 	Status     string            `json:"status"`
 	StatusCode int               `json:"statusCode"`
@@ -36,19 +51,37 @@ type ResponseResult struct {
 	SizeBytes  int64             `json:"sizeBytes"`
 	Error      string            `json:"error"`
 	Cookies    []CookieSummary   `json:"cookies"`
+	Validation *ValidationResult `json:"validation,omitempty"`
+}
+
+type SavedResponse struct {
+	StatusCode  int               `json:"statusCode"`
+	Headers     map[string]string `json:"headers"`
+	Body        string            `json:"body"`
+	CapturedAt  string            `json:"capturedAt"`
+}
+
+type MockOverride struct {
+	Enabled    bool   `json:"enabled"`
+	StatusCode int    `json:"statusCode"`
+	DelayMs    int    `json:"delayMs"`
+	Body       string `json:"body"`
 }
 
 type SavedRequest struct {
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	CollID    string         `json:"collectionId"`
-	Payload   RequestPayload `json:"payload"`
-	CreatedAt string         `json:"createdAt"`
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	CollID       string         `json:"collectionId"`
+	Payload      RequestPayload `json:"payload"`
+	CreatedAt    string         `json:"createdAt"`
+	SavedResponse *SavedResponse `json:"savedResponse,omitempty"`
+	MockOverride  *MockOverride  `json:"mockOverride,omitempty"`
 }
 
 type Collection struct {
 	ID       string         `json:"id"`
 	Name     string         `json:"name"`
+	SpecPath string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
 	Requests []SavedRequest `json:"requests"`
 }
 
