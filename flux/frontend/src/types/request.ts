@@ -38,6 +38,15 @@ export interface RequestState {
   authKeyIn: ApiKeyIn;
 }
 
+export interface CookieSummary {
+  name: string;
+  value: string;
+  domain: string;
+  expires: string;
+  httpOnly: boolean;
+  secure: boolean;
+}
+
 export interface ResponseResult {
   status: string;
   statusCode: number;
@@ -46,4 +55,5 @@ export interface ResponseResult {
   timingMs: number;
   sizeBytes: number;
   error: string;
+  cookies: CookieSummary[];
 }

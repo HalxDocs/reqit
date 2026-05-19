@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type RequestTab = "params" | "headers" | "body" | "auth";
-export type ResponseTab = "body" | "headers";
+export type ResponseTab = "body" | "headers" | "cookies";
 
 type UIStore = {
   requestTab: RequestTab;

@@ -22,6 +22,7 @@ export function useSendRequest() {
         timingMs: 0,
         sizeBytes: 0,
         error: "URL is required",
+        cookies: [],
       });
       return;
     }
@@ -40,6 +41,7 @@ export function useSendRequest() {
         timingMs: 0,
         sizeBytes: 0,
         error: err instanceof Error ? err.message : String(err),
+        cookies: [],
       });
     } finally {
       // Refresh history so the Sidebar list reflects the new entry that the

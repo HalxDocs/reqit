@@ -9,6 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"flux/internal/collections"
+	cookiestore "flux/internal/cookies"
 	"flux/internal/environments"
 	gitpkg "flux/internal/git"
 	"flux/internal/history"
@@ -32,6 +33,7 @@ type App struct {
 	profile      *profile.Store
 	git          *gitpkg.Store
 	locks        *locks.Store
+	cookies      *cookiestore.Store
 	fsWatcher    *watcher.Watcher
 
 	mu       sync.Mutex
@@ -78,6 +80,7 @@ func (a *App) mountWorkspace(dir string) {
 	a.history = history.NewStore(dir)
 	a.environments = environments.NewStore(dir)
 	a.locks = locks.New(dir)
+	a.cookies = cookiestore.New(dir)
 
 	// Stop previous watcher if any.
 	if a.fsWatcher != nil {
@@ -195,7 +198,7 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 	a.inflight = cancel
 	a.mu.Unlock()
 
-	result := requester.Execute(ctx, payload)
+	result := requester.Execute(ctx, payload, a.cookies)
 
 	a.mu.Lock()
 	if a.inflight != nil {
@@ -526,6 +529,27 @@ func (a *App) GetActiveContributors() ([]gitpkg.Contributor, error) {
 		return []gitpkg.Contributor{}, nil
 	}
 	return a.git.GetActiveContributors()
+}
+
+// --- Cookies ---
+
+func (a *App) GetCookies() []cookiestore.CookieInfo {
+	if a.cookies == nil {
+		return []cookiestore.CookieInfo{}
+	}
+	return a.cookies.GetAll()
+}
+
+func (a *App) ClearCookiesForDomain(domain string) {
+	if a.cookies != nil {
+		a.cookies.ClearDomain(domain)
+	}
+}
+
+func (a *App) ClearAllCookies() {
+	if a.cookies != nil {
+		a.cookies.ClearAll()
+	}
 }
 
 var _ = uuid.NewString

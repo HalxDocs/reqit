@@ -18,6 +18,15 @@ type RequestPayload struct {
 	AuthValue string   `json:"authValue"` // token or "user:pass"
 }
 
+type CookieSummary struct {
+	Name     string `json:"name"`
+	Value    string `json:"value"`
+	Domain   string `json:"domain"`
+	Expires  string `json:"expires"`
+	HttpOnly bool   `json:"httpOnly"`
+	Secure   bool   `json:"secure"`
+}
+
 type ResponseResult struct {
 	Status     string            `json:"status"`
 	StatusCode int               `json:"statusCode"`
@@ -26,6 +35,7 @@ type ResponseResult struct {
 	TimingMs   int64             `json:"timingMs"`
 	SizeBytes  int64             `json:"sizeBytes"`
 	Error      string            `json:"error"`
+	Cookies    []CookieSummary   `json:"cookies"`
 }
 
 type SavedRequest struct {

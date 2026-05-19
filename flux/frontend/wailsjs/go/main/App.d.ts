@@ -38,6 +38,12 @@ export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
 export function GetVersion():Promise<string>;
 
+export function GetCookies():Promise<Array<{domain:string,name:string,value:string,expires:string,httpOnly:boolean,secure:boolean}>>;
+
+export function ClearCookiesForDomain(arg1:string):Promise<void>;
+
+export function ClearAllCookies():Promise<void>;
+
 export function GetActiveWorkspace():Promise<workspaces.Info>;
 
 export function GetBranches():Promise<Array<string>>;

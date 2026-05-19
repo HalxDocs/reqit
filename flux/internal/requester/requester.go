@@ -16,22 +16,24 @@ import (
 
 const defaultTimeout = 30 * time.Second
 
-// httpClient is reused across all requests so the underlying transport can
-// pool TCP connections and reuse TLS sessions.
-var httpClient = &http.Client{
-	Transport: &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     90 * time.Second,
-	},
+// sharedTransport is reused for TCP connection pooling.
+var sharedTransport = &http.Transport{
+	MaxIdleConns:        100,
+	MaxIdleConnsPerHost: 10,
+	IdleConnTimeout:     90 * time.Second,
 }
 
-// Execute runs the given RequestPayload under the supplied context (so callers
-// can cancel mid-flight) and returns a fully-populated ResponseResult. Any
-// transport-level failure is returned in the Error field rather than as a Go
-// error so the frontend can display it as a normal result. Cancellation is
-// surfaced as a friendly "Request canceled" string.
-func Execute(ctx context.Context, payload models.RequestPayload) models.ResponseResult {
+// httpClient is the default client with no cookie jar.
+var httpClient = &http.Client{Transport: sharedTransport}
+
+// Execute runs the given RequestPayload under the supplied context. If jar is
+// non-nil, cookies are automatically stored from Set-Cookie responses and
+// replayed on subsequent requests to the same domain.
+func Execute(ctx context.Context, payload models.RequestPayload, jar http.CookieJar) models.ResponseResult {
+	client := httpClient
+	if jar != nil {
+		client = &http.Client{Jar: jar, Transport: sharedTransport}
+	}
 	start := time.Now()
 
 	finalURL, err := buildURL(payload.URL, payload.Params)
@@ -64,7 +66,7 @@ func Execute(ctx context.Context, payload models.RequestPayload) models.Response
 	}
 	applyAuth(req, payload.AuthType, payload.AuthValue)
 
-	resp, err := httpClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return errResult(errors.New("request canceled"), time.Since(start))
@@ -87,6 +89,23 @@ func Execute(ctx context.Context, payload models.RequestPayload) models.Response
 
 	headers := flattenHeaders(resp.Header)
 
+	// Collect cookies set by this response for the frontend to display.
+	var setCookies []models.CookieSummary
+	for _, c := range resp.Cookies() {
+		exp := ""
+		if !c.Expires.IsZero() {
+			exp = c.Expires.Format(time.RFC3339)
+		}
+		setCookies = append(setCookies, models.CookieSummary{
+			Name:     c.Name,
+			Value:    c.Value,
+			Domain:   resp.Request.URL.Hostname(),
+			Expires:  exp,
+			HttpOnly: c.HttpOnly,
+			Secure:   c.Secure,
+		})
+	}
+
 	return models.ResponseResult{
 		Status:     resp.Status,
 		StatusCode: resp.StatusCode,
@@ -94,6 +113,7 @@ func Execute(ctx context.Context, payload models.RequestPayload) models.Response
 		Body:       string(respBody),
 		TimingMs:   timing.Milliseconds(),
 		SizeBytes:  int64(len(respBody)),
+		Cookies:    setCookies,
 		Error:      "",
 	}
 }

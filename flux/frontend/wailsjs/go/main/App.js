@@ -62,6 +62,18 @@ export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
 
+export function GetCookies() {
+  return window['go']['main']['App']['GetCookies']();
+}
+
+export function ClearCookiesForDomain(arg1) {
+  return window['go']['main']['App']['ClearCookiesForDomain'](arg1);
+}
+
+export function ClearAllCookies() {
+  return window['go']['main']['App']['ClearAllCookies']();
+}
+
 export function GetActiveWorkspace() {
   return window['go']['main']['App']['GetActiveWorkspace']();
 }
