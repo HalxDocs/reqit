@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useProfileStore } from "../../stores/useProfileStore";
-
-const VERSION = "0.1.0";
+import { GetVersion } from "../../../wailsjs/go/main/App";
 
 export function SettingsModal() {
   const open = useUIStore((s) => s.settingsModalOpen);
@@ -11,6 +10,8 @@ export function SettingsModal() {
   const profile = useProfileStore((s) => s.profile);
   const appDataDir = useProfileStore((s) => s.appDataDir);
   const update = useProfileStore((s) => s.update);
+  const [version, setVersion] = useState("");
+  useEffect(() => { GetVersion().then(setVersion).catch(() => {}); }, []);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,7 +88,7 @@ export function SettingsModal() {
         </Section>
 
         <Section title="About">
-          <Stat label="Version" value={`reqit ${VERSION}`} />
+          <Stat label="Version" value={version ? `reqit ${version}` : "reqit"} />
           <Stat label="Repository" value="github.com/HalxDocs/reqit" mono />
         </Section>
 

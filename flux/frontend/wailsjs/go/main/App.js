@@ -58,6 +58,10 @@ export function GetActiveContributors() {
   return window['go']['main']['App']['GetActiveContributors']();
 }
 
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
+}
+
 export function GetActiveWorkspace() {
   return window['go']['main']['App']['GetActiveWorkspace']();
 }

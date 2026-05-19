@@ -36,6 +36,8 @@ export function DeleteWorkspace(arg1:string):Promise<void>;
 
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
+export function GetVersion():Promise<string>;
+
 export function GetActiveWorkspace():Promise<workspaces.Info>;
 
 export function GetBranches():Promise<Array<string>>;

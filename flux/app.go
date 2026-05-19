@@ -18,6 +18,7 @@ import (
 	"flux/internal/profile"
 	"flux/internal/requester"
 	"flux/internal/storage"
+	"flux/internal/updater"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
 )
@@ -55,6 +56,19 @@ func (a *App) startup(ctx context.Context) {
 	if dir, err := a.workspaces.ActiveDir(); err == nil && dir != "" {
 		a.mountWorkspace(dir)
 	}
+
+	// Check for updates in the background — emit event if one is found.
+	go func() {
+		info, found, err := updater.Check()
+		if err != nil || !found {
+			return
+		}
+		runtime.EventsEmit(a.ctx, "update:available", info)
+	}()
+}
+
+func (a *App) GetVersion() string {
+	return updater.CurrentVersion
 }
 
 // mountWorkspace reinitializes the scoped stores with a new data directory.

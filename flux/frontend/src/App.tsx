@@ -15,6 +15,7 @@ import { WelcomeModal } from "./components/modals/WelcomeModal";
 import { PasteCurlModal } from "./components/modals/PasteCurlModal";
 import { TeamModal } from "./components/modals/TeamModal";
 import { ToastHost } from "./components/shared/ToastHost";
+import { UpdateBanner } from "./components/shared/UpdateBanner";
 import { HomeScreen } from "./screens/HomeScreen";
 import { useSendRequest } from "./hooks/useSendRequest";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -123,6 +124,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       </div>
       <Sidebar onGoHome={onGoHome} />
       <div className="flex-1 flex flex-col min-w-0">
+        <UpdateBanner />
         <TabBar />
         <UrlBar onSend={send} />
         <UrlPreview />
