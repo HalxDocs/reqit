@@ -1,13 +1,23 @@
 import { useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Copy, Download, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown, ChevronRight, Copy, Download,
+  FileCode2, MoreVertical, Pencil, Plus, Trash2, Unlink,
+} from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { useTabsStore } from "../../stores/useTabsStore";
+import { useWorkspaceStore } from "../../stores/useWorkspaceStore";
 import { decodePayload } from "../../lib/loadPayload";
 import { MethodBadge } from "../shared/MethodBadge";
 import { cn } from "../../lib/cn";
 import { downloadText, safeFilename } from "../../lib/download";
 import { toast } from "../../stores/useToastStore";
+import {
+  GetActiveWorkspace,
+  LinkCollectionSpec,
+  InvalidateSpec,
+  PickFile,
+} from "../../../wailsjs/go/main/App";
 import type { models } from "../../../wailsjs/go/models";
 import type { HttpMethod } from "../../types/request";
 
@@ -18,6 +28,7 @@ export function CollectionsTree() {
   const createCollection = useCollectionStore((s) => s.createCollection);
   const renameCollection = useCollectionStore((s) => s.renameCollection);
   const deleteCollection = useCollectionStore((s) => s.deleteCollection);
+  const loadCollections = useCollectionStore((s) => s.load);
   const deleteRequest = useCollectionStore((s) => s.deleteRequest);
   const renameRequest = useCollectionStore((s) => s.renameRequest);
   const duplicateRequest = useCollectionStore((s) => s.duplicateRequest);
@@ -50,10 +61,7 @@ export function CollectionsTree() {
 
   const handleCreate = async () => {
     const trimmed = newName.trim();
-    if (!trimmed) {
-      setCreating(false);
-      return;
-    }
+    if (!trimmed) { setCreating(false); return; }
     await createCollection(trimmed);
     setNewName("");
     setCreating(false);
@@ -69,6 +77,40 @@ export function CollectionsTree() {
     const trimmed = renameReqValue.trim();
     if (trimmed) await renameRequest(id, trimmed);
     setRenamingReqID(null);
+  };
+
+  const handleLinkSpec = async (collID: string) => {
+    try {
+      const filePath = await PickFile("Select OpenAPI Spec", "*.yaml;*.yml;*.json");
+      if (!filePath) return;
+
+      const ws = await GetActiveWorkspace();
+      const dir = ws.dataDir.replace(/\\/g, "/");
+      const normalized = filePath.replace(/\\/g, "/");
+
+      if (!normalized.startsWith(dir)) {
+        toast.error("Spec file must be inside your workspace folder");
+        return;
+      }
+
+      const relative = normalized.slice(dir.length).replace(/^\//, "");
+      await LinkCollectionSpec(collID, relative);
+      await loadCollections();
+      toast.success("Spec linked — contract validation is now active");
+    } catch (e) {
+      toast.error(String(e));
+    }
+  };
+
+  const handleUnlinkSpec = async (collID: string, specPath: string) => {
+    try {
+      await InvalidateSpec(specPath);
+      await LinkCollectionSpec(collID, "");
+      await loadCollections();
+      toast.success("Spec unlinked");
+    } catch (e) {
+      toast.error(String(e));
+    }
   };
 
   const loadRequest = (req: models.SavedRequest) => {
@@ -93,10 +135,7 @@ export function CollectionsTree() {
             onBlur={handleCreate}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleCreate();
-              if (e.key === "Escape") {
-                setCreating(false);
-                setNewName("");
-              }
+              if (e.key === "Escape") { setCreating(false); setNewName(""); }
             }}
             placeholder="Collection name…"
             className="w-full h-[28px] px-2 bg-surface border border-blue rounded-md text-12 text-text outline-none ring-2 ring-blue"
@@ -114,9 +153,7 @@ export function CollectionsTree() {
       )}
 
       {collections.length === 0 && !creating && (
-        <div className="px-3 py-2 text-11 text-subtext italic">
-          No collections yet.
-        </div>
+        <div className="px-3 py-2 text-11 text-subtext italic">No collections yet.</div>
       )}
 
       {filter && visible.length === 0 && collections.length > 0 && (
@@ -125,6 +162,7 @@ export function CollectionsTree() {
 
       {visible.map(({ coll: c, requests }) => {
         const isOpen = expanded[c.id] !== false || !!filter;
+        const hasSpec = !!c.spec;
         return (
           <div key={c.id} className="flex flex-col">
             <div className="group px-3 py-1.5 flex items-center gap-1 hover:bg-cardHover transition-colors">
@@ -136,6 +174,7 @@ export function CollectionsTree() {
               >
                 {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
               </button>
+
               {renamingID === c.id ? (
                 <input
                   autoFocus
@@ -157,27 +196,37 @@ export function CollectionsTree() {
                   {c.name}
                 </button>
               )}
+
+              {/* Spec indicator badge */}
+              {hasSpec && (
+                <span
+                  title={`Contract spec: ${c.spec}`}
+                  className="flex items-center gap-0.5 text-10 text-blue/70 font-mono shrink-0"
+                >
+                  <FileCode2 size={10} />
+                </span>
+              )}
+
               <span className="text-11 text-subtext font-mono mr-1">
                 {c.requests.length}
               </span>
               <CollectionMenu
+                hasSpec={hasSpec}
+                specPath={c.spec ?? ""}
                 onRename={() => {
                   setRenameValue(c.name);
                   setRenamingID(c.id);
                 }}
                 onExport={() => {
                   const payload = JSON.stringify(
-                    {
-                      schema: "flux/collection/v1",
-                      exportedAt: new Date().toISOString(),
-                      collection: c,
-                    },
-                    null,
-                    2,
+                    { schema: "flux/collection/v1", exportedAt: new Date().toISOString(), collection: c },
+                    null, 2,
                   );
                   downloadText(payload, `${safeFilename(c.name)}.flux.json`);
                   toast.success(`Exported "${c.name}"`);
                 }}
+                onLinkSpec={() => handleLinkSpec(c.id)}
+                onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                 onDelete={() => {
                   if (confirm(`Delete collection "${c.name}" and all its requests?`)) {
                     deleteCollection(c.id).then(() => toast.success(`Deleted "${c.name}"`));
@@ -223,27 +272,25 @@ export function CollectionsTree() {
                   ) : (
                     <span className="flex-1 text-12 text-text truncate">{req.name}</span>
                   )}
+                  {/* Saved-response dot */}
+                  {req.savedResponse && (
+                    <span
+                      title="Saved for mock replay"
+                      className="w-1.5 h-1.5 rounded-full bg-success shrink-0"
+                    />
+                  )}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRenameReqValue(req.name);
-                      setRenamingReqID(req.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setRenameReqValue(req.name); setRenamingReqID(req.id); }}
                     className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all"
-                    aria-label="Rename request"
                     title="Rename"
                   >
                     <Pencil size={12} />
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      duplicateRequest(req.id).catch(() => undefined);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); duplicateRequest(req.id).catch(() => undefined); }}
                     className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all"
-                    aria-label="Duplicate request"
                     title="Duplicate"
                   >
                     <Copy size={12} />
@@ -252,12 +299,9 @@ export function CollectionsTree() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete request "${req.name}"?`)) {
-                        deleteRequest(req.id);
-                      }
+                      if (confirm(`Delete request "${req.name}"?`)) deleteRequest(req.id);
                     }}
                     className="opacity-0 group-hover:opacity-100 text-subtext hover:text-danger transition-all"
-                    aria-label="Delete request"
                     title="Delete"
                   >
                     <Trash2 size={12} />
@@ -272,12 +316,20 @@ export function CollectionsTree() {
 }
 
 function CollectionMenu({
+  hasSpec,
+  specPath,
   onRename,
   onExport,
+  onLinkSpec,
+  onUnlinkSpec,
   onDelete,
 }: {
+  hasSpec: boolean;
+  specPath: string;
   onRename: () => void;
   onExport: () => void;
+  onLinkSpec: () => void;
+  onUnlinkSpec: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -294,39 +346,63 @@ function CollectionMenu({
       </button>
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[140px]">
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[170px]">
             <button
               type="button"
-              onClick={() => {
-                setOpen(false);
-                onRename();
-              }}
+              onClick={() => { setOpen(false); onRename(); }}
               className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover"
             >
               Rename
             </button>
             <button
               type="button"
-              onClick={() => {
-                setOpen(false);
-                onExport();
-              }}
+              onClick={() => { setOpen(false); onExport(); }}
               className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
             >
               <Download size={12} />
-              <span>Export as JSON</span>
+              Export as JSON
             </button>
+
+            <div className="border-t border-border my-1" />
+
+            {hasSpec ? (
+              <>
+                <div className="px-3 py-1 text-10 text-subtext/60 font-mono truncate max-w-[170px]" title={specPath}>
+                  {specPath}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); onLinkSpec(); }}
+                  className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+                >
+                  <FileCode2 size={12} className="text-blue" />
+                  Change Spec
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); onUnlinkSpec(); }}
+                  className="w-full px-3 py-1.5 text-left text-12 text-subtext hover:bg-cardHover flex items-center gap-2"
+                >
+                  <Unlink size={12} />
+                  Unlink Spec
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onLinkSpec(); }}
+                className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+              >
+                <FileCode2 size={12} className="text-blue" />
+                Link OpenAPI Spec
+              </button>
+            )}
+
             <div className="border-t border-border my-1" />
             <button
               type="button"
-              onClick={() => {
-                setOpen(false);
-                onDelete();
-              }}
+              onClick={() => { setOpen(false); onDelete(); }}
               className="w-full px-3 py-1.5 text-left text-12 text-danger hover:bg-cardHover"
             >
               Delete
