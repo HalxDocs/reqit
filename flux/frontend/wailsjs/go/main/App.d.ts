@@ -3,6 +3,7 @@
 import {models} from '../models';
 import {workspaces} from '../models';
 import {git} from '../models';
+import {cookies} from '../models';
 import {environments} from '../models';
 import {main} from '../models';
 import {locks} from '../models';
@@ -13,6 +14,10 @@ export function AddRequestToCollection(arg1:string,arg2:string,arg3:models.Reque
 export function AppDataDir():Promise<string>;
 
 export function CancelRequest():Promise<void>;
+
+export function ClearAllCookies():Promise<void>;
+
+export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
@@ -36,19 +41,13 @@ export function DeleteWorkspace(arg1:string):Promise<void>;
 
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
-export function GetVersion():Promise<string>;
-
-export function GetCookies():Promise<Array<{domain:string,name:string,value:string,expires:string,httpOnly:boolean,secure:boolean}>>;
-
-export function ClearCookiesForDomain(arg1:string):Promise<void>;
-
-export function ClearAllCookies():Promise<void>;
-
 export function GetActiveWorkspace():Promise<workspaces.Info>;
 
 export function GetBranches():Promise<Array<string>>;
 
 export function GetCollections():Promise<Array<models.Collection>>;
+
+export function GetCookies():Promise<Array<cookies.CookieInfo>>;
 
 export function GetEnvironments():Promise<environments.Snapshot>;
 
@@ -60,7 +59,11 @@ export function GetHistory():Promise<Array<models.HistoryEntry>>;
 
 export function GetLocks():Promise<Record<string, locks.LockInfo>>;
 
+export function GetMockStatus():Promise<main.MockStatus>;
+
 export function GetProfile():Promise<profile.Profile>;
+
+export function GetVersion():Promise<string>;
 
 export function GetWorkspaces():Promise<Array<workspaces.Info>>;
 
@@ -69,6 +72,10 @@ export function GitPull():Promise<void>;
 export function ImportPostman(arg1:string,arg2:string):Promise<number>;
 
 export function InitGit(arg1:string,arg2:string):Promise<void>;
+
+export function InvalidateSpec(arg1:string):Promise<void>;
+
+export function LinkCollectionSpec(arg1:string,arg2:string):Promise<void>;
 
 export function LockCollection(arg1:string):Promise<void>;
 
@@ -86,9 +93,19 @@ export function RenameCollection(arg1:string,arg2:string):Promise<void>;
 
 export function RenameWorkspace(arg1:string,arg2:string):Promise<void>;
 
+export function SaveCapturedResponse(arg1:string,arg2:string,arg3:models.SavedResponse):Promise<void>;
+
+export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
+
 export function SendRequest(arg1:models.RequestPayload):Promise<models.ResponseResult>;
 
 export function SetActiveEnvironment(arg1:string):Promise<void>;
+
+export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
+
+export function StartMockServer(arg1:number):Promise<main.MockStatus>;
+
+export function StopMockServer():Promise<void>;
 
 export function SwitchBranch(arg1:string):Promise<void>;
 
@@ -101,17 +118,3 @@ export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvV
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
-
-export function LinkCollectionSpec(arg1:string,arg2:string):Promise<void>;
-
-export function InvalidateSpec(arg1:string):Promise<void>;
-
-export function StartMockServer(arg1:number):Promise<main.MockStatus>;
-
-export function StopMockServer():Promise<void>;
-
-export function GetMockStatus():Promise<main.MockStatus>;
-
-export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
-
-export function SaveCapturedResponse(arg1:string,arg2:string,arg3:models.SavedResponse):Promise<void>;

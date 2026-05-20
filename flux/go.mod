@@ -4,6 +4,7 @@ go 1.25
 
 require (
 	github.com/fsnotify/fsnotify v1.10.1
+	github.com/getkin/kin-openapi v0.138.0
 	github.com/go-git/go-git/v5 v5.18.0
 	github.com/google/uuid v1.6.0
 	github.com/wailsapp/wails/v2 v2.12.0
@@ -20,7 +21,6 @@ require (
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/getkin/kin-openapi v0.138.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.8.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect

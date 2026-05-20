@@ -14,6 +14,14 @@ export function CancelRequest() {
   return window['go']['main']['App']['CancelRequest']();
 }
 
+export function ClearAllCookies() {
+  return window['go']['main']['App']['ClearAllCookies']();
+}
+
+export function ClearCookiesForDomain(arg1) {
+  return window['go']['main']['App']['ClearCookiesForDomain'](arg1);
+}
+
 export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
@@ -58,22 +66,6 @@ export function GetActiveContributors() {
   return window['go']['main']['App']['GetActiveContributors']();
 }
 
-export function GetVersion() {
-  return window['go']['main']['App']['GetVersion']();
-}
-
-export function GetCookies() {
-  return window['go']['main']['App']['GetCookies']();
-}
-
-export function ClearCookiesForDomain(arg1) {
-  return window['go']['main']['App']['ClearCookiesForDomain'](arg1);
-}
-
-export function ClearAllCookies() {
-  return window['go']['main']['App']['ClearAllCookies']();
-}
-
 export function GetActiveWorkspace() {
   return window['go']['main']['App']['GetActiveWorkspace']();
 }
@@ -84,6 +76,10 @@ export function GetBranches() {
 
 export function GetCollections() {
   return window['go']['main']['App']['GetCollections']();
+}
+
+export function GetCookies() {
+  return window['go']['main']['App']['GetCookies']();
 }
 
 export function GetEnvironments() {
@@ -106,8 +102,16 @@ export function GetLocks() {
   return window['go']['main']['App']['GetLocks']();
 }
 
+export function GetMockStatus() {
+  return window['go']['main']['App']['GetMockStatus']();
+}
+
 export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
+}
+
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
 }
 
 export function GetWorkspaces() {
@@ -124,6 +128,14 @@ export function ImportPostman(arg1, arg2) {
 
 export function InitGit(arg1, arg2) {
   return window['go']['main']['App']['InitGit'](arg1, arg2);
+}
+
+export function InvalidateSpec(arg1) {
+  return window['go']['main']['App']['InvalidateSpec'](arg1);
+}
+
+export function LinkCollectionSpec(arg1, arg2) {
+  return window['go']['main']['App']['LinkCollectionSpec'](arg1, arg2);
 }
 
 export function LockCollection(arg1) {
@@ -158,12 +170,32 @@ export function RenameWorkspace(arg1, arg2) {
   return window['go']['main']['App']['RenameWorkspace'](arg1, arg2);
 }
 
+export function SaveCapturedResponse(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveCapturedResponse'](arg1, arg2, arg3);
+}
+
+export function SaveResponseToRequest(arg1, arg2) {
+  return window['go']['main']['App']['SaveResponseToRequest'](arg1, arg2);
+}
+
 export function SendRequest(arg1) {
   return window['go']['main']['App']['SendRequest'](arg1);
 }
 
 export function SetActiveEnvironment(arg1) {
   return window['go']['main']['App']['SetActiveEnvironment'](arg1);
+}
+
+export function SetRouteOverride(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetRouteOverride'](arg1, arg2, arg3);
+}
+
+export function StartMockServer(arg1) {
+  return window['go']['main']['App']['StartMockServer'](arg1);
+}
+
+export function StopMockServer() {
+  return window['go']['main']['App']['StopMockServer']();
 }
 
 export function SwitchBranch(arg1) {
@@ -188,32 +220,4 @@ export function UpdateProfile(arg1, arg2) {
 
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
-}
-
-export function LinkCollectionSpec(arg1, arg2) {
-  return window['go']['main']['App']['LinkCollectionSpec'](arg1, arg2);
-}
-
-export function InvalidateSpec(arg1) {
-  return window['go']['main']['App']['InvalidateSpec'](arg1);
-}
-
-export function StartMockServer(arg1) {
-  return window['go']['main']['App']['StartMockServer'](arg1);
-}
-
-export function StopMockServer() {
-  return window['go']['main']['App']['StopMockServer']();
-}
-
-export function GetMockStatus() {
-  return window['go']['main']['App']['GetMockStatus']();
-}
-
-export function SetRouteOverride(arg1, arg2, arg3) {
-  return window['go']['main']['App']['SetRouteOverride'](arg1, arg2, arg3);
-}
-
-export function SaveCapturedResponse(arg1, arg2, arg3) {
-  return window['go']['main']['App']['SaveCapturedResponse'](arg1, arg2, arg3);
 }
