@@ -1,6 +1,6 @@
 # reqit Documentation
 
-> A local-first API client built for developers and teams. Fast, private, and sync-ready — no cloud account needed.
+> A local-first API client built for speed. No cloud account, no telemetry, no lock-in.
 
 ---
 
@@ -11,11 +11,18 @@
 3. [Workspaces](#workspaces)
 4. [Collections](#collections)
 5. [Environments & Variables](#environments--variables)
-6. [History](#history)
-7. [Team Collaboration](#team-collaboration)
-8. [Keyboard Shortcuts](#keyboard-shortcuts)
-9. [Importing from Postman](#importing-from-postman)
-10. [FAQ](#faq)
+6. [Authentication](#authentication)
+7. [Response Viewer](#response-viewer)
+8. [Cookie Jar](#cookie-jar)
+9. [Contract Testing](#contract-testing)
+10. [Local Mock Server](#local-mock-server)
+11. [Code Generation](#code-generation)
+12. [Import](#import)
+13. [Git & Collaboration](#git--collaboration)
+14. [Request History](#request-history)
+15. [Auto-updates](#auto-updates)
+16. [Keyboard Shortcuts](#keyboard-shortcuts)
+17. [FAQ](#faq)
 
 ---
 
@@ -25,23 +32,22 @@
 
 | Platform | File |
 |----------|------|
-| Windows  | `reqit-windows-amd64.exe` |
-| macOS    | `reqit-macos-universal.zip` |
-| Linux    | `reqit-linux-amd64` |
+| Windows  | [reqit-windows-amd64.exe](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-windows-amd64.exe) |
+| macOS    | [reqit-macos-universal.zip](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-macos-universal.zip) |
+| Linux    | [reqit-linux-amd64](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64) |
 
-Download the latest release from [GitHub Releases](https://github.com/HalxDocs/reqit/releases/latest).
+Latest release: [github.com/HalxDocs/reqit/releases/latest](https://github.com/HalxDocs/reqit/releases/latest)
 
 ### macOS — First Launch
 
-macOS will show a Gatekeeper warning because the app is not notarized. To bypass:
+macOS blocks unsigned apps. To open reqit:
 
-1. Right-click the app → **Open**
-2. Click **Open** in the dialog
-3. The app will run normally from now on
+1. Right-click `reqit.app` → **Open** → **Open** in the dialog
+2. Or: **System Settings → Privacy & Security → Open Anyway**
 
 Or via Terminal:
 ```bash
-xattr -cr /Applications/reqit.app
+xattr -cr /path/to/reqit.app
 ```
 
 ### Linux — Make Executable
@@ -55,266 +61,420 @@ chmod +x reqit-linux-amd64
 
 ## Your First Request
 
-1. Open reqit — you land on the **Home** screen
-2. Create or open a workspace
-3. Click **New Tab** (or press `Ctrl/Cmd + T`)
-4. Type your URL in the address bar (e.g. `https://jsonplaceholder.typicode.com/posts/1`)
-5. Select the HTTP method (GET, POST, PUT, DELETE, PATCH)
-6. Press **Send** or hit `Enter`
+1. Launch reqit — you land on the **Home** screen
+2. Click **Open workspaces** → create or open a workspace
+3. Press `Ctrl + T` to open a new request tab
+4. Type a URL in the address bar (e.g. `https://jsonplaceholder.typicode.com/posts/1`)
+5. Press `Ctrl + Enter` to send
 
-The response appears in the right panel — body, status code, headers, and timing.
-
-### Adding Headers
-
-Click the **Headers** tab in the request panel and add key-value pairs. Common ones:
-- `Content-Type: application/json`
-- `Authorization: Bearer <token>`
-
-### Adding a Body
-
-Switch to the **Body** tab, select `JSON`, and paste your payload:
-```json
-{
-  "title": "My post",
-  "body": "Hello world",
-  "userId": 1
-}
-```
-
-### Authentication
-
-Use the **Auth** tab to add:
-- **Bearer Token** — paste your JWT or API key
-- **Basic Auth** — username + password (base64 encoded automatically)
-
-Or add the `Authorization` header manually in the Headers tab.
+The response appears in the right panel: body, status code, response time, size, headers, and cookies.
 
 ---
 
 ## Workspaces
 
-A workspace is just a **folder on your machine**. Everything inside it — collections, environments, history — lives as plain JSON files. No database, no proprietary format.
+A workspace is a **folder on your machine**. Everything inside — collections, environments, history, cookie jar — lives as plain JSON files. No database, no proprietary format.
 
 ### Create a Workspace
 
-1. Home screen → **New Workspace**
-2. Give it a name and optional description
-3. Pick a color to distinguish it in the workspace switcher
+Home screen → **New workspace** → enter a name, pick an accent colour, add an optional description.
 
-### Open an Existing Folder as a Workspace
+### Open an Existing Folder
 
-If you have a folder syncing via Dropbox/OneDrive/Google Drive:
-
-1. Home screen → **Open Folder**
-2. Pick the folder
-3. reqit detects existing data and loads it immediately
+Home screen → **Open folder** → pick any directory. reqit detects existing data in `.flux/` and loads it. Use this to open a workspace you already have synced via Dropbox, OneDrive, or Google Drive.
 
 ### Switch Workspaces
 
-Click the workspace name at the top of the sidebar → **Switch** to another workspace. Each workspace has its own collections, environments, and history.
+Click the reqit logo top-left to return to the Home screen, then open another workspace. Each workspace remembers its open tabs, active environment, and cookie jar independently.
+
+### Cross-Device Sync (No Account)
+
+Drop any workspace folder into Dropbox, OneDrive, or Google Drive. On another machine: Home → Open folder → pick the synced folder. All collections, environments, and history load immediately. No sign-in required.
 
 ### Data Location
 
-| Platform | Path |
-|----------|------|
-| Windows  | `%APPDATA%\reqit\workspaces\<id>\` |
-| macOS    | `~/Library/Application Support/reqit/workspaces/<id>/` |
-| Linux    | `~/.config/reqit/workspaces/<id>/` |
+| Platform | Default path |
+|----------|-------------|
+| Windows  | `%APPDATA%\reqit\workspaces\` |
+| macOS    | `~/Library/Application Support/reqit/workspaces/` |
+| Linux    | `~/.config/reqit/workspaces/` |
 
 ---
 
 ## Collections
 
-Collections group saved requests into folders. Good for organizing requests by project, service, or flow.
+Collections group saved requests. Each collection is a JSON file in your workspace folder.
+
+### Create a Collection
+
+Sidebar → **+ New collection** → type a name → Enter.
 
 ### Save a Request
 
-After sending a request:
-1. Click **Save** (or `Ctrl/Cmd + S`)
-2. Pick an existing collection or create a new one
-3. Give the request a name
+With a request open: `Ctrl + S` → pick or create a collection → give it a name → Save.
 
-### Run a Saved Request
+### Open a Saved Request
 
-Click any request in the **Collections** panel in the sidebar. It loads into a new tab.
+Click any request in the sidebar Collections tree. It opens in a new tab with all settings restored.
 
-### Edit a Saved Request
+### Rename
 
-Load the request, make your changes, then Save again — it updates in place.
+Hover a collection or request → click the pencil icon → type the new name → Enter. Press Escape to cancel.
+
+### Duplicate a Request
+
+Hover a request row → click the duplicate (copy) icon. A copy appears in the same collection ready to rename.
+
+### Delete
+
+Hover → click the trash icon → confirm. Deletions are permanent.
 
 ### Export a Collection
 
-Right-click a collection → **Export**. Saves as a `.flux.json` file you can share or back up.
+Collection ⋮ menu → **Export as JSON** → saves a `.flux.json` file you can share or import into another workspace.
 
-### Import from Postman
+### Search & Filter
 
-See [Importing from Postman](#importing-from-postman).
+Type in the sidebar search bar above the collections tree. Results update live as you type — collections with no matching requests are hidden automatically.
 
 ---
 
 ## Environments & Variables
 
-Environments let you switch between different configurations (dev, staging, prod) without editing requests.
+Environments let you switch between configs (Dev / Staging / Prod) without editing individual requests.
 
 ### Create an Environment
 
-1. Click the **Env** dropdown at the top of the sidebar → **+ New Environment**
-2. Name it (e.g. "Production")
-3. Add variables as key-value pairs
+Sidebar env dropdown → **+ New** → name it → add key-value pairs (e.g. `base_url = https://api.prod.com`).
 
-### Use a Variable
+### Use Variables
 
-In any URL, header, or body field, reference variables with double curly braces:
+Reference any variable with `{{VARIABLE_NAME}}` in URLs, headers, query params, or the body:
 
 ```
 https://{{base_url}}/api/users
-Authorization: Bearer {{api_token}}
+Authorization: Bearer {{access_token}}
 ```
+
+Variables are resolved before the request is sent. The URL preview bar shows the expanded result.
 
 ### Switch Environments
 
-Click the Env dropdown → select a different environment. All `{{variables}}` resolve to the new values instantly.
+Click the env dropdown in the sidebar → select a different environment. All `{{variables}}` in every open tab resolve to the new values instantly.
 
-### Environment Scope
+### Variable Scope
 
-Variables are per-workspace and stored locally. They are **never** sent to any external service.
-
----
-
-## History
-
-reqit automatically records every request you send.
-
-- View history in the **History** section of the sidebar
-- Click any entry to reload it into a new tab
-- History is limited to the last 200 entries per workspace
-- Clear history: **Settings** → **Storage** → **Clear History**
+Variables are per-workspace. They never leave your machine.
 
 ---
 
-## Team Collaboration
+## Authentication
 
-reqit uses **Git** to sync workspaces between teammates. No separate server needed — just a shared private GitHub (or GitLab/Bitbucket) repository.
+The **Auth** tab on each request provides shortcuts for common auth schemes. The value is injected as a header before every send.
 
-> Everything syncs through Git: collections, environments, and history are all plain JSON files committed to the repo.
+### Bearer Token
+
+Adds `Authorization: Bearer <token>`. Use an environment variable for the token value:
+
+```
+Token: {{access_token}}
+```
+
+### Basic Auth
+
+Enter a username and password. reqit Base64-encodes them and sends `Authorization: Basic ...` automatically. Supports env variable references in both fields.
+
+### API Key
+
+Specify the header name (e.g. `X-API-Key`) and value. reqit adds that header on every send. Supports env variables.
+
+---
+
+## Response Viewer
+
+### Status Bar
+
+Displays: HTTP status code (colour-coded — green 2xx, yellow 3xx, red 4xx/5xx), response time in ms, and payload size.
+
+### Body Tab
+
+Syntax-highlighted JSON, XML, and HTML with pretty-printing. Switch to **Raw** for plain text. Use the copy button to copy the entire body to clipboard.
+
+### Headers Tab
+
+All response headers in a table. Useful for inspecting `cache-control`, `content-type`, `set-cookie`, rate-limit headers, and CORS headers.
+
+### Cookies Tab
+
+Every cookie set by the response: name, value, domain, path, expiry, `HttpOnly`, and `Secure` flags.
+
+### Contract Badge
+
+If the request's collection has a linked OpenAPI spec, a badge appears in the status bar after each response — see [Contract Testing](#contract-testing).
+
+### Save for Mock
+
+Click **Save for Mock** (bookmark icon in the response toolbar) to capture the current response. The [Local Mock Server](#local-mock-server) will replay it for this route.
+
+---
+
+## Cookie Jar
+
+reqit maintains a persistent cookie jar per workspace that behaves like a real browser.
 
 ### How It Works
 
+1. You send a request to `https://api.example.com/login`
+2. The response includes `Set-Cookie: session=abc123; HttpOnly`
+3. reqit stores the cookie in the workspace cookie jar automatically
+4. On the next request to any matching domain, reqit sends `Cookie: session=abc123`
+5. Authenticated endpoints work without you manually copying tokens
+
+### Persistence
+
+The cookie jar is saved as a JSON file in your workspace folder and survives app restarts.
+
+### Viewing Cookies
+
+Open the **Cookies** tab in the response panel to see exactly which cookies are stored and their attributes.
+
+### Clearing Cookies
+
+Delete the `cookies.json` file in your workspace folder, or manage it from the Settings modal.
+
+---
+
+## Contract Testing
+
+Validate that your API responses match their OpenAPI specification automatically on every request.
+
+### Link a Spec to a Collection
+
+1. In the sidebar, hover the collection name → click ⋮
+2. Select **Link OpenAPI Spec**
+3. Pick a `.yaml`, `.yml`, or `.json` spec file from inside your workspace folder
+4. A blue spec indicator (`⌗`) appears next to the collection name
+
+> The spec file must be inside your workspace folder so it stays with the collection in git.
+
+### Validation
+
+After every request in that collection, reqit:
+
+- Checks the **status code** against the spec's defined responses for that operation
+- Validates the **response body** JSON schema against the spec's content schema
+- Checks **response headers** against the spec's header definitions
+
+### Contract Badge
+
+A badge appears in the response status bar:
+
+- **✓ Contract OK** (green) — response matches the spec
+- **✗ N violations** (red) — one or more mismatches found
+
+Click the badge to expand a violations panel showing each error:
+
+| Column | Description |
+|--------|-------------|
+| Layer  | `status`, `body`, or `header` |
+| Field  | JSON path of the failing field (e.g. `$.user.email`) |
+| Message | Human-readable error |
+
+### Skipped Validation
+
+If the endpoint isn't defined in the spec (e.g. a request to an undocumented route), the badge shows `Skipped` in grey. No false positives.
+
+### Change or Unlink a Spec
+
+Collection ⋮ menu → **Change Spec** (swap to a different file) or **Unlink Spec** (remove contract validation entirely).
+
+---
+
+## Local Mock Server
+
+Run a real HTTP server inside reqit that replays your saved responses — no backend needed.
+
+### Start the Server
+
+Click **Mock Server** in the toolbar (between the tab bar and URL bar) → **Start**. The server starts on `http://localhost:4321`.
+
+### Register Routes (Save for Mock)
+
+1. Send a real request to your API
+2. In the response panel, click **Save for Mock** (bookmark icon)
+3. reqit registers the request's method + path as a mock route
+
+The mock server will now handle that route and return the captured body, status code, and headers.
+
+### Path Parameter Matching
+
+Routes support `:param` placeholders:
+
+| Saved route | Matches |
+|-------------|---------|
+| `GET /users/:id` | `GET /users/1`, `GET /users/abc` |
+| `POST /orders/:id/items` | `POST /orders/42/items` |
+
+### Delay Simulation
+
+Use **Set Override** (from the mock panel route list) to add a delay in milliseconds. Useful for testing loading spinners and timeout handling.
+
+### Status Override
+
+Override the HTTP status code returned for a route without changing the saved body. Force a `500` to test error states, or `429` to test rate-limit handling.
+
+### CORS
+
+The mock server includes permissive CORS headers (`Access-Control-Allow-Origin: *`). Any browser-based frontend can call `localhost:4321` directly without a proxy.
+
+### X-Mock-Server Header
+
+Every mock response includes `X-Mock-Server: reqit` so you can distinguish mock responses from real ones in your frontend.
+
+### Stopping
+
+Click **Stop** in the mock panel or close the reqit app.
+
+---
+
+## Code Generation
+
+Open a request tab → click **`</>` Code** → pick a format:
+
+### cURL
+
+```bash
+curl -X POST https://api.example.com/users \
+  -H "Authorization: Bearer abc123" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Alice"}'
 ```
-Teammate A commits & pushes  →  GitHub repo  →  Teammate B pulls on open
+
+### JavaScript (fetch)
+
+```js
+const res = await fetch("https://api.example.com/users", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer abc123",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ name: "Alice" }),
+});
+const data = await res.json();
 ```
 
-- reqit auto-pulls every time you open a workspace
-- You commit and push manually via the **Team** panel
-- Active contributors (anyone who committed in the last 24h) appear at the top of the Team panel
+### Python (requests)
 
-### Step 1 — Create a GitHub Repository
+```python
+import requests
 
-1. Go to [github.com](https://github.com) → **New repository**
-2. Set visibility to **Private** (recommended)
-3. Do **not** initialize with a README (reqit will do the first commit)
-4. Copy the HTTPS clone URL: `https://github.com/your-org/your-repo.git`
+res = requests.post(
+    "https://api.example.com/users",
+    headers={"Authorization": "Bearer abc123"},
+    json={"name": "Alice"},
+)
+data = res.json()
+```
 
-### Step 2 — Get a Personal Access Token (PAT)
+Variables in the generated code are resolved using the active environment values.
 
-GitHub requires a PAT for HTTPS push/pull access.
+---
 
-1. Go to [github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)
-2. Click **Generate new token (classic)**
-3. Set expiry (90 days recommended)
-4. Check the **`repo`** scope (full repo access)
-5. Click **Generate token** and copy it immediately (you won't see it again)
+## Import
 
-### Step 3 — Connect reqit to the Repository
+### Postman Collection (v2.1)
 
-1. Open reqit with your workspace active
-2. Click **Team** in the sidebar (below Collections & History)
-3. Paste your **Remote URL** and **PAT**
-4. Click **Connect**
+1. In Postman: right-click collection → **Export** → **Collection v2.1** → save the `.json` file
+2. In reqit: sidebar → **Import Postman** button (or `Ctrl + Shift + I`) → pick the file
+3. All requests, folders, headers, auth, and bodies are imported into a new collection
 
-reqit will:
-- Initialize a git repo in your workspace folder (if not already one)
-- Set the remote origin to your URL
-- Store your PAT securely in the OS keychain (Windows Credential Manager / macOS Keychain / Linux secret-service)
-- Pull any existing data from the remote
+> Postman environment variables are not automatically imported. Add them manually in the Env panel.
 
-### Step 4 — Invite a Teammate
+### Paste cURL
 
-Share these two things with your teammate:
+Toolbar → **Paste cURL** (or look for the cURL import option) → paste a `curl` command. reqit parses:
 
-1. **The remote URL** — use the "Copy remote URL" button in the Team panel
-2. **Instructions** — they need to generate their own PAT and connect on their machine
+- `-X` / `--request` → HTTP method
+- `-H` / `--header` → headers
+- `-d` / `--data` / `--data-raw` → body
+- `--user` / `-u` → Basic auth
+- URL → URL bar
 
-Your teammate:
-1. Opens reqit → creates or opens a workspace
-2. Clicks **Team** → pastes the same remote URL + their own PAT → **Connect**
-3. reqit pulls all your existing collections and environments automatically
+The request opens in a new tab ready to send.
 
-### Committing & Pushing
+---
 
-When you've made changes (new requests, updated environments):
+## Git & Collaboration
 
-1. Click **Team** in the sidebar
-2. Write a commit message describing what changed (e.g. "Add auth endpoints")
-3. Click **Commit & Push**
+### Why Git?
 
-Your teammate will see the changes next time they open the workspace (auto-pull) or click **Pull** in the Team panel.
+reqit stores everything as plain JSON. This means you get version control for free — track when endpoints changed, who added what, and roll back any mistake.
 
-### Branches
+### Commit Your Workspace
 
-The Team panel includes a branch switcher. Use branches to work on a feature without affecting the main workspace:
+```bash
+cd /path/to/your/workspace
+git init
+git remote add origin https://github.com/your-org/api-workspace.git
+git add .
+git commit -m "initial collections"
+git push -u origin main
+```
 
-1. Click the branch name → type a new branch name → press Enter
-2. Work on your changes
-3. Commit & Push to that branch
-4. Merge on GitHub when ready
+### Git Panel
 
-### Seeing Who's Active
+The **Git** tab in the sidebar shows the current git status of the workspace folder — modified files, staged changes, and current branch. Useful for a quick check before committing.
 
-The **Active today** section at the top of the Team panel shows everyone who committed in the last 24 hours — their name, commit count, and when they last pushed. This works offline by reading the git log.
+### Team Workflow
 
-### PAT Security
+1. Each developer clones the workspace repo and opens it in reqit via **Open folder**
+2. When someone adds or changes a request, they commit and push the JSON changes
+3. Others pull and reqit picks up the changes immediately
+4. API changes are reviewed in pull requests alongside the code that implements them
 
-- PATs are stored in the **OS keychain**, never in plain files
-- Each teammate uses their own PAT
-- If a PAT is revoked or expired, reconnect via **Team → Edit** → enter the new PAT
+### Branching
 
-### Conflict Resolution
+Branch your workspace just like code:
 
-If two teammates edit the same file and both push, git will detect a conflict on pull. Currently reqit surfaces the raw git error. In this case:
-1. Open a terminal in the workspace folder
-2. Run `git status` to see conflicted files
-3. Resolve manually, then commit via the Team panel
+```bash
+git checkout -b feature/new-auth-endpoints
+```
+
+Work on your requests, commit, push the branch, open a PR. The diff is human-readable JSON.
+
+---
+
+## Request History
+
+Every request you send is automatically logged in the sidebar **History** tab.
+
+- Click any entry to open it in a new tab with the full request restored (method, URL, headers, body)
+- History is stored per workspace
+- Entries are ordered newest-first
+
+---
+
+## Auto-updates
+
+reqit checks for new releases silently on startup by calling the GitHub releases API.
+
+- If a newer version is found, a **dismissible banner** appears at the top of the app with the new version number and a download link
+- Click the link to open the releases page in your browser
+- Click **×** to dismiss — reqit never auto-downloads or force-updates
+- The check fails silently when offline; no error is shown
 
 ---
 
 ## Keyboard Shortcuts
 
-| Action | Windows / Linux | macOS |
-|--------|----------------|-------|
-| Send request | `Enter` (in URL bar) | `Enter` |
-| New tab | `Ctrl + T` | `Cmd + T` |
-| Close tab | `Ctrl + W` | `Cmd + W` |
-| Focus URL bar | `Ctrl + L` | `Cmd + L` |
-| Save request | `Ctrl + S` | `Cmd + S` |
-| Next tab | `Ctrl + Tab` | `Cmd + Tab` |
-| Previous tab | `Ctrl + Shift + Tab` | `Cmd + Shift + Tab` |
-
----
-
-## Importing from Postman
-
-Export your collection from Postman:
-1. In Postman → right-click collection → **Export** → **Collection v2.1**
-2. Save the `.json` file
-
-Import into reqit:
-1. In the sidebar → **Collections** → click the **Import** icon (↓)
-2. Select the target collection (or create one first)
-3. Pick the exported `.json` file
-4. All requests are imported with their URLs, methods, headers, and bodies
-
-> Note: Postman environment variables are not automatically imported. Add them manually via the **Env** panel.
+| Action | Shortcut |
+|--------|----------|
+| Send request | `Ctrl + Enter` |
+| Save request | `Ctrl + S` |
+| New tab | `Ctrl + T` |
+| Close tab | `Ctrl + W` |
+| Focus URL bar | `Ctrl + E` |
 
 ---
 
@@ -324,23 +484,29 @@ Import into reqit:
 Yes. reqit is fully open source under the MIT license. Always free, no premium tier.
 
 **Does reqit send any data to the internet?**
-Only when you explicitly send an API request. Your collections, environments, and history never leave your machine (unless you connect a Git remote — and then they go only to your own repo).
+Only when you explicitly send an API request. Your collections, environments, history, and cookie jar never leave your machine. The only outbound connections reqit makes on its own are: (1) a startup version check to the GitHub API, and (2) the live GitHub star count displayed on the home screen — both are read-only and contain no personal data.
 
-**Can I use GitLab or Bitbucket instead of GitHub?**
-Yes. Any HTTPS git remote that supports PAT authentication works. The setup steps are the same — just use your GitLab/Bitbucket PAT.
+**Can I use reqit offline?**
+Yes. All core features work without an internet connection. The version check and star count will silently fail — everything else is unaffected.
 
-**What happens if I lose my PAT?**
-Generate a new one on GitHub and reconnect via **Team → Edit remote**. Your data is safe — it's all in the workspace folder.
-
-**Can I use reqit without Git?**
-Absolutely. Git sync is optional. If you don't click **Team**, nothing git-related runs.
-
-**How do I back up my data without Git?**
-Copy your workspace folder. Everything is plain JSON — `collections.json`, `environments.json`, `history.json`. Zip it and store it anywhere.
+**How do I back up my data?**
+Copy your workspace folder. Everything is plain JSON — zip it and store it anywhere.
 
 **The app says "no active workspace" — what do I do?**
-Go to **Home** (click the logo at the top of the sidebar) and create or open a workspace.
+Click the reqit logo at the top of the sidebar to return to the Home screen, then create or open a workspace.
+
+**Can I use reqit with HTTPS and self-signed certificates?**
+Yes — reqit's HTTP engine does not verify TLS certificates by default for local/dev servers. Disable this in Settings if needed for security.
+
+**What OpenAPI versions does contract testing support?**
+OpenAPI 3.0 and 3.1 (`.yaml`, `.yml`, `.json`). Swagger 2.0 is not supported.
+
+**Can I run multiple mock servers?**
+Currently reqit runs one mock server at a time on port 4321. Stop the current server to change the port (port selection coming in a future release).
+
+**How do I report a bug or request a feature?**
+Open an issue at [github.com/HalxDocs/reqit/issues](https://github.com/HalxDocs/reqit/issues).
 
 ---
 
-*reqit is built with [Wails](https://wails.io) (Go + React). Source: [github.com/HalxDocs/reqit](https://github.com/HalxDocs/reqit)*
+*reqit v0.3.1 · Built with [Wails](https://wails.io) (Go + React) · [github.com/HalxDocs/reqit](https://github.com/HalxDocs/reqit)*

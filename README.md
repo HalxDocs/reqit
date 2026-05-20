@@ -1,44 +1,126 @@
-# reqit
+<p align="center">
+  <img src="flux/frontend/src/assets/images/reqitloo.jpeg" alt="reqit" height="60" />
+</p>
 
-A fast, local-first API client built for developers who want speed without the bloat. No Electron. No cloud account. No telemetry. Your collections live as plain JSON files you own.
+<h3 align="center">reqit</h3>
+<p align="center">A fast, local-first API client. No Electron. No cloud account. No telemetry.</p>
 
-[![Release](https://img.shields.io/github/v/release/HalxDocs/reqit?style=flat-square)](https://github.com/HalxDocs/reqit/releases/latest)
-[![Stars](https://img.shields.io/github/stars/HalxDocs/reqit?style=flat-square)](https://github.com/HalxDocs/reqit/stargazers)
-[![License](https://img.shields.io/github/license/HalxDocs/reqit?style=flat-square)](LICENSE)
+<p align="center">
+  <a href="https://github.com/HalxDocs/reqit/releases/latest"><img src="https://img.shields.io/github/v/release/HalxDocs/reqit?style=flat-square&label=latest" alt="Latest release" /></a>
+  <a href="https://github.com/HalxDocs/reqit/releases"><img src="https://img.shields.io/github/downloads/HalxDocs/reqit/total?style=flat-square" alt="Downloads" /></a>
+  <a href="https://github.com/HalxDocs/reqit/stargazers"><img src="https://img.shields.io/github/stars/HalxDocs/reqit?style=flat-square" alt="Stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/HalxDocs/reqit?style=flat-square" alt="License" /></a>
+</p>
 
 ---
 
 ## Download
 
-| Platform | Link |
+| Platform | File |
 |----------|------|
 | Windows  | [reqit-windows-amd64.exe](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-windows-amd64.exe) |
 | macOS    | [reqit-macos-universal.zip](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-macos-universal.zip) |
 | Linux    | [reqit-linux-amd64](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64) |
 
-Or visit the [releases page](https://github.com/HalxDocs/reqit/releases).
+Or browse all releases on the [releases page](https://github.com/HalxDocs/reqit/releases).
+
+> **macOS:** right-click the app → Open → Open, or run `xattr -cr reqit.app` in Terminal to bypass Gatekeeper.
+
+---
+
+## What is reqit?
+
+reqit is a native desktop API client for developers. It replaces tools like Postman or Insomnia with something that is smaller, faster, and completely offline. Your collections live as plain JSON files in folders you own — commit them, sync them, or share them however you like.
 
 ---
 
 ## Features
 
-- **HTTP client** — GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS with full params, headers, and body support
-- **Collections** — save and organise requests; plain JSON files on your machine
-- **Workspaces** — group collections by project; each workspace is a folder you own
-- **Environments** — `{{VAR}}` interpolation across URLs, headers, and body fields
-- **Auth** — Bearer token, Basic, and API Key support
-- **Response viewer** — syntax-highlighted JSON, XML, and HTML pretty-print; in-body search
-- **Code generation** — copy as cURL, JavaScript `fetch`, or Python `requests`
-- **Postman import** — drop in a v2.1 collection instantly
-- **cURL import** — paste any curl command and it opens as a request tab
-- **History** — every request is automatically logged
-- **Team collaboration** — Git-based sync; see active teammates, commit & push, invite via shared remote URL
-- **Cross-device sync** — drop a workspace folder into Dropbox, Drive, or OneDrive; no account needed
+### Core
+
+- **HTTP client** — GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS with full query params, headers, and body support (JSON / form-urlencoded / multipart / raw)
+- **Multi-tab interface** — open multiple requests simultaneously without losing state
+- **URL preview** — see the fully expanded URL with variables resolved before you send
+- **Response viewer** — syntax-highlighted JSON, XML, and HTML; status code, response time, and payload size at a glance
+- **Copy response** — one-click copy of the full response body
+
+### Collections & Workspaces
+
+- **Workspaces** — each workspace is a plain folder on disk; create as many as you need, one per project
+- **Collections** — group requests into named collections; rename, duplicate, delete, and reorder inline
+- **Save requests** — `Ctrl+S` saves the current request with name and collection
+- **Export collection** — export any collection as a portable `.flux.json` JSON file
+- **Search & filter** — live-filter collections and requests by name from the sidebar
+
+### Environments & Auth
+
+- **Environments** — named variable sets (Dev / Staging / Prod); `{{VAR}}` interpolation in URLs, headers, body, and query params
+- **Env switcher** — swap active environment in one click; all open tabs update instantly
+- **Bearer token** — auto-injects `Authorization: Bearer <token>`; supports env variables
+- **Basic auth** — username + password auto-encoded as Base64
+- **API key** — attach a key to any header name you choose
+
+### Cookie Jar
+
+- **Auto-capture** — every `Set-Cookie` header is stored in a per-workspace cookie jar automatically
+- **Auto-replay** — cookies are sent on subsequent requests to matching domains, like a real browser
+- **Persistent** — the cookie jar survives app restarts; stored as a JSON file in your workspace
+- **Inspect** — view all cookies in the response Cookies tab
+
+### Contract Testing
+
+- **Link an OpenAPI spec** — attach a `.yaml` / `.yml` / `.json` spec to any collection from the ⋮ menu
+- **Auto-validation** — every response is validated against the spec: status code, response body JSON schema, and headers
+- **Contract badge** — green ✓ `Contract OK` or red ✗ `N violations` badge in the status bar
+- **Violation details** — click the badge to expand a panel with each violation's layer, field path, and message
+- **Change / unlink** — swap or remove the linked spec at any time from the collection menu
+
+### Local Mock Server
+
+- **One-click start** — launch a real HTTP server on `localhost:4321` from the Mock panel in the toolbar
+- **Save for Mock** — click `Save for Mock` after any live response to capture it; the mock server replays it for that route
+- **Path parameter matching** — `/users/:id` matches `/users/123`, `/users/456`, etc.
+- **Delay simulation** — add artificial latency (ms) to any route to test loading states and timeouts
+- **Status override** — force any status code on a route without changing the saved body
+- **CORS enabled** — permissive CORS headers let any browser frontend call `localhost:4321` directly
+
+### Import & Code Generation
+
+- **Postman import** — drop in a Postman v2.1 collection JSON; all requests, headers, auth, and bodies are imported instantly
+- **cURL import** — paste any `curl` command and reqit parses it into a fully configured request tab
+- **Code generation** — export the current request as `curl`, JavaScript `fetch`, or Python `requests`
+
+### Git & Collaboration
+
+- **Plain JSON format** — all collections are human-readable JSON; diff them in any git client
+- **Commit alongside code** — workspace folders can live inside your project repo; track API changes with code changes
+- **Git panel** — view the current git status of your workspace directory from inside reqit
+- **Branch per feature** — teams can branch workspaces like code and review API changes via pull requests
+
+### Developer Experience
+
+- **Request history** — every request is auto-logged; click any entry to replay it in a new tab
+- **Cross-device sync** — drop a workspace folder into Dropbox, OneDrive, or Google Drive; open it on any machine with "Open folder" — no account needed
+- **Auto-updates** — reqit checks for new releases on startup and shows a dismissible banner if one is available
 - **Keyboard shortcuts** — built for keyboard-first use
 
-## Data storage
+---
 
-Everything is local. No data leaves your machine.
+## Keyboard Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Send request | `Ctrl + Enter` |
+| Save request | `Ctrl + S` |
+| New tab | `Ctrl + T` |
+| Close tab | `Ctrl + W` |
+| Focus URL bar | `Ctrl + E` |
+
+---
+
+## Data Storage
+
+Everything is local. No data leaves your machine unless you explicitly send an API request or push to a git remote you control.
 
 | Platform | Path |
 |----------|------|
@@ -48,80 +130,56 @@ Everything is local. No data leaves your machine.
 
 ---
 
-## macOS — Gatekeeper Warning
-
-macOS blocks apps that aren't notarized. reqit is safe — this warning appears because the app isn't signed with an Apple Developer certificate yet.
-
-**To open it anyway:**
-
-1. Right-click `reqit.app` → **Open** → **Open** in the dialog
-2. Or: **System Settings → Privacy & Security → Open Anyway**
-
-Or via Terminal:
-```bash
-xattr -cr /path/to/reqit.app
-```
-
----
-
-## Built with
+## Built With
 
 | Layer | Technology |
 |-------|-----------|
 | Desktop framework | [Wails v2](https://wails.io) |
-| Backend | [Go 1.22](https://go.dev) |
+| Backend | [Go](https://go.dev) (latest stable) |
+| HTTP engine | Go `net/http` with custom persistent cookie jar |
+| OpenAPI validation | [kin-openapi](https://github.com/getkin/kin-openapi) |
 | Frontend | [React 18](https://react.dev) + [TypeScript](https://www.typescriptlang.org) |
 | Build tool | [Vite](https://vitejs.dev) |
 | Styling | [Tailwind CSS v3](https://tailwindcss.com) |
-| Icons | [HugeIcons](https://hugeicons.com) |
-| JSON editor | [CodeMirror 6](https://codemirror.net) |
 | State management | [Zustand](https://zustand-demo.pmnd.rs) |
-| Git sync | [go-git](https://github.com/go-git/go-git) |
-| Fonts | [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) + [Inter](https://rsms.me/inter/) |
+| JSON editor | [CodeMirror 6](https://codemirror.net) |
+| Icons | [HugeIcons](https://hugeicons.com) |
 
 ---
 
-## Running from source
+## Running from Source
 
-**Prerequisites:** Go 1.22+, Node 20+, [Wails CLI v2](https://wails.io/docs/gettingstarted/installation)
+**Prerequisites:** Go (latest stable), Node 20+, [Wails CLI v2](https://wails.io/docs/gettingstarted/installation)
 
 ```bash
 # Install Wails CLI
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-# Clone and run in dev mode
+# Clone
 git clone https://github.com/HalxDocs/reqit.git
 cd reqit/flux
+
+# Dev mode (live reload)
 wails dev
-```
 
-**Production build:**
-
-```bash
-cd reqit/flux
+# Production build
 wails build
 ```
 
-**Web landing page only:**
-
-```bash
-cd reqit/flux/frontend
-npm install --include=dev
-npm run build:web
-```
+The binary lands in `flux/build/bin/`.
 
 ---
 
 ## Documentation
 
-See [DOCS.md](DOCS.md) for the full user guide including team collaboration setup.
+See [DOCS.md](DOCS.md) for the full user guide.
 
 ---
 
 ## Contributing
 
-Issues and PRs are welcome. Keep requests focused — one feature or fix per PR.
+Issues and pull requests are welcome. Keep PRs focused — one feature or fix per PR.
 
 ---
 
-Built by [HalxDocs](https://halxdocs.com)
+Built by [HalxDocs](https://halxdocs.com) · MIT License

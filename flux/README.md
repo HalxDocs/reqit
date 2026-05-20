@@ -1,80 +1,123 @@
-# Flux
+# reqit — Go + Wails source
 
-A fast, local-first API client for developers. Built with [Wails](https://wails.io) (Go + React), no Electron, no cloud account required.
+This is the source tree for **reqit**, a local-first desktop API client built with [Wails v2](https://wails.io) (Go backend + React/TypeScript frontend).
 
----
-
-## Features
-
-- **HTTP requests** — GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS with params, headers, body (JSON, form-encoded, raw)
-- **Auth tab** — Bearer token and Basic auth with one click
-- **Multiple tabs** — open and switch between requests without losing state
-- **Collections** — save and organise requests; rename, delete, export as JSON
-- **History** — every request you send is automatically logged
-- **Environments** — named variable sets; use `{{VAR_NAME}}` in any URL, header, or body field
-- **Response viewer** — status + timing + size, JSON viewer with syntax highlighting and in-body search (Ctrl+F / ⌘F), XML/HTML pretty-print
-- **Code generation** — copy the current request as cURL, JavaScript `fetch`, or Python `requests`
-- **Postman import** — drop in a Postman v2.1 collection JSON and it lands in your chosen collection
-- **Paste cURL** — paste any `curl` command and it opens as a new tab with headers, body, and auth pre-filled
-- **Export collection** — download any collection as a `flux/collection/v1` JSON file (git-friendly)
+See the [root README](../README.md) for the full feature list and download links.
 
 ---
 
-## Getting started
+## Project structure
 
-### Prerequisites
+```
+flux/
+├── app.go                    # Wails App — all backend methods exposed to frontend
+├── main.go                   # Entry point
+├── wails.json                # Wails project config (name, build settings)
+├── go.mod / go.sum
+├── build/
+│   ├── appicon.png           # App icon (1024×1024, used by all platforms)
+│   └── windows/
+│       └── icon.ico          # Windows taskbar / exe icon (multi-size)
+├── frontend/
+│   ├── src/
+│   │   ├── screens/          # Full-page views (HomeScreen, etc.)
+│   │   ├── components/       # UI components (RequestPanel, ResponsePane, Sidebar…)
+│   │   ├── stores/           # Zustand state stores
+│   │   ├── hooks/            # React hooks
+│   │   ├── lib/              # Utilities (codegen, curl parser, download…)
+│   │   └── types/            # TypeScript types
+│   └── wailsjs/              # Auto-generated Wails JS bindings (do not edit)
+└── internal/
+    ├── collections/          # CRUD for collections and saved requests
+    ├── contract/             # OpenAPI spec loading and response validation
+    ├── cookies/              # Persistent per-workspace cookie jar
+    ├── environments/         # Environment variable sets
+    ├── history/              # Request history log
+    ├── mock/                 # Local mock HTTP server
+    ├── models/               # Shared Go structs (request, response, collection…)
+    ├── requester/            # HTTP request execution engine
+    ├── updater/              # GitHub release version checker
+    └── workspaces/           # Workspace metadata management
+```
 
-- [Go 1.22+](https://go.dev/dl/)
-- [Node.js 18+](https://nodejs.org/)
-- [Wails CLI v2](https://wails.io/docs/gettingstarted/installation)
+---
+
+## Prerequisites
+
+- Go (latest stable)
+- Node.js 20+
+- Wails CLI v2
 
 ```bash
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ```
 
-### Dev mode
+---
+
+## Dev mode
 
 ```bash
 cd flux
 wails dev
 ```
 
-> **Note:** The app only works as a native Wails window. The browser URL that Wails prints (`http://localhost:34115`) will show the UI but all backend calls (sending requests, reading files, persistence) require the desktop runtime and will fail in the browser.
+Hot-reload is active for both Go and the frontend. The app runs as a native window — backend calls (file I/O, HTTP engine, mock server) require the Wails runtime and will not work in a plain browser tab.
 
-### Build
+---
+
+## Production build
 
 ```bash
 cd flux
 wails build
 ```
 
-The binary lands in `flux/build/bin/`. No installer needed — it's a single executable.
+Output: `flux/build/bin/reqit` (or `reqit.exe` on Windows). Single binary, no installer needed.
+
+### Platform targets
+
+```bash
+# Windows
+wails build -platform windows/amd64 -o reqit
+
+# macOS (universal — Intel + Apple Silicon)
+wails build -platform darwin/universal -o reqit
+
+# Linux
+wails build -platform linux/amd64 -o reqit
+```
+
+---
+
+## CI / Release
+
+Releases are built by GitHub Actions on `v*.*.*` tag pushes. See [`.github/workflows/release.yml`](../.github/workflows/release.yml). Three jobs run in parallel (Windows, macOS, Linux) and upload artifacts to a GitHub Release automatically.
+
+```bash
+# Trigger a release
+git tag v0.x.y
+git push origin v0.x.y
+```
+
+---
+
+## Adding a backend method
+
+1. Add a method on `*App` in `app.go` (or a new file)
+2. Run `wails generate module` or restart `wails dev` — the JS bindings in `frontend/wailsjs/` are regenerated automatically
+3. Import and call from the frontend via `import { YourMethod } from "../../wailsjs/go/main/App"`
 
 ---
 
 ## Data storage
 
-All data (collections, history, environments, profile) is stored as JSON files in your OS user-config directory:
-
 | Platform | Path |
 |----------|------|
-| Windows  | `%APPDATA%\flux\` |
-| macOS    | `~/Library/Application Support/flux/` |
-| Linux    | `~/.config/flux/` |
+| Windows  | `%APPDATA%\reqit\` |
+| macOS    | `~/Library/Application Support/reqit/` |
+| Linux    | `~/.config/reqit/` |
 
-Nothing leaves your machine.
-
----
-
-## Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Desktop shell | [Wails v2](https://wails.io) |
-| Backend | Go 1.22+, `net/http` stdlib |
-| Frontend | React 18 + TypeScript + Tailwind v3 |
-| State | [Zustand](https://github.com/pmndrs/zustand) |
-| Editor | [CodeMirror 6](https://codemirror.net/) |
+Each workspace is a subdirectory containing JSON files for collections, environments, history, cookies, and git metadata.
 
 ---
 
