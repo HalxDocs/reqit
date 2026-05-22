@@ -17,7 +17,9 @@ import {
   StarIcon,
   PlusSignIcon,
   Download02Icon,
+  Book01Icon,
 } from "@hugeicons/core-free-icons";
+import { DOC_SECTIONS } from "../lib/docs";
 import reqitLogo from "../assets/images/reqitloo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -156,6 +158,17 @@ export function WebApp() {
               <span className="font-mono text-11 min-w-[24px] text-center">
                 {stars === null ? "—" : fmtStars(stars)}
               </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("docs");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+            >
+              <HugeiconsIcon icon={Book01Icon} size={13} color="currentColor" />
+              <span>Docs</span>
             </button>
             <button
               type="button"
@@ -304,6 +317,80 @@ export function WebApp() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Documentation */}
+        <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon icon={Book01Icon} size={18} color="#3B82F6" strokeWidth={1.5} />
+              <h2
+                className="text-22 sm:text-26 font-bold text-text tracking-tight"
+                style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+              >
+                Documentation
+              </h2>
+            </div>
+            <p className="text-13 text-subtext max-w-[480px] leading-relaxed">
+              Every feature in reqit — what it does, how it works, and why it's there.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {DOC_SECTIONS.map((s) => (
+              <a
+                key={s.id}
+                href={`#docs-${s.id}`}
+                className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-blue/40 hover:text-text text-subtext transition-all"
+              >
+                {s.title}
+              </a>
+            ))}
+          </div>
+
+          {DOC_SECTIONS.map((section) => (
+            <section key={section.id} id={`docs-${section.id}`} className="flex flex-col gap-5 scroll-mt-20">
+              <div className="flex items-center gap-3 pb-3 border-b border-border">
+                <div>
+                  <div
+                    className="text-15 font-bold text-text leading-tight"
+                    style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+                  >
+                    {section.title}
+                  </div>
+                  <div className="text-11 text-subtext mt-0.5">{section.subtitle}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {section.features.map((f) => (
+                  <div
+                    key={f.name}
+                    className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-blue/20 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-[6px] h-[6px] rounded-full bg-blue shrink-0" />
+                      <span className="text-12 font-semibold text-text">{f.name}</span>
+                    </div>
+                    <p className="text-11 text-subtext leading-relaxed pl-[14px]">{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <footer className="flex flex-col items-center gap-2 pt-4 pb-4 border-t border-border">
+            <p className="text-11 text-subtext text-center">
+              Missing something?{" "}
+              <button
+                type="button"
+                onClick={() => open("https://github.com/HalxDocs/reqit/issues")}
+                className="text-blue hover:underline"
+              >
+                Open an issue on GitHub
+              </button>
+            </p>
+          </footer>
         </section>
 
         {/* Download CTA */}
