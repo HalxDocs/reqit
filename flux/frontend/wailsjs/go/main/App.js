@@ -14,6 +14,10 @@ export function CancelRequest() {
   return window['go']['main']['App']['CancelRequest']();
 }
 
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function ClearAllCookies() {
   return window['go']['main']['App']['ClearAllCookies']();
 }

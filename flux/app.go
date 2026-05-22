@@ -77,6 +77,14 @@ func (a *App) startup(ctx context.Context) {
 	}()
 }
 
+func (a *App) CheckForUpdates() *updater.UpdateInfo {
+	info, found, err := updater.Check()
+	if err != nil || !found {
+		return nil
+	}
+	return &info
+}
+
 func (a *App) GetVersion() string {
 	return updater.CurrentVersion
 }

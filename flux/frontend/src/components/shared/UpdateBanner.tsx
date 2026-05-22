@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Download, X, ArrowUpCircle } from "lucide-react";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
+import { CheckForUpdates } from "../../../wailsjs/go/main/App";
 
 interface UpdateInfo {
   version: string;
@@ -14,6 +15,12 @@ export function UpdateBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    CheckForUpdates().then((info) => {
+      if (info) {
+        setUpdate(info);
+        setDismissed(false);
+      }
+    });
     const off = EventsOn("update:available", (info: UpdateInfo) => {
       setUpdate(info);
       setDismissed(false);

@@ -143,6 +143,22 @@ export namespace main {
 	        this.routes = source["routes"];
 	    }
 	}
+	export class UpdateInfo {
+	    version: string;
+	    downloadUrl: string;
+	    releaseUrl: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.version = source["version"];
+	        this.downloadUrl = source["downloadUrl"];
+	        this.releaseUrl = source["releaseUrl"];
+	    }
+	}
 
 }
 

@@ -15,6 +15,8 @@ export function AppDataDir():Promise<string>;
 
 export function CancelRequest():Promise<void>;
 
+export function CheckForUpdates():Promise<main.UpdateInfo|null>;
+
 export function ClearAllCookies():Promise<void>;
 
 export function ClearCookiesForDomain(arg1:string):Promise<void>;

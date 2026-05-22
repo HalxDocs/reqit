@@ -38,6 +38,10 @@ func Check() (UpdateInfo, bool, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return UpdateInfo{}, false, fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	}
+
 	var rel Release
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
 		return UpdateInfo{}, false, err
