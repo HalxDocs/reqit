@@ -4,26 +4,45 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"flux/internal/models"
 	"flux/internal/requester"
 )
 
+const maxConcurrent = 5
+
 func RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion, jar http.CookieJar) models.CollectionRunResult {
 	start := time.Now()
-	results := make([]models.RequestRunResult, 0, len(reqs))
+	results := make([]models.RequestRunResult, len(reqs))
+	var mu sync.Mutex
 	passed, failed := 0, 0
 
-	for _, r := range reqs {
-		res := runSingle(r, assertions[r.ID], jar)
-		if res.Passed {
-			passed++
-		} else {
-			failed++
-		}
-		results = append(results, res)
+	sem := make(chan struct{}, maxConcurrent)
+	var wg sync.WaitGroup
+
+	for i, r := range reqs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(idx int, req models.RunnerRequest) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			res := runSingle(req, assertions[req.ID], jar)
+
+			mu.Lock()
+			results[idx] = res
+			if res.Passed {
+				passed++
+			} else {
+				failed++
+			}
+			mu.Unlock()
+		}(i, r)
 	}
+
+	wg.Wait()
 
 	return models.CollectionRunResult{
 		Results:    results,
