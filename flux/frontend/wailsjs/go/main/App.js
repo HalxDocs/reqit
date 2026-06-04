@@ -162,10 +162,6 @@ export function ReadFileText(arg1) {
   return window['go']['main']['App']['ReadFileText'](arg1);
 }
 
-export function RunCollection(arg1, arg2) {
-  return window['go']['main']['App']['RunCollection'](arg1, arg2);
-}
-
 export function RelocateWorkspace(arg1, arg2) {
   return window['go']['main']['App']['RelocateWorkspace'](arg1, arg2);
 }
@@ -176,6 +172,10 @@ export function RenameCollection(arg1, arg2) {
 
 export function RenameWorkspace(arg1, arg2) {
   return window['go']['main']['App']['RenameWorkspace'](arg1, arg2);
+}
+
+export function RunCollection(arg1, arg2) {
+  return window['go']['main']['App']['RunCollection'](arg1, arg2);
 }
 
 export function SaveCapturedResponse(arg1, arg2, arg3) {

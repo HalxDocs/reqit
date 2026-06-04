@@ -4,6 +4,12 @@ import { RunCollection } from "../../../wailsjs/go/main/App";
 import { useEnvStore } from "../../stores/useEnvStore";
 import type { models } from "../../../wailsjs/go/models";
 
+interface AssertionShape {
+  statusCode?: number;
+  maxTimingMs?: number;
+  bodyContains?: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -15,7 +21,7 @@ const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g;
 export function RunnerModal({ open, onClose, collection }: Props) {
   const resolve = useEnvStore((s) => s.resolve);
 
-  const [assertions, setAssertions] = useState<Record<string, models.Assertion>>({});
+  const [assertions, setAssertions] = useState<Record<string, AssertionShape>>({});
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<models.CollectionRunResult | null>(null);
 
@@ -47,11 +53,11 @@ export function RunnerModal({ open, onClose, collection }: Props) {
     }
   };
 
-  const updateAssertion = (reqID: string, partial: Partial<models.Assertion>) => {
-    setAssertions((prev) => ({
-      ...prev,
-      [reqID]: { ...(prev[reqID] || {}), ...partial },
-    }));
+  const updateAssertion = (reqID: string, partial: Partial<AssertionShape>) => {
+    setAssertions((prev) => {
+      const cur = prev[reqID] || { statusCode: 0, maxTimingMs: 0, bodyContains: "" };
+      return { ...prev, [reqID]: { ...cur, ...partial } };
+    });
   };
 
   return (
@@ -106,8 +112,8 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                       <input
                         type="number"
                         placeholder="200"
-                        value={a.statusCode ?? ""}
-                        onChange={(e) => updateAssertion(req.id, { statusCode: e.target.value ? parseInt(e.target.value) : undefined })}
+                        value={a.statusCode || ""}
+                        onChange={(e) => updateAssertion(req.id, { statusCode: e.target.value ? parseInt(e.target.value) : 0 })}
                         className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
                       />
                     </div>
@@ -116,8 +122,8 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                       <input
                         type="number"
                         placeholder="3000"
-                        value={a.maxTimingMs ?? ""}
-                        onChange={(e) => updateAssertion(req.id, { maxTimingMs: e.target.value ? parseInt(e.target.value) : undefined })}
+                        value={a.maxTimingMs || ""}
+                        onChange={(e) => updateAssertion(req.id, { maxTimingMs: e.target.value ? parseInt(e.target.value) : 0 })}
                         className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
                       />
                     </div>
@@ -126,8 +132,8 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                       <input
                         type="text"
                         placeholder='"ok"'
-                        value={a.bodyContains ?? ""}
-                        onChange={(e) => updateAssertion(req.id, { bodyContains: e.target.value || undefined })}
+                        value={a.bodyContains}
+                        onChange={(e) => updateAssertion(req.id, { bodyContains: e.target.value })}
                         className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
                       />
                     </div>

@@ -107,8 +107,8 @@ type HistoryEntry struct {
 // --- Collection Runner ---
 
 type Assertion struct {
-	StatusCode   *int   `json:"statusCode,omitempty"`
-	MaxTimingMs  *int64 `json:"maxTimingMs,omitempty"`
+	StatusCode   int    `json:"statusCode,omitempty"`
+	MaxTimingMs  int64  `json:"maxTimingMs,omitempty"`
 	BodyContains string `json:"bodyContains,omitempty"`
 }
 

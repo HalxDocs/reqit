@@ -57,12 +57,12 @@ func runSingle(req models.RunnerRequest, assertion models.Assertion, jar http.Co
 func evaluateAssertions(resp models.ResponseResult, a models.Assertion) []string {
 	var errs []string
 
-	if a.StatusCode != nil && resp.StatusCode != *a.StatusCode {
-		errs = append(errs, "expected status "+itoa(*a.StatusCode)+", got "+itoa(resp.StatusCode))
+	if a.StatusCode > 0 && resp.StatusCode != a.StatusCode {
+		errs = append(errs, "expected status "+itoa(a.StatusCode)+", got "+itoa(resp.StatusCode))
 	}
 
-	if a.MaxTimingMs != nil && resp.TimingMs > *a.MaxTimingMs {
-		errs = append(errs, "response too slow: "+itoa64(resp.TimingMs)+"ms (max "+itoa64(*a.MaxTimingMs)+"ms)")
+	if a.MaxTimingMs > 0 && resp.TimingMs > a.MaxTimingMs {
+		errs = append(errs, "response too slow: "+itoa64(resp.TimingMs)+"ms (max "+itoa64(a.MaxTimingMs)+"ms)")
 	}
 
 	if a.BodyContains != "" && !strings.Contains(resp.Body, a.BodyContains) {
