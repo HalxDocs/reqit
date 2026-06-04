@@ -36,6 +36,7 @@ export function CollectionsTree() {
   const setLoadedRequestID = useUIStore((s) => s.setLoadedRequestID);
   const loadedRequestID = useUIStore((s) => s.loadedRequestID);
   const filter = useUIStore((s) => s.sidebarFilter);
+  const openRunner = useUIStore((s) => s.openRunner);
 
   const [renamingID, setRenamingID] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -227,6 +228,7 @@ export function CollectionsTree() {
                 }}
                 onLinkSpec={() => handleLinkSpec(c.id)}
                 onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
+                onRun={c.requests.length > 0 ? () => openRunner(c.id) : undefined}
                 onDelete={() => {
                   if (confirm(`Delete collection "${c.name}" and all its requests?`)) {
                     deleteCollection(c.id).then(() => toast.success(`Deleted "${c.name}"`));
@@ -323,6 +325,7 @@ function CollectionMenu({
   onLinkSpec,
   onUnlinkSpec,
   onDelete,
+  onRun,
 }: {
   hasSpec: boolean;
   specPath: string;
@@ -331,6 +334,7 @@ function CollectionMenu({
   onLinkSpec: () => void;
   onUnlinkSpec: () => void;
   onDelete: () => void;
+  onRun?: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -363,6 +367,16 @@ function CollectionMenu({
               <Download size={12} />
               Export as JSON
             </button>
+
+            {onRun && (
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onRun(); }}
+                className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+              >
+                Run
+              </button>
+            )}
 
             <div className="border-t border-border my-1" />
 

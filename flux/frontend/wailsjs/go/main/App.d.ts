@@ -89,6 +89,8 @@ export function PickFolder(arg1:string):Promise<string>;
 
 export function ReadFileText(arg1:string):Promise<string>;
 
+export function RunCollection(arg1:Array<models.RunnerRequest>, arg2:Record<string, models.Assertion>):Promise<models.CollectionRunResult>;
+
 export function RelocateWorkspace(arg1:string,arg2:string):Promise<void>;
 
 export function RenameCollection(arg1:string,arg2:string):Promise<void>;

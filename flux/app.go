@@ -25,6 +25,7 @@ import (
 	"flux/internal/profile"
 	"flux/internal/requester"
 	"flux/internal/storage"
+	"flux/internal/runner"
 	"flux/internal/updater"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
@@ -87,6 +88,12 @@ func (a *App) CheckForUpdates() *updater.UpdateInfo {
 
 func (a *App) GetVersion() string {
 	return updater.CurrentVersion
+}
+
+// RunCollection executes all requests in a resolved payload set with the given
+// assertions and returns pass/fail results for each request.
+func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
+	return runner.RunCollection(reqs, assertions, a.cookies)
 }
 
 // mountWorkspace reinitializes the scoped stores with a new data directory.

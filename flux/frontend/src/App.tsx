@@ -14,6 +14,7 @@ import { SettingsModal } from "./components/modals/SettingsModal";
 import { WelcomeModal } from "./components/modals/WelcomeModal";
 import { PasteCurlModal } from "./components/modals/PasteCurlModal";
 import { TeamModal } from "./components/modals/TeamModal";
+import { RunnerModal } from "./components/modals/RunnerModal";
 import { ToastHost } from "./components/shared/ToastHost";
 import { UpdateBanner } from "./components/shared/UpdateBanner";
 import { MockPanel } from "./components/shared/MockPanel";
@@ -25,6 +26,7 @@ import { useTabSync } from "./hooks/useTabSync";
 import { useCollectionStore } from "./stores/useCollectionStore";
 import { useHistoryStore } from "./stores/useHistoryStore";
 import { useEnvStore } from "./stores/useEnvStore";
+import { useUIStore } from "./stores/useUIStore";
 import { useTabsStore } from "./stores/useTabsStore";
 import { useProfileStore } from "./stores/useProfileStore";
 import { useWorkspaceStore } from "./stores/useWorkspaceStore";
@@ -94,6 +96,10 @@ export default function App() {
 function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const send = useSendRequest();
   const { width, onResize } = useResizablePanel();
+  const runnerCollID = useUIStore((s) => s.runnerCollID);
+  const closeRunner = useUIStore((s) => s.closeRunner);
+  const collections = useCollectionStore((s) => s.collections);
+  const runnerColl = runnerCollID ? collections.find((c) => c.id === runnerCollID) : null;
 
   useKeyboardShortcuts(send);
   useTabSync();
@@ -146,6 +152,13 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <WelcomeModal />
       <PasteCurlModal />
       <TeamModal />
+      {runnerColl && (
+        <RunnerModal
+          open={true}
+          onClose={closeRunner}
+          collection={runnerColl}
+        />
+      )}
       <ToastHost />
     </div>
   );

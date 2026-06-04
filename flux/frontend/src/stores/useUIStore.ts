@@ -46,6 +46,10 @@ type UIStore = {
 
   sidebarFilter: string;
   setSidebarFilter: (q: string) => void;
+
+  runnerCollID: string | null;
+  openRunner: (collID: string) => void;
+  closeRunner: () => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -91,4 +95,8 @@ export const useUIStore = create<UIStore>((set) => ({
 
   sidebarFilter: "",
   setSidebarFilter: (sidebarFilter) => set({ sidebarFilter }),
+
+  runnerCollID: null,
+  openRunner: (runnerCollID) => set({ runnerCollID }),
+  closeRunner: () => set({ runnerCollID: null }),
 }));

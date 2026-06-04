@@ -103,3 +103,39 @@ type HistoryEntry struct {
 	Response  ResponseResult `json:"response"`
 	CreatedAt string         `json:"createdAt"`
 }
+
+// --- Collection Runner ---
+
+type Assertion struct {
+	StatusCode   *int   `json:"statusCode,omitempty"`
+	MaxTimingMs  *int64 `json:"maxTimingMs,omitempty"`
+	BodyContains string `json:"bodyContains,omitempty"`
+}
+
+type RunnerRequest struct {
+	ID      string         `json:"id"`
+	Name    string         `json:"name"`
+	Payload RequestPayload `json:"payload"`
+}
+
+type RequestRunResult struct {
+	RequestID       string   `json:"requestId"`
+	RequestName     string   `json:"requestName"`
+	Passed          bool     `json:"passed"`
+	StatusCode      int      `json:"statusCode"`
+	StatusText      string   `json:"statusText"`
+	TimingMs        int64    `json:"timingMs"`
+	SizeBytes       int64    `json:"sizeBytes"`
+	Error           string   `json:"error"`
+	AssertionErrors []string `json:"assertionErrors"`
+}
+
+type CollectionRunResult struct {
+	CollectionID   string             `json:"collectionId"`
+	CollectionName string             `json:"collectionName"`
+	Results        []RequestRunResult `json:"results"`
+	Passed         int                `json:"passed"`
+	Failed         int                `json:"failed"`
+	Total          int                `json:"total"`
+	DurationMs     int64              `json:"durationMs"`
+}
