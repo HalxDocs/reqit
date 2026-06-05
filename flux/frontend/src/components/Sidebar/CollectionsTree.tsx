@@ -13,6 +13,7 @@ import { cn } from "../../lib/cn";
 import { downloadText, safeFilename } from "../../lib/download";
 import { toast } from "../../stores/useToastStore";
 import {
+  ExportOpenAPI,
   GetActiveWorkspace,
   LinkCollectionSpec,
   InvalidateSpec,
@@ -118,7 +119,10 @@ export function CollectionsTree() {
     newTab({
       title: req.name,
       savedRequestID: req.id,
-      request: decodePayload(req.payload),
+      request: decodePayload(req.payload, {
+        preSetVars: req.preSetVars as any,
+        extractRules: req.extractRules as any,
+      }),
       response: null,
       dirty: false,
     });
@@ -226,6 +230,15 @@ export function CollectionsTree() {
                   downloadText(payload, `${safeFilename(c.name)}.flux.json`);
                   toast.success(`Exported "${c.name}"`);
                 }}
+                onExportOpenAPI={async () => {
+                  try {
+                    const spec = await ExportOpenAPI(c.id);
+                    downloadText(spec, `${safeFilename(c.name)}.openapi.json`);
+                    toast.success(`OpenAPI spec exported for "${c.name}"`);
+                  } catch (e) {
+                    toast.error(String(e));
+                  }
+                }}
                 onLinkSpec={() => handleLinkSpec(c.id)}
                 onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                 onRun={c.requests.length > 0 ? () => openRunner(c.id) : undefined}
@@ -322,6 +335,7 @@ function CollectionMenu({
   specPath,
   onRename,
   onExport,
+  onExportOpenAPI,
   onLinkSpec,
   onUnlinkSpec,
   onDelete,
@@ -331,6 +345,7 @@ function CollectionMenu({
   specPath: string;
   onRename: () => void;
   onExport: () => void;
+  onExportOpenAPI?: () => void;
   onLinkSpec: () => void;
   onUnlinkSpec: () => void;
   onDelete: () => void;
@@ -367,6 +382,16 @@ function CollectionMenu({
               <Download size={12} />
               Export as JSON
             </button>
+            {onExportOpenAPI && (
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onExportOpenAPI(); }}
+                className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+              >
+                <FileCode2 size={12} />
+                Export OpenAPI Spec
+              </button>
+            )}
 
             {onRun && (
               <button

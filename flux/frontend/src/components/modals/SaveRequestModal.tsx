@@ -5,6 +5,7 @@ import { useCollectionStore } from "../../stores/useCollectionStore";
 import { useRequestStore } from "../../stores/useRequestStore";
 import { useTabsStore } from "../../stores/useTabsStore";
 import { buildPayloadLiteral } from "../../lib/buildPayload";
+import { UpdateScriptRules } from "../../../wailsjs/go/main/App";
 import { toast } from "../../stores/useToastStore";
 
 const NEW_COLLECTION_VALUE = "__new__";
@@ -50,8 +51,13 @@ export function SaveRequestModal() {
         const created = await createCollection(newCollName.trim());
         targetID = created.id;
       }
-      const payload = buildPayloadLiteral(useRequestStore.getState());
+      const s = useRequestStore.getState();
+      const payload = buildPayloadLiteral(s);
       const saved = await addRequest(targetID, name.trim(), payload);
+      // Save script rules
+      if (s.preSetVars?.length || s.extractRules?.length) {
+        await UpdateScriptRules(saved.id, s.preSetVars as never, s.extractRules as never).catch(() => {});
+      }
       markActiveSaved(saved.id, name.trim());
       useUIStore.getState().setLoadedRequestID(saved.id);
       toast.success(`Saved "${name.trim()}"`);

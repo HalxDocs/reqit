@@ -36,6 +36,8 @@ export interface RequestState {
   authKeyName: string;
   authKeyValue: string;
   authKeyIn: ApiKeyIn;
+  preSetVars: PreSetVar[];
+  extractRules: ExtractRule[];
 }
 
 export interface CookieSummary {
@@ -66,6 +68,19 @@ export interface SavedResponse {
   headers: Record<string, string>;
   body: string;
   capturedAt: string;
+}
+
+export interface PreSetVar {
+  id: string;
+  key: string;
+  value: string;
+}
+
+export interface ExtractRule {
+  id: string;
+  type: "body_json" | "header";
+  source: string;
+  target: string;
 }
 
 export interface MockOverride {

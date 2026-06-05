@@ -148,6 +148,40 @@ export namespace main {
 
 export namespace models {
 	
+	export class ExtractRule {
+	    id: string;
+	    type: string;
+	    source: string;
+	    target: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExtractRule(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.type = source["type"];
+	        this.source = source["source"];
+	        this.target = source["target"];
+	    }
+	}
+	export class PreSetVar {
+	    id: string;
+	    key: string;
+	    value: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PreSetVar(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.key = source["key"];
+	        this.value = source["value"];
+	    }
+	}
 	export class MockOverride {
 	    enabled: boolean;
 	    statusCode: number;
@@ -256,6 +290,8 @@ export namespace models {
 	    createdAt: string;
 	    savedResponse?: SavedResponse;
 	    mockOverride?: MockOverride;
+	    preSetVars?: PreSetVar[];
+	    extractRules?: ExtractRule[];
 	
 	    static createFrom(source: any = {}) {
 	        return new SavedRequest(source);
@@ -270,6 +306,8 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	        this.savedResponse = this.convertValues(source["savedResponse"], SavedResponse);
 	        this.mockOverride = this.convertValues(source["mockOverride"], MockOverride);
+	        this.preSetVars = this.convertValues(source["preSetVars"], PreSetVar);
+	        this.extractRules = this.convertValues(source["extractRules"], ExtractRule);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -469,6 +507,7 @@ export namespace models {
 		}
 	}
 	
+	
 	export class ValidationError {
 	    layer: string;
 	    field: string;
@@ -609,10 +648,13 @@ export namespace models {
 	
 	
 	
+	
 	export class RunnerRequest {
 	    id: string;
 	    name: string;
 	    payload: RequestPayload;
+	    preSetVars?: PreSetVar[];
+	    extractRules?: ExtractRule[];
 	
 	    static createFrom(source: any = {}) {
 	        return new RunnerRequest(source);
@@ -623,6 +665,8 @@ export namespace models {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.payload = this.convertValues(source["payload"], RequestPayload);
+	        this.preSetVars = this.convertValues(source["preSetVars"], PreSetVar);
+	        this.extractRules = this.convertValues(source["extractRules"], ExtractRule);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -43,6 +43,7 @@ reqit is a native desktop API client for developers. It replaces tools like Post
 - **URL preview** — see the fully expanded URL with variables resolved before you send
 - **Response viewer** — syntax-highlighted JSON, XML, and HTML; status code, response time, and payload size at a glance
 - **Copy response** — one-click copy of the full response body
+- **Response chaining** — right-click any value in the status bar or headers to instantly set it as an environment variable
 
 ### Collections & Workspaces
 
@@ -59,6 +60,14 @@ reqit is a native desktop API client for developers. It replaces tools like Post
 - **Bearer token** — auto-injects `Authorization: Bearer <token>`; supports env variables
 - **Basic auth** — username + password auto-encoded as Base64
 - **API key** — attach a key to any header name you choose
+
+### WebSocket & SSE Client
+
+- **Real-time connections** — connect to any `ws://` / `wss://` endpoint or Server-Sent Events (SSE) URL
+- **Message log** — timestamped, color-coded sent/received messages with auto-scroll
+- **Protocol toggle** — switch between WebSocket (bidirectional) and SSE (receive-only) in one click
+- **Message input** — send text messages over WebSocket while connected
+- **Status indicator** — live connection state with connect/disconnect control
 
 ### Cookie Jar
 
@@ -83,6 +92,35 @@ reqit is a native desktop API client for developers. It replaces tools like Post
 - **Delay simulation** — add artificial latency (ms) to any route to test loading states and timeouts
 - **Status override** — force any status code on a route without changing the saved body
 - **CORS enabled** — permissive CORS headers let any browser frontend call `localhost:4321` directly
+
+### Collection Runner
+
+- **Run all requests** — execute every request in a collection sequentially or concurrently (up to 5 parallel)
+- **Assertions** — define pass/fail rules per request: status code checks, max response time, body contains string
+- **Pass/fail results** — color-coded results grid with per-request status, timing, and assertion breakdown
+- **Run from sidebar** — right-click any collection and select "Run" to launch the runner modal
+- **Scripted runs** — automatically resolves `{{var}}` references; applies pre-set variables and extracts values between requests
+
+### Scripting (Pre-Request & Post-Response)
+
+- **Pre-set variables** — define variables to set before a request executes; values can reference environment variables
+- **Extract rules** — after a response arrives, extract values from JSON body (dot-path) or response headers into environment variables
+- **Scripts tab** — dedicated "Scripts" tab in the request panel for managing both pre-set and extract rules
+- **Request chaining** — pass data between requests in a collection run: extract a token from login → use it in subsequent requests
+
+### OpenAPI Export
+
+- **Spec generation** — export any collection as an OpenAPI 3.0.3 JSON spec
+- **Schema inference** — request bodies get JSON schemas, query params are extracted, auth schemes are detected
+- **Export from sidebar** — right-click any collection and select "Export OpenAPI Spec"
+
+### CLI Mode
+
+- **Headless execution** — run collections from the terminal without launching the GUI: `reqit run <collection>`
+- **Environment selection** — `reqit run <collection> --env <name>` to pick the active variable set
+- **Output formats** — `--output text` (human-readable) or `--output json` (machine-parseable)
+- **Workspace targeting** — `--workspace <id>` to run against a specific workspace
+- **CI/CD ready** — use in pipelines for smoke tests and contract checks
 
 ### Import & Code Generation
 
@@ -137,7 +175,8 @@ Everything is local. No data leaves your machine unless you explicitly send an A
 | Desktop framework | [Wails v2](https://wails.io) |
 | Backend | [Go](https://go.dev) (latest stable) |
 | HTTP engine | Go `net/http` with custom persistent cookie jar |
-| OpenAPI validation | [kin-openapi](https://github.com/getkin/kin-openapi) |
+| OpenAPI validation & export | [kin-openapi](https://github.com/getkin/kin-openapi) |
+| WebSocket | [gorilla/websocket](https://github.com/gorilla/websocket) |
 | Frontend | [React 18](https://react.dev) + [TypeScript](https://www.typescriptlang.org) |
 | Build tool | [Vite](https://vitejs.dev) |
 | Styling | [Tailwind CSS v3](https://tailwindcss.com) |

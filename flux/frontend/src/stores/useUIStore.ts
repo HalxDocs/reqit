@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type RequestTab = "params" | "headers" | "body" | "auth";
+export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts";
 export type ResponseTab = "body" | "headers" | "cookies";
 
 export type WorkspaceView = "http" | "socket";

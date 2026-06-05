@@ -76,6 +76,8 @@ type SavedRequest struct {
 	CreatedAt    string         `json:"createdAt"`
 	SavedResponse *SavedResponse `json:"savedResponse,omitempty"`
 	MockOverride  *MockOverride  `json:"mockOverride,omitempty"`
+	PreSetVars    []PreSetVar    `json:"preSetVars,omitempty"`
+	ExtractRules  []ExtractRule  `json:"extractRules,omitempty"`
 }
 
 type Collection struct {
@@ -104,6 +106,21 @@ type HistoryEntry struct {
 	CreatedAt string         `json:"createdAt"`
 }
 
+// --- Scripting ---
+
+type PreSetVar struct {
+	ID    string `json:"id"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type ExtractRule struct {
+	ID     string `json:"id"`
+	Type   string `json:"type"`   // "body_json" | "header"
+	Source string `json:"source"` // JSON path like "data.id" or header name
+	Target string `json:"target"` // env var name to set
+}
+
 // --- Collection Runner ---
 
 type Assertion struct {
@@ -113,9 +130,11 @@ type Assertion struct {
 }
 
 type RunnerRequest struct {
-	ID      string         `json:"id"`
-	Name    string         `json:"name"`
-	Payload RequestPayload `json:"payload"`
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	Payload      RequestPayload `json:"payload"`
+	PreSetVars   []PreSetVar    `json:"preSetVars,omitempty"`
+	ExtractRules []ExtractRule  `json:"extractRules,omitempty"`
 }
 
 type RequestRunResult struct {

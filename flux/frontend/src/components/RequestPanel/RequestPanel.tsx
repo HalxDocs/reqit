@@ -4,12 +4,14 @@ import { ParamsTab } from "./tabs/ParamsTab";
 import { HeadersTab } from "./tabs/HeadersTab";
 import { BodyTab } from "./tabs/BodyTab";
 import { AuthTab } from "./tabs/AuthTab";
+import { ScriptsPanel } from "./ScriptsPanel";
 
 const TABS: TabItem<RequestTab>[] = [
   { id: "params", label: "Params" },
   { id: "headers", label: "Headers" },
   { id: "body", label: "Body" },
   { id: "auth", label: "Auth" },
+  { id: "scripts", label: "Scripts" },
 ];
 
 export function RequestPanel({ width }: { width: number }) {
@@ -27,6 +29,7 @@ export function RequestPanel({ width }: { width: number }) {
         {requestTab === "headers" && <HeadersTab />}
         {requestTab === "body" && <BodyTab />}
         {requestTab === "auth" && <AuthTab />}
+        {requestTab === "scripts" && <ScriptsPanel />}
       </div>
     </section>
   );

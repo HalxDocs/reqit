@@ -37,6 +37,8 @@ export function RunnerModal({ open, onClose, collection }: Props) {
       id: r.id,
       name: r.name,
       payload: resolvePayload(r.payload, resolve),
+      preSetVars: r.preSetVars,
+      extractRules: r.extractRules,
     }));
   }, [collection, resolve]) as any;
 

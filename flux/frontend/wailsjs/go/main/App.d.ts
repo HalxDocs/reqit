@@ -46,6 +46,8 @@ export function DeleteWorkspace(arg1:string):Promise<void>;
 
 export function DisconnectSocket():Promise<void>;
 
+export function ExportOpenAPI(arg1:string):Promise<string>;
+
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
 export function GetActiveWorkspace():Promise<workspaces.Info>;
@@ -133,3 +135,5 @@ export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvV
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
+
+export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:Array<models.ExtractRule>):Promise<void>;

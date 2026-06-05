@@ -74,6 +74,10 @@ export function DisconnectSocket() {
   return window['go']['main']['App']['DisconnectSocket']();
 }
 
+export function ExportOpenAPI(arg1) {
+  return window['go']['main']['App']['ExportOpenAPI'](arg1);
+}
+
 export function GetActiveContributors() {
   return window['go']['main']['App']['GetActiveContributors']();
 }
@@ -248,4 +252,8 @@ export function UpdateProfile(arg1, arg2) {
 
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
+}
+
+export function UpdateScriptRules(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateScriptRules'](arg1, arg2, arg3);
 }

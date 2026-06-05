@@ -35,6 +35,8 @@ const emptyRequest = (): RequestState => ({
   authKeyName: "X-API-Key",
   authKeyValue: "",
   authKeyIn: "header",
+  preSetVars: [{ id: uid("sv"), key: "", value: "" }],
+  extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -64,6 +66,8 @@ const pickRequestState = (): RequestState => {
     authKeyName: s.authKeyName,
     authKeyValue: s.authKeyValue,
     authKeyIn: s.authKeyIn,
+    preSetVars: s.preSetVars,
+    extractRules: s.extractRules,
   };
 };
 

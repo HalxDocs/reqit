@@ -294,5 +294,7 @@ export function parseCurl(input: string): RequestState {
     authKeyName: "X-API-Key",
     authKeyValue: "",
     authKeyIn: "header",
+    preSetVars: [{ id: uid("sv"), key: "", value: "" }],
+    extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   };
 }

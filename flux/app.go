@@ -21,6 +21,7 @@ import (
 	"flux/internal/locks"
 	"flux/internal/mock"
 	"flux/internal/models"
+	"flux/internal/openapi"
 	"flux/internal/postman"
 	"flux/internal/profile"
 	"flux/internal/requester"
@@ -106,6 +107,24 @@ func (a *App) GetVersion() string {
 // assertions and returns pass/fail results for each request.
 func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
 	return runner.RunCollection(reqs, assertions, a.cookies)
+}
+
+// --- OpenAPI Export ---
+
+func (a *App) ExportOpenAPI(collectionID string) (string, error) {
+	if a.collections == nil {
+		return "", fmt.Errorf("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collectionID {
+			return openapi.Export(c)
+		}
+	}
+	return "", fmt.Errorf("collection not found: %s", collectionID)
 }
 
 // --- WebSocket / SSE ---
@@ -346,6 +365,13 @@ func (a *App) UpdateSavedRequest(reqID, name string, payload models.RequestPaylo
 		return errors.New("no active workspace")
 	}
 	return a.collections.UpdateRequest(reqID, name, payload)
+}
+
+func (a *App) UpdateScriptRules(reqID string, preSetVars []models.PreSetVar, extractRules []models.ExtractRule) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	return a.collections.UpdateRequestScripts(reqID, preSetVars, extractRules)
 }
 
 func (a *App) DeleteSavedRequest(reqID string) error {

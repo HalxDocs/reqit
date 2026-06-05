@@ -157,6 +157,24 @@ func (s *Store) UpdateRequest(reqID, name string, payload models.RequestPayload)
 	return errors.New("request not found")
 }
 
+func (s *Store) UpdateRequestScripts(reqID string, preSetVars []models.PreSetVar, extractRules []models.ExtractRule) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		for j := range s.collections[i].Requests {
+			if s.collections[i].Requests[j].ID == reqID {
+				s.collections[i].Requests[j].PreSetVars = preSetVars
+				s.collections[i].Requests[j].ExtractRules = extractRules
+				return s.save()
+			}
+		}
+	}
+	return errors.New("request not found")
+}
+
 func (s *Store) DeleteRequest(reqID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

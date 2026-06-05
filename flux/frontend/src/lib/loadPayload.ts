@@ -2,8 +2,10 @@ import type {
   ApiKeyIn,
   AuthType,
   BodyType,
+  ExtractRule,
   HttpMethod,
   KeyValue,
+  PreSetVar,
   RequestState,
 } from "../types/request";
 import { uid } from "./id";
@@ -45,7 +47,10 @@ const emptyRow = (): KeyValue => ({
 const ensureNonEmpty = (rows: KeyValue[]): KeyValue[] =>
   rows.length ? rows : [emptyRow()];
 
-export function decodePayload(p: WirePayload): RequestState {
+export function decodePayload(
+  p: WirePayload,
+  extras?: { preSetVars?: PreSetVar[]; extractRules?: ExtractRule[] },
+): RequestState {
   const method: HttpMethod = (
     VALID_METHODS.includes(p.method ?? "") ? p.method : "GET"
   ) as HttpMethod;
@@ -97,5 +102,7 @@ export function decodePayload(p: WirePayload): RequestState {
     authKeyName,
     authKeyValue,
     authKeyIn,
+    preSetVars: extras?.preSetVars?.length ? extras.preSetVars : [{ id: uid("sv"), key: "", value: "" }],
+    extractRules: extras?.extractRules?.length ? extras.extractRules : [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   };
 }

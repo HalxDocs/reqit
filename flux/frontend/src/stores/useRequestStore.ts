@@ -3,8 +3,10 @@ import type {
   ApiKeyIn,
   AuthType,
   BodyType,
+  ExtractRule,
   HttpMethod,
   KeyValue,
+  PreSetVar,
   RequestState,
 } from "../types/request";
 import { uid } from "../lib/id";
@@ -33,6 +35,8 @@ const initialState: RequestState = {
   authKeyName: "X-API-Key",
   authKeyValue: "",
   authKeyIn: "header",
+  preSetVars: [{ id: uid("sv"), key: "", value: "" }],
+  extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
 };
 
 type RequestStore = RequestState & {
@@ -60,6 +64,14 @@ type RequestStore = RequestState & {
   setAuthKeyName: (s: string) => void;
   setAuthKeyValue: (s: string) => void;
   setAuthKeyIn: (v: ApiKeyIn) => void;
+
+  addPreSetVar: () => void;
+  updatePreSetVar: (id: string, patch: Partial<PreSetVar>) => void;
+  removePreSetVar: (id: string) => void;
+
+  addExtractRule: () => void;
+  updateExtractRule: (id: string, patch: Partial<ExtractRule>) => void;
+  removeExtractRule: (id: string) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -111,6 +123,25 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setAuthKeyValue: (authKeyValue) => set({ authKeyValue }),
   setAuthKeyIn: (authKeyIn) => set({ authKeyIn }),
 
+  addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
+  updatePreSetVar: (id, patch) =>
+    set((s) => ({ preSetVars: s.preSetVars.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
+  removePreSetVar: (id) =>
+    set((s) => {
+      const next = s.preSetVars.filter((r) => r.id !== id);
+      return { preSetVars: next.length ? next : [{ id: uid("sv"), key: "", value: "" }] };
+    }),
+
+  addExtractRule: () =>
+    set((s) => ({ extractRules: [...s.extractRules, { id: uid("er"), type: "body_json", source: "", target: "" }] })),
+  updateExtractRule: (id, patch) =>
+    set((s) => ({ extractRules: s.extractRules.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
+  removeExtractRule: (id) =>
+    set((s) => {
+      const next = s.extractRules.filter((r) => r.id !== id);
+      return { extractRules: next.length ? next : [{ id: uid("er"), type: "body_json", source: "", target: "" }] };
+    }),
+
   reset: () =>
     set({
       method: "GET",
@@ -127,6 +158,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
       authKeyName: "X-API-Key",
       authKeyValue: "",
       authKeyIn: "header",
+      preSetVars: [{ id: uid("sv"), key: "", value: "" }],
+      extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
     }),
 
   loadState: (s) => set({ ...s }),
