@@ -2,16 +2,27 @@ package main
 
 import (
 	"embed"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"flux/internal/cli"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
+	// If the first arg is a CLI command, run headlessly.
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "run", "list", "help", "--help", "-h":
+			os.Exit(cli.Run(os.Args[1:]))
+		}
+	}
+
 	app := NewApp()
 
 	err := wails.Run(&options.App{

@@ -26,6 +26,7 @@ import (
 	"flux/internal/requester"
 	"flux/internal/storage"
 	"flux/internal/runner"
+	"flux/internal/sock"
 	"flux/internal/updater"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
@@ -47,12 +48,15 @@ type App struct {
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
+
+	sock *sock.Socket
 }
 
 func NewApp() *App {
 	return &App{
 		workspaces: workspaces.NewStore(),
 		profile:    profile.NewStore(),
+		sock:       sock.New(),
 	}
 }
 
@@ -76,6 +80,14 @@ func (a *App) startup(ctx context.Context) {
 		}
 		runtime.EventsEmit(a.ctx, "update:available", info)
 	}()
+
+	// Wire socket event callbacks.
+	a.sock.OnEvent(func(msg models.SocketMessage) {
+		runtime.EventsEmit(a.ctx, "socket:message", msg)
+	})
+	a.sock.OnStatus(func(status string) {
+		runtime.EventsEmit(a.ctx, "socket:status", status)
+	})
 }
 
 func (a *App) CheckForUpdates() *updater.UpdateInfo {
@@ -94,6 +106,25 @@ func (a *App) GetVersion() string {
 // assertions and returns pass/fail results for each request.
 func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
 	return runner.RunCollection(reqs, assertions, a.cookies)
+}
+
+// --- WebSocket / SSE ---
+
+func (a *App) ConnectSocket(url, protocol string) error {
+	return a.sock.Connect(url, protocol)
+}
+
+func (a *App) SendSocketMessage(msg string) error {
+	return a.sock.Send(msg)
+}
+
+func (a *App) DisconnectSocket() error {
+	a.sock.Disconnect()
+	return nil
+}
+
+func (a *App) GetSocketState() models.SocketState {
+	return a.sock.State()
 }
 
 // mountWorkspace reinitializes the scoped stores with a new data directory.
@@ -375,6 +406,39 @@ func (a *App) SetActiveEnvironment(id string) error {
 		return errors.New("no active workspace")
 	}
 	return a.environments.SetActive(id)
+}
+
+// SetEnvVar adds or updates a single variable in the active environment.
+func (a *App) SetEnvVar(key, value string) error {
+	if a.environments == nil {
+		return errors.New("no active workspace")
+	}
+	snap, err := a.environments.Get()
+	if err != nil {
+		return err
+	}
+	if snap.Active == "" {
+		return errors.New("no active environment — create one first")
+	}
+	for _, env := range snap.Environments {
+		if env.ID == snap.Active {
+			vars := env.Vars
+			found := false
+			for j, v := range vars {
+				if v.Key == key {
+					vars[j].Value = value
+					vars[j].Enabled = true
+					found = true
+					break
+				}
+			}
+			if !found {
+				vars = append(vars, models.EnvVar{Key: key, Value: value, Enabled: true})
+			}
+			return a.environments.Update(snap.Active, env.Name, vars)
+		}
+	}
+	return errors.New("active environment not found")
 }
 
 // --- Postman import ---

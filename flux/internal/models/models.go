@@ -139,3 +139,18 @@ type CollectionRunResult struct {
 	Total          int                `json:"total"`
 	DurationMs     int64              `json:"durationMs"`
 }
+
+// --- WebSocket / SSE ---
+
+type SocketMessage struct {
+	Timestamp int64  `json:"timestamp"`
+	Direction string `json:"direction"` // "sent" | "received"
+	Body      string `json:"body"`
+}
+
+type SocketState struct {
+	Status   string          `json:"status"`   // "disconnected" | "connecting" | "connected" | "error"
+	Protocol string          `json:"protocol"` // "ws" | "sse"
+	URL      string          `json:"url"`
+	Messages []SocketMessage `json:"messages"`
+}

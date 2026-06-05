@@ -15,6 +15,7 @@ import { WelcomeModal } from "./components/modals/WelcomeModal";
 import { PasteCurlModal } from "./components/modals/PasteCurlModal";
 import { TeamModal } from "./components/modals/TeamModal";
 import { RunnerModal } from "./components/modals/RunnerModal";
+import { SocketPanel } from "./components/SocketPanel/SocketPanel";
 import { ToastHost } from "./components/shared/ToastHost";
 import { UpdateBanner } from "./components/shared/UpdateBanner";
 import { MockPanel } from "./components/shared/MockPanel";
@@ -98,6 +99,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const { width, onResize } = useResizablePanel();
   const runnerCollID = useUIStore((s) => s.runnerCollID);
   const closeRunner = useUIStore((s) => s.closeRunner);
+  const view = useUIStore((s) => s.view);
   const collections = useCollectionStore((s) => s.collections);
   const runnerColl = runnerCollID ? collections.find((c) => c.id === runnerCollID) : null;
 
@@ -130,6 +132,9 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         </button>
       </div>
       <Sidebar onGoHome={onGoHome} />
+      {view === "socket" ? (
+        <SocketPanel />
+      ) : (
       <div className="flex-1 flex flex-col min-w-0">
         <UpdateBanner />
         <TabBar />
@@ -144,6 +149,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           <ResponsePane />
         </div>
       </div>
+      )}
       <SaveRequestModal />
       <EnvironmentsModal />
       <ImportPostmanModal />

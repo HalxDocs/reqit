@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users } from "lucide-react";
+import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users, Radio } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitloo.jpeg";
 import { useWorkspaceStore } from "../../stores/useWorkspaceStore";
+import { cn } from "../../lib/cn";
 import { CollectionsTree } from "./CollectionsTree";
 import { HistoryList } from "./HistoryList";
 import { EnvSwitcher } from "./EnvSwitcher";
@@ -15,6 +16,8 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
   const openTeam = useUIStore((s) => s.openTeamModal);
+  const view = useUIStore((s) => s.view);
+  const setView = useUIStore((s) => s.setView);
   const profile = useProfileStore((s) => s.profile);
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const activeID = useWorkspaceStore((s) => s.activeID);
@@ -43,6 +46,25 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
       <div className="px-3 py-2 border-b border-border flex flex-col gap-2">
         <EnvSwitcher />
         <SearchBar />
+      </div>
+
+      <div className="px-3 py-2 border-b border-border">
+        <button
+          type="button"
+          onClick={() => setView(view === "socket" ? "http" : "socket")}
+          className={cn(
+            "w-full h-[34px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
+            view === "socket"
+              ? "bg-blue/10 text-blue font-semibold"
+              : "text-subtext hover:text-text hover:bg-cardHover",
+          )}
+        >
+          <Radio size={14} />
+          <span>WebSocket / SSE</span>
+          {view === "socket" && (
+            <span className="ml-auto text-10 text-blue/60 font-normal">active</span>
+          )}
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-2">

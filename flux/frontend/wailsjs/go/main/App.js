@@ -34,6 +34,10 @@ export function CommitAndPush(arg1) {
   return window['go']['main']['App']['CommitAndPush'](arg1);
 }
 
+export function ConnectSocket(arg1, arg2) {
+  return window['go']['main']['App']['ConnectSocket'](arg1, arg2);
+}
+
 export function CreateBranch(arg1) {
   return window['go']['main']['App']['CreateBranch'](arg1);
 }
@@ -64,6 +68,10 @@ export function DeleteSavedRequest(arg1) {
 
 export function DeleteWorkspace(arg1) {
   return window['go']['main']['App']['DeleteWorkspace'](arg1);
+}
+
+export function DisconnectSocket() {
+  return window['go']['main']['App']['DisconnectSocket']();
 }
 
 export function GetActiveContributors() {
@@ -112,6 +120,10 @@ export function GetMockStatus() {
 
 export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
+}
+
+export function GetSocketState() {
+  return window['go']['main']['App']['GetSocketState']();
 }
 
 export function GetVersion() {
@@ -190,8 +202,16 @@ export function SendRequest(arg1) {
   return window['go']['main']['App']['SendRequest'](arg1);
 }
 
+export function SendSocketMessage(arg1) {
+  return window['go']['main']['App']['SendSocketMessage'](arg1);
+}
+
 export function SetActiveEnvironment(arg1) {
   return window['go']['main']['App']['SetActiveEnvironment'](arg1);
+}
+
+export function SetEnvVar(arg1, arg2) {
+  return window['go']['main']['App']['SetEnvVar'](arg1, arg2);
 }
 
 export function SetRouteOverride(arg1, arg2, arg3) {

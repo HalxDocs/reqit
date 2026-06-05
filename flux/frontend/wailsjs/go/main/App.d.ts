@@ -26,6 +26,8 @@ export function ClearHistory():Promise<void>;
 
 export function CommitAndPush(arg1:string):Promise<void>;
 
+export function ConnectSocket(arg1:string,arg2:string):Promise<void>;
+
 export function CreateBranch(arg1:string):Promise<void>;
 
 export function CreateCollection(arg1:string):Promise<models.Collection>;
@@ -41,6 +43,8 @@ export function DeleteEnvironment(arg1:string):Promise<void>;
 export function DeleteSavedRequest(arg1:string):Promise<void>;
 
 export function DeleteWorkspace(arg1:string):Promise<void>;
+
+export function DisconnectSocket():Promise<void>;
 
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
@@ -65,6 +69,8 @@ export function GetLocks():Promise<Record<string, locks.LockInfo>>;
 export function GetMockStatus():Promise<main.MockStatus>;
 
 export function GetProfile():Promise<profile.Profile>;
+
+export function GetSocketState():Promise<models.SocketState>;
 
 export function GetVersion():Promise<string>;
 
@@ -104,7 +110,11 @@ export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
 
 export function SendRequest(arg1:models.RequestPayload):Promise<models.ResponseResult>;
 
+export function SendSocketMessage(arg1:string):Promise<void>;
+
 export function SetActiveEnvironment(arg1:string):Promise<void>;
+
+export function SetEnvVar(arg1:string,arg2:string):Promise<void>;
 
 export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
 

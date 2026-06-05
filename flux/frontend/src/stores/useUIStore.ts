@@ -3,11 +3,16 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth";
 export type ResponseTab = "body" | "headers" | "cookies";
 
+export type WorkspaceView = "http" | "socket";
+
 type UIStore = {
   requestTab: RequestTab;
   responseTab: ResponseTab;
   setRequestTab: (t: RequestTab) => void;
   setResponseTab: (t: ResponseTab) => void;
+
+  view: WorkspaceView;
+  setView: (v: WorkspaceView) => void;
 
   saveModalOpen: boolean;
   openSaveModal: () => void;
@@ -57,6 +62,9 @@ export const useUIStore = create<UIStore>((set) => ({
   responseTab: "body",
   setRequestTab: (requestTab) => set({ requestTab }),
   setResponseTab: (responseTab) => set({ responseTab }),
+
+  view: "http",
+  setView: (view) => set({ view }),
 
   saveModalOpen: false,
   openSaveModal: () => set({ saveModalOpen: true }),
