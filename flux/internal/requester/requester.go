@@ -78,7 +78,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	}
 	defer resp.Body.Close()
 
-	respBody, readErr := io.ReadAll(resp.Body)
+	respBody, readErr := io.ReadAll(io.LimitReader(resp.Body, 50*1024*1024))
 	timing := time.Since(start)
 	if readErr != nil {
 		if errors.Is(readErr, context.Canceled) {
@@ -91,19 +91,21 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 
 	// Collect cookies set by this response for the frontend to display.
 	var setCookies []models.CookieSummary
-	for _, c := range resp.Cookies() {
-		exp := ""
-		if !c.Expires.IsZero() {
-			exp = c.Expires.Format(time.RFC3339)
+	if resp.Request != nil && resp.Request.URL != nil {
+		for _, c := range resp.Cookies() {
+			exp := ""
+			if !c.Expires.IsZero() {
+				exp = c.Expires.Format(time.RFC3339)
+			}
+			setCookies = append(setCookies, models.CookieSummary{
+				Name:     c.Name,
+				Value:    c.Value,
+				Domain:   resp.Request.URL.Hostname(),
+				Expires:  exp,
+				HttpOnly: c.HttpOnly,
+				Secure:   c.Secure,
+			})
 		}
-		setCookies = append(setCookies, models.CookieSummary{
-			Name:     c.Name,
-			Value:    c.Value,
-			Domain:   resp.Request.URL.Hostname(),
-			Expires:  exp,
-			HttpOnly: c.HttpOnly,
-			Secure:   c.Secure,
-		})
 	}
 
 	return models.ResponseResult{

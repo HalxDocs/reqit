@@ -18,14 +18,17 @@ type SocketStore = {
   disconnect: () => Promise<void>;
   send: (msg: string) => Promise<void>;
   refresh: () => Promise<void>;
+  cleanup: () => void;
 };
 
+const MSG_EVENT = "socket:message";
+const STATUS_EVENT = "socket:status";
+
 export const useSocketStore = create<SocketStore>((set, get) => {
-  // Wire Wails events on init
-  EventsOn("socket:message", (msg: models.SocketMessage) => {
+  EventsOn(MSG_EVENT, (msg: models.SocketMessage) => {
     set((s) => ({ messages: [...s.messages, msg] }));
   });
-  EventsOn("socket:status", (status: string) => {
+  EventsOn(STATUS_EVENT, (status: string) => {
     set({ status });
   });
 
@@ -47,12 +50,20 @@ export const useSocketStore = create<SocketStore>((set, get) => {
     },
 
     disconnect: async () => {
-      await DisconnectSocket();
+      try {
+        await DisconnectSocket();
+      } catch {
+        // ignore if already disconnected
+      }
       set({ status: "disconnected" });
     },
 
     send: async (msg) => {
-      await SendSocketMessage(msg);
+      try {
+        await SendSocketMessage(msg);
+      } catch {
+        // ignore send failures
+      }
     },
 
     refresh: async () => {
@@ -67,6 +78,11 @@ export const useSocketStore = create<SocketStore>((set, get) => {
       } catch {
         // not connected
       }
+    },
+
+    cleanup: () => {
+      EventsOff(MSG_EVENT);
+      EventsOff(STATUS_EVENT);
     },
   };
 });

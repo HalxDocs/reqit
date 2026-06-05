@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	gogit "github.com/go-git/go-git/v5"
@@ -37,6 +38,7 @@ type GitConfig struct {
 }
 
 type Store struct {
+	mu   sync.Mutex
 	repo *gogit.Repository
 	dir  string
 }
@@ -64,6 +66,8 @@ func IsRepo(dir string) bool {
 
 // SetRemote adds or updates the origin remote.
 func (s *Store) SetRemote(url string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_ = s.repo.DeleteRemote("origin")
 	_, err := s.repo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
@@ -74,6 +78,8 @@ func (s *Store) SetRemote(url string) error {
 
 // GetRemote returns the origin URL, or empty string if none.
 func (s *Store) GetRemote() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	r, err := s.repo.Remote("origin")
 	if err != nil || len(r.Config().URLs) == 0 {
 		return ""
@@ -83,6 +89,8 @@ func (s *Store) GetRemote() string {
 
 // CommitAll stages everything and commits.
 func (s *Store) CommitAll(message, name, email string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	w, err := s.repo.Worktree()
 	if err != nil {
 		return err
@@ -103,6 +111,8 @@ func (s *Store) CommitAll(message, name, email string) error {
 
 // Push pushes to origin using the given PAT.
 func (s *Store) Push(pat string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	err := s.repo.Push(&gogit.PushOptions{
 		Auth: &githttp.BasicAuth{Username: "x", Password: pat},
 	})
@@ -114,6 +124,8 @@ func (s *Store) Push(pat string) error {
 
 // Pull pulls from origin.
 func (s *Store) Pull(pat string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	w, err := s.repo.Worktree()
 	if err != nil {
 		return err
@@ -131,6 +143,8 @@ func (s *Store) Pull(pat string) error {
 
 // GetBranches lists all local branch names.
 func (s *Store) GetBranches() ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	refs, err := s.repo.Branches()
 	if err != nil {
 		return nil, err
@@ -145,6 +159,8 @@ func (s *Store) GetBranches() ([]string, error) {
 
 // CurrentBranch returns the checked-out branch name.
 func (s *Store) CurrentBranch() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	head, err := s.repo.Head()
 	if err != nil {
 		return ""
@@ -154,6 +170,8 @@ func (s *Store) CurrentBranch() string {
 
 // SwitchBranch checks out an existing branch.
 func (s *Store) SwitchBranch(name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	w, err := s.repo.Worktree()
 	if err != nil {
 		return err
@@ -166,6 +184,8 @@ func (s *Store) SwitchBranch(name string) error {
 
 // CreateBranch creates and checks out a new branch.
 func (s *Store) CreateBranch(name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	w, err := s.repo.Worktree()
 	if err != nil {
 		return err
@@ -178,6 +198,8 @@ func (s *Store) CreateBranch(name string) error {
 
 // GetLog returns the last n commits. Pass 0 for all.
 func (s *Store) GetLog(limit int) ([]CommitInfo, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	iter, err := s.repo.Log(&gogit.LogOptions{})
 	if err != nil {
 		return nil, err
@@ -206,6 +228,8 @@ func (s *Store) GetLog(limit int) ([]CommitInfo, error) {
 
 // HasChanges returns true if there are uncommitted changes.
 func (s *Store) HasChanges() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	w, err := s.repo.Worktree()
 	if err != nil {
 		return false
@@ -219,6 +243,8 @@ func (s *Store) HasChanges() bool {
 
 // GetActiveContributors returns unique authors who committed within the last 24 hours.
 func (s *Store) GetActiveContributors() ([]Contributor, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	iter, err := s.repo.Log(&gogit.LogOptions{})
 	if err != nil {
 		return nil, err

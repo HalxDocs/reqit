@@ -31,12 +31,16 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   loaded: false,
 
   load: async () => {
-    const [all, active] = await Promise.all([GetWorkspaces(), GetActiveWorkspace()]);
-    set({
-      workspaces: all,
-      activeID: active?.id ?? null,
-      loaded: true,
-    });
+    try {
+      const [all, active] = await Promise.all([GetWorkspaces(), GetActiveWorkspace()]);
+      set({
+        workspaces: all,
+        activeID: active?.id ?? null,
+        loaded: true,
+      });
+    } catch {
+      set({ loaded: true });
+    }
   },
 
   create: async (name, description, color) => {

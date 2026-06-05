@@ -40,12 +40,16 @@ export const useCollectionStore = create<CollectionStore>((set, get) => ({
   loaded: false,
 
   load: async () => {
-    const collections = await GetCollections();
-    const expanded: Record<string, boolean> = { ...get().expanded };
-    for (const c of collections) {
-      if (!(c.id in expanded)) expanded[c.id] = true;
+    try {
+      const collections = await GetCollections();
+      const expanded: Record<string, boolean> = { ...get().expanded };
+      for (const c of collections) {
+        if (!(c.id in expanded)) expanded[c.id] = true;
+      }
+      set({ collections, expanded, loaded: true });
+    } catch {
+      set({ loaded: true });
     }
-    set({ collections, expanded, loaded: true });
   },
 
   toggleExpanded: (id) =>

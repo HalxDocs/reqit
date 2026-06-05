@@ -48,9 +48,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("loading");
 
   useEffect(() => {
-    void (async () => {
-      await Promise.all([loadWorkspaces(), loadProfile()]);
-    })();
+    Promise.all([loadWorkspaces(), loadProfile()]).catch(() => {});
   }, [loadWorkspaces, loadProfile]);
 
   useEffect(() => {

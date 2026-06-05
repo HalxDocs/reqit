@@ -83,7 +83,7 @@ func Validate(doc *openapi3.T, method, rawURL string, statusCode int, body []byt
 	fakeURL := &url.URL{Scheme: "https", Host: "reqit.local", Path: pathOnly}
 	httpReq := &http.Request{Method: method, URL: fakeURL}
 	route, _, findErr := router.FindRoute(httpReq)
-	if findErr != nil {
+	if findErr != nil || route.Operation == nil {
 		res.SkipReason = "endpoint not in spec"
 		return res
 	}
@@ -101,15 +101,17 @@ func Validate(doc *openapi3.T, method, rawURL string, statusCode int, body []byt
 	// Body schema check.
 	if respSpec != nil && respSpec.Value != nil && respSpec.Value.Content != nil {
 		mt := respSpec.Value.Content.Get("application/json")
-		if mt != nil && mt.Schema != nil {
+		if mt != nil && mt.Schema != nil && mt.Schema.Value != nil {
 			var data interface{}
-			if jsonErr := json.Unmarshal(body, &data); jsonErr == nil {
-				if vErr := mt.Schema.Value.VisitJSON(data); vErr != nil {
-					errs = append(errs, ValidationError{
-						Layer:   "body",
-						Field:   "",
-						Message: vErr.Error(),
-					})
+			if len(body) < 50*1024*1024 {
+				if jsonErr := json.Unmarshal(body, &data); jsonErr == nil {
+					if vErr := mt.Schema.Value.VisitJSON(data); vErr != nil {
+						errs = append(errs, ValidationError{
+							Layer:   "body",
+							Field:   "",
+							Message: vErr.Error(),
+						})
+					}
 				}
 			}
 		}

@@ -16,6 +16,8 @@ import (
 	"flux/internal/models"
 )
 
+const maxMessages = 500
+
 type Socket struct {
 	mu         sync.Mutex
 	conn       *websocket.Conn
@@ -26,6 +28,7 @@ type Socket struct {
 	messages   []models.SocketMessage
 	onEvent    func(models.SocketMessage)
 	onStatus   func(string)
+	cbMu       sync.RWMutex
 }
 
 func New() *Socket {
@@ -33,11 +36,42 @@ func New() *Socket {
 }
 
 func (s *Socket) OnEvent(fn func(models.SocketMessage)) {
+	s.cbMu.Lock()
 	s.onEvent = fn
+	s.cbMu.Unlock()
 }
 
 func (s *Socket) OnStatus(fn func(string)) {
+	s.cbMu.Lock()
 	s.onStatus = fn
+	s.cbMu.Unlock()
+}
+
+func (s *Socket) emitEvent(msg models.SocketMessage) {
+	s.cbMu.RLock()
+	fn := s.onEvent
+	s.cbMu.RUnlock()
+	if fn != nil {
+		fn(msg)
+	}
+}
+
+func (s *Socket) emitStatus(status string) {
+	s.cbMu.RLock()
+	fn := s.onStatus
+	s.cbMu.RUnlock()
+	if fn != nil {
+		fn(status)
+	}
+}
+
+func (s *Socket) appendMessage(entry models.SocketMessage) {
+	s.mu.Lock()
+	if len(s.messages) >= maxMessages {
+		s.messages = append(s.messages[:0], s.messages[1:]...)
+	}
+	s.messages = append(s.messages, entry)
+	s.mu.Unlock()
 }
 
 func (s *Socket) State() models.SocketState {
@@ -118,13 +152,8 @@ func (s *Socket) Send(msg string) error {
 		Body:      msg,
 	}
 
-	s.mu.Lock()
-	s.messages = append(s.messages, entry)
-	s.mu.Unlock()
-
-	if s.onEvent != nil {
-		s.onEvent(entry)
-	}
+	s.appendMessage(entry)
+	s.emitEvent(entry)
 
 	return nil
 }
@@ -179,13 +208,8 @@ func (s *Socket) readLoopWS(ctx context.Context, c *websocket.Conn) {
 			Body:      string(msg),
 		}
 
-		s.mu.Lock()
-		s.messages = append(s.messages, entry)
-		s.mu.Unlock()
-
-		if s.onEvent != nil {
-			s.onEvent(entry)
-		}
+		s.appendMessage(entry)
+		s.emitEvent(entry)
 	}
 }
 
@@ -200,7 +224,8 @@ func (s *Socket) connectSSE(ctx context.Context, url string) error {
 	}
 	req.Header.Set("Accept", "text/event-stream")
 
-	resp, err := http.DefaultClient.Do(req)
+	sseClient := &http.Client{Timeout: 30 * time.Second}
+	resp, err := sseClient.Do(req)
 	if err != nil {
 		s.mu.Lock()
 		s.status = "error"
@@ -260,13 +285,8 @@ func (s *Socket) readLoopSSE(ctx context.Context, body io.ReadCloser) {
 				Body:      body,
 			}
 
-			s.mu.Lock()
-			s.messages = append(s.messages, entry)
-			s.mu.Unlock()
-
-			if s.onEvent != nil {
-				s.onEvent(entry)
-			}
+			s.appendMessage(entry)
+			s.emitEvent(entry)
 		}
 	}
 
@@ -274,10 +294,4 @@ func (s *Socket) readLoopSSE(ctx context.Context, body io.ReadCloser) {
 	s.status = "disconnected"
 	s.mu.Unlock()
 	s.emitStatus("disconnected")
-}
-
-func (s *Socket) emitStatus(status string) {
-	if s.onStatus != nil {
-		s.onStatus(status)
-	}
 }

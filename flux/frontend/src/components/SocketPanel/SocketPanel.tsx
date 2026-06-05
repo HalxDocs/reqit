@@ -28,9 +28,15 @@ export function SocketPanel() {
   // Refresh state on mount (if reconnecting from previous session)
   useEffect(() => { void refresh(); }, [refresh]);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages only if user hasn't scrolled up
+  const logContainer = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    logEnd.current?.scrollIntoView({ behavior: "smooth" });
+    const el = logContainer.current;
+    if (!el) return;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    if (isAtBottom) {
+      logEnd.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const isConnected = status === "connected";
@@ -150,7 +156,7 @@ export function SocketPanel() {
       </div>
 
       {/* Message log */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-surface">
+      <div ref={logContainer} className="flex-1 min-h-0 overflow-y-auto bg-surface">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-subtext gap-3 px-6">
             <Terminal size={28} className="opacity-30" />

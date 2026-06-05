@@ -32,12 +32,16 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
   loaded: false,
 
   load: async () => {
-    const snap = await GetEnvironments();
-    set({
-      environments: snap.environments ?? [],
-      activeID: snap.active ?? "",
-      loaded: true,
-    });
+    try {
+      const snap = await GetEnvironments();
+      set({
+        environments: snap.environments ?? [],
+        activeID: snap.active ?? "",
+        loaded: true,
+      });
+    } catch {
+      set({ loaded: true });
+    }
   },
 
   setActive: async (id) => {

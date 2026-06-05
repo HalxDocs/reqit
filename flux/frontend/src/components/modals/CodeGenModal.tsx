@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Copy } from "lucide-react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useRequestStore } from "../../stores/useRequestStore";
@@ -15,26 +15,53 @@ const LANGS: { id: Lang; label: string }[] = [
   { id: "python", label: "Python (requests)" },
 ];
 
+function useRequestSnapshot() {
+  const method = useRequestStore((s) => s.method);
+  const url = useRequestStore((s) => s.url);
+  const headers = useRequestStore((s) => s.headers);
+  const params = useRequestStore((s) => s.params);
+  const bodyType = useRequestStore((s) => s.bodyType);
+  const bodyRaw = useRequestStore((s) => s.bodyRaw);
+  const bodyForm = useRequestStore((s) => s.bodyForm);
+  const authType = useRequestStore((s) => s.authType);
+  const authToken = useRequestStore((s) => s.authToken);
+  const authUser = useRequestStore((s) => s.authUser);
+  const authPass = useRequestStore((s) => s.authPass);
+  const authKeyName = useRequestStore((s) => s.authKeyName);
+  const authKeyValue = useRequestStore((s) => s.authKeyValue);
+  const authKeyIn = useRequestStore((s) => s.authKeyIn);
+  const preSetVars = useRequestStore((s) => s.preSetVars);
+  const extractRules = useRequestStore((s) => s.extractRules);
+  return useMemo(() => ({
+    method, url, headers, params, bodyType, bodyRaw, bodyForm,
+    authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
+    preSetVars, extractRules,
+  }), [method, url, headers, params, bodyType, bodyRaw, bodyForm,
+      authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
+      preSetVars, extractRules]);
+}
+
 export function CodeGenModal() {
   const open = useUIStore((s) => s.codeGenModalOpen);
   const close = useUIStore((s) => s.closeCodeGenModal);
-  const requestState = useRequestStore();
+  const requestSnapshot = useRequestSnapshot();
   const [lang, setLang] = useState<Lang>("curl");
-  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const code = useMemo(() => {
     if (!open) return "";
-    const payload = buildPayload(requestState);
+    const payload = buildPayload(requestSnapshot);
     if (lang === "curl") return toCurl(payload);
     if (lang === "fetch") return toJsFetch(payload);
     return toPythonRequests(payload);
-  }, [open, lang, requestState]);
+  }, [open, lang, requestSnapshot]);
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      const { toast } = await import("../../stores/useToastStore");
+      toast.success("Copied to clipboard");
     } catch {
       // ignore
     }
@@ -79,17 +106,8 @@ export function CodeGenModal() {
             onClick={copy}
             className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md flex items-center gap-2 transition-all"
           >
-            {copied ? (
-              <>
-                <Check size={12} />
-                <span>Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy size={12} />
-                <span>Copy</span>
-              </>
-            )}
+            <Copy size={12} />
+            <span>Copy</span>
           </button>
         </div>
       </div>

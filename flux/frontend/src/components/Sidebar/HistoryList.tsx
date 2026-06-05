@@ -43,8 +43,8 @@ export function HistoryList() {
       <div className="px-3 pb-1 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => {
-            if (entries.length && confirm("Clear all history?")) clear();
+          onClick={async () => {
+            if (entries.length && confirm("Clear all history?")) { try { await clear(); } catch {} }
           }}
           disabled={!entries.length}
           className="text-subtext hover:text-danger disabled:opacity-30 transition-colors p-1 rounded-sm"
@@ -59,7 +59,7 @@ export function HistoryList() {
         <div className="px-3 py-2 text-11 text-subtext italic">No history yet.</div>
       ) : (
         entries.map((e) => {
-          const code = e.response.statusCode || 0;
+          const code = e.response?.statusCode || 0;
           return (
             <button
               key={e.id}

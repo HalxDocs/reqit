@@ -30,7 +30,11 @@ const finalHeaders = (p: WirePayload): Array<[string, string]> => {
     out.push(["Authorization", `Bearer ${p.authValue}`]);
   }
   if (p.authType === "basic" && p.authValue) {
-    out.push(["Authorization", `Basic ${btoa(p.authValue)}`]);
+    try {
+      out.push(["Authorization", `Basic ${btoa(p.authValue)}`]);
+    } catch {
+      out.push(["Authorization", `Basic ${btoa(unescape(encodeURIComponent(p.authValue)))}`]);
+    }
   }
   if (p.bodyType === "json" && p.body && !out.some(([k]) => k.toLowerCase() === "content-type")) {
     out.push(["Content-Type", "application/json"]);
@@ -129,9 +133,6 @@ export function toPythonRequests(p: WirePayload): string {
   const args = [escapePy(url)];
   if (params.length) args.push("params=params");
   if (headers.length) args.push("headers=headers");
-  let call = `response = requests.${p.method.toLowerCase()}(${args.join(", ")}${bodyArg})`;
-  // Some methods take only url+kwargs; this works for all standard verbs.
-  void call;
   lines.push("");
   lines.push(`response = requests.request(${escapePy(p.method.toUpperCase())}, ${args.join(", ")}${bodyArg})`);
   lines.push("response.raise_for_status()");

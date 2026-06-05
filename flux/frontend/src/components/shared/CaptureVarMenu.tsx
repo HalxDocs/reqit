@@ -15,13 +15,17 @@ export function CaptureVarMenu({ open, value, x, y, onClose }: Props) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const focusTimer = useRef<ReturnType<typeof setTimeout>>();
   const loadEnvs = useEnvStore((s) => s.load);
 
   useEffect(() => {
     if (!open) return;
     setName("");
     setBusy(false);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    focusTimer.current = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => {
+      if (focusTimer.current) clearTimeout(focusTimer.current);
+    };
   }, [open]);
 
   if (!open) return null;

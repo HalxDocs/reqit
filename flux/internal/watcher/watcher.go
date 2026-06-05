@@ -53,6 +53,11 @@ func (w *Watcher) loop() {
 					w.timer.Stop()
 				}
 				w.timer = time.AfterFunc(200*time.Millisecond, func() {
+					select {
+					case <-w.done:
+						return
+					default:
+					}
 					w.handler(name)
 				})
 				w.mu.Unlock()
@@ -67,6 +72,12 @@ func (w *Watcher) loop() {
 }
 
 func (w *Watcher) Close() {
+	w.mu.Lock()
+	if w.timer != nil {
+		w.timer.Stop()
+		w.timer = nil
+	}
+	w.mu.Unlock()
 	close(w.done)
 	_ = w.fw.Close()
 }

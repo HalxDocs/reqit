@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"flux/internal/collections"
@@ -772,9 +770,12 @@ func (a *App) SetRouteOverride(colID, reqID string, o models.MockOverride) error
 	if err := a.collections.SetMockOverride(colID, reqID, o); err != nil {
 		return err
 	}
-	if a.mockReg != nil {
+	a.mu.Lock()
+	reg := a.mockReg
+	a.mu.Unlock()
+	if reg != nil {
 		cols, _ := a.GetCollections()
-		loadCollsIntoRegistry(a.mockReg, cols)
+		loadCollsIntoRegistry(reg, cols)
 		runtime.EventsEmit(a.ctx, "mock:updated", a.GetMockStatus())
 	}
 	return nil
@@ -796,9 +797,12 @@ func (a *App) SaveCapturedResponse(colID, reqID string, resp models.SavedRespons
 	if err := a.collections.SetSavedResponse(colID, reqID, resp); err != nil {
 		return err
 	}
-	if a.mockReg != nil {
+	a.mu.Lock()
+	reg := a.mockReg
+	a.mu.Unlock()
+	if reg != nil {
 		cols, _ := a.GetCollections()
-		loadCollsIntoRegistry(a.mockReg, cols)
+		loadCollsIntoRegistry(reg, cols)
 		runtime.EventsEmit(a.ctx, "mock:updated", a.GetMockStatus())
 	}
 	return nil
@@ -855,5 +859,4 @@ func extractMockPath(raw string) string {
 	return s
 }
 
-var _ = uuid.NewString
-var _ = time.Now
+

@@ -242,9 +242,13 @@ export function CollectionsTree() {
                 onLinkSpec={() => handleLinkSpec(c.id)}
                 onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                 onRun={c.requests.length > 0 ? () => openRunner(c.id) : undefined}
-                onDelete={() => {
-                  if (confirm(`Delete collection "${c.name}" and all its requests?`)) {
-                    deleteCollection(c.id).then(() => toast.success(`Deleted "${c.name}"`));
+                onDelete={async () => {
+                  if (!confirm(`Delete collection "${c.name}" and all its requests?`)) return;
+                  try {
+                    await deleteCollection(c.id);
+                    toast.success(`Deleted "${c.name}"`);
+                  } catch {
+                    toast.error(`Failed to delete "${c.name}"`);
                   }
                 }}
               />
