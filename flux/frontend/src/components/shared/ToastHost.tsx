@@ -1,12 +1,84 @@
-import { AlertCircle, CheckCircle2, Info, X, type LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 import { useToastStore, type ToastKind } from "../../stores/useToastStore";
 import { cn } from "../../lib/cn";
 
-const STYLES: Record<ToastKind, { icon: LucideIcon; ring: string; tint: string }> = {
-  info: { icon: Info, ring: "border-blue/40", tint: "text-blue" },
-  success: { icon: CheckCircle2, ring: "border-teal/40", tint: "text-teal" },
-  error: { icon: AlertCircle, ring: "border-danger/40", tint: "text-danger" },
+const STYLES: Record<ToastKind, { icon: typeof Info; bg: string; tint: string; bar: string }> = {
+  info: { icon: Info, bg: "bg-blue/15", tint: "text-blue", bar: "bg-blue" },
+  success: { icon: CheckCircle2, bg: "bg-success/15", tint: "text-success", bar: "bg-success" },
+  error: { icon: AlertCircle, bg: "bg-danger/15", tint: "text-danger", bar: "bg-danger" },
 };
+
+const DURATION: Record<ToastKind, number> = {
+  info: 2500,
+  success: 2500,
+  error: 4500,
+};
+
+function ToastItem({
+  toast,
+  onDismiss,
+}: {
+  toast: { id: string; kind: ToastKind; message: string };
+  onDismiss: (id: string) => void;
+}) {
+  const [exiting, setExiting] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const { icon: Icon, bg, tint, bar } = STYLES[toast.kind];
+  const duration = DURATION[toast.kind];
+
+  const dismiss = useCallback(() => {
+    setExiting(true);
+    setTimeout(() => onDismiss(toast.id), 200);
+  }, [onDismiss, toast.id]);
+
+  useEffect(() => {
+    if (!paused) {
+      timerRef.current = setTimeout(dismiss, duration);
+    } else if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [paused, dismiss, duration]);
+
+  return (
+    <div
+      className={cn(
+        "pointer-events-auto flex items-start gap-2.5 bg-card border border-border rounded-lg shadow-xl shadow-black/30 pl-3 pr-2 py-2.5 min-w-[280px] max-w-[400px] overflow-hidden relative",
+        exiting ? "animate-[toast-slide-out_0.2s_ease-in_forwards]" : "animate-[toast-slide-in_0.25s_ease-out]",
+      )}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center shrink-0 mt-[1px]", bg)}>
+        <Icon size={12} className={tint} />
+      </div>
+
+      <span className="text-12 text-text leading-[18px] flex-1 break-words">{toast.message}</span>
+
+      <button
+        type="button"
+        onClick={dismiss}
+        className="text-subtext hover:text-text transition-colors p-0.5 rounded hover:bg-border shrink-0 self-start"
+        aria-label="Dismiss"
+      >
+        <X size={11} />
+      </button>
+
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-border/50">
+        <div
+          className={cn("h-full rounded-full", bar)}
+          style={{
+            animation: exiting ? "none" : paused ? "none" : `toast-progress ${duration}ms linear forwards`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts);
@@ -16,29 +88,9 @@ export function ToastHost() {
 
   return (
     <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
-      {toasts.map((t) => {
-        const { icon: Icon, ring, tint } = STYLES[t.kind];
-        return (
-          <div
-            key={t.id}
-            className={cn(
-              "pointer-events-auto bg-card border rounded-md shadow-lg pl-3 pr-2 py-2 flex items-center gap-2 min-w-[240px] max-w-[420px]",
-              ring,
-            )}
-          >
-            <Icon size={14} className={cn("shrink-0", tint)} />
-            <span className="text-12 text-text flex-1">{t.message}</span>
-            <button
-              type="button"
-              onClick={() => dismiss(t.id)}
-              className="text-subtext hover:text-text transition-colors p-1 rounded-sm"
-              aria-label="Dismiss"
-            >
-              <X size={12} />
-            </button>
-          </div>
-        );
-      })}
+      {toasts.map((t) => (
+        <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
+      ))}
     </div>
   );
 }

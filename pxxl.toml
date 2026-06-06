@@ -1,2 +1,3 @@
 [build]
-context = "flux/frontend"
+command = "cd flux/frontend && npm install && npm run build"
+output_directory = "flux/frontend/dist"

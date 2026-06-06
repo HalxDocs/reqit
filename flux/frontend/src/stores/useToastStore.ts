@@ -22,9 +22,6 @@ export const useToastStore = create<ToastStore>((set) => ({
   push: (kind, message) => {
     const id = nextId();
     set((s) => ({ toasts: [...s.toasts, { id, kind, message }] }));
-    setTimeout(() => {
-      set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
-    }, kind === "error" ? 4500 : 2500);
   },
   dismiss: (id) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
