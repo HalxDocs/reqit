@@ -1,0 +1,7 @@
+{
+  "name": "reqit-web",
+  "private": true,
+  "scripts": {
+    "build": "cd flux/frontend && npm install && npm run build && cp -r dist/* ../"
+  }
+}
