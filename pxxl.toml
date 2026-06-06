@@ -1,2 +1,2 @@
 [build]
-output_directory = "flux/frontend/dist"
+command = "cd /workspace/app/flux/frontend && npm install && npm run build && cp -r dist/* /workspace/app/"
