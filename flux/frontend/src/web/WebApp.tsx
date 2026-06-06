@@ -415,8 +415,36 @@ export function WebApp() {
           <p className="text-11 text-subtext/60">Windows · macOS · Linux</p>
         </section>
 
+        {/* Support */}
+        <section className="max-w-[480px] mx-auto px-4 sm:px-6 text-center">
+          <div className="w-[32px] h-px bg-border mx-auto mb-5" />
+          <h3 className="text-13 font-bold text-text mb-3">Support reqit</h3>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="https://github.com/sponsors/HalxDocs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors w-full sm:w-auto justify-center"
+            >
+              <HugeiconsIcon icon={GithubIcon} size={14} color="currentColor" />
+              GitHub Sponsors
+              <span className="font-normal opacity-70">· International</span>
+            </a>
+            <a
+              href="https://myhappr.xyz/halxdocs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-text bg-card border border-border hover:border-blue/40 rounded-lg transition-colors w-full sm:w-auto justify-center"
+            >
+              <HugeiconsIcon icon={StarIcon} size={14} color="currentColor" />
+              myhappr.xyz
+              <span className="font-normal opacity-70">· Africa</span>
+            </a>
+          </div>
+        </section>
+
         {/* Footer */}
-        <footer className="flex flex-col items-center gap-2 pb-4">
+        <footer className="flex flex-col items-center gap-2 pb-6 pt-6">
           <div className="w-[32px] h-px bg-border" />
           <p className="text-11 text-subtext text-center">
             Built by{" "}
