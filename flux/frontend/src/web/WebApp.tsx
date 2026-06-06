@@ -97,58 +97,51 @@ const FEATURES = [
   { icon: PowerSocketIcon, title: "OpenAPI export", desc: "Export any collection as OpenAPI 3.0.3 spec or preview as Swagger UI." },
 ];
 
+const SCREENSHOTS = [
+  { src: "/screenshot-main.png", alt: "reqit main interface" },
+  { src: "/screenshot-collections.png", alt: "reqit collections view" },
+  { src: "/screenshot-socket.png", alt: "reqit WebSocket client" },
+];
+
 function AppMockup() {
+  const [idx, setIdx] = useState(0);
+  const len = SCREENSHOTS.length;
+
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % len), 4000);
+    return () => clearInterval(t);
+  }, [len]);
+
   return (
-    <div className="relative w-full max-w-[500px] mx-auto">
-      {/* Browser window frame */}
+    <div className="relative w-full max-w-[640px] mx-auto">
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl shadow-black/30">
-        {/* Title bar */}
         <div className="flex items-center gap-1.5 px-3 h-[32px] bg-card border-b border-border">
           <div className="w-[8px] h-[8px] rounded-full bg-danger/70" />
           <div className="w-[8px] h-[8px] rounded-full bg-warn/70" />
           <div className="w-[8px] h-[8px] rounded-full bg-teal/70" />
           <div className="ml-3 text-[10px] text-subtext/50 font-mono">reqit — API Client</div>
         </div>
-        {/* Content */}
-        <div className="p-3 flex flex-col gap-2">
-          {/* URL bar */}
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1 px-2 h-[24px] bg-bg border border-border rounded text-[9px] text-blue font-mono">
-              <span className="font-bold">GET</span>
-            </div>
-            <div className="flex-1 h-[24px] px-2 bg-bg border border-border rounded text-[9px] text-subtext font-mono flex items-center">
-              https://api.example.com/users
-            </div>
-            <div className="w-[24px] h-[24px] bg-blue rounded flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-            </div>
-          </div>
-          {/* Panels */}
-          <div className="flex gap-2">
-            <div className="flex-1 space-y-1.5">
-              <div className="flex gap-1">
-                <div className="flex-1 h-[20px] bg-card border border-border rounded text-[8px] text-subtext/40 font-mono flex items-center px-1.5">Headers</div>
-                <div className="flex-1 h-[20px] bg-card border border-border rounded text-[8px] text-subtext/40 font-mono flex items-center px-1.5">Body</div>
-              </div>
-              <div className="h-[40px] bg-card border border-border rounded p-1.5">
-                <div className="h-[12px] bg-border/30 rounded w-2/3 mb-1" />
-                <div className="h-[12px] bg-border/30 rounded w-1/2" />
-              </div>
-            </div>
-            <div className="flex-1 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <div className="text-[8px] text-teal font-bold font-mono">200 OK</div>
-                <div className="text-[7px] text-subtext/40 font-mono">127ms</div>
-              </div>
-              <div className="h-[40px] bg-card border border-border rounded p-1.5">
-                <div className="h-[12px] bg-border/30 rounded w-full mb-1" />
-                <div className="h-[12px] bg-border/30 rounded w-3/4" />
-              </div>
-            </div>
-          </div>
+        <div className="relative bg-bg">
+          {SCREENSHOTS.map((s, i) => (
+            <img
+              key={s.src}
+              src={s.src}
+              alt={s.alt}
+              className={`w-full h-auto block transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0 absolute inset-0"}`}
+            />
+          ))}
         </div>
       </div>
-      {/* Glow effect */}
+      <div className="flex items-center justify-center gap-2 mt-3">
+        {SCREENSHOTS.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setIdx(i)}
+            className={`w-[7px] h-[7px] rounded-full transition-all ${i === idx ? "bg-blue w-[18px]" : "bg-border hover:bg-subtext/50"}`}
+          />
+        ))}
+      </div>
       <div className="absolute -inset-4 bg-blue/10 blur-3xl -z-10 rounded-full" />
     </div>
   );
@@ -263,6 +256,29 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
                 <div className="text-13 font-semibold text-text mb-0.5">{f.title}</div>
                 <div className="text-11 text-subtext leading-relaxed">{f.desc}</div>
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Screenshot gallery */}
+      <section>
+        <div className="text-center mb-6">
+          <p className="text-[10px] font-semibold text-blue uppercase tracking-[0.14em] mb-2">Gallery</p>
+          <h2
+            className="text-22 sm:text-26 font-bold text-text"
+            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+          >
+            See it in action
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {SCREENSHOTS.map((s) => (
+            <div
+              key={s.src}
+              className="bg-surface border border-border rounded-xl overflow-hidden hover:border-blue/30 transition-all group"
+            >
+              <img src={s.src} alt={s.alt} className="w-full h-auto block group-hover:scale-[1.02] transition-transform duration-500" />
             </div>
           ))}
         </div>
