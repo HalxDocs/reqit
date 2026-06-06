@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
-  ChevronDown, ChevronRight, Copy, Download,
+  ChevronDown, ChevronRight, Copy, Download, Eye,
   FileCode2, MoreVertical, Pencil, Plus, Trash2, Unlink,
 } from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
@@ -14,6 +14,7 @@ import { downloadText, safeFilename } from "../../lib/download";
 import { toast } from "../../stores/useToastStore";
 import {
   ExportOpenAPI,
+  PreviewOpenAPI,
   GetActiveWorkspace,
   LinkCollectionSpec,
   InvalidateSpec,
@@ -239,6 +240,14 @@ export function CollectionsTree() {
                     toast.error(String(e));
                   }
                 }}
+                onPreviewOpenAPI={async () => {
+                  try {
+                    await PreviewOpenAPI(c.id);
+                    toast.success(`Opened API docs in browser for "${c.name}"`);
+                  } catch (e) {
+                    toast.error(String(e));
+                  }
+                }}
                 onLinkSpec={() => handleLinkSpec(c.id)}
                 onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                 onRun={c.requests.length > 0 ? () => openRunner(c.id) : undefined}
@@ -340,6 +349,7 @@ function CollectionMenu({
   onRename,
   onExport,
   onExportOpenAPI,
+  onPreviewOpenAPI,
   onLinkSpec,
   onUnlinkSpec,
   onDelete,
@@ -350,6 +360,7 @@ function CollectionMenu({
   onRename: () => void;
   onExport: () => void;
   onExportOpenAPI?: () => void;
+  onPreviewOpenAPI?: () => void;
   onLinkSpec: () => void;
   onUnlinkSpec: () => void;
   onDelete: () => void;
@@ -394,6 +405,16 @@ function CollectionMenu({
               >
                 <FileCode2 size={12} />
                 Export OpenAPI Spec
+              </button>
+            )}
+            {onPreviewOpenAPI && (
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onPreviewOpenAPI(); }}
+                className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
+              >
+                <Eye size={12} />
+                Preview API Docs
               </button>
             )}
 

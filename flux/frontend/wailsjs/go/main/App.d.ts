@@ -48,6 +48,8 @@ export function DisconnectSocket():Promise<void>;
 
 export function ExportOpenAPI(arg1:string):Promise<string>;
 
+export function ExportOpenAPIFiles(arg1:string):Promise<Record<string, string>>;
+
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
 export function GetActiveWorkspace():Promise<workspaces.Info>;
@@ -95,6 +97,8 @@ export function OpenWorkspaceFromFolder(arg1:string):Promise<workspaces.Info>;
 export function PickFile(arg1:string,arg2:string):Promise<string>;
 
 export function PickFolder(arg1:string):Promise<string>;
+
+export function PreviewOpenAPI(arg1:string):Promise<void>;
 
 export function ReadFileText(arg1:string):Promise<string>;
 

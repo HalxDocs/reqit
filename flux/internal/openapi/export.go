@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -246,6 +248,80 @@ func extractPath(rawURL string) string {
 
 // inferSchemaFromJSON attempts to parse a JSON body and return a schema.
 // Falls back to string schema.
+// ExportToFile writes the OpenAPI spec as JSON and returns the path.
+func ExportToFile(coll models.Collection, dir string) (jsonPath string, err error) {
+	spec, err := Export(coll)
+	if err != nil {
+		return "", err
+	}
+	slug := strings.Map(func(r rune) rune {
+		if r == ' ' || r == '-' {
+			return '_'
+		}
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_' {
+			return -1
+		}
+		return r
+	}, coll.Name)
+	if slug == "" {
+		slug = "openapi"
+	}
+	jsonPath = filepath.Join(dir, slug+".openapi.json")
+	return jsonPath, os.WriteFile(jsonPath, []byte(spec), 0644)
+}
+
+// ExportToHTML generates a self-contained HTML file with Swagger UI
+// that renders the spec inline — open in any browser, no server needed.
+func ExportToHTML(coll models.Collection, dir string) (htmlPath string, err error) {
+	spec, err := Export(coll)
+	if err != nil {
+		return "", err
+	}
+	specJSON, _ := json.Marshal(json.RawMessage(spec))
+
+	html := fmt.Sprintf(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>%s — API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    html { box-sizing: border-box; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      spec: %s,
+      dom_id: "#swagger-ui",
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis],
+    });
+  </script>
+</body>
+</html>`, coll.Name, string(specJSON))
+
+	slug := strings.Map(func(r rune) rune {
+		if r == ' ' || r == '-' {
+			return '_'
+		}
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_' {
+			return -1
+		}
+		return r
+	}, coll.Name)
+	if slug == "" {
+		slug = "openapi"
+	}
+	htmlPath = filepath.Join(dir, slug+".openapi.html")
+	return htmlPath, os.WriteFile(htmlPath, []byte(html), 0644)
+}
+
 func inferSchemaFromJSON(body string) *openapi3.Schema {
 	var v any
 	if err := json.Unmarshal([]byte(body), &v); err != nil {

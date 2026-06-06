@@ -78,6 +78,10 @@ export function ExportOpenAPI(arg1) {
   return window['go']['main']['App']['ExportOpenAPI'](arg1);
 }
 
+export function ExportOpenAPIFiles(arg1) {
+  return window['go']['main']['App']['ExportOpenAPIFiles'](arg1);
+}
+
 export function GetActiveContributors() {
   return window['go']['main']['App']['GetActiveContributors']();
 }
@@ -172,6 +176,10 @@ export function PickFile(arg1, arg2) {
 
 export function PickFolder(arg1) {
   return window['go']['main']['App']['PickFolder'](arg1);
+}
+
+export function PreviewOpenAPI(arg1) {
+  return window['go']['main']['App']['PreviewOpenAPI'](arg1);
 }
 
 export function ReadFileText(arg1) {

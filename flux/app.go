@@ -125,6 +125,62 @@ func (a *App) ExportOpenAPI(collectionID string) (string, error) {
 	return "", fmt.Errorf("collection not found: %s", collectionID)
 }
 
+// PreviewOpenAPI exports the spec as HTML and opens it in the default browser.
+func (a *App) PreviewOpenAPI(collectionID string) error {
+	if a.collections == nil {
+		return fmt.Errorf("no active workspace")
+	}
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return fmt.Errorf("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return err
+	}
+	for _, c := range all {
+		if c.ID == collectionID {
+			htmlPath, hErr := openapi.ExportToHTML(c, dir)
+			if hErr != nil {
+				return hErr
+			}
+			runtime.BrowserOpenURL(a.ctx, "file:///"+strings.ReplaceAll(htmlPath, "\\", "/"))
+			return nil
+		}
+	}
+	return fmt.Errorf("collection not found: %s", collectionID)
+}
+
+// ExportOpenAPIFiles writes both the JSON spec and a self-contained HTML page
+// (Swagger UI embedded) to the workspace directory and returns their paths.
+func (a *App) ExportOpenAPIFiles(collectionID string) (map[string]string, error) {
+	if a.collections == nil {
+		return nil, fmt.Errorf("no active workspace")
+	}
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return nil, fmt.Errorf("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range all {
+		if c.ID == collectionID {
+			jsonPath, jErr := openapi.ExportToFile(c, dir)
+			if jErr != nil {
+				return nil, jErr
+			}
+			htmlPath, hErr := openapi.ExportToHTML(c, dir)
+			if hErr != nil {
+				return nil, hErr
+			}
+			return map[string]string{"json": jsonPath, "html": htmlPath}, nil
+		}
+	}
+	return nil, fmt.Errorf("collection not found: %s", collectionID)
+}
+
 // --- WebSocket / SSE ---
 
 func (a *App) ConnectSocket(url, protocol string) error {
