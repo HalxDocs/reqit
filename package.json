@@ -3,9 +3,6 @@
   "private": true,
   "scripts": {
     "postinstall": "cd flux/frontend && npm install && npm run build:web && cp -r dist-web/* ../../ && cp dist-web/web.html ../../index.html && rm -rf node_modules",
-    "start": "serve -s -l 3000"
-  },
-  "dependencies": {
-    "serve": "^14.2.4"
+    "start": "node serve.js"
   }
 }
