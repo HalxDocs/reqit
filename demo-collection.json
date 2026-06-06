@@ -1,0 +1,27 @@
+{
+  "name": "Demo API",
+  "requests": [
+    {
+      "name": "Get JSONPlaceholder post",
+      "payload": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "headers": [],
+        "params": [],
+        "bodyType": "none",
+        "body": ""
+      }
+    },
+    {
+      "name": "Get users",
+      "payload": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/users",
+        "headers": [],
+        "params": [],
+        "bodyType": "none",
+        "body": ""
+      }
+    }
+  ]
+}
