@@ -2,7 +2,7 @@
   "name": "reqit-web",
   "private": true,
   "scripts": {
-    "postinstall": "cd flux/frontend && npm install && npm run build:web && rm -rf node_modules",
+    "postinstall": "cd flux/frontend && npm install && npm run build:web && cp -r dist-web/* ../../ && cp dist-web/web.html ../../index.html && rm -rf node_modules",
     "start": "serve -s -l 3000"
   },
   "dependencies": {
