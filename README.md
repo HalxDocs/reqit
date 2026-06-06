@@ -215,6 +215,17 @@ See [DOCS.md](DOCS.md) for the full user guide.
 
 ---
 
+## Support
+
+If reqit saves you time, consider supporting the project:
+
+| Region | Platform |
+|--------|----------|
+| 🌍 International | [GitHub Sponsors](https://github.com/sponsors/HalxDocs) |
+| 🌍 Africa / Nigeria | [myhappr.xyz](https://myhappr.xyz/halxdocs) |
+
+---
+
 ## Contributing
 
 Issues and pull requests are welcome. Keep PRs focused — one feature or fix per PR.
