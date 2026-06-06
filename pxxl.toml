@@ -1,0 +1,4 @@
+[build]
+context = "flux/frontend"
+command = "npm install && npm run build:web && rm -rf node_modules"
+output_directory = "dist-web"
