@@ -14,7 +14,6 @@ import {
   KeyboardIcon,
   Layers01Icon,
   GithubIcon,
-  StarIcon,
   PlusSignIcon,
   Download02Icon,
   Book01Icon,
@@ -139,7 +138,7 @@ function Kbd({ children }: { children: string }) {
   );
 }
 
-function HomePage({ stars, goToDocs }: { stars: number | null; goToDocs: () => void }) {
+function HomePage({ goToDocs }: { goToDocs: () => void }) {
   return (
     <>
       {/* Hero */}
@@ -183,6 +182,43 @@ function HomePage({ stars, goToDocs }: { stars: number | null; goToDocs: () => v
         <p className="text-11 text-subtext/60">
           Available for Windows · macOS · Linux · Free &amp; open source
         </p>
+      </section>
+
+      {/* Support — prominent top section */}
+      <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+        <div className="text-center sm:text-left shrink-0">
+          <h2
+            className="text-15 font-bold text-text"
+            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+          >
+            Support reqit
+          </h2>
+          <p className="text-12 text-subtext mt-1">Choose your preferred platform</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full sm:w-auto">
+          <a
+            href="https://github.com/sponsors/HalxDocs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 h-[44px] px-5 text-13 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm shadow-blue/20 justify-center"
+          >
+            <HugeiconsIcon icon={GithubIcon} size={16} color="currentColor" />
+            <span>GitHub Sponsors</span>
+            <span className="text-11 font-normal opacity-70 bg-white/15 rounded-md px-2 py-0.5">International</span>
+          </a>
+          <a
+            href="https://myhappr.xyz/halxdocs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 h-[44px] px-5 text-13 font-bold text-text bg-card border border-border hover:bg-surface rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] justify-center"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+            </svg>
+            <span>myhappr.xyz</span>
+            <span className="text-11 font-normal opacity-70 bg-border/50 rounded-md px-2 py-0.5">Africa</span>
+          </a>
+        </div>
       </section>
 
       {/* Steps */}
@@ -298,34 +334,6 @@ function HomePage({ stars, goToDocs }: { stars: number | null; goToDocs: () => v
         </button>
         <p className="text-11 text-subtext/60">Windows · macOS · Linux</p>
       </section>
-
-      {/* Support */}
-      <section className="text-center">
-        <div className="w-[32px] h-px bg-border mx-auto mb-5" />
-        <h3 className="text-13 font-bold text-text mb-3">Support reqit</h3>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-[400px] mx-auto">
-          <a
-            href="https://github.com/sponsors/HalxDocs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 h-[38px] px-5 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors w-full sm:w-auto justify-center"
-          >
-            <HugeiconsIcon icon={GithubIcon} size={14} color="currentColor" />
-            GitHub Sponsors
-            <span className="font-normal opacity-70 ml-1">· International</span>
-          </a>
-          <a
-            href="https://myhappr.xyz/halxdocs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 h-[38px] px-5 text-12 font-bold text-text bg-card border border-border hover:border-blue/40 rounded-lg transition-colors w-full sm:w-auto justify-center"
-          >
-            <HugeiconsIcon icon={StarIcon} size={14} color="currentColor" />
-            myhappr.xyz
-            <span className="font-normal opacity-70 ml-1">· Africa</span>
-          </a>
-        </div>
-      </section>
     </>
   );
 }
@@ -433,17 +441,20 @@ export function WebApp() {
         <div className="max-w-[860px] mx-auto px-4 sm:px-6 h-[56px] flex items-center justify-between">
           <img src={reqitLogo} alt="reqit" className="h-[28px] sm:h-[32px] w-auto object-contain" />
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => open(GITHUB_URL)}
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
             >
               <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
-              <HugeiconsIcon icon={StarIcon} size={11} color="#f0a500" strokeWidth={2} />
-              <span className="font-mono text-11 min-w-[24px] text-center">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="font-mono text-11 min-w-[22px] text-center tabular-nums">
                 {stars === null ? "—" : fmtStars(stars)}
               </span>
-            </button>
+            </a>
             <button
               type="button"
               onClick={() => setPage("docs")}
@@ -466,7 +477,7 @@ export function WebApp() {
 
       <main className="max-w-[860px] mx-auto px-4 sm:px-6 py-10 sm:py-16 flex flex-col gap-14 sm:gap-20">
         {page === "home" ? (
-          <HomePage stars={stars} goToDocs={() => setPage("docs")} />
+          <HomePage goToDocs={() => setPage("docs")} />
         ) : (
           <DocsPage goHome={() => setPage("home")} />
         )}
