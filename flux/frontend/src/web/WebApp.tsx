@@ -466,7 +466,7 @@ export function WebApp() {
             <button
               type="button"
               onClick={download}
-              className="flex items-center gap-1.5 h-[32px] px-3 sm:px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors"
+              className="hidden sm:flex items-center gap-1.5 h-[32px] px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors"
             >
               <HugeiconsIcon icon={Download02Icon} size={13} color="currentColor" />
               <span>Download</span>
