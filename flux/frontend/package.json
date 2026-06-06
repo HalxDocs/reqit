@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:web": "tsc --noEmit && vite build --mode web",
-    "start": "node -e \"process.exit(0)\"",
     "preview": "vite preview",
     "preview:web": "vite preview --mode web --outDir dist-web"
   },
