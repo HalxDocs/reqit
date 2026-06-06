@@ -18,6 +18,7 @@ import {
   PlusSignIcon,
   Download02Icon,
   Book01Icon,
+  ArrowLeft01Icon,
 } from "@hugeicons/core-free-icons";
 import { DOC_SECTIONS } from "../lib/docs";
 import reqitLogo from "../assets/images/reqitloo.jpeg";
@@ -138,7 +139,291 @@ function Kbd({ children }: { children: string }) {
   );
 }
 
+function HomePage({ stars, goToDocs }: { stars: number | null; goToDocs: () => void }) {
+  return (
+    <>
+      {/* Hero */}
+      <section className="flex flex-col items-center text-center gap-5 sm:gap-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue/10 border border-blue/20 rounded-full text-[10px] text-blue font-semibold tracking-[0.12em] uppercase">
+          Local-first · No account · No telemetry
+        </div>
+
+        <h1
+          className="text-[38px] sm:text-48 font-bold text-text leading-[1.08] tracking-[-0.03em] max-w-[580px]"
+          style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+        >
+          The API client built for{" "}
+          <span className="text-blue">speed</span>.
+        </h1>
+
+        <p className="text-13 sm:text-15 text-subtext max-w-[400px] sm:max-w-[460px] leading-relaxed">
+          Fast, open, and beautifully minimal. Your collections live as plain JSON —
+          commit them, sync them, share them however you like.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button
+            type="button"
+            onClick={download}
+            className="flex items-center gap-3 h-[46px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
+          >
+            <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
+            <span>{OS_LABEL[getOS()]}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => open(GITHUB_URL)}
+            className="flex items-center gap-2 h-[46px] px-5 text-13 text-subtext bg-card border border-border rounded-xl hover:border-blue/40 hover:text-text transition-all"
+          >
+            <HugeiconsIcon icon={GithubIcon} size={15} color="currentColor" />
+            <span>View on GitHub</span>
+          </button>
+        </div>
+
+        <p className="text-11 text-subtext/60">
+          Available for Windows · macOS · Linux · Free &amp; open source
+        </p>
+      </section>
+
+      {/* Steps */}
+      <section className="flex flex-col gap-4 sm:gap-5">
+        <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em] text-center">
+          Get started in 30 seconds
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {STEPS.map((s) => (
+            <div
+              key={s.number}
+              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4 hover:border-blue/30 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-[36px] h-[36px] rounded-xl bg-blue/10 flex items-center justify-center">
+                  <HugeiconsIcon icon={s.icon} size={17} color="#3B82F6" strokeWidth={1.5} />
+                </div>
+                <span
+                  className="text-22 font-bold tabular-nums"
+                  style={{ color: "#2a2a2a", fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+                >
+                  {s.number}
+                </span>
+              </div>
+              <div>
+                <div className="text-13 font-semibold text-text mb-1">{s.title}</div>
+                <div className="text-12 text-subtext leading-relaxed">{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="flex flex-col gap-4 sm:gap-5">
+        <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em] text-center">
+          Everything you need, nothing you don't
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {FEATURES.map((f) => (
+            <div
+              key={f.title}
+              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2.5 hover:border-blue/30 transition-colors"
+            >
+              <HugeiconsIcon icon={f.icon} size={16} color="#3B82F6" strokeWidth={1.5} />
+              <div>
+                <div className="text-12 font-semibold text-text">{f.title}</div>
+                <div className="text-11 text-subtext mt-0.5 leading-relaxed">{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Sync callout */}
+      <section className="bg-card border border-border rounded-2xl p-5 flex items-start gap-4">
+        <div className="w-[40px] h-[40px] rounded-xl bg-teal/10 flex items-center justify-center shrink-0">
+          <HugeiconsIcon icon={Layers01Icon} size={20} color="#06B6D4" strokeWidth={1.5} />
+        </div>
+        <div>
+          <div className="text-13 font-semibold text-text mb-1">
+            Sync to any device — no account needed
+          </div>
+          <div className="text-12 text-subtext leading-relaxed">
+            Each workspace is just a folder. Drop it into Dropbox, OneDrive, or Google Drive
+            and it syncs automatically. On your second device, open reqit → "Open folder" →
+            pick the synced folder. Done. No login, no subscription, no data sent anywhere.
+          </div>
+        </div>
+      </section>
+
+      {/* Keyboard shortcuts */}
+      <section className="flex flex-col gap-4 sm:gap-5">
+        <div className="flex items-center gap-2">
+          <HugeiconsIcon icon={KeyboardIcon} size={14} color="#888888" strokeWidth={1.5} />
+          <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em]">
+            Keyboard shortcuts
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
+          {SHORTCUTS.map((s) => (
+            <div
+              key={s.desc}
+              className="flex items-center gap-3 py-2.5 border-b border-border/50"
+            >
+              <div className="flex items-center gap-1 shrink-0">
+                {s.keys.map((k) => <Kbd key={k}>{k}</Kbd>)}
+              </div>
+              <span className="text-12 text-subtext">{s.desc}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Download CTA */}
+      <section className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center gap-5">
+        <h2
+          className="text-22 font-bold text-text"
+          style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+        >
+          Ready to try reqit?
+        </h2>
+        <p className="text-13 text-subtext max-w-[380px] leading-relaxed">
+          Free, open source, and always will be. No account needed — just download and run.
+        </p>
+        <button
+          type="button"
+          onClick={download}
+          className="flex items-center gap-3 h-[46px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
+        >
+          <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
+          {OS_LABEL[getOS()]}
+        </button>
+        <p className="text-11 text-subtext/60">Windows · macOS · Linux</p>
+      </section>
+
+      {/* Support */}
+      <section className="text-center">
+        <div className="w-[32px] h-px bg-border mx-auto mb-5" />
+        <h3 className="text-13 font-bold text-text mb-3">Support reqit</h3>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-[400px] mx-auto">
+          <a
+            href="https://github.com/sponsors/HalxDocs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 h-[38px] px-5 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors w-full sm:w-auto justify-center"
+          >
+            <HugeiconsIcon icon={GithubIcon} size={14} color="currentColor" />
+            GitHub Sponsors
+            <span className="font-normal opacity-70 ml-1">· International</span>
+          </a>
+          <a
+            href="https://myhappr.xyz/halxdocs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 h-[38px] px-5 text-12 font-bold text-text bg-card border border-border hover:border-blue/40 rounded-lg transition-colors w-full sm:w-auto justify-center"
+          >
+            <HugeiconsIcon icon={StarIcon} size={14} color="currentColor" />
+            myhappr.xyz
+            <span className="font-normal opacity-70 ml-1">· Africa</span>
+          </a>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function DocsPage({ goHome }: { goHome: () => void }) {
+  return (
+    <>
+      {/* Docs header */}
+      <div className="flex items-center justify-between mb-2">
+        <button
+          type="button"
+          onClick={goHome}
+          className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-blue/40 transition-all"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={13} color="currentColor" />
+          <span>Back</span>
+        </button>
+      </div>
+
+      {/* Documentation */}
+      <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={Book01Icon} size={18} color="#3B82F6" strokeWidth={1.5} />
+            <h2
+              className="text-22 sm:text-26 font-bold text-text tracking-tight"
+              style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+            >
+              Documentation
+            </h2>
+          </div>
+          <p className="text-13 text-subtext max-w-[480px] leading-relaxed">
+            Every feature in reqit — what it does, how it works, and why it's there.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {DOC_SECTIONS.map((s) => (
+            <a
+              key={s.id}
+              href={`#docs-${s.id}`}
+              className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-blue/40 hover:text-text text-subtext transition-all"
+            >
+              {s.title}
+            </a>
+          ))}
+        </div>
+
+        {DOC_SECTIONS.map((section) => (
+          <section key={section.id} id={`docs-${section.id}`} className="flex flex-col gap-5 scroll-mt-20">
+            <div className="flex items-center gap-3 pb-3 border-b border-border">
+              <div>
+                <div
+                  className="text-15 font-bold text-text leading-tight"
+                  style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+                >
+                  {section.title}
+                </div>
+                <div className="text-11 text-subtext mt-0.5">{section.subtitle}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {section.features.map((f) => (
+                <div
+                  key={f.name}
+                  className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-blue/20 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-[6px] h-[6px] rounded-full bg-blue shrink-0" />
+                    <span className="text-12 font-semibold text-text">{f.name}</span>
+                  </div>
+                  <p className="text-11 text-subtext leading-relaxed pl-[14px]">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <footer className="flex flex-col items-center gap-2 pt-4 pb-4 border-t border-border">
+          <p className="text-11 text-subtext text-center">
+            Missing something?{" "}
+            <button
+              type="button"
+              onClick={() => open("https://github.com/HalxDocs/reqit/issues")}
+              className="text-blue hover:underline"
+            >
+              Open an issue on GitHub
+            </button>
+          </p>
+        </footer>
+      </section>
+    </>
+  );
+}
+
 export function WebApp() {
+  const [page, setPage] = useState<"home" | "docs">("home");
   const stars = useGitHubStars("HalxDocs/reqit");
 
   return (
@@ -161,11 +446,8 @@ export function WebApp() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                const el = document.getElementById("docs");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+              onClick={() => setPage("docs")}
+              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
             >
               <HugeiconsIcon icon={Book01Icon} size={13} color="currentColor" />
               <span>Docs</span>
@@ -183,265 +465,11 @@ export function WebApp() {
       </header>
 
       <main className="max-w-[860px] mx-auto px-4 sm:px-6 py-10 sm:py-16 flex flex-col gap-14 sm:gap-20">
-
-        {/* Hero */}
-        <section className="flex flex-col items-center text-center gap-5 sm:gap-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue/10 border border-blue/20 rounded-full text-[10px] text-blue font-semibold tracking-[0.12em] uppercase">
-            Local-first · No account · No telemetry
-          </div>
-
-          <h1
-            className="text-[38px] sm:text-48 font-bold text-text leading-[1.08] tracking-[-0.03em] max-w-[580px]"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
-          >
-            The API client built for{" "}
-            <span className="text-blue">speed</span>.
-          </h1>
-
-          <p className="text-13 sm:text-15 text-subtext max-w-[400px] sm:max-w-[460px] leading-relaxed">
-            Fast, open, and beautifully minimal. Your collections live as plain JSON —
-            commit them, sync them, share them however you like.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <button
-              type="button"
-              onClick={download}
-              className="flex items-center gap-3 h-[46px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
-            >
-              <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
-              <span>{OS_LABEL[getOS()]}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => open(GITHUB_URL)}
-              className="flex items-center gap-2 h-[46px] px-5 text-13 text-subtext bg-card border border-border rounded-xl hover:border-blue/40 hover:text-text transition-all"
-            >
-              <HugeiconsIcon icon={GithubIcon} size={15} color="currentColor" />
-              <span>View on GitHub</span>
-            </button>
-          </div>
-
-          <p className="text-11 text-subtext/60">
-            Available for Windows · macOS · Linux · Free &amp; open source
-          </p>
-        </section>
-
-        {/* Steps */}
-        <section className="flex flex-col gap-4 sm:gap-5">
-          <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em] text-center">
-            Get started in 30 seconds
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {STEPS.map((s) => (
-              <div
-                key={s.number}
-                className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4 hover:border-blue/30 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="w-[36px] h-[36px] rounded-xl bg-blue/10 flex items-center justify-center">
-                    <HugeiconsIcon icon={s.icon} size={17} color="#3B82F6" strokeWidth={1.5} />
-                  </div>
-                  <span
-                    className="text-22 font-bold tabular-nums"
-                    style={{ color: "#2a2a2a", fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
-                  >
-                    {s.number}
-                  </span>
-                </div>
-                <div>
-                  <div className="text-13 font-semibold text-text mb-1">{s.title}</div>
-                  <div className="text-12 text-subtext leading-relaxed">{s.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="flex flex-col gap-4 sm:gap-5">
-          <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em] text-center">
-            Everything you need, nothing you don't
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {FEATURES.map((f) => (
-              <div
-                key={f.title}
-                className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2.5 hover:border-blue/30 transition-colors"
-              >
-                <HugeiconsIcon icon={f.icon} size={16} color="#3B82F6" strokeWidth={1.5} />
-                <div>
-                  <div className="text-12 font-semibold text-text">{f.title}</div>
-                  <div className="text-11 text-subtext mt-0.5 leading-relaxed">{f.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Sync callout */}
-        <section className="bg-card border border-border rounded-2xl p-5 flex items-start gap-4">
-          <div className="w-[40px] h-[40px] rounded-xl bg-teal/10 flex items-center justify-center shrink-0">
-            <HugeiconsIcon icon={Layers01Icon} size={20} color="#06B6D4" strokeWidth={1.5} />
-          </div>
-          <div>
-            <div className="text-13 font-semibold text-text mb-1">
-              Sync to any device — no account needed
-            </div>
-            <div className="text-12 text-subtext leading-relaxed">
-              Each workspace is just a folder. Drop it into Dropbox, OneDrive, or Google Drive
-              and it syncs automatically. On your second device, open reqit → "Open folder" →
-              pick the synced folder. Done. No login, no subscription, no data sent anywhere.
-            </div>
-          </div>
-        </section>
-
-        {/* Keyboard shortcuts */}
-        <section className="flex flex-col gap-4 sm:gap-5">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={KeyboardIcon} size={14} color="#888888" strokeWidth={1.5} />
-            <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em]">
-              Keyboard shortcuts
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
-            {SHORTCUTS.map((s) => (
-              <div
-                key={s.desc}
-                className="flex items-center gap-3 py-2.5 border-b border-border/50"
-              >
-                <div className="flex items-center gap-1 shrink-0">
-                  {s.keys.map((k) => <Kbd key={k}>{k}</Kbd>)}
-                </div>
-                <span className="text-12 text-subtext">{s.desc}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Documentation */}
-        <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={Book01Icon} size={18} color="#3B82F6" strokeWidth={1.5} />
-              <h2
-                className="text-22 sm:text-26 font-bold text-text tracking-tight"
-                style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
-              >
-                Documentation
-              </h2>
-            </div>
-            <p className="text-13 text-subtext max-w-[480px] leading-relaxed">
-              Every feature in reqit — what it does, how it works, and why it's there.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {DOC_SECTIONS.map((s) => (
-              <a
-                key={s.id}
-                href={`#docs-${s.id}`}
-                className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-blue/40 hover:text-text text-subtext transition-all"
-              >
-                {s.title}
-              </a>
-            ))}
-          </div>
-
-          {DOC_SECTIONS.map((section) => (
-            <section key={section.id} id={`docs-${section.id}`} className="flex flex-col gap-5 scroll-mt-20">
-              <div className="flex items-center gap-3 pb-3 border-b border-border">
-                <div>
-                  <div
-                    className="text-15 font-bold text-text leading-tight"
-                    style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
-                  >
-                    {section.title}
-                  </div>
-                  <div className="text-11 text-subtext mt-0.5">{section.subtitle}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {section.features.map((f) => (
-                  <div
-                    key={f.name}
-                    className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-blue/20 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-[6px] h-[6px] rounded-full bg-blue shrink-0" />
-                      <span className="text-12 font-semibold text-text">{f.name}</span>
-                    </div>
-                    <p className="text-11 text-subtext leading-relaxed pl-[14px]">{f.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-
-          <footer className="flex flex-col items-center gap-2 pt-4 pb-4 border-t border-border">
-            <p className="text-11 text-subtext text-center">
-              Missing something?{" "}
-              <button
-                type="button"
-                onClick={() => open("https://github.com/HalxDocs/reqit/issues")}
-                className="text-blue hover:underline"
-              >
-                Open an issue on GitHub
-              </button>
-            </p>
-          </footer>
-        </section>
-
-        {/* Download CTA */}
-        <section className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center gap-5">
-          <h2
-            className="text-22 font-bold text-text"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
-          >
-            Ready to try reqit?
-          </h2>
-          <p className="text-13 text-subtext max-w-[380px] leading-relaxed">
-            Free, open source, and always will be. No account needed — just download and run.
-          </p>
-          <button
-            type="button"
-            onClick={download}
-            className="flex items-center gap-3 h-[46px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
-          >
-            <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
-            {OS_LABEL[getOS()]}
-          </button>
-          <p className="text-11 text-subtext/60">Windows · macOS · Linux</p>
-        </section>
-
-        {/* Support */}
-        <section className="max-w-[480px] mx-auto px-4 sm:px-6 text-center">
-          <div className="w-[32px] h-px bg-border mx-auto mb-5" />
-          <h3 className="text-13 font-bold text-text mb-3">Support reqit</h3>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="https://github.com/sponsors/HalxDocs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors w-full sm:w-auto justify-center"
-            >
-              <HugeiconsIcon icon={GithubIcon} size={14} color="currentColor" />
-              GitHub Sponsors
-              <span className="font-normal opacity-70">· International</span>
-            </a>
-            <a
-              href="https://myhappr.xyz/halxdocs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-text bg-card border border-border hover:border-blue/40 rounded-lg transition-colors w-full sm:w-auto justify-center"
-            >
-              <HugeiconsIcon icon={StarIcon} size={14} color="currentColor" />
-              myhappr.xyz
-              <span className="font-normal opacity-70">· Africa</span>
-            </a>
-          </div>
-        </section>
+        {page === "home" ? (
+          <HomePage stars={stars} goToDocs={() => setPage("docs")} />
+        ) : (
+          <DocsPage goHome={() => setPage("home")} />
+        )}
 
         {/* Footer */}
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">
