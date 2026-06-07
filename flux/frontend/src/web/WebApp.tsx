@@ -160,12 +160,12 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             className="text-[36px] sm:text-44 lg:text-52 font-bold text-text leading-[1.06] tracking-[-0.03em] max-w-[600px]"
             style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
           >
-            The API client that puts you{" "}
-            <span className="text-blue">in control</span>.
+            A native desktop app for{" "}
+            <span className="text-blue">testing APIs</span>.
           </h1>
           <p className="text-14 sm:text-16 text-subtext max-w-[440px] leading-relaxed">
-            Fast, native, and completely offline. Your collections are plain JSON files you own — 
-            commit them to git, sync them to any device, and never worry about lock-in.
+            A lighter, faster alternative to Postman and Insomnia. No Electron, no cloud account, 
+            no telemetry. Send requests, view responses, manage collections — all offline, all yours.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-3 mt-1">
             <button

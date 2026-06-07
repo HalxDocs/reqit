@@ -3,7 +3,7 @@
 </p>
 
 <h3 align="center">reqit</h3>
-<p align="center">A fast, local-first API client. No Electron. No cloud account. No telemetry.</p>
+<p align="center">A native desktop app for testing APIs — lighter and faster than Postman or Insomnia. No Electron. No cloud account. No telemetry.</p>
 
 <p align="center">
   <a href="https://github.com/HalxDocs/reqit/releases/latest"><img src="https://img.shields.io/github/v/release/HalxDocs/reqit?style=flat-square&label=latest" alt="Latest release" /></a>
@@ -11,6 +11,12 @@
   <a href="https://github.com/HalxDocs/reqit/stargazers"><img src="https://img.shields.io/github/stars/HalxDocs/reqit?style=flat-square" alt="Stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/HalxDocs/reqit?style=flat-square" alt="License" /></a>
 </p>
+
+---
+
+## What is this?
+
+reqit replaces Postman, Insomnia, or Bruno — but runs as a real native desktop app (Go + React, not Electron). Point it at any HTTP API, WebSocket, or SSE endpoint, send requests, inspect responses, and organize everything into collections that live as plain JSON files on your machine. No signup, no cloud, no data leaves your computer unless you send a request.
 
 ---
 
