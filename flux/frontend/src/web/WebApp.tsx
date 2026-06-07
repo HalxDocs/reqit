@@ -147,6 +147,177 @@ function AppMockup() {
   );
 }
 
+const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+
+const DEMO_URL = "https://jsonplaceholder.typicode.com/todos/1";
+
+function ApiPlayground() {
+  const [method, setMethod] = useState<"GET" | "POST" | "PUT" | "PATCH" | "DELETE">("GET");
+  const [url, setUrl] = useState(DEMO_URL);
+  const [sending, setSending] = useState(false);
+  const [res, setRes] = useState<{ status: number; statusText: string; time: number; headers: Record<string, string>; body: string } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+
+  async function send() {
+    const t0 = performance.now();
+    setSending(true);
+    setErr(null);
+    setRes(null);
+    try {
+      const r = await fetch(url, { method });
+      const t1 = performance.now();
+      const headers: Record<string, string> = {};
+      r.headers.forEach((v, k) => { headers[k] = v; });
+      const body = r.headers.get("content-type")?.includes("json")
+        ? JSON.stringify(await r.json(), null, 2)
+        : await r.text();
+      setRes({ status: r.status, statusText: r.statusText, time: Math.round(t1 - t0), headers, body });
+    } catch (e) {
+      setErr(e instanceof TypeError ? "CORS blocked or unreachable — try the desktop app for unrestricted access." : String(e));
+    }
+    setSending(false);
+  }
+
+  const methodColors: Record<string, string> = {
+    GET: "text-teal border-teal/30 bg-teal/5",
+    POST: "text-blue border-blue/30 bg-blue/5",
+    PUT: "text-warn border-warn/30 bg-warn/5",
+    PATCH: "text-accent border-accent/30 bg-accent/5",
+    DELETE: "text-danger border-danger/30 bg-danger/5",
+  };
+
+  return (
+    <div className="max-w-[780px] mx-auto">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl shadow-black/20">
+        {/* Title bar */}
+        <div className="flex items-center gap-1.5 px-3 h-[28px] bg-card border-b border-border">
+          <div className="w-[7px] h-[7px] rounded-full bg-danger/70" />
+          <div className="w-[7px] h-[7px] rounded-full bg-warn/70" />
+          <div className="w-[7px] h-[7px] rounded-full bg-teal/70" />
+          <span className="ml-2 text-[9px] text-subtext/50 font-mono">reqit playground</span>
+        </div>
+
+        {/* Input row */}
+        <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2">
+          {/* Method dropdown */}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowPicker(!showPicker)}
+              className={`h-[38px] px-3 text-11 font-bold font-mono rounded-lg border transition-all ${methodColors[method]} flex items-center gap-1.5`}
+            >
+              {method}
+              <svg className={`w-3 h-3 transition-transform ${showPicker ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </button>
+            {showPicker && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />
+                <div className="absolute top-full left-0 mt-1 z-20 bg-card border border-border rounded-lg overflow-hidden shadow-xl min-w-[110px]">
+                  {METHODS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => { setMethod(m); setShowPicker(false); }}
+                      className={`block w-full text-left px-3 py-[7px] text-11 font-mono font-bold hover:bg-surface transition-colors ${m === method ? "bg-surface" : ""} ${methodColors[m].split(" ")[0]}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* URL input */}
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder="https://api.example.com/endpoint"
+            className="flex-1 h-[38px] px-3 bg-bg border border-border rounded-lg text-12 text-text font-mono placeholder:text-subtext/30 outline-none focus:border-blue/50 transition-colors min-w-0"
+          />
+
+          {/* Send button */}
+          <button
+            type="button"
+            onClick={send}
+            disabled={sending || !url.trim()}
+            className="h-[38px] shrink-0 px-4 sm:px-5 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+          >
+            {sending ? (
+              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" className="opacity-30" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeDashoffset="10" strokeLinecap="round" /></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+            )}
+            <span className="hidden sm:inline">{sending ? "Sending..." : "Send"}</span>
+          </button>
+        </div>
+
+        {/* Response */}
+        {(res || err || sending) && (
+          <div className="border-t border-border">
+            {sending && (
+              <div className="p-6 flex items-center justify-center gap-2 text-12 text-subtext">
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" className="opacity-30" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeDashoffset="10" strokeLinecap="round" /></svg>
+                Sending request...
+              </div>
+            )}
+
+            {err && (
+              <div className="p-4 text-12 text-danger font-mono leading-relaxed break-all">{err}</div>
+            )}
+
+            {res && !sending && (
+              <>
+                {/* Status bar */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-card border-b border-border">
+                  <span className={`text-11 font-bold font-mono ${res.status < 300 ? "text-teal" : res.status < 500 ? "text-warn" : "text-danger"}`}>
+                    {res.status} {res.statusText}
+                  </span>
+                  <span className="text-10 text-subtext/50 font-mono">{res.time}ms</span>
+                  <span className="text-10 text-subtext/30 hidden sm:block">·</span>
+                  <span className="text-10 text-subtext/50 font-mono hidden sm:inline">{(res.body.length / 1024).toFixed(1)} KB</span>
+                </div>
+
+                {/* Headers toggle */}
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-[6px] w-full text-10 text-subtext/60 hover:text-subtext bg-bg/50 border-b border-border transition-colors text-left"
+                >
+                  <svg className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                  Response headers ({Object.keys(res.headers).length})
+                </button>
+                {expanded && (
+                  <div className="px-3 sm:px-4 py-2 bg-bg/30 border-b border-border max-h-[160px] overflow-y-auto text-10 font-mono text-subtext/60 space-y-0.5">
+                    {Object.entries(res.headers).map(([k, v]) => (
+                      <div key={k}><span className="text-subtext/80">{k}:</span> {v}</div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Body */}
+                <div className="max-h-[320px] sm:max-h-[420px] overflow-auto">
+                  <pre className="p-3 sm:p-4 text-11 sm:text-12 font-mono text-text leading-relaxed whitespace-pre-wrap break-all">{res.body}</pre>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p className="text-10 text-subtext/40 text-center mt-2">
+        Some APIs block browser CORS. The {" "}
+        <button type="button" onClick={download} className="text-blue hover:underline">desktop app</button>
+        {" "}handles this transparently.
+      </p>
+    </div>
+  );
+}
+
 function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | null }) {
   return (
     <>
@@ -230,6 +401,23 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             <span className="text-11 font-normal opacity-70 bg-border/50 rounded px-1.5 py-0.5">Africa</span>
           </a>
         </div>
+      </section>
+
+      {/* Live API Playground */}
+      <section>
+        <div className="text-center mb-6">
+          <p className="text-[10px] font-semibold text-blue uppercase tracking-[0.14em] mb-2">Try it live</p>
+          <h2
+            className="text-22 sm:text-26 font-bold text-text"
+            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+          >
+            Send a real request, right here
+          </h2>
+          <p className="text-13 text-subtext mt-2 max-w-[480px] mx-auto leading-relaxed">
+            No download needed. No account. Just paste a URL and hit send.
+          </p>
+        </div>
+        <ApiPlayground />
       </section>
 
       {/* Features */}
