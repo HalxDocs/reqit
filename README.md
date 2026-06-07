@@ -16,7 +16,7 @@
 
 ## What is this?
 
-reqit replaces Postman, Insomnia, or Bruno — but runs as a real native desktop app (Go + React, not Electron). Point it at any HTTP API, WebSocket, or SSE endpoint, send requests, inspect responses, and organize everything into collections that live as plain JSON files on your machine. No signup, no cloud, no data leaves your computer unless you send a request.
+reqit replaces Postman, Insomnia, or Bruno — but runs as a real native desktop app (Go + Wails, not Electron). Point it at any HTTP API, WebSocket, or SSE endpoint, send requests, inspect responses, and organize everything into collections that live as plain JSON files on your machine. No signup, no cloud, no data leaves your computer unless you send a request.
 
 ---
 
