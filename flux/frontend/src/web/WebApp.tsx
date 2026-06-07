@@ -200,7 +200,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           <span>GitHub stars</span>
         </div>
         <div className="text-12 text-subtext/40 hidden sm:block">·</div>
-        <div className="text-12 text-subtext">Built with Go + React</div>
+        <div className="text-12 text-subtext">Built with Go + Wails</div>
         <div className="text-12 text-subtext/40 hidden sm:block">·</div>
         <div className="text-12 text-subtext">MIT licensed</div>
       </div>
