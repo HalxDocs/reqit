@@ -13,13 +13,13 @@ const config: Config = {
         border: "#26262C",
         // Plasma cyan accent
         cyan: {
-          DEFAULT: "#06B6D4",
-          hover: "#22D3EE",
-          dim: "#0891B2",
+          DEFAULT: "#0891B2",
+          hover: "#06B6D4",
+          dim: "#0E7490",
         },
         // Method colors
         get: "#5B9CF6",
-        post: "#06B6D4",
+        post: "#0891B2",
         put: "#F59E0B",
         patch: "#C084FC",
         del: "#F87171",
@@ -65,7 +65,7 @@ const config: Config = {
         lg: '12px',
       },
       ringColor: {
-        DEFAULT: '#06B6D4',
+        DEFAULT: '#0891B2',
       },
     },
   },

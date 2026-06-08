@@ -154,7 +154,7 @@ const DOC_SECTIONS = [
   {
     id: "request-builder",
     icon: ArrowDataTransferHorizontalIcon,
-    color: "#06B6D4",
+    color: "#0891B2",
     title: "Request Builder",
     subtitle: "Compose any HTTP request",
     features: [
@@ -251,7 +251,7 @@ const DOC_SECTIONS = [
   {
     id: "codegen",
     icon: CodeIcon,
-    color: "#06B6D4",
+    color: "#0891B2",
     title: "Code Generation",
     subtitle: "Copy-paste ready snippets",
     features: [
@@ -660,8 +660,8 @@ function LandingView({
 
       {/* Sync callout */}
       <section className="bg-card border border-border rounded-2xl p-5 flex items-start gap-4">
-        <div className="w-[40px] h-[40px] rounded-xl bg-teal/10 flex items-center justify-center shrink-0">
-          <HugeiconsIcon icon={Layers01Icon} size={20} color="#06B6D4" strokeWidth={1.5} />
+        <div className="w-[40px] h-[40px] rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
+          <HugeiconsIcon icon={Layers01Icon} size={20} color="#0891B2" strokeWidth={1.5} />
         </div>
         <div>
           <div className="text-13 font-semibold text-text mb-1">
