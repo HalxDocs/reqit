@@ -12,6 +12,8 @@ export interface WirePayload {
   authType: string;
   authValue: string;
   specPath?: string;
+  graphqlQuery: string;
+  graphqlVariables: string;
 }
 
 const stripId = (kv: KeyValue) => ({
@@ -44,6 +46,8 @@ export function buildPayload(s: RequestState): WirePayload {
     bodyForm: s.bodyForm.map((kv) => resolveKV(kv, resolve)),
     authType: s.authType,
     authValue,
+    graphqlQuery: s.bodyType === "graphql" ? resolve(s.graphqlQuery) : "",
+    graphqlVariables: s.bodyType === "graphql" ? resolve(s.graphqlVariables) : "",
   };
 }
 
@@ -66,5 +70,7 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     bodyForm: s.bodyForm.map(stripId),
     authType: s.authType,
     authValue,
+    graphqlQuery: s.bodyType === "graphql" ? s.graphqlQuery : "",
+    graphqlVariables: s.bodyType === "graphql" ? s.graphqlVariables : "",
   };
 }

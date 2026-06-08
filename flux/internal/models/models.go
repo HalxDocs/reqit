@@ -11,12 +11,14 @@ type RequestPayload struct {
 	URL       string   `json:"url"`
 	Headers   []Header `json:"headers"`
 	Params    []Header `json:"params"`
-	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"
+	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"|"graphql"
 	Body      string   `json:"body"`
 	BodyForm  []Header `json:"bodyForm"`  // for form / urlencoded modes
 	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"
 	AuthValue string   `json:"authValue"` // token or "user:pass"
 	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
+	GraphQLQuery     string `json:"graphqlQuery"`
+	GraphQLVariables string `json:"graphqlVariables"`
 }
 
 type CookieSummary struct {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -154,6 +155,16 @@ func buildBody(p models.RequestPayload) (io.Reader, string, error) {
 			return nil, "application/json", nil
 		}
 		return strings.NewReader(p.Body), "application/json", nil
+	case "graphql":
+		var buf strings.Builder
+		buf.WriteString(`{"query":`)
+		buf.WriteString(strconv.Quote(p.GraphQLQuery))
+		if p.GraphQLVariables != "" {
+			buf.WriteString(`,"variables":`)
+			buf.WriteString(p.GraphQLVariables)
+		}
+		buf.WriteString("}")
+		return strings.NewReader(buf.String()), "application/json", nil
 	case "urlencoded":
 		values := url.Values{}
 		for _, kv := range p.BodyForm {
@@ -164,8 +175,6 @@ func buildBody(p models.RequestPayload) (io.Reader, string, error) {
 		}
 		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded", nil
 	case "form":
-		// Phase 1: serialise multipart/form-data fields as urlencoded fallback.
-		// Real multipart with file uploads is a Phase 2 concern.
 		values := url.Values{}
 		for _, kv := range p.BodyForm {
 			if !kv.Enabled || kv.Key == "" {

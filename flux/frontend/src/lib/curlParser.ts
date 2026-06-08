@@ -276,6 +276,8 @@ export function parseCurl(input: string): RequestState {
           },
           emptyRow(),
         ],
+    graphqlQuery: "",
+    graphqlVariables: "",
     bodyType: out.bodyType,
     bodyRaw: out.bodyType === "json" ? out.body : "",
     bodyForm: out.bodyForm.length ? out.bodyForm : [emptyRow()],

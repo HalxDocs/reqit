@@ -17,7 +17,7 @@ export interface KeyValue {
   enabled: boolean;
 }
 
-export type BodyType = "none" | "json" | "form" | "urlencoded";
+export type BodyType = "none" | "json" | "form" | "urlencoded" | "graphql";
 export type AuthType = "none" | "bearer" | "basic" | "apikey";
 export type ApiKeyIn = "header" | "query";
 
@@ -38,6 +38,8 @@ export interface RequestState {
   authKeyIn: ApiKeyIn;
   preSetVars: PreSetVar[];
   extractRules: ExtractRule[];
+  graphqlQuery: string;
+  graphqlVariables: string;
 }
 
 export interface CookieSummary {

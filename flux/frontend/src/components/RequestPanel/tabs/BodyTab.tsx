@@ -4,11 +4,13 @@ import { useRequestStore } from "../../../stores/useRequestStore";
 import { cn } from "../../../lib/cn";
 import { KeyValueEditor } from "../../shared/KeyValueEditor";
 import { JsonEditor } from "../../shared/JsonEditor";
+import { GraphqlEditor } from "../../shared/GraphqlEditor";
 import type { BodyType } from "../../../types/request";
 
 const MODES: { id: BodyType; label: string }[] = [
   { id: "none", label: "None" },
   { id: "json", label: "Raw JSON" },
+  { id: "graphql", label: "GraphQL" },
   { id: "form", label: "form-data" },
   { id: "urlencoded", label: "x-www-form-urlencoded" },
 ];
@@ -33,6 +35,10 @@ export function BodyTab() {
   const addBodyForm = useRequestStore((s) => s.addBodyForm);
   const updateBodyForm = useRequestStore((s) => s.updateBodyForm);
   const removeBodyForm = useRequestStore((s) => s.removeBodyForm);
+  const graphqlQuery = useRequestStore((s) => s.graphqlQuery);
+  const setGraphqlQuery = useRequestStore((s) => s.setGraphqlQuery);
+  const graphqlVariables = useRequestStore((s) => s.graphqlVariables);
+  const setGraphqlVariables = useRequestStore((s) => s.setGraphqlVariables);
 
   const validity = useMemo(() => validateJson(bodyRaw), [bodyRaw]);
 
@@ -106,6 +112,36 @@ export function BodyTab() {
             />
           </div>
         </>
+      )}
+
+      {bodyType === "graphql" && (
+        <div className="flex flex-col h-full">
+          <div className="flex-1 min-h-0 flex flex-col sm:flex-row gap-0 sm:gap-0">
+            <div className="flex-1 min-h-0 flex flex-col border-b sm:border-b-0 sm:border-r border-border">
+              <div className="px-3 py-[6px] text-[10px] font-semibold text-subtext uppercase tracking-wider bg-card/50 border-b border-border">
+                Query
+              </div>
+              <div className="flex-1 min-h-0">
+                <GraphqlEditor
+                  value={graphqlQuery}
+                  onChange={setGraphqlQuery}
+                />
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="px-3 py-[6px] text-[10px] font-semibold text-subtext uppercase tracking-wider bg-card/50 border-b border-border">
+                Variables (JSON)
+              </div>
+              <div className="flex-1 min-h-0">
+                <JsonEditor
+                  value={graphqlVariables}
+                  onChange={setGraphqlVariables}
+                  placeholder='{ "key": "value" }'
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {(bodyType === "form" || bodyType === "urlencoded") && (

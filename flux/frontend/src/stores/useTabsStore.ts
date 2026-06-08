@@ -37,6 +37,8 @@ const emptyRequest = (): RequestState => ({
   authKeyIn: "header",
   preSetVars: [{ id: uid("sv"), key: "", value: "" }],
   extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
+  graphqlQuery: "",
+  graphqlVariables: "",
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -68,6 +70,8 @@ const pickRequestState = (): RequestState => {
     authKeyIn: s.authKeyIn,
     preSetVars: s.preSetVars,
     extractRules: s.extractRules,
+    graphqlQuery: s.graphqlQuery,
+    graphqlVariables: s.graphqlVariables,
   };
 };
 

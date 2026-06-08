@@ -37,6 +37,8 @@ const initialState: RequestState = {
   authKeyIn: "header",
   preSetVars: [{ id: uid("sv"), key: "", value: "" }],
   extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
+  graphqlQuery: "",
+  graphqlVariables: "",
 };
 
 type RequestStore = RequestState & {
@@ -72,6 +74,9 @@ type RequestStore = RequestState & {
   addExtractRule: () => void;
   updateExtractRule: (id: string, patch: Partial<ExtractRule>) => void;
   removeExtractRule: (id: string) => void;
+
+  setGraphqlQuery: (q: string) => void;
+  setGraphqlVariables: (v: string) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -123,6 +128,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setAuthKeyValue: (authKeyValue) => set({ authKeyValue }),
   setAuthKeyIn: (authKeyIn) => set({ authKeyIn }),
 
+  setGraphqlQuery: (graphqlQuery) => set({ graphqlQuery }),
+  setGraphqlVariables: (graphqlVariables) => set({ graphqlVariables }),
+
   addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
   updatePreSetVar: (id, patch) =>
     set((s) => ({ preSetVars: s.preSetVars.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
@@ -160,6 +168,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
       authKeyIn: "header",
       preSetVars: [{ id: uid("sv"), key: "", value: "" }],
       extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
+      graphqlQuery: "",
+      graphqlVariables: "",
     }),
 
   loadState: (s) => set({ ...s }),

@@ -26,6 +26,8 @@ interface WirePayload {
   bodyForm?: WireKV[];
   authType?: string;
   authValue?: string;
+  graphqlQuery?: string;
+  graphqlVariables?: string;
 }
 
 const VALID_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
@@ -102,6 +104,8 @@ export function decodePayload(
     authKeyName,
     authKeyValue,
     authKeyIn,
+    graphqlQuery: bodyType === "graphql" ? p.graphqlQuery ?? "" : "",
+    graphqlVariables: bodyType === "graphql" ? p.graphqlVariables ?? "" : "",
     preSetVars: extras?.preSetVars?.length ? extras.preSetVars : [{ id: uid("sv"), key: "", value: "" }],
     extractRules: extras?.extractRules?.length ? extras.extractRules : [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   };
