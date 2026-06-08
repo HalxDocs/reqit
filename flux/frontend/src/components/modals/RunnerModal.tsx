@@ -116,7 +116,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                         placeholder="200"
                         value={a.statusCode || ""}
                         onChange={(e) => updateAssertion(req.id, { statusCode: e.target.value ? parseInt(e.target.value) : 0 })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
+                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
                       />
                     </div>
                     <div className="flex flex-col gap-1">
@@ -126,7 +126,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                         placeholder="3000"
                         value={a.maxTimingMs || ""}
                         onChange={(e) => updateAssertion(req.id, { maxTimingMs: e.target.value ? parseInt(e.target.value) : 0 })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
+                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
                       />
                     </div>
                     <div className="flex flex-col gap-1">
@@ -136,7 +136,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                         placeholder='"ok"'
                         value={a.bodyContains}
                         onChange={(e) => updateAssertion(req.id, { bodyContains: e.target.value })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-blue"
+                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
                       />
                     </div>
                   </div>
@@ -160,7 +160,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
               type="button"
               onClick={handleRun}
               disabled={running}
-              className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+              className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
             >
               {running ? "Running…" : "Run"}
             </button>

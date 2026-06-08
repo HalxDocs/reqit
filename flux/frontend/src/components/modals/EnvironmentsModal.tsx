@@ -120,7 +120,7 @@ export function EnvironmentsModal() {
             type="button"
             onClick={handleCreate}
             disabled={busy}
-            className="flex items-center gap-2 h-[28px] px-2 mb-2 text-12 text-subtext hover:text-blue transition-colors"
+            className="flex items-center gap-2 h-[28px] px-2 mb-2 text-12 text-subtext hover:text-cyan transition-colors"
           >
             <Plus size={12} />
             <span>New</span>
@@ -139,7 +139,7 @@ export function EnvironmentsModal() {
                 className={cn(
                   "text-left px-2 py-1.5 rounded-sm text-12 transition-colors truncate",
                   env.id === selectedID
-                    ? "bg-blue/15 text-blue"
+                    ? "bg-cyan/15 text-cyan"
                     : "text-text hover:bg-cardHover",
                 )}
               >
@@ -162,7 +162,7 @@ export function EnvironmentsModal() {
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 placeholder="Environment name"
-                className="h-[32px] px-2 mb-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+                className="h-[32px] px-2 mb-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
               />
 
               <div className="flex-1 border border-border rounded-md overflow-hidden bg-surface">
@@ -219,7 +219,7 @@ export function EnvironmentsModal() {
                     type="button"
                     onClick={handleSave}
                     disabled={busy}
-                    className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+                    className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
                   >
                     {busy ? "Saving…" : "Save"}
                   </button>

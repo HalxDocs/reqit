@@ -26,7 +26,7 @@ export function StatusBar() {
   if (isLoading) {
     return (
       <div className="h-[40px] px-4 border-b border-border flex items-center gap-4 text-12">
-        <span className="text-blue font-bold">Sending…</span>
+        <span className="text-cyan font-bold">Sending…</span>
         <span className="text-subtext font-mono">{formatTiming(elapsed)}</span>
       </div>
     );

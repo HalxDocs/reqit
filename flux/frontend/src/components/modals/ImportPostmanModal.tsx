@@ -91,7 +91,7 @@ export function ImportPostmanModal() {
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           >
             {collections.map((c) => (
               <option key={c.id} value={c.id}>
@@ -112,7 +112,7 @@ export function ImportPostmanModal() {
               onChange={(e) => setNewCollName(e.target.value)}
               spellCheck={false}
               placeholder="e.g. Imported APIs"
-              className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+              className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
             />
           </div>
         )}
@@ -136,7 +136,7 @@ export function ImportPostmanModal() {
             type="button"
             onClick={handleImport}
             disabled={busy}
-            className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+            className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
           >
             {busy ? "Importing…" : "Import"}
           </button>

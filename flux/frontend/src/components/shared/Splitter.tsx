@@ -45,11 +45,11 @@ export function Splitter({ onResize, className }: Props) {
       }}
       className={cn(
         "group relative w-[6px] shrink-0 cursor-col-resize select-none",
-        "bg-transparent hover:bg-blue/20 transition-colors",
+        "bg-transparent hover:bg-cyan/20 transition-colors",
         className,
       )}
     >
-      <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-blue transition-colors" />
+      <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-cyan transition-colors" />
     </div>
   );
 }

@@ -62,13 +62,13 @@ export function CaptureVarMenu({ open, value, x, y, onClose }: Props) {
             onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onClose(); }}
             placeholder="Variable name"
             spellCheck={false}
-            className="flex-1 h-[32px] px-2 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="flex-1 h-[32px] px-2 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           />
           <button
             type="button"
             onClick={handleSave}
             disabled={busy || !name.trim()}
-            className="h-[32px] px-3 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+            className="h-[32px] px-3 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
           >
             Save
           </button>

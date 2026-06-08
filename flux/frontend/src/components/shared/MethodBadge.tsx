@@ -2,11 +2,11 @@ import { cn } from "../../lib/cn";
 import type { HttpMethod } from "../../types/request";
 
 const STYLES: Record<string, string> = {
-  GET: "bg-teal text-black",
-  POST: "bg-blue text-white",
-  PUT: "bg-warn text-black",
-  PATCH: "bg-blue text-white",
-  DELETE: "bg-danger text-white",
+  GET: "bg-get text-black",
+  POST: "bg-post text-black",
+  PUT: "bg-put text-black",
+  PATCH: "bg-patch text-black",
+  DELETE: "bg-del text-white",
   HEAD: "bg-border text-subtext",
   OPTIONS: "bg-border text-subtext",
 };

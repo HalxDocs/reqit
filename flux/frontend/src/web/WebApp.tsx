@@ -438,7 +438,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
               className="group bg-card border border-border rounded-xl p-4 flex items-start gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all"
             >
               <div className="w-[36px] h-[36px] rounded-lg bg-cyan/10 flex items-center justify-center shrink-0 group-hover:bg-cyan/20 transition-colors">
-                <HugeiconsIcon icon={f.icon} size={16} color="#22D3EE" strokeWidth={1.5} />
+                <HugeiconsIcon icon={f.icon} size={16} color="#06B6D4" strokeWidth={1.5} />
               </div>
               <div className="min-w-0">
                 <div className="text-13 font-semibold text-text mb-0.5">{f.title}</div>
@@ -518,7 +518,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
       <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Book01Icon} size={18} color="#22D3EE" strokeWidth={1.5} />
+            <HugeiconsIcon icon={Book01Icon} size={18} color="#06B6D4" strokeWidth={1.5} />
             <h2
               className="text-22 sm:text-26 font-bold text-text tracking-tight"
               style={{ fontFamily: 'Syne, system-ui, sans-serif' }}

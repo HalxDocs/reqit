@@ -17,7 +17,7 @@ export function SearchBar() {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search collections, history…"
         spellCheck={false}
-        className="w-full h-[28px] pl-7 pr-7 bg-bg border border-border rounded-md text-12 text-text placeholder:text-subtext outline-none focus:border-blue focus:ring-2 focus:ring-blue transition-colors"
+        className="w-full h-[28px] pl-7 pr-7 bg-bg border border-border rounded-md text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
       />
       {value && (
         <button

@@ -75,7 +75,7 @@ export default function App() {
   if (screen === "loading") {
     return (
       <div className="h-screen w-screen bg-bg flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-blue border-t-transparent animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-cyan border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -108,7 +108,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
     <div className="h-screen w-screen flex bg-bg text-text">
       {/* Mobile: show a "use desktop" message instead of the full app UI */}
       <div className="md:hidden fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center gap-5 p-8 text-center">
-        <div className="w-[64px] h-[64px] rounded-2xl bg-blue/10 flex items-center justify-center">
+        <div className="w-[64px] h-[64px] rounded-2xl bg-cyan/10 flex items-center justify-center">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
           </svg>
@@ -124,7 +124,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <button
           type="button"
           onClick={onGoHome}
-          className="flex items-center gap-2 h-[38px] px-5 text-13 font-semibold text-blue bg-blue/10 border border-blue/20 rounded-xl hover:bg-blue/15 transition-colors"
+          className="flex items-center gap-2 h-[38px] px-5 text-13 font-semibold text-cyan bg-cyan/10 border border-cyan/20 rounded-xl hover:bg-cyan/15 transition-colors"
         >
           ← Back to home
         </button>

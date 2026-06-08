@@ -51,7 +51,7 @@ export function WelcomeModal() {
             autoFocus
             spellCheck={false}
             placeholder="Kamsy"
-            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           />
         </Field>
 
@@ -63,7 +63,7 @@ export function WelcomeModal() {
             spellCheck={false}
             autoComplete="off"
             placeholder="kamsy@example.com"
-            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           />
         </Field>
 
@@ -79,7 +79,7 @@ export function WelcomeModal() {
             type="button"
             onClick={handleSave}
             disabled={busy}
-            className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+            className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
           >
             {busy ? "Saving…" : "Get started"}
           </button>

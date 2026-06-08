@@ -100,12 +100,12 @@ export function CookiesView({ currentDomain }: Props) {
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className={`text-11 font-semibold font-mono truncate flex-1 ${
-                    domain === currentDomain ? "text-blue" : "text-subtext"
+                    domain === currentDomain ? "text-cyan" : "text-subtext"
                   }`}
                 >
                   {domain}
                   {domain === currentDomain && (
-                    <span className="ml-2 text-10 font-normal text-blue/60 normal-case tracking-normal">
+                    <span className="ml-2 text-10 font-normal text-cyan/60 normal-case tracking-normal">
                       current
                     </span>
                   )}
@@ -134,7 +134,7 @@ export function CookiesView({ currentDomain }: Props) {
                           <span className="text-10 bg-subtext/10 text-subtext px-1.5 rounded">HttpOnly</span>
                         )}
                         {c.secure && (
-                          <span className="text-10 bg-blue/10 text-blue px-1.5 rounded">Secure</span>
+                          <span className="text-10 bg-cyan/10 text-cyan px-1.5 rounded">Secure</span>
                         )}
                       </div>
                       <div className="text-11 text-subtext font-mono mt-0.5 break-all">

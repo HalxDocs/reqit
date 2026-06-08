@@ -27,7 +27,7 @@ export function Tabs<T extends string>({
           >
             {tab.label}
             {isActive && (
-              <span className="absolute left-3 right-3 -bottom-px h-[2px] bg-blue rounded-full" />
+              <span className="absolute left-3 right-3 -bottom-px h-[2px] bg-cyan rounded-full" />
             )}
           </button>
         );

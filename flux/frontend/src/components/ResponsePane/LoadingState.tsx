@@ -15,7 +15,7 @@ export function LoadingState() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 text-subtext">
-      <Loader2 size={28} className="text-blue animate-spin" />
+      <Loader2 size={28} className="text-cyan animate-spin" />
       <div className="text-12 font-mono">{formatTiming(elapsed)}</div>
     </div>
   );

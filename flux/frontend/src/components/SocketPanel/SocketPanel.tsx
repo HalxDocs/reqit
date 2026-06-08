@@ -83,7 +83,7 @@ export function SocketPanel() {
               className={cn(
                 "h-[28px] px-2.5 text-11 rounded-md font-semibold transition-all",
                 proto === p.id
-                  ? "bg-blue text-white"
+                  ? "bg-cyan text-white"
                   : "text-subtext hover:text-text bg-surface border border-border",
               )}
             >
@@ -105,7 +105,7 @@ export function SocketPanel() {
           }
           disabled={isConnected}
           spellCheck={false}
-          className="flex-1 h-[32px] px-3 bg-bg border border-border rounded-md text-12 text-text outline-none focus:border-blue transition-colors disabled:opacity-50"
+          className="flex-1 h-[32px] px-3 bg-bg border border-border rounded-md text-12 text-text outline-none focus:border-cyan transition-colors disabled:opacity-50"
         />
 
         {/* Connect / Disconnect button */}
@@ -117,7 +117,7 @@ export function SocketPanel() {
             "h-[32px] px-4 text-12 font-bold rounded-md transition-all shrink-0 flex items-center gap-1.5",
             isConnected
               ? "bg-danger hover:bg-danger/80 text-white"
-              : "bg-blue hover:bg-blue-hover text-white disabled:opacity-60",
+              : "bg-cyan hover:bg-cyan-hover text-white disabled:opacity-60",
           )}
         >
           {isBusy ? (
@@ -179,13 +179,13 @@ export function SocketPanel() {
                 key={i}
                 className={cn(
                   "px-4 py-2.5 flex items-start gap-3 hover:bg-card/30 transition-colors",
-                  msg.direction === "sent" && "bg-blue/5",
+                  msg.direction === "sent" && "bg-cyan/5",
                 )}
               >
                 <span
                   className={cn(
                     "shrink-0 text-10 font-mono font-bold uppercase tracking-wider mt-0.5 w-[60px]",
-                    msg.direction === "sent" ? "text-blue" : "text-green",
+                    msg.direction === "sent" ? "text-cyan" : "text-green",
                   )}
                 >
                   {msg.direction === "sent" ? "SENT" : "RECV"}
@@ -214,13 +214,13 @@ export function SocketPanel() {
           placeholder={canSend ? "Type a message…" : "Connect to send messages"}
           disabled={!canSend}
           spellCheck={false}
-          className="flex-1 h-[36px] px-3 bg-bg border border-border rounded-md text-12 text-text outline-none focus:border-blue transition-colors disabled:opacity-40"
+          className="flex-1 h-[36px] px-3 bg-bg border border-border rounded-md text-12 text-text outline-none focus:border-cyan transition-colors disabled:opacity-40"
         />
         <button
           type="button"
           onClick={handleSend}
           disabled={!canSend || !inputMsg.trim()}
-          className="h-[36px] w-[36px] flex items-center justify-center bg-blue hover:bg-blue-hover text-white rounded-md disabled:opacity-40 transition-all shrink-0"
+          className="h-[36px] w-[36px] flex items-center justify-center bg-cyan hover:bg-cyan-hover text-white rounded-md disabled:opacity-40 transition-all shrink-0"
           title="Send"
         >
           <Send size={14} />

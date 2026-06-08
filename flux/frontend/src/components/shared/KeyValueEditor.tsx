@@ -87,7 +87,7 @@ export function KeyValueEditor({
       <button
         type="button"
         onClick={onAdd}
-        className="flex items-center gap-2 px-3 py-2 text-12 text-subtext hover:text-blue transition-colors w-fit"
+        className="flex items-center gap-2 px-3 py-2 text-12 text-subtext hover:text-cyan transition-colors w-fit"
       >
         <Plus size={12} />
         <span>Add row</span>

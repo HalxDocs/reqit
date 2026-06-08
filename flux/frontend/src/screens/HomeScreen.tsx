@@ -370,7 +370,7 @@ function WorkspaceCard({
       type="button"
       onClick={() => !busy && onOpen(ws.id)}
       disabled={busy}
-      className="group text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-blue/50 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue disabled:opacity-60"
+      className="group text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-cyan/50 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan disabled:opacity-60"
     >
       <div className="h-1.5 w-full" style={{ backgroundColor: ws.color || "#3B82F6" }} />
       <div className="p-5 flex flex-col gap-4">
@@ -464,7 +464,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
           <button
             type="button"
             onClick={() => openExternal(GITHUB_URL)}
-            className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+            className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
             title="Star on GitHub"
           >
             <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
@@ -476,7 +476,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
           <button
             type="button"
             onClick={() => setView("docs")}
-            className="hidden sm:flex items-center gap-2 h-[32px] px-3 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+            className="hidden sm:flex items-center gap-2 h-[32px] px-3 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
           >
             <HugeiconsIcon icon={Book01Icon} size={13} color="currentColor" />
             <span>Docs</span>
@@ -484,7 +484,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
           <button
             type="button"
             onClick={handleOpenFolder}
-            className="hidden sm:flex items-center gap-2 h-[32px] px-3 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+            className="hidden sm:flex items-center gap-2 h-[32px] px-3 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
           >
             <HugeiconsIcon icon={FolderOpenIcon} size={13} color="currentColor" />
             <span>Open folder</span>
@@ -492,7 +492,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 h-[32px] px-3 sm:px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 h-[32px] px-3 sm:px-4 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-lg transition-colors"
           >
             <HugeiconsIcon icon={PlusSignIcon} size={13} color="currentColor" />
             <span className="hidden sm:inline">New workspace</span>
@@ -553,14 +553,14 @@ function LandingView({
       {/* Hero */}
       <section className="flex flex-col items-center text-center gap-5 sm:gap-6">
         <div className="flex items-center gap-3 flex-wrap justify-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue/10 border border-blue/20 rounded-full text-[10px] text-blue font-semibold tracking-[0.12em] uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan/10 border border-cyan/20 rounded-full text-[10px] text-cyan font-semibold tracking-[0.12em] uppercase">
             Local-first · No account · No telemetry
           </div>
           {/* GitHub badge */}
           <button
             type="button"
             onClick={() => openExternal(GITHUB_URL)}
-            className="sm:hidden inline-flex items-center gap-1.5 px-2.5 py-1 bg-card border border-border rounded-full text-[10px] text-subtext hover:text-text hover:border-blue/40 transition-all"
+            className="sm:hidden inline-flex items-center gap-1.5 px-2.5 py-1 bg-card border border-border rounded-full text-[10px] text-subtext hover:text-text hover:border-cyan/40 transition-all"
           >
             <HugeiconsIcon icon={GithubIcon} size={11} color="currentColor" />
             <HugeiconsIcon icon={StarIcon} size={10} color="#f0a500" strokeWidth={2} />
@@ -573,7 +573,7 @@ function LandingView({
           style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
         >
           The API client built for{" "}
-          <span className="text-blue">speed</span>.
+          <span className="text-cyan">speed</span>.
         </h1>
 
         <p className="text-13 sm:text-15 text-subtext max-w-[380px] sm:max-w-[460px] leading-relaxed">
@@ -585,7 +585,7 @@ function LandingView({
           <button
             type="button"
             onClick={onGoToWorkspaces}
-            className="flex items-center gap-3 h-[44px] sm:h-[46px] px-6 sm:px-7 text-13 sm:text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
+            className="flex items-center gap-3 h-[44px] sm:h-[46px] px-6 sm:px-7 text-13 sm:text-14 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
           >
             <span>Open workspaces</span>
             <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" />
@@ -593,7 +593,7 @@ function LandingView({
           <button
             type="button"
             onClick={onGoDocs}
-            className="flex items-center gap-2 h-[44px] sm:h-[46px] px-5 text-13 sm:text-14 font-semibold text-subtext hover:text-text bg-card border border-border hover:border-blue/40 rounded-xl transition-all"
+            className="flex items-center gap-2 h-[44px] sm:h-[46px] px-5 text-13 sm:text-14 font-semibold text-subtext hover:text-text bg-card border border-border hover:border-cyan/40 rounded-xl transition-all"
           >
             <HugeiconsIcon icon={Book01Icon} size={15} color="currentColor" />
             <span>View all features</span>
@@ -615,10 +615,10 @@ function LandingView({
           {STEPS.map((s) => (
             <div
               key={s.number}
-              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4 hover:border-blue/30 transition-colors"
+              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4 hover:border-cyan/30 transition-colors"
             >
               <div className="flex items-center justify-between">
-                <div className="w-[36px] h-[36px] rounded-xl bg-blue/10 flex items-center justify-center">
+                <div className="w-[36px] h-[36px] rounded-xl bg-cyan/10 flex items-center justify-center">
                   <HugeiconsIcon icon={s.icon} size={17} color="#3B82F6" strokeWidth={1.5} />
                 </div>
                 <span
@@ -646,7 +646,7 @@ function LandingView({
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2.5 hover:border-blue/30 transition-colors"
+              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2.5 hover:border-cyan/30 transition-colors"
             >
               <HugeiconsIcon icon={f.icon} size={16} color="#3B82F6" strokeWidth={1.5} />
               <div>
@@ -708,7 +708,7 @@ function LandingView({
           <button
             type="button"
             onClick={() => openExternal(PORTFOLIO_URL)}
-            className="text-text font-semibold hover:text-blue transition-colors"
+            className="text-text font-semibold hover:text-cyan transition-colors"
           >
             HalxDocs
           </button>
@@ -753,7 +753,7 @@ function DocsView() {
           <a
             key={s.id}
             href={`#${s.id}`}
-            className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-blue/40 hover:text-text text-subtext transition-all"
+            className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-cyan/40 hover:text-text text-subtext transition-all"
             style={{ scrollBehavior: "smooth" }}
           >
             <HugeiconsIcon icon={s.icon} size={11} color={s.color} strokeWidth={1.5} />
@@ -789,7 +789,7 @@ function DocsView() {
             {section.features.map((f) => (
               <div
                 key={f.name}
-                className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-blue/20 transition-colors"
+                className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-cyan/20 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -812,7 +812,7 @@ function DocsView() {
           <button
             type="button"
             onClick={() => openExternal("https://github.com/HalxDocs/reqit/issues")}
-            className="text-blue hover:underline"
+            className="text-cyan hover:underline"
           >
             Open an issue on GitHub
           </button>
@@ -837,7 +837,7 @@ function WorkspacesView({
     <div className="max-w-[860px] mx-auto px-4 sm:px-6 py-10">
       {wsList.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-5 text-center">
-          <div className="w-[64px] h-[64px] rounded-2xl bg-blue/10 flex items-center justify-center">
+          <div className="w-[64px] h-[64px] rounded-2xl bg-cyan/10 flex items-center justify-center">
             <HugeiconsIcon icon={FolderLibraryIcon} size={32} color="#3B82F6" strokeWidth={1.5} />
           </div>
           <div>
@@ -854,7 +854,7 @@ function WorkspacesView({
           <button
             type="button"
             onClick={onCreate}
-            className="flex items-center gap-2 h-[40px] px-6 text-13 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-colors"
+            className="flex items-center gap-2 h-[40px] px-6 text-13 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-xl transition-colors"
           >
             <HugeiconsIcon icon={PlusSignIcon} size={15} color="currentColor" />
             Create workspace
@@ -873,7 +873,7 @@ function WorkspacesView({
               <div key={ws.id} className="relative">
                 {switching === ws.id && (
                   <div className="absolute inset-0 z-10 bg-bg/70 rounded-2xl flex items-center justify-center">
-                    <div className="w-5 h-5 rounded-full border-2 border-blue border-t-transparent animate-spin" />
+                    <div className="w-5 h-5 rounded-full border-2 border-cyan border-t-transparent animate-spin" />
                   </div>
                 )}
                 <WorkspaceCard ws={ws} onOpen={onOpen} busy={switching !== null} />

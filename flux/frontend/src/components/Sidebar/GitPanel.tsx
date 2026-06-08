@@ -192,7 +192,7 @@ export function GitPanel() {
             <button
               type="button"
               onClick={() => setShowSetup(true)}
-              className="w-full text-11 text-blue hover:underline text-left py-1"
+              className="w-full text-11 text-cyan hover:underline text-left py-1"
             >
               + Connect a Git remote
             </button>
@@ -202,14 +202,14 @@ export function GitPanel() {
           {showSetup && (
             <div className="flex flex-col gap-1.5">
               <input
-                className="w-full h-[28px] px-2 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-blue/40"
+                className="w-full h-[28px] px-2 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-cyan/40"
                 placeholder="Remote URL (https://github.com/…)"
                 value={setupForm.remoteUrl}
                 onChange={(e) => setSetupForm((f) => ({ ...f, remoteUrl: e.target.value }))}
               />
               <input
                 type="password"
-                className="w-full h-[28px] px-2 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-blue/40"
+                className="w-full h-[28px] px-2 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-cyan/40"
                 placeholder="Personal Access Token (PAT)"
                 value={setupForm.pat}
                 onChange={(e) => setSetupForm((f) => ({ ...f, pat: e.target.value }))}
@@ -219,7 +219,7 @@ export function GitPanel() {
                   type="button"
                   onClick={handleSetup}
                   disabled={loading}
-                  className="flex-1 h-[26px] text-11 font-semibold bg-blue text-white rounded hover:bg-blue-hover transition-colors disabled:opacity-50"
+                  className="flex-1 h-[26px] text-11 font-semibold bg-cyan text-white rounded hover:bg-cyan-hover transition-colors disabled:opacity-50"
                 >
                   {loading ? "…" : "Save"}
                 </button>
@@ -252,7 +252,7 @@ export function GitPanel() {
                   type="button"
                   onClick={handlePull}
                   disabled={loading}
-                  className="ml-auto flex items-center gap-1 h-[22px] px-2 text-11 text-subtext bg-card border border-border rounded hover:border-blue/40 hover:text-blue transition-all disabled:opacity-50"
+                  className="ml-auto flex items-center gap-1 h-[22px] px-2 text-11 text-subtext bg-card border border-border rounded hover:border-cyan/40 hover:text-cyan transition-all disabled:opacity-50"
                   title="Pull"
                 >
                   <RefreshCw size={10} />
@@ -261,7 +261,7 @@ export function GitPanel() {
                 <button
                   type="button"
                   onClick={() => setShowSetup((v) => !v)}
-                  className="h-[22px] w-[22px] flex items-center justify-center text-subtext bg-card border border-border rounded hover:border-blue/40 hover:text-blue transition-all"
+                  className="h-[22px] w-[22px] flex items-center justify-center text-subtext bg-card border border-border rounded hover:border-cyan/40 hover:text-cyan transition-all"
                   title="Edit remote / PAT"
                 >
                   <Settings size={10} />
@@ -276,7 +276,7 @@ export function GitPanel() {
                       key={b}
                       type="button"
                       onClick={() => { void handleSwitchBranch(b); setShowBranches(false); }}
-                      className={`w-full text-left px-2 py-1 text-11 flex items-center gap-1.5 hover:bg-cardHover transition-colors ${b === status.currentBranch ? "text-blue" : "text-text"}`}
+                      className={`w-full text-left px-2 py-1 text-11 flex items-center gap-1.5 hover:bg-cardHover transition-colors ${b === status.currentBranch ? "text-cyan" : "text-text"}`}
                     >
                       <GitBranch size={10} />
                       {b}
@@ -291,7 +291,7 @@ export function GitPanel() {
                       onChange={(e) => setNewBranch(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") void handleCreateBranch(); }}
                     />
-                    <button type="button" onClick={handleCreateBranch} className="text-subtext hover:text-blue">
+                    <button type="button" onClick={handleCreateBranch} className="text-subtext hover:text-cyan">
                       <Plus size={11} />
                     </button>
                   </div>
@@ -300,7 +300,7 @@ export function GitPanel() {
 
               {/* Commit message */}
               <textarea
-                className="w-full h-[52px] px-2 py-1.5 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-blue/40 resize-none leading-relaxed"
+                className="w-full h-[52px] px-2 py-1.5 text-11 bg-card border border-border rounded text-text placeholder:text-subtext/50 outline-none focus:border-cyan/40 resize-none leading-relaxed"
                 placeholder="Commit message…"
                 value={commitMsg}
                 onChange={(e) => setCommitMsg(e.target.value)}
@@ -311,7 +311,7 @@ export function GitPanel() {
                 type="button"
                 onClick={handleCommitPush}
                 disabled={loading || !commitMsg.trim()}
-                className="w-full h-[28px] flex items-center justify-center gap-1.5 text-11 font-semibold bg-blue text-white rounded hover:bg-blue-hover transition-colors disabled:opacity-40"
+                className="w-full h-[28px] flex items-center justify-center gap-1.5 text-11 font-semibold bg-cyan text-white rounded hover:bg-cyan-hover transition-colors disabled:opacity-40"
               >
                 <Upload size={11} />
                 {loading ? "Pushing…" : "Commit & Push"}
@@ -333,7 +333,7 @@ export function GitPanel() {
                     <div key={c.hash} className="flex flex-col gap-0.5 py-1.5 border-b border-border/50 last:border-0">
                       <span className="text-11 text-text truncate">{c.message.split("\n")[0]}</span>
                       <span className="text-10 text-subtext">
-                        {c.author} · <code className="text-blue">{c.hash}</code>
+                        {c.author} · <code className="text-cyan">{c.hash}</code>
                       </span>
                     </div>
                   ))}
@@ -346,13 +346,13 @@ export function GitPanel() {
                   <div className="flex items-center gap-1.5 text-11 text-subtext font-semibold uppercase tracking-wider">
                     <Users size={10} />
                     <span>Active today</span>
-                    <span className="ml-auto bg-blue/15 text-blue text-10 font-bold px-1.5 rounded-full">
+                    <span className="ml-auto bg-cyan/15 text-cyan text-10 font-bold px-1.5 rounded-full">
                       {contributors.length}
                     </span>
                   </div>
                   {contributors.map((c) => (
                     <div key={c.email} className="flex items-center gap-2">
-                      <div className="w-[22px] h-[22px] rounded-full bg-blue/20 flex items-center justify-center text-blue text-10 font-bold shrink-0">
+                      <div className="w-[22px] h-[22px] rounded-full bg-cyan/20 flex items-center justify-center text-cyan text-10 font-bold shrink-0">
                         {initials(c.name)}
                       </div>
                       <div className="flex-1 min-w-0">

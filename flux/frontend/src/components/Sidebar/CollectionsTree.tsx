@@ -144,14 +144,14 @@ export function CollectionsTree() {
               if (e.key === "Escape") { setCreating(false); setNewName(""); }
             }}
             placeholder="Collection name…"
-            className="w-full h-[28px] px-2 bg-surface border border-blue rounded-md text-12 text-text outline-none ring-2 ring-blue"
+            className="w-full h-[28px] px-2 bg-surface border border-cyan rounded-md text-12 text-text outline-none ring-2 ring-cyan"
           />
         </div>
       ) : (
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="mx-3 mb-1 h-[28px] px-2 flex items-center gap-2 text-12 text-subtext hover:text-blue hover:bg-cardHover rounded-md border border-dashed border-border hover:border-blue transition-colors"
+          className="mx-3 mb-1 h-[28px] px-2 flex items-center gap-2 text-12 text-subtext hover:text-cyan hover:bg-cardHover rounded-md border border-dashed border-border hover:border-cyan transition-colors"
         >
           <Plus size={12} />
           <span>New collection</span>
@@ -191,7 +191,7 @@ export function CollectionsTree() {
                     if (e.key === "Enter") handleRename(c.id);
                     if (e.key === "Escape") setRenamingID(null);
                   }}
-                  className="flex-1 h-[20px] px-1 bg-surface border border-blue rounded-sm text-12 text-text outline-none"
+                  className="flex-1 h-[20px] px-1 bg-surface border border-cyan rounded-sm text-12 text-text outline-none"
                 />
               ) : (
                 <button
@@ -207,7 +207,7 @@ export function CollectionsTree() {
               {hasSpec && (
                 <span
                   title={`Contract spec: ${c.spec}`}
-                  className="flex items-center gap-0.5 text-10 text-blue/70 font-mono shrink-0"
+                  className="flex items-center gap-0.5 text-10 text-cyan/70 font-mono shrink-0"
                 >
                   <FileCode2 size={10} />
                 </span>
@@ -279,7 +279,7 @@ export function CollectionsTree() {
                   onClick={() => renamingReqID === req.id ? undefined : loadRequest(req)}
                 >
                   {loadedRequestID === req.id && (
-                    <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-blue" />
+                    <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-cyan" />
                   )}
                   <MethodBadge method={(req.payload.method as HttpMethod) || "GET"} />
                   {renamingReqID === req.id ? (
@@ -295,7 +295,7 @@ export function CollectionsTree() {
                         e.stopPropagation();
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="flex-1 h-[20px] px-1 bg-surface border border-blue rounded-sm text-12 text-text outline-none"
+                      className="flex-1 h-[20px] px-1 bg-surface border border-cyan rounded-sm text-12 text-text outline-none"
                     />
                   ) : (
                     <span className="flex-1 text-12 text-text truncate">{req.name}</span>
@@ -440,7 +440,7 @@ function CollectionMenu({
                   onClick={() => { setOpen(false); onLinkSpec(); }}
                   className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
                 >
-                  <FileCode2 size={12} className="text-blue" />
+                  <FileCode2 size={12} className="text-cyan" />
                   Change Spec
                 </button>
                 <button
@@ -458,7 +458,7 @@ function CollectionMenu({
                 onClick={() => { setOpen(false); onLinkSpec(); }}
                 className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"
               >
-                <FileCode2 size={12} className="text-blue" />
+                <FileCode2 size={12} className="text-cyan" />
                 Link OpenAPI Spec
               </button>
             )}

@@ -48,14 +48,14 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         }}
         spellCheck={false}
         autoComplete="off"
-        className="flex-1 min-w-0 h-[40px] px-3 bg-card border border-border rounded-md font-mono text-13 text-text placeholder:text-subtext outline-none focus:border-blue focus:ring-2 focus:ring-blue transition-colors"
+        className="flex-1 min-w-0 h-[40px] px-3 bg-card border border-border rounded-md font-mono text-13 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
       />
 
       <button
         type="button"
         onClick={openCodeGen}
         title="Generate code (cURL / fetch / Python)"
-        className="h-[36px] w-[36px] flex items-center justify-center bg-card border border-border hover:border-blue rounded-md text-subtext hover:text-text transition-colors"
+        className="h-[36px] w-[36px] flex items-center justify-center bg-card border border-border hover:border-cyan rounded-md text-subtext hover:text-text transition-colors"
         aria-label="Generate code"
       >
         <Code2 size={14} />
@@ -65,7 +65,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         type="button"
         onClick={openSaveModal}
         title="Save request (Ctrl+S)"
-        className="h-[36px] w-[36px] flex items-center justify-center bg-card border border-border hover:border-blue rounded-md text-subtext hover:text-text transition-colors"
+        className="h-[36px] w-[36px] flex items-center justify-center bg-card border border-border hover:border-cyan rounded-md text-subtext hover:text-text transition-colors"
         aria-label="Save request"
       >
         <Save size={14} />
@@ -86,7 +86,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         <button
           type="button"
           onClick={onSend}
-          className="h-[36px] px-4 bg-blue hover:bg-blue-hover active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all"
+          className="h-[36px] px-4 bg-cyan hover:bg-cyan-hover active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all"
         >
           <Send size={14} />
           <span>Send</span>

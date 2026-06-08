@@ -77,7 +77,7 @@ export function CreateWorkspaceModal({
             autoFocus
             spellCheck={false}
             placeholder="e.g. Personal APIs"
-            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           />
         </div>
 
@@ -91,7 +91,7 @@ export function CreateWorkspaceModal({
             onChange={(e) => setDescription(e.target.value)}
             spellCheck={false}
             placeholder="What is this workspace for?"
-            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
           />
         </div>
 

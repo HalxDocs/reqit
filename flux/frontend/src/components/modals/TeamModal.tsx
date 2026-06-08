@@ -160,8 +160,8 @@ export function TeamModal() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-[32px] h-[32px] rounded-lg bg-blue/15 flex items-center justify-center">
-              <Users size={15} className="text-blue" />
+            <div className="w-[32px] h-[32px] rounded-lg bg-cyan/15 flex items-center justify-center">
+              <Users size={15} className="text-cyan" />
             </div>
             <div>
               <div className="text-14 font-bold text-text">Team</div>
@@ -193,7 +193,7 @@ export function TeamModal() {
                   Active today
                 </span>
                 {contributors.length > 0 && (
-                  <span className="text-10 font-bold text-blue bg-blue/10 px-2 py-0.5 rounded-full">
+                  <span className="text-10 font-bold text-cyan bg-cyan/10 px-2 py-0.5 rounded-full">
                     {contributors.length} online
                   </span>
                 )}
@@ -260,14 +260,14 @@ export function TeamModal() {
                   </p>
                 )}
                 <input
-                  className="w-full h-[36px] px-3 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-blue/50 transition-colors"
+                  className="w-full h-[36px] px-3 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-cyan/50 transition-colors"
                   placeholder="Remote URL  (https://github.com/your-org/repo)"
                   value={setupForm.remoteUrl}
                   onChange={(e) => setSetupForm((f) => ({ ...f, remoteUrl: e.target.value }))}
                 />
                 <input
                   type="password"
-                  className="w-full h-[36px] px-3 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-blue/50 transition-colors"
+                  className="w-full h-[36px] px-3 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-cyan/50 transition-colors"
                   placeholder="Personal Access Token (PAT)"
                   value={setupForm.pat}
                   onChange={(e) => setSetupForm((f) => ({ ...f, pat: e.target.value }))}
@@ -277,7 +277,7 @@ export function TeamModal() {
                     type="button"
                     onClick={handleSetup}
                     disabled={loading || !setupForm.remoteUrl.trim()}
-                    className="flex-1 h-[36px] text-12 font-semibold bg-blue text-white rounded-lg hover:bg-blue-hover transition-colors disabled:opacity-40"
+                    className="flex-1 h-[36px] text-12 font-semibold bg-cyan text-white rounded-lg hover:bg-cyan-hover transition-colors disabled:opacity-40"
                   >
                     {loading ? "Connecting…" : "Connect"}
                   </button>
@@ -303,7 +303,7 @@ export function TeamModal() {
                   type="button"
                   onClick={copyRemoteUrl}
                   title="Copy remote URL"
-                  className="w-[28px] h-[28px] flex items-center justify-center text-subtext hover:text-blue hover:bg-blue/10 rounded-lg transition-all"
+                  className="w-[28px] h-[28px] flex items-center justify-center text-subtext hover:text-cyan hover:bg-cyan/10 rounded-lg transition-all"
                 >
                   {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
                 </button>
@@ -311,7 +311,7 @@ export function TeamModal() {
                   type="button"
                   onClick={handlePull}
                   disabled={loading}
-                  className="flex items-center gap-1.5 h-[28px] px-2.5 text-11 font-medium text-subtext bg-cardHover border border-border rounded-lg hover:border-blue/40 hover:text-blue transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 h-[28px] px-2.5 text-11 font-medium text-subtext bg-cardHover border border-border rounded-lg hover:border-cyan/40 hover:text-cyan transition-all disabled:opacity-50"
                 >
                   <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
                   Pull
@@ -329,9 +329,9 @@ export function TeamModal() {
               <button
                 type="button"
                 onClick={() => setShowBranches((v) => !v)}
-                className="flex items-center gap-2 w-full h-[36px] px-3 bg-card border border-border rounded-lg text-12 text-text hover:border-blue/40 transition-colors"
+                className="flex items-center gap-2 w-full h-[36px] px-3 bg-card border border-border rounded-lg text-12 text-text hover:border-cyan/40 transition-colors"
               >
-                <GitBranch size={12} className="text-blue shrink-0" />
+                <GitBranch size={12} className="text-cyan shrink-0" />
                 <span className="flex-1 text-left truncate">{status.currentBranch || "detached"}</span>
                 <ChevronDown size={12} className="text-subtext shrink-0" />
               </button>
@@ -343,11 +343,11 @@ export function TeamModal() {
                       key={b}
                       type="button"
                       onClick={() => { void handleSwitchBranch(b); setShowBranches(false); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-12 hover:bg-cardHover transition-colors ${b === status.currentBranch ? "text-blue font-semibold" : "text-text"}`}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-12 hover:bg-cardHover transition-colors ${b === status.currentBranch ? "text-cyan font-semibold" : "text-text"}`}
                     >
                       <GitBranch size={11} className="shrink-0" />
                       {b}
-                      {b === status.currentBranch && <span className="ml-auto text-10 text-blue/60">current</span>}
+                      {b === status.currentBranch && <span className="ml-auto text-10 text-cyan/60">current</span>}
                     </button>
                   ))}
                   <div className="flex items-center gap-2 px-3 py-2 border-t border-border">
@@ -358,7 +358,7 @@ export function TeamModal() {
                       onChange={(e) => setNewBranch(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") void handleCreateBranch(); }}
                     />
-                    <button type="button" onClick={handleCreateBranch} className="text-subtext hover:text-blue transition-colors">
+                    <button type="button" onClick={handleCreateBranch} className="text-subtext hover:text-cyan transition-colors">
                       <Plus size={13} />
                     </button>
                   </div>
@@ -382,7 +382,7 @@ export function TeamModal() {
                 )}
               </div>
               <textarea
-                className="w-full h-[72px] px-3 py-2 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-blue/50 resize-none leading-relaxed transition-colors"
+                className="w-full h-[72px] px-3 py-2 text-12 bg-card border border-border rounded-lg text-text placeholder:text-subtext/50 outline-none focus:border-cyan/50 resize-none leading-relaxed transition-colors"
                 placeholder="Describe what changed…"
                 value={commitMsg}
                 onChange={(e) => setCommitMsg(e.target.value)}
@@ -391,7 +391,7 @@ export function TeamModal() {
                 type="button"
                 onClick={handleCommitPush}
                 disabled={loading || !commitMsg.trim()}
-                className="mt-2 w-full h-[38px] flex items-center justify-center gap-2 text-13 font-semibold bg-blue text-white rounded-lg hover:bg-blue-hover transition-colors disabled:opacity-40"
+                className="mt-2 w-full h-[38px] flex items-center justify-center gap-2 text-13 font-semibold bg-cyan text-white rounded-lg hover:bg-cyan-hover transition-colors disabled:opacity-40"
               >
                 <Upload size={13} />
                 {loading ? "Pushing…" : "Commit & Push"}
@@ -415,7 +415,7 @@ export function TeamModal() {
                 <div className="mt-3 flex flex-col gap-0.5">
                   {log.map((c) => (
                     <div key={c.hash} className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
-                      <code className="text-10 font-mono text-blue bg-blue/10 px-1.5 py-0.5 rounded shrink-0 mt-0.5">{c.hash}</code>
+                      <code className="text-10 font-mono text-cyan bg-cyan/10 px-1.5 py-0.5 rounded shrink-0 mt-0.5">{c.hash}</code>
                       <div className="flex-1 min-w-0">
                         <div className="text-12 text-text truncate">{c.message.split("\n")[0]}</div>
                         <div className="text-11 text-subtext mt-0.5">{c.author} · {timeAgo(c.when)}</div>
@@ -432,14 +432,14 @@ export function TeamModal() {
             <div className="text-11 font-semibold text-subtext uppercase tracking-wider mb-3">Invite a Teammate</div>
             <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-[22px] h-[22px] rounded-full bg-blue flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">1</div>
+                <div className="w-[22px] h-[22px] rounded-full bg-cyan flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">1</div>
                 <div>
                   <div className="text-12 font-semibold text-text">Create a private GitHub repo</div>
                   <div className="text-11 text-subtext mt-0.5">Go to github.com → New repository → set to Private</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-[22px] h-[22px] rounded-full bg-blue flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">2</div>
+                <div className="w-[22px] h-[22px] rounded-full bg-cyan flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">2</div>
                 <div>
                   <div className="text-12 font-semibold text-text">Share the remote URL</div>
                   <div className="text-11 text-subtext mt-0.5">
@@ -449,7 +449,7 @@ export function TeamModal() {
                     <button
                       type="button"
                       onClick={copyRemoteUrl}
-                      className="mt-1.5 flex items-center gap-1.5 text-11 font-medium text-blue hover:text-blue-hover transition-colors"
+                      className="mt-1.5 flex items-center gap-1.5 text-11 font-medium text-cyan hover:text-cyan-hover transition-colors"
                     >
                       {copied ? <Check size={11} /> : <Copy size={11} />}
                       {copied ? "Copied!" : "Copy remote URL"}
@@ -458,7 +458,7 @@ export function TeamModal() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-[22px] h-[22px] rounded-full bg-blue flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">3</div>
+                <div className="w-[22px] h-[22px] rounded-full bg-cyan flex items-center justify-center text-white text-10 font-bold shrink-0 mt-0.5">3</div>
                 <div>
                   <div className="text-12 font-semibold text-text">Teammate connects on their machine</div>
                   <div className="text-11 text-subtext mt-0.5">
@@ -479,11 +479,11 @@ export function TeamModal() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 p-3 bg-blue/5 border border-blue/20 rounded-lg">
-              <Link size={12} className="text-blue shrink-0" />
+            <div className="mt-3 flex items-center gap-2 p-3 bg-cyan/5 border border-cyan/20 rounded-lg">
+              <Link size={12} className="text-cyan shrink-0" />
               <p className="text-11 text-subtext">
                 Each teammate needs their own PAT. Generate one at{" "}
-                <span className="text-blue font-mono">github.com → Settings → Developer settings → Personal access tokens</span>
+                <span className="text-cyan font-mono">github.com → Settings → Developer settings → Personal access tokens</span>
                 . Scopes needed: <span className="font-mono text-text">repo</span>.
               </p>
             </div>

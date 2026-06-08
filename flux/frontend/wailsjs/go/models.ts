@@ -245,6 +245,8 @@ export namespace models {
 	    authType: string;
 	    authValue: string;
 	    specPath: string;
+	    graphqlQuery: string;
+	    graphqlVariables: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -262,6 +264,8 @@ export namespace models {
 	        this.authType = source["authType"];
 	        this.authValue = source["authValue"];
 	        this.specPath = source["specPath"];
+	        this.graphqlQuery = source["graphqlQuery"];
+	        this.graphqlVariables = source["graphqlVariables"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

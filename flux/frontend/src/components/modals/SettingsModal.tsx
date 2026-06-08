@@ -46,7 +46,7 @@ export function SettingsModal() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               spellCheck={false}
-              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
             />
           </Field>
           <Field label="Email">
@@ -56,7 +56,7 @@ export function SettingsModal() {
               onChange={(e) => setEmail(e.target.value)}
               spellCheck={false}
               autoComplete="off"
-              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-blue focus:ring-2 focus:ring-blue"
+              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
             />
           </Field>
           <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export function SettingsModal() {
               type="button"
               onClick={handleSave}
               disabled={busy}
-              className="h-[28px] px-3 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+              className="h-[28px] px-3 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
             >
               {busy ? "Saving…" : "Save profile"}
             </button>

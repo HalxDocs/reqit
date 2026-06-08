@@ -35,16 +35,16 @@ export function UpdateBanner() {
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-blue/10 border-b border-blue/20 shrink-0">
-      <ArrowUpCircle size={14} className="text-blue shrink-0" />
+    <div className="flex items-center gap-3 px-4 py-2 bg-cyan/10 border-b border-cyan/20 shrink-0">
+      <ArrowUpCircle size={14} className="text-cyan shrink-0" />
       <span className="text-12 text-text flex-1">
-        <span className="font-semibold text-blue">reqit {update.version}</span> is available —
+        <span className="font-semibold text-cyan">reqit {update.version}</span> is available —
         you're on an older version.
       </span>
       <button
         type="button"
         onClick={openDownload}
-        className="flex items-center gap-1.5 h-[24px] px-3 text-11 font-semibold bg-blue text-white rounded-lg hover:bg-blue-hover transition-colors shrink-0"
+        className="flex items-center gap-1.5 h-[24px] px-3 text-11 font-semibold bg-cyan text-white rounded-lg hover:bg-cyan-hover transition-colors shrink-0"
       >
         <Download size={11} />
         Download

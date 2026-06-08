@@ -23,7 +23,7 @@ export function ScriptsPanel() {
           <button
             type="button"
             onClick={addPreSetVar}
-            className="flex items-center gap-1 text-11 text-blue hover:text-blue-hover transition-colors"
+            className="flex items-center gap-1 text-11 text-cyan hover:text-cyan-hover transition-colors"
           >
             <Plus size={12} />
             Add
@@ -38,7 +38,7 @@ export function ScriptsPanel() {
                 onChange={(e) => updatePreSetVar(v.id, { key: e.target.value })}
                 placeholder="Variable name (e.g. token)"
                 spellCheck={false}
-                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-blue transition-colors"
+                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan transition-colors"
               />
               <input
                 type="text"
@@ -46,7 +46,7 @@ export function ScriptsPanel() {
                 onChange={(e) => updatePreSetVar(v.id, { value: e.target.value })}
                 placeholder="Value (supports {{}} references)"
                 spellCheck={false}
-                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-blue transition-colors"
+                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan transition-colors"
               />
               <button
                 type="button"
@@ -69,7 +69,7 @@ export function ScriptsPanel() {
           <button
             type="button"
             onClick={addExtractRule}
-            className="flex items-center gap-1 text-11 text-blue hover:text-blue-hover transition-colors"
+            className="flex items-center gap-1 text-11 text-cyan hover:text-cyan-hover transition-colors"
           >
             <Plus size={12} />
             Add
@@ -81,7 +81,7 @@ export function ScriptsPanel() {
               <select
                 value={r.type}
                 onChange={(e) => updateExtractRule(r.id, { type: e.target.value as "body_json" | "header" })}
-                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-blue transition-colors"
+                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan transition-colors"
               >
                 <option value="body_json">JSON Body</option>
                 <option value="header">Header</option>
@@ -92,7 +92,7 @@ export function ScriptsPanel() {
                 onChange={(e) => updateExtractRule(r.id, { source: e.target.value })}
                 placeholder={r.type === "header" ? "Content-Type" : "data.id"}
                 spellCheck={false}
-                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-blue transition-colors"
+                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan transition-colors"
               />
               <input
                 type="text"
@@ -100,7 +100,7 @@ export function ScriptsPanel() {
                 onChange={(e) => updateExtractRule(r.id, { target: e.target.value })}
                 placeholder="Target var (e.g. my_token)"
                 spellCheck={false}
-                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-blue transition-colors"
+                className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan transition-colors"
               />
               <button
                 type="button"

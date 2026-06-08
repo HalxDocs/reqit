@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "../shared/Modal";
 import { useUIStore } from "../../stores/useUIStore";
 import { useTabsStore, deriveTitle } from "../../stores/useTabsStore";
@@ -49,7 +49,7 @@ export function PasteCurlModal() {
           spellCheck={false}
           autoFocus
           placeholder={`curl -X POST 'https://api.example.com/users' \\\n  -H 'Content-Type: application/json' \\\n  -d '{"name":"alice"}'`}
-          className="bg-surface border border-border rounded-md p-3 font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-blue focus:ring-2 focus:ring-blue resize-none min-h-[200px]"
+          className="bg-surface border border-border rounded-md p-3 font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan resize-none min-h-[200px]"
         />
 
         {err && <div className="text-12 text-danger">{err}</div>}
@@ -66,7 +66,7 @@ export function PasteCurlModal() {
             type="button"
             onClick={handleImport}
             disabled={!text.trim()}
-            className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+            className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
           >
             Import as new tab
           </button>

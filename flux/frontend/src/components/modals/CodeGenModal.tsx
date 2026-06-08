@@ -85,7 +85,7 @@ export function CodeGenModal() {
             >
               {l.label}
               {lang === l.id && (
-                <span className="absolute left-3 right-3 bottom-0 h-[2px] bg-blue rounded-full" />
+                <span className="absolute left-3 right-3 bottom-0 h-[2px] bg-cyan rounded-full" />
               )}
             </button>
           ))}
@@ -106,7 +106,7 @@ export function CodeGenModal() {
           <button
             type="button"
             onClick={copy}
-            className="h-[32px] px-4 bg-blue hover:bg-blue-hover text-white text-12 font-bold rounded-md flex items-center gap-2 transition-all"
+            className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md flex items-center gap-2 transition-all"
           >
             <Copy size={12} />
             <span>Copy</span>

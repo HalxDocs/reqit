@@ -38,7 +38,7 @@ export function TabBar() {
             )}
           >
             {isActive && (
-              <span className="absolute top-0 left-0 right-0 h-[2px] bg-blue" />
+              <span className="absolute top-0 left-0 right-0 h-[2px] bg-cyan" />
             )}
             <MethodBadge method={method} className="text-[10px] h-[16px] px-1" />
             <span className="flex-1 truncate text-12 font-mono">{title}</span>
@@ -64,7 +64,7 @@ export function TabBar() {
       <button
         type="button"
         onClick={() => newTab()}
-        className="shrink-0 px-3 flex items-center text-subtext hover:text-blue hover:bg-cardHover transition-colors"
+        className="shrink-0 px-3 flex items-center text-subtext hover:text-cyan hover:bg-cardHover transition-colors"
         aria-label="New tab"
         title="New tab (Ctrl+T)"
       >

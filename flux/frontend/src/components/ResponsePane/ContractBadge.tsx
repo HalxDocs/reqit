@@ -46,7 +46,7 @@ export function ContractBadge({ validation }: Props) {
                       ? "bg-warning/15 text-warning"
                       : e.layer === "body"
                       ? "bg-danger/15 text-danger"
-                      : "bg-blue/15 text-blue"
+                      : "bg-cyan/15 text-cyan"
                   }`}
                 >
                   {e.layer}

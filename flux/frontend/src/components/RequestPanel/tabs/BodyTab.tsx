@@ -62,7 +62,7 @@ export function BodyTab() {
             className={cn(
               "px-3 h-[28px] rounded-sm text-12 font-medium transition-colors",
               bodyType === m.id
-                ? "bg-blue text-white"
+                ? "bg-cyan text-white"
                 : "bg-card text-subtext hover:text-text hover:bg-cardHover",
             )}
           >

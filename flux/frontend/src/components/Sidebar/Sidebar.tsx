@@ -55,14 +55,14 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
           className={cn(
             "w-full h-[34px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
             view === "socket"
-              ? "bg-blue/10 text-blue font-semibold"
+              ? "bg-cyan/10 text-cyan font-semibold"
               : "text-subtext hover:text-text hover:bg-cardHover",
           )}
         >
           <Radio size={14} />
           <span>WebSocket / SSE</span>
           {view === "socket" && (
-            <span className="ml-auto text-10 text-blue/60 font-normal">active</span>
+            <span className="ml-auto text-10 text-cyan/60 font-normal">active</span>
           )}
         </button>
       </div>
@@ -76,7 +76,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
               <button
                 type="button"
                 onClick={openPasteCurl}
-                className="text-subtext hover:text-blue transition-colors p-1 rounded-sm"
+                className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
                 aria-label="Paste cURL"
                 title="Paste cURL command"
               >
@@ -85,7 +85,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
               <button
                 type="button"
                 onClick={openImport}
-                className="text-subtext hover:text-blue transition-colors p-1 rounded-sm"
+                className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
                 aria-label="Import Postman collection"
                 title="Import Postman v2.1 collection"
               >
@@ -109,7 +109,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         className="border-t border-border h-[40px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
         title="Team — invite members, sync, commit"
       >
-        <div className="w-[24px] h-[24px] rounded-full bg-blue/15 flex items-center justify-center text-blue shrink-0 relative">
+        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0 relative">
           <Users size={12} />
           {hasChanges && (
             <span className="absolute -top-0.5 -right-0.5 w-[7px] h-[7px] rounded-full bg-amber-400 border border-surface" />
@@ -124,7 +124,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         onClick={openSettings}
         className="border-t border-border h-[44px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left"
       >
-        <div className="w-[24px] h-[24px] rounded-full bg-blue/15 flex items-center justify-center text-blue shrink-0">
+        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0">
           <User size={12} />
         </div>
         <div className="flex-1 min-w-0">

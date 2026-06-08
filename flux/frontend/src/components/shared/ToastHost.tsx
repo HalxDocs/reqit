@@ -4,7 +4,7 @@ import { useToastStore, type ToastKind } from "../../stores/useToastStore";
 import { cn } from "../../lib/cn";
 
 const STYLES: Record<ToastKind, { icon: typeof Info; bg: string; tint: string; bar: string }> = {
-  info: { icon: Info, bg: "bg-blue/15", tint: "text-blue", bar: "bg-blue" },
+  info: { icon: Info, bg: "bg-cyan/15", tint: "text-cyan", bar: "bg-cyan" },
   success: { icon: CheckCircle2, bg: "bg-success/15", tint: "text-success", bar: "bg-success" },
   error: { icon: AlertCircle, bg: "bg-danger/15", tint: "text-danger", bar: "bg-danger" },
 };
