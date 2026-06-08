@@ -5,27 +5,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#0F1117",
-        surface: "#161B22",
-        card: "#161B22",
-        cardHover: "#1E2430",
-        border: "#21262D",
-        blue: {
-          DEFAULT: "#7C3AED",
-          hover: "#8B5CF6",
+        // Surface layers
+        bg: "#0F0F11",
+        surface: "#141416",
+        card: "#1A1A1D",
+        cardHover: "#202024",
+        border: "#26262C",
+        // Plasma cyan accent
+        cyan: {
+          DEFAULT: "#22D3EE",
+          hover: "#67E8F9",
+          dim: "#0891B2",
         },
-        accent: "#06B6D4",
-        teal: "#06B6D4",
-        danger: "#EF4444",
-        warn: "#F59E0B",
-        success: "#10B981",
-        text: "#F0F6FC",
-        subtext: "#6B7280",
+        // Method colors
+        get: "#5B9CF6",
+        post: "#22D3EE",
+        put: "#F59E0B",
+        patch: "#C084FC",
+        del: "#F87171",
+        // Status
+        danger: "#F87171",
+        warn: "#E8A44A",
+        success: "#3DFAAF",
+        // Text hierarchy
+        text: "#F2F2F4",
+        subtext: "#A0A0B0",
+        tertiary: "#606072",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'],
-        display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Geist', 'system-ui', 'sans-serif'],
+        mono: ['"DM Mono"', 'ui-monospace', 'Menlo', 'monospace'],
+        display: ['Syne', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         '11': ['11px', '16px'],
@@ -55,7 +65,7 @@ const config: Config = {
         lg: '12px',
       },
       ringColor: {
-        DEFAULT: '#7C3AED',
+        DEFAULT: '#22D3EE',
       },
     },
   },

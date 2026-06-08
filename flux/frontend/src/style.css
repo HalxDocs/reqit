@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,9 +14,9 @@
 
   body {
     margin: 0;
-    background-color: #0F1117;
-    color: #F0F6FC;
-    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #0F0F11;
+    color: #F2F2F4;
+    font-family: 'Geist', system-ui, sans-serif;
     font-size: 12px;
     line-height: 18px;
     -webkit-font-smoothing: antialiased;
@@ -36,7 +34,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #21262D;
+    background: #26262C;
     border-radius: 4px;
   }
 
@@ -46,7 +44,7 @@
 
   *:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px #7C3AED;
+    box-shadow: 0 0 0 2px #22D3EE;
   }
 }
 

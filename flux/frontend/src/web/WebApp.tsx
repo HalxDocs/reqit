@@ -138,11 +138,11 @@ function AppMockup() {
             key={i}
             type="button"
             onClick={() => setIdx(i)}
-            className={`w-[7px] h-[7px] rounded-full transition-all ${i === idx ? "bg-blue w-[18px]" : "bg-border hover:bg-subtext/50"}`}
+            className={`w-[7px] h-[7px] rounded-full transition-all ${i === idx ? "bg-cyan w-[18px]" : "bg-border hover:bg-subtext/50"}`}
           />
         ))}
       </div>
-      <div className="absolute -inset-4 bg-blue/10 blur-3xl -z-10 rounded-full" />
+      <div className="absolute -inset-4 bg-cyan/10 blur-3xl -z-10 rounded-full" />
     </div>
   );
 }
@@ -181,11 +181,11 @@ function ApiPlayground() {
   }
 
   const methodColors: Record<string, string> = {
-    GET: "text-teal border-teal/30 bg-teal/5",
-    POST: "text-blue border-blue/30 bg-blue/5",
-    PUT: "text-warn border-warn/30 bg-warn/5",
-    PATCH: "text-accent border-accent/30 bg-accent/5",
-    DELETE: "text-danger border-danger/30 bg-danger/5",
+    GET: "text-get border-get/30 bg-get/5",
+    POST: "text-cyan border-cyan/30 bg-cyan/5",
+    PUT: "text-put border-put/30 bg-put/5",
+    PATCH: "text-patch border-patch/30 bg-patch/5",
+    DELETE: "text-del border-del/30 bg-del/5",
   };
 
   return (
@@ -237,7 +237,7 @@ function ApiPlayground() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder="https://api.example.com/endpoint"
-            className="flex-1 h-[38px] px-3 bg-bg border border-border rounded-lg text-12 text-text font-mono placeholder:text-subtext/30 outline-none focus:border-blue/50 transition-colors min-w-0"
+            className="flex-1 h-[38px] px-3 bg-bg border border-border rounded-lg text-12 text-text font-mono placeholder:text-subtext/30 outline-none focus:border-cyan/50 transition-colors min-w-0"
           />
 
           {/* Send button */}
@@ -245,7 +245,7 @@ function ApiPlayground() {
             type="button"
             onClick={send}
             disabled={sending || !url.trim()}
-            className="h-[38px] shrink-0 px-4 sm:px-5 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+            className="h-[38px] shrink-0 px-4 sm:px-5 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
           >
             {sending ? (
               <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" className="opacity-30" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeDashoffset="10" strokeLinecap="round" /></svg>
@@ -311,7 +311,7 @@ function ApiPlayground() {
 
       <p className="text-10 text-subtext/40 text-center mt-2">
         Some APIs block browser CORS. The {" "}
-        <button type="button" onClick={download} className="text-blue hover:underline">desktop app</button>
+        <button type="button" onClick={download} className="text-cyan hover:underline">desktop app</button>
         {" "}handles this transparently.
       </p>
     </div>
@@ -324,15 +324,15 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       {/* Hero — full width, centered */}
       <section className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-5 flex-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue/10 border border-blue/20 rounded-full text-[10px] text-blue font-semibold tracking-[0.12em] uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan/10 border border-cyan/20 rounded-full text-[10px] text-cyan font-semibold tracking-[0.12em] uppercase">
             Local-first · No account · No telemetry
           </div>
           <h1
             className="text-[36px] sm:text-44 lg:text-52 font-bold text-text leading-[1.06] tracking-[-0.03em] max-w-[600px]"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
           >
             A native desktop app for{" "}
-            <span className="text-blue">testing APIs</span>.
+            <span className="text-cyan">testing APIs</span>.
           </h1>
           <p className="text-14 sm:text-16 text-subtext max-w-[440px] leading-relaxed">
             A lighter, faster alternative to Postman and Insomnia. No Electron, no cloud account, 
@@ -342,7 +342,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             <button
               type="button"
               onClick={download}
-              className="flex items-center gap-3 h-[48px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
+              className="flex items-center gap-3 h-[48px] px-7 text-14 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan/20"
             >
               <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
               <span>{OS_LABEL[getOS()]}</span>
@@ -350,7 +350,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             <button
               type="button"
               onClick={() => open(GITHUB_URL)}
-              className="flex items-center gap-2 h-[48px] px-5 text-13 text-subtext bg-card border border-border rounded-xl hover:border-blue/40 hover:text-text transition-all"
+              className="flex items-center gap-2 h-[48px] px-5 text-13 text-subtext bg-card border border-border rounded-xl hover:border-cyan/40 hover:text-text transition-all"
             >
               <HugeiconsIcon icon={GithubIcon} size={16} color="currentColor" />
               <span>View on GitHub</span>
@@ -377,14 +377,14 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       </div>
 
       {/* Support card */}
-      <section className="bg-gradient-to-r from-blue/5 to-transparent border border-blue/10 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+      <section className="bg-gradient-to-r from-cyan/5 to-transparent border border-cyan/10 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
         <span className="text-13 font-semibold text-text shrink-0">Support the project</span>
         <div className="flex flex-col sm:flex-row items-stretch gap-3">
           <a
             href="https://github.com/sponsors/HalxDocs"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-all hover:scale-[1.02] justify-center"
+            className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-lg transition-all hover:scale-[1.02] justify-center"
           >
             <HugeiconsIcon icon={GithubIcon} size={14} color="currentColor" />
             GitHub Sponsors
@@ -406,10 +406,10 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       {/* Live API Playground */}
       <section>
         <div className="text-center mb-6">
-          <p className="text-[10px] font-semibold text-blue uppercase tracking-[0.14em] mb-2">Try it live</p>
+          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Try it live</p>
           <h2
             className="text-22 sm:text-26 font-bold text-text"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
           >
             Send a real request, right here
           </h2>
@@ -423,10 +423,10 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       {/* Features */}
       <section>
         <div className="text-center mb-8">
-          <p className="text-[10px] font-semibold text-blue uppercase tracking-[0.14em] mb-2">Features</p>
+          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Features</p>
           <h2
             className="text-22 sm:text-26 font-bold text-text"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
           >
             Everything an API client should be
           </h2>
@@ -435,10 +435,10 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="group bg-card border border-border rounded-xl p-4 flex items-start gap-3 hover:border-blue/30 hover:bg-cardHover transition-all"
+              className="group bg-card border border-border rounded-xl p-4 flex items-start gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all"
             >
-              <div className="w-[36px] h-[36px] rounded-lg bg-blue/10 flex items-center justify-center shrink-0 group-hover:bg-blue/20 transition-colors">
-                <HugeiconsIcon icon={f.icon} size={16} color="#3B82F6" strokeWidth={1.5} />
+              <div className="w-[36px] h-[36px] rounded-lg bg-cyan/10 flex items-center justify-center shrink-0 group-hover:bg-cyan/20 transition-colors">
+                <HugeiconsIcon icon={f.icon} size={16} color="#22D3EE" strokeWidth={1.5} />
               </div>
               <div className="min-w-0">
                 <div className="text-13 font-semibold text-text mb-0.5">{f.title}</div>
@@ -452,10 +452,10 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       {/* Screenshot gallery */}
       <section>
         <div className="text-center mb-6">
-          <p className="text-[10px] font-semibold text-blue uppercase tracking-[0.14em] mb-2">Gallery</p>
+          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Gallery</p>
           <h2
             className="text-22 sm:text-26 font-bold text-text"
-            style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
           >
             See it in action
           </h2>
@@ -464,7 +464,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {SCREENSHOTS.map((s) => (
             <div
               key={s.src}
-              className="bg-surface border border-border rounded-xl overflow-hidden hover:border-blue/30 transition-all group"
+              className="bg-surface border border-border rounded-xl overflow-hidden hover:border-cyan/30 transition-all group"
             >
               <img src={s.src} alt={s.alt} className="w-full h-auto block group-hover:scale-[1.02] transition-transform duration-500" />
             </div>
@@ -476,7 +476,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
       <section className="bg-card border border-border rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center gap-5">
         <h2
           className="text-22 font-bold text-text"
-          style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+          style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
         >
           Get started in seconds
         </h2>
@@ -486,7 +486,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
         <button
           type="button"
           onClick={download}
-          className="flex items-center gap-3 h-[48px] px-7 text-14 font-bold text-white bg-blue hover:bg-blue-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue/20"
+          className="flex items-center gap-3 h-[48px] px-7 text-14 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan/20"
         >
           <HugeiconsIcon icon={Download02Icon} size={16} color="currentColor" />
           {OS_LABEL[getOS()]}
@@ -509,7 +509,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
       <button
         type="button"
         onClick={goHome}
-        className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-blue/40 transition-all self-start"
+        className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all self-start"
       >
         <HugeiconsIcon icon={ArrowLeft01Icon} size={13} color="currentColor" />
         <span>Back to home</span>
@@ -518,10 +518,10 @@ function DocsPage({ goHome }: { goHome: () => void }) {
       <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Book01Icon} size={18} color="#3B82F6" strokeWidth={1.5} />
+            <HugeiconsIcon icon={Book01Icon} size={18} color="#22D3EE" strokeWidth={1.5} />
             <h2
               className="text-22 sm:text-26 font-bold text-text tracking-tight"
-              style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+              style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
             >
               Documentation
             </h2>
@@ -536,7 +536,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
             <a
               key={s.id}
               href={`#docs-${s.id}`}
-              className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-blue/40 hover:text-text text-subtext transition-all"
+              className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-cyan/40 hover:text-text text-subtext transition-all"
             >
               {s.title}
             </a>
@@ -549,7 +549,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
               <div>
                 <div
                   className="text-15 font-bold text-text leading-tight"
-                  style={{ fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif' }}
+                  style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
                 >
                   {section.title}
                 </div>
@@ -560,10 +560,10 @@ function DocsPage({ goHome }: { goHome: () => void }) {
               {section.features.map((f) => (
                 <div
                   key={f.name}
-                  className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-blue/20 transition-colors"
+                  className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1.5 hover:border-cyan/20 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-[6px] h-[6px] rounded-full bg-blue shrink-0" />
+                    <span className="w-[6px] h-[6px] rounded-full bg-cyan shrink-0" />
                     <span className="text-12 font-semibold text-text">{f.name}</span>
                   </div>
                   <p className="text-11 text-subtext leading-relaxed pl-[14px]">{f.desc}</p>
@@ -579,7 +579,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
             <button
               type="button"
               onClick={() => open("https://github.com/HalxDocs/reqit/issues")}
-              className="text-blue hover:underline"
+              className="text-cyan hover:underline"
             >
               Open an issue on GitHub
             </button>
@@ -604,7 +604,7 @@ export function WebApp() {
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
             >
               <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
               <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
@@ -615,7 +615,7 @@ export function WebApp() {
             <button
               type="button"
               onClick={() => setPage("docs")}
-              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-blue/40 hover:text-text transition-all"
+              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
             >
               <HugeiconsIcon icon={Book01Icon} size={13} color="currentColor" />
               <span>Docs</span>
@@ -623,7 +623,7 @@ export function WebApp() {
             <button
               type="button"
               onClick={download}
-              className="hidden sm:flex items-center gap-1.5 h-[32px] px-4 text-12 font-bold text-white bg-blue hover:bg-blue-hover rounded-lg transition-colors"
+              className="hidden sm:flex items-center gap-1.5 h-[32px] px-4 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-lg transition-colors"
             >
               <HugeiconsIcon icon={Download02Icon} size={13} color="currentColor" />
               <span>Download</span>
@@ -639,7 +639,7 @@ export function WebApp() {
           <div className="w-[32px] h-px bg-border" />
           <p className="text-11 text-subtext text-center">
             Built by{" "}
-            <button type="button" onClick={() => open(PORTFOLIO_URL)} className="text-text font-semibold hover:text-blue transition-colors">HalxDocs</button>
+            <button type="button" onClick={() => open(PORTFOLIO_URL)} className="text-text font-semibold hover:text-cyan transition-colors">HalxDocs</button>
             {" "}·{" "}
             <button type="button" onClick={() => open(GITHUB_URL)} className="inline-flex items-center gap-1 hover:text-text transition-colors">
               <HugeiconsIcon icon={GithubIcon} size={11} color="currentColor" />
