@@ -6,7 +6,6 @@ flux/frontend/dist/
 flux/frontend/dist-web/
 flux/frontend/package.json.md5
 index.html
-assets/
 
 # Dependencies
 node_modules/
