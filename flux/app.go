@@ -215,9 +215,18 @@ func (a *App) mountWorkspace(dir string) {
 		a.fsWatcher = nil
 	}
 
-	// Start file watcher — emits workspace:changed so the frontend can reload.
+	// Start file watcher — emits workspace:changed + specific events so the frontend can reload.
 	if w, err := watcher.New(func(filename string) {
 		runtime.EventsEmit(a.ctx, "workspace:changed", filename)
+		base := filepath.Base(filename)
+		switch base {
+		case "collections.json":
+			runtime.EventsEmit(a.ctx, "collections:changed", nil)
+		case "environments.json":
+			runtime.EventsEmit(a.ctx, "environments:changed", nil)
+		case "history.json":
+			runtime.EventsEmit(a.ctx, "history:changed", nil)
+		}
 	}); err == nil {
 		_ = w.Watch(dir)
 		a.fsWatcher = w

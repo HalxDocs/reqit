@@ -6,7 +6,9 @@ import {
   SetActiveEnvironment,
   UpdateEnvironment,
 } from "../../wailsjs/go/main/App";
+import { EventsOn, EventsOff } from "../../wailsjs/runtime";
 import type { models } from "../../wailsjs/go/models";
+import { toast } from "./useToastStore";
 
 type EnvStore = {
   environments: models.Environment[];
@@ -15,6 +17,7 @@ type EnvStore = {
 
   load: () => Promise<void>;
   setActive: (id: string) => Promise<void>;
+  cleanup: () => void;
 
   create: (name: string) => Promise<models.Environment>;
   update: (id: string, name: string, vars: models.EnvVar[]) => Promise<void>;
@@ -25,8 +28,15 @@ type EnvStore = {
 };
 
 const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g;
+const ENV_EVENT = "environments:changed";
 
-export const useEnvStore = create<EnvStore>((set, get) => ({
+export const useEnvStore = create<EnvStore>((set, get) => {
+  EventsOn(ENV_EVENT, () => {
+    toast.info("Environments changed externally — reloading");
+    get().load();
+  });
+
+  return {
   environments: [],
   activeID: "",
   loaded: false,
@@ -84,7 +94,12 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     }
     return out;
   },
-}));
+
+  cleanup: () => {
+    EventsOff(ENV_EVENT);
+  },
+  };
+});
 
 function activeMap(envs: models.Environment[], activeID: string): Map<string, string> {
   const out = new Map<string, string>();

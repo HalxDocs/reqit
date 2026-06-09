@@ -8,16 +8,21 @@ import {
   RenameCollection,
   UpdateSavedRequest,
 } from "../../wailsjs/go/main/App";
+import { EventsOn, EventsOff } from "../../wailsjs/runtime";
 import type { models } from "../../wailsjs/go/models";
 import type { WirePayload } from "../lib/buildPayload";
+import { useTabsStore } from "./useTabsStore";
+import { toast } from "./useToastStore";
 
 type CollectionStore = {
   collections: models.Collection[];
   expanded: Record<string, boolean>;
   loaded: boolean;
+  lastExternalChange: number | null;
 
-  load: () => Promise<void>;
+  load: (external?: boolean) => Promise<void>;
   toggleExpanded: (id: string) => void;
+  cleanup: () => void;
 
   createCollection: (name: string) => Promise<models.Collection>;
   renameCollection: (id: string, name: string) => Promise<void>;
@@ -34,19 +39,42 @@ type CollectionStore = {
   duplicateRequest: (reqID: string) => Promise<void>;
 };
 
-export const useCollectionStore = create<CollectionStore>((set, get) => ({
+const COLL_EVENT = "collections:changed";
+
+function reconcileTabs(collections: models.Collection[]) {
+  const savedIDs = new Set<string>();
+  for (const c of collections) {
+    for (const r of c.requests) savedIDs.add(r.id);
+  }
+  const tabs = useTabsStore.getState().tabs;
+  for (const t of tabs) {
+    if (t.savedRequestID && !savedIDs.has(t.savedRequestID)) {
+      toast.info(`Request "${t.title}" was deleted externally — tab closed`);
+      useTabsStore.getState().closeTab(t.id);
+    }
+  }
+}
+
+export const useCollectionStore = create<CollectionStore>((set, get) => {
+  EventsOn(COLL_EVENT, () => {
+    get().load(true);
+  });
+
+  return {
   collections: [],
   expanded: {},
   loaded: false,
+  lastExternalChange: null,
 
-  load: async () => {
+  load: async (external = false) => {
     try {
       const collections = await GetCollections();
       const expanded: Record<string, boolean> = { ...get().expanded };
       for (const c of collections) {
         if (!(c.id in expanded)) expanded[c.id] = true;
       }
-      set({ collections, expanded, loaded: true });
+      set({ collections, expanded, loaded: true, lastExternalChange: external ? Date.now() : null });
+      if (external) reconcileTabs(collections);
     } catch {
       set({ loaded: true });
     }
@@ -121,4 +149,9 @@ export const useCollectionStore = create<CollectionStore>((set, get) => ({
       return;
     }
   },
-}));
+
+  cleanup: () => {
+    EventsOff(COLL_EVENT);
+  },
+  };
+});
