@@ -100,7 +100,8 @@ const FEATURES = [
 const SCREENSHOTS = [
   { src: "/screenshot-main.png", alt: "reqit main interface" },
   { src: "/screenshot-collections.png", alt: "reqit collections view" },
-  { src: "/screenshot-socket.png", alt: "reqit WebSocket client" },
+  { src: "/script.png", alt: "reqit script sandbox" },
+  { src: "/graphql.png", alt: "reqit GraphQL editor" },
 ];
 
 function AppMockup() {
