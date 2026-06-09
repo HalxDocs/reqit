@@ -17,8 +17,10 @@ type RequestPayload struct {
 	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"
 	AuthValue string   `json:"authValue"` // token or "user:pass"
 	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
-	GraphQLQuery     string `json:"graphqlQuery"`
-	GraphQLVariables string `json:"graphqlVariables"`
+	GraphQLQuery     string   `json:"graphqlQuery"`
+	GraphQLVariables string   `json:"graphqlVariables"`
+	PreScript        string   `json:"preScript"`
+	PostScript       string   `json:"postScript"`
 }
 
 type CookieSummary struct {

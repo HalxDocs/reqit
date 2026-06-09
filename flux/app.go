@@ -23,6 +23,7 @@ import (
 	"flux/internal/postman"
 	"flux/internal/profile"
 	"flux/internal/requester"
+	"flux/internal/scripting"
 	"flux/internal/storage"
 	"flux/internal/runner"
 	"flux/internal/sock"
@@ -334,7 +335,19 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 	a.inflight = cancel
 	a.mu.Unlock()
 
+	if vars, err := scripting.RunPreScript(payload.PreScript, &payload); err == nil && len(vars) > 0 {
+		if a.environments != nil {
+			_ = a.environments.MergeVars(vars)
+		}
+	}
+
 	result := requester.Execute(ctx, payload, a.cookies)
+
+	if vars, err := scripting.RunPostScript(payload.PostScript, &payload, &result); err == nil && len(vars) > 0 {
+		if a.environments != nil {
+			_ = a.environments.MergeVars(vars)
+		}
+	}
 
 	a.mu.Lock()
 	if a.inflight != nil {

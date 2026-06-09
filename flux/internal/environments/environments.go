@@ -144,3 +144,37 @@ func (s *Store) SetActive(id string) error {
 	}
 	return errors.New("environment not found")
 }
+
+func (s *Store) MergeVars(vars map[string]string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	if s.active == "" {
+		return nil
+	}
+	for i := range s.envs {
+		if s.envs[i].ID != s.active {
+			continue
+		}
+		existing := map[string]int{}
+		for j, v := range s.envs[i].Vars {
+			existing[v.Key] = j
+		}
+		for key, value := range vars {
+			if idx, ok := existing[key]; ok {
+				s.envs[i].Vars[idx].Value = value
+				s.envs[i].Vars[idx].Enabled = true
+			} else {
+				s.envs[i].Vars = append(s.envs[i].Vars, models.EnvVar{
+					Key:     key,
+					Value:   value,
+					Enabled: true,
+				})
+			}
+		}
+		return s.save()
+	}
+	return nil
+}

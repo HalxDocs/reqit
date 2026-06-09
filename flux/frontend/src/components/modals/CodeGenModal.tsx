@@ -34,13 +34,17 @@ function useRequestSnapshot() {
   const extractRules = useRequestStore((s) => s.extractRules);
   const graphqlQuery = useRequestStore((s) => s.graphqlQuery);
   const graphqlVariables = useRequestStore((s) => s.graphqlVariables);
+  const preScript = useRequestStore((s) => s.preScript);
+  const postScript = useRequestStore((s) => s.postScript);
   return useMemo(() => ({
     method, url, headers, params, bodyType, bodyRaw, bodyForm,
     authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
     preSetVars, extractRules, graphqlQuery, graphqlVariables,
+    preScript, postScript,
   }), [method, url, headers, params, bodyType, bodyRaw, bodyForm,
       authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
-      preSetVars, extractRules, graphqlQuery, graphqlVariables]);
+      preSetVars, extractRules, graphqlQuery, graphqlVariables,
+      preScript, postScript]);
 }
 
 export function CodeGenModal() {

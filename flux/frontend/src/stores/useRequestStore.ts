@@ -40,6 +40,8 @@ const initialState: RequestState = {
   extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   graphqlQuery: "",
   graphqlVariables: "",
+  preScript: "",
+  postScript: "",
 };
 
 type RequestStore = RequestState & {
@@ -84,6 +86,8 @@ type RequestStore = RequestState & {
   setGraphqlSchema: (s: GraphQLSchema | null) => void;
   setGraphqlSchemaLoading: (v: boolean) => void;
   setGraphqlSchemaError: (e: string) => void;
+  setPreScript: (s: string) => void;
+  setPostScript: (s: string) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -143,6 +147,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setGraphqlSchema: (graphqlSchema) => set({ graphqlSchema }),
   setGraphqlSchemaLoading: (graphqlSchemaLoading) => set({ graphqlSchemaLoading }),
   setGraphqlSchemaError: (graphqlSchemaError) => set({ graphqlSchemaError }),
+  setPreScript: (preScript) => set({ preScript }),
+  setPostScript: (postScript) => set({ postScript }),
 
   addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
   updatePreSetVar: (id, patch) =>
@@ -183,6 +189,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
       extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
       graphqlQuery: "",
       graphqlVariables: "",
+      preScript: "",
+      postScript: "",
       graphqlSchema: null,
       graphqlSchemaLoading: false,
       graphqlSchemaError: "",

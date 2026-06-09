@@ -14,6 +14,8 @@ export interface WirePayload {
   specPath?: string;
   graphqlQuery: string;
   graphqlVariables: string;
+  preScript: string;
+  postScript: string;
 }
 
 const stripId = (kv: KeyValue) => ({
@@ -48,6 +50,8 @@ export function buildPayload(s: RequestState): WirePayload {
     authValue,
     graphqlQuery: s.bodyType === "graphql" ? resolve(s.graphqlQuery) : "",
     graphqlVariables: s.bodyType === "graphql" ? resolve(s.graphqlVariables) : "",
+    preScript: s.preScript ?? "",
+    postScript: s.postScript ?? "",
   };
 }
 
@@ -72,5 +76,7 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     authValue,
     graphqlQuery: s.bodyType === "graphql" ? s.graphqlQuery : "",
     graphqlVariables: s.bodyType === "graphql" ? s.graphqlVariables : "",
+    preScript: s.preScript ?? "",
+    postScript: s.postScript ?? "",
   };
 }

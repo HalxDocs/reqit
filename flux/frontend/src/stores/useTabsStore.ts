@@ -39,6 +39,8 @@ const emptyRequest = (): RequestState => ({
   extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   graphqlQuery: "",
   graphqlVariables: "",
+  preScript: "",
+  postScript: "",
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -72,6 +74,8 @@ const pickRequestState = (): RequestState => {
     extractRules: s.extractRules,
     graphqlQuery: s.graphqlQuery,
     graphqlVariables: s.graphqlVariables,
+    preScript: s.preScript,
+    postScript: s.postScript,
   };
 };
 

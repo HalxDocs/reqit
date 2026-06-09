@@ -1,19 +1,87 @@
-import React from "react";
+import React, { useMemo } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
 import { Plus, Trash2 } from "lucide-react";
 import { useRequestStore } from "../../stores/useRequestStore";
+import { fluxCmTheme } from "../../lib/cmTheme";
 
 export function ScriptsPanel() {
   const preSetVars = useRequestStore((s) => s.preSetVars);
   const extractRules = useRequestStore((s) => s.extractRules);
+  const preScript = useRequestStore((s) => s.preScript);
+  const postScript = useRequestStore((s) => s.postScript);
   const addPreSetVar = useRequestStore((s) => s.addPreSetVar);
   const updatePreSetVar = useRequestStore((s) => s.updatePreSetVar);
   const removePreSetVar = useRequestStore((s) => s.removePreSetVar);
   const addExtractRule = useRequestStore((s) => s.addExtractRule);
   const updateExtractRule = useRequestStore((s) => s.updateExtractRule);
   const removeExtractRule = useRequestStore((s) => s.removeExtractRule);
+  const setPreScript = useRequestStore((s) => s.setPreScript);
+  const setPostScript = useRequestStore((s) => s.setPostScript);
+
+  const jsExtensions = useMemo(
+    () => [javascript(), fluxCmTheme, EditorView.lineWrapping],
+    [],
+  );
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
+      {/* Pre-request Script */}
+      <div className="border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-11 text-subtext font-semibold uppercase tracking-wider">
+            Pre-request Script (JavaScript)
+          </span>
+        </div>
+        <div className="px-4 pb-2" style={{ height: 140 }}>
+          <CodeMirror
+            value={preScript}
+            theme={oneDark}
+            extensions={jsExtensions}
+            onChange={(val) => setPreScript(val)}
+            placeholder={"// Set variables before request\npm.variables.set(\"token\", \"abc123\");"}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              highlightActiveLine: true,
+              highlightActiveLineGutter: true,
+              autocompletion: false,
+            }}
+            height="100%"
+            className="h-full"
+          />
+        </div>
+      </div>
+
+      {/* Post-response Script */}
+      <div className="border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-11 text-subtext font-semibold uppercase tracking-wider">
+            Post-response Script (JavaScript)
+          </span>
+        </div>
+        <div className="px-4 pb-2" style={{ height: 140 }}>
+          <CodeMirror
+            value={postScript}
+            theme={oneDark}
+            extensions={jsExtensions}
+            onChange={(val) => setPostScript(val)}
+            placeholder={"// Extract values from response\npm.response.to.have.status(200);\nconst id = pm.response.json().data.id;\npm.variables.set(\"userId\", id);"}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              highlightActiveLine: true,
+              highlightActiveLineGutter: true,
+              autocompletion: false,
+            }}
+            height="100%"
+            className="h-full"
+          />
+        </div>
+      </div>
+
       {/* Pre-Set Variables */}
       <div className="border-b border-border">
         <div className="flex items-center justify-between px-4 py-2">

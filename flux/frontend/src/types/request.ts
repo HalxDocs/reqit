@@ -40,6 +40,8 @@ export interface RequestState {
   extractRules: ExtractRule[];
   graphqlQuery: string;
   graphqlVariables: string;
+  preScript: string;
+  postScript: string;
 }
 
 export interface CookieSummary {

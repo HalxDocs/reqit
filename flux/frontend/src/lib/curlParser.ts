@@ -298,5 +298,7 @@ export function parseCurl(input: string): RequestState {
     authKeyIn: "header",
     preSetVars: [{ id: uid("sv"), key: "", value: "" }],
     extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
+    preScript: "",
+    postScript: "",
   };
 }

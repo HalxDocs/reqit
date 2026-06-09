@@ -143,6 +143,8 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
         authValue: req.payload.authValue,
         graphqlQuery: (req.payload as any).graphqlQuery ?? "",
         graphqlVariables: (req.payload as any).graphqlVariables ?? "",
+        preScript: (req.payload as any).preScript ?? "",
+        postScript: (req.payload as any).postScript ?? "",
       };
       await AddRequestToCollection(c.id, `${req.name} (copy)`, wire as never);
       await get().load();
