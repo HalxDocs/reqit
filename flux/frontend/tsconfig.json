@@ -16,7 +16,9 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
+    "baseUrl": ".",
     "paths": {
+      "@/*": ["src/*"],
       "@hugeicons/core-free-icons": ["./node_modules/@hugeicons/core-free-icons/dist/types/index.d.ts"],
       "@hugeicons/react": ["./node_modules/@hugeicons/react/dist/types/index.d.ts"]
     },

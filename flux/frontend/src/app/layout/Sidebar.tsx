@@ -1,0 +1,169 @@
+import { useEffect, useState } from "react";
+import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users, Radio } from "lucide-react";
+import reqitLogo from "../../assets/images/reqitlogo.jpeg";
+import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
+import { cn } from "@/shared/lib/cn";
+import { CollectionsTree } from "@/features/collections/components/CollectionsTree";
+import { HistoryList } from "@/features/history/components/HistoryList";
+import { EnvSwitcher } from "@/features/env/components/EnvSwitcher";
+import { SearchBar } from "@/features/collections/components/SearchBar";
+import { useUIStore } from "@/app/stores/useUIStore";
+import { useProfileStore } from "@/app/stores/useProfileStore";
+import { GetGitStatus } from "../../../wailsjs/go/main/App";
+
+export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
+  const openImport = useUIStore((s) => s.openImportModal);
+  const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
+  const openSettings = useUIStore((s) => s.openSettingsModal);
+  const openTeam = useUIStore((s) => s.openTeamModal);
+  const view = useUIStore((s) => s.view);
+  const setView = useUIStore((s) => s.setView);
+  const profile = useProfileStore((s) => s.profile);
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const activeID = useWorkspaceStore((s) => s.activeID);
+  const activeWs = workspaces.find((w) => w.id === activeID);
+
+  const [hasChanges, setHasChanges] = useState(false);
+  useEffect(() => {
+    GetGitStatus().then((s: { hasChanges: boolean }) => setHasChanges(s.hasChanges)).catch(() => {});
+  }, []);
+
+  return (
+    <aside className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
+      <button
+        type="button"
+        onClick={onGoHome}
+        className="h-[48px] px-4 flex items-center gap-2 border-b border-border hover:bg-cardHover transition-colors text-left group"
+        title="All workspaces"
+      >
+        <img src={reqitLogo} alt="reqit" className="h-[28px] w-auto object-contain shrink-0" />
+        <span className="flex-1 text-12 font-semibold text-text truncate min-w-0">
+          {activeWs?.name ?? "Workspace"}
+        </span>
+        <ChevronDown size={12} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
+      </button>
+
+      <div className="px-3 py-2 border-b border-border flex flex-col gap-2">
+        <EnvSwitcher />
+        <SearchBar />
+      </div>
+
+      <div className="px-3 py-2 border-b border-border">
+        <button
+          type="button"
+          onClick={() => setView(view === "socket" ? "http" : "socket")}
+          className={cn(
+            "w-full h-[34px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
+            view === "socket"
+              ? "bg-cyan/10 text-cyan font-semibold"
+              : "text-subtext hover:text-text hover:bg-cardHover",
+          )}
+        >
+          <Radio size={14} />
+          <span>WebSocket / SSE</span>
+          {view === "socket" && (
+            <span className="ml-auto text-10 text-cyan/60 font-normal">active</span>
+          )}
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-2">
+        <Section
+          icon={<Folder size={12} />}
+          label="Collections"
+          action={
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={openPasteCurl}
+                className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
+                aria-label="Paste cURL"
+                title="Paste cURL command"
+              >
+                <Terminal size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={openImport}
+                className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
+                aria-label="Import Postman collection"
+                title="Import Postman v2.1 collection"
+              >
+                <Download size={12} />
+              </button>
+            </div>
+          }
+        >
+          <CollectionsTree />
+        </Section>
+
+        <Section icon={<HistoryIcon size={12} />} label="History">
+          <HistoryList />
+        </Section>
+      </nav>
+
+      {/* Team button */}
+      <button
+        type="button"
+        onClick={openTeam}
+        className="border-t border-border h-[40px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
+        title="Team — invite members, sync, commit"
+      >
+        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0 relative">
+          <Users size={12} />
+          {hasChanges && (
+            <span className="absolute -top-0.5 -right-0.5 w-[7px] h-[7px] rounded-full bg-amber-400 border border-surface" />
+          )}
+        </div>
+        <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
+        <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={openSettings}
+        className="border-t border-border h-[44px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left"
+      >
+        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0">
+          <User size={12} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-12 text-text truncate">
+            {profile?.name?.trim() || "Set up profile"}
+          </div>
+          <div className="text-11 text-subtext truncate">
+            {profile && profile.requestCount > 0
+              ? `${profile.requestCount} request${profile.requestCount === 1 ? "" : "s"} sent`
+              : "Welcome to reqit"}
+          </div>
+        </div>
+        <Settings size={12} className="text-subtext shrink-0" />
+      </button>
+    </aside>
+  );
+}
+
+function Section({
+  icon,
+  label,
+  action,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="pb-3">
+      <div className="px-3 py-2 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
+        <span className="flex items-center gap-2">
+          {icon}
+          <span>{label}</span>
+        </span>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}

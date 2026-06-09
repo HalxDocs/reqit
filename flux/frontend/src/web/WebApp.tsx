@@ -18,7 +18,7 @@ import {
   PowerSocketIcon,
   TerminalIcon,
 } from "@hugeicons/core-free-icons";
-import { DOC_SECTIONS } from "../lib/docs";
+import { DOC_SECTIONS } from "../shared/lib/docs";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
