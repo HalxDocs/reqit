@@ -4,6 +4,7 @@ import type {
   AuthType,
   BodyType,
   ExtractRule,
+  GraphQLSchema,
   HttpMethod,
   KeyValue,
   PreSetVar,
@@ -42,6 +43,9 @@ const initialState: RequestState = {
 };
 
 type RequestStore = RequestState & {
+  graphqlSchema: GraphQLSchema | null;
+  graphqlSchemaLoading: boolean;
+  graphqlSchemaError: string;
   setMethod: (m: HttpMethod) => void;
   setUrl: (url: string) => void;
 
@@ -77,6 +81,9 @@ type RequestStore = RequestState & {
 
   setGraphqlQuery: (q: string) => void;
   setGraphqlVariables: (v: string) => void;
+  setGraphqlSchema: (s: GraphQLSchema | null) => void;
+  setGraphqlSchemaLoading: (v: boolean) => void;
+  setGraphqlSchemaError: (e: string) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -87,6 +94,9 @@ const patchRow = (rows: KeyValue[], id: string, patch: Partial<KeyValue>) =>
 
 export const useRequestStore = create<RequestStore>((set) => ({
   ...initialState,
+  graphqlSchema: null,
+  graphqlSchemaLoading: false,
+  graphqlSchemaError: "",
 
   setMethod: (method) => set({ method }),
   setUrl: (url) => set({ url }),
@@ -130,6 +140,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
 
   setGraphqlQuery: (graphqlQuery) => set({ graphqlQuery }),
   setGraphqlVariables: (graphqlVariables) => set({ graphqlVariables }),
+  setGraphqlSchema: (graphqlSchema) => set({ graphqlSchema }),
+  setGraphqlSchemaLoading: (graphqlSchemaLoading) => set({ graphqlSchemaLoading }),
+  setGraphqlSchemaError: (graphqlSchemaError) => set({ graphqlSchemaError }),
 
   addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
   updatePreSetVar: (id, patch) =>
@@ -170,6 +183,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
       extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
       graphqlQuery: "",
       graphqlVariables: "",
+      graphqlSchema: null,
+      graphqlSchemaLoading: false,
+      graphqlSchemaError: "",
     }),
 
   loadState: (s) => set({ ...s }),

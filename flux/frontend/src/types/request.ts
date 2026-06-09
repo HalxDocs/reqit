@@ -92,6 +92,29 @@ export interface MockOverride {
   body: string;
 }
 
+export interface GraphQLFieldTypeRef {
+  name: string;
+  kind: string;
+  ofType?: GraphQLFieldTypeRef | null;
+}
+
+export interface GraphQLSchemaField {
+  name: string;
+  description?: string;
+  type: GraphQLFieldTypeRef | null;
+}
+
+export interface GraphQLSchemaType {
+  name: string;
+  kind: string;
+  description?: string;
+  fields?: GraphQLSchemaField[];
+}
+
+export interface GraphQLSchema {
+  types: GraphQLSchemaType[];
+}
+
 export interface ResponseResult {
   status: string;
   statusCode: number;

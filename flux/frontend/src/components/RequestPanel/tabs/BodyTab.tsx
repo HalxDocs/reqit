@@ -1,11 +1,12 @@
-import { useMemo } from "react";
-import { Check, AlertTriangle } from "lucide-react";
+import { useMemo, useCallback, useState } from "react";
+import { Check, AlertTriangle, RefreshCw, ChevronRight, ChevronDown } from "lucide-react";
 import { useRequestStore } from "../../../stores/useRequestStore";
 import { cn } from "../../../lib/cn";
 import { KeyValueEditor } from "../../shared/KeyValueEditor";
 import { JsonEditor } from "../../shared/JsonEditor";
 import { GraphqlEditor } from "../../shared/GraphqlEditor";
-import type { BodyType } from "../../../types/request";
+import { fetchGraphQLSchema } from "../../../lib/introspectGraphQL";
+import type { BodyType, GraphQLSchemaType } from "../../../types/request";
 
 const MODES: { id: BodyType; label: string }[] = [
   { id: "none", label: "None" },
@@ -39,6 +40,21 @@ export function BodyTab() {
   const setGraphqlQuery = useRequestStore((s) => s.setGraphqlQuery);
   const graphqlVariables = useRequestStore((s) => s.graphqlVariables);
   const setGraphqlVariables = useRequestStore((s) => s.setGraphqlVariables);
+  const graphqlSchema = useRequestStore((s) => s.graphqlSchema);
+  const setGraphqlSchema = useRequestStore((s) => s.setGraphqlSchema);
+  const graphqlSchemaLoading = useRequestStore((s) => s.graphqlSchemaLoading);
+  const setGraphqlSchemaLoading = useRequestStore((s) => s.setGraphqlSchemaLoading);
+  const graphqlSchemaError = useRequestStore((s) => s.graphqlSchemaError);
+  const setGraphqlSchemaError = useRequestStore((s) => s.setGraphqlSchemaError);
+  const url = useRequestStore((s) => s.url);
+  const headers = useRequestStore((s) => s.headers);
+  const authType = useRequestStore((s) => s.authType);
+  const authValue = useRequestStore((s) => {
+    if (s.authType === "bearer") return s.authToken;
+    if (s.authType === "basic") return `${s.authUser}:${s.authPass}`;
+    if (s.authType === "apikey") return `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;
+    return "";
+  });
 
   const validity = useMemo(() => validateJson(bodyRaw), [bodyRaw]);
 
@@ -47,9 +63,27 @@ export function BodyTab() {
       const parsed = JSON.parse(bodyRaw);
       setBodyRaw(JSON.stringify(parsed, null, 2));
     } catch {
-      // ignore — button is disabled when invalid
+      // ignore
     }
   };
+
+  const handleFetchSchema = useCallback(async () => {
+    if (!url.trim()) {
+      setGraphqlSchemaError("Enter a URL before fetching schema");
+      return;
+    }
+    setGraphqlSchemaLoading(true);
+    setGraphqlSchemaError("");
+    try {
+      const schema = await fetchGraphQLSchema(url, headers, authType, authValue);
+      setGraphqlSchema(schema);
+    } catch (err) {
+      setGraphqlSchemaError(err instanceof Error ? err.message : "Failed to fetch schema");
+      setGraphqlSchema(null);
+    } finally {
+      setGraphqlSchemaLoading(false);
+    }
+  }, [url, headers, authType, authValue, setGraphqlSchema, setGraphqlSchemaLoading, setGraphqlSchemaError]);
 
   return (
     <div className="flex flex-col h-full">
@@ -118,13 +152,24 @@ export function BodyTab() {
         <div className="flex flex-col h-full">
           <div className="flex-1 min-h-0 flex flex-col sm:flex-row gap-0 sm:gap-0">
             <div className="flex-1 min-h-0 flex flex-col border-b sm:border-b-0 sm:border-r border-border">
-              <div className="px-3 py-[6px] text-[10px] font-semibold text-subtext uppercase tracking-wider bg-card/50 border-b border-border">
-                Query
+              <div className="flex items-center justify-between px-3 py-[6px] text-[10px] font-semibold text-subtext uppercase tracking-wider bg-card/50 border-b border-border">
+                <span>Query</span>
+                <button
+                  type="button"
+                  onClick={handleFetchSchema}
+                  disabled={graphqlSchemaLoading}
+                  className="inline-flex items-center gap-1 text-[10px] font-medium normal-case text-cyan hover:text-cyan-hover transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={11} className={cn(graphqlSchemaLoading && "animate-spin")} />
+                  {graphqlSchemaLoading ? "Loading…" : graphqlSchema ? "Re-fetch" : "Fetch Schema"}
+                </button>
               </div>
               <div className="flex-1 min-h-0">
                 <GraphqlEditor
                   value={graphqlQuery}
                   onChange={setGraphqlQuery}
+                  schema={graphqlSchema}
+                  schemaLoading={graphqlSchemaLoading}
                 />
               </div>
             </div>
@@ -141,6 +186,21 @@ export function BodyTab() {
               </div>
             </div>
           </div>
+
+          {graphqlSchemaError && (
+            <div className="px-3 py-2 text-11 text-warn border-t border-border">
+              {graphqlSchemaError}
+            </div>
+          )}
+
+          {graphqlSchema && graphqlSchema.types.length > 0 && (
+            <div className="border-t border-border max-h-[180px] overflow-y-auto">
+              <div className="px-3 py-[6px] text-[10px] font-semibold text-subtext uppercase tracking-wider bg-card/50 border-b border-border sticky top-0">
+                Schema ({graphqlSchema.types.length} types)
+              </div>
+              <SchemaTree types={graphqlSchema.types} />
+            </div>
+          )}
         </div>
       )}
 
@@ -152,6 +212,55 @@ export function BodyTab() {
           onRemove={removeBodyForm}
         />
       )}
+    </div>
+  );
+}
+
+function SchemaTree({ types }: { types: GraphQLSchemaType[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = useCallback((name: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="py-1">
+      {types.map((t) => (
+        <div key={t.name}>
+          <button
+            type="button"
+            onClick={() => toggle(t.name)}
+            className="w-full flex items-center gap-1.5 px-3 py-[3px] text-11 text-subtext hover:text-text hover:bg-cardHover transition-colors text-left"
+          >
+            {t.fields && t.fields.length > 0 ? (
+              expanded.has(t.name) ? <ChevronDown size={10} /> : <ChevronRight size={10} />
+            ) : (
+              <span className="w-[10px]" />
+            )}
+            <span className="text-cyan font-medium">{t.name}</span>
+            <span className="text-tertiary text-[10px]">{t.kind}</span>
+          </button>
+          {expanded.has(t.name) && t.fields && (
+            <div className="ml-3 pl-3 border-l border-border/50">
+              {t.fields.map((f) => (
+                <div key={f.name} className="flex items-center gap-1.5 px-3 py-[2px] text-11 text-subtext">
+                  <span className="text-text">{f.name}</span>
+                  {f.type && (
+                    <span className="text-tertiary text-[10px] font-mono">
+                      : {f.type.name || f.type.kind}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
