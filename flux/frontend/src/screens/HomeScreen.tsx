@@ -35,7 +35,7 @@ import { useTabsStore } from "../stores/useTabsStore";
 import { CreateWorkspaceModal } from "../components/modals/CreateWorkspaceModal";
 import { PickFolder } from "../../wailsjs/go/main/App";
 import { toast } from "../stores/useToastStore";
-import reqitLogo from "../assets/images/reqitloo.jpeg";
+import reqitLogo from "../assets/images/reqitlogo.jpeg";
 import type { workspaces } from "../../wailsjs/go/models";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";

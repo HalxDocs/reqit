@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users, Radio } from "lucide-react";
-import reqitLogo from "../../assets/images/reqitloo.jpeg";
+import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "../../stores/useWorkspaceStore";
 import { cn } from "../../lib/cn";
 import { CollectionsTree } from "./CollectionsTree";

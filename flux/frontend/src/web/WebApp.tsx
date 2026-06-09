@@ -19,7 +19,7 @@ import {
   TerminalIcon,
 } from "@hugeicons/core-free-icons";
 import { DOC_SECTIONS } from "../lib/docs";
-import reqitLogo from "../assets/images/reqitloo.jpeg";
+import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
 const RELEASES_URL = "https://github.com/HalxDocs/reqit/releases/latest";
