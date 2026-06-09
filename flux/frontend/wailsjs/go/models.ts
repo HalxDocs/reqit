@@ -247,6 +247,8 @@ export namespace models {
 	    specPath: string;
 	    graphqlQuery: string;
 	    graphqlVariables: string;
+	    preScript: string;
+	    postScript: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -266,6 +268,8 @@ export namespace models {
 	        this.specPath = source["specPath"];
 	        this.graphqlQuery = source["graphqlQuery"];
 	        this.graphqlVariables = source["graphqlVariables"];
+	        this.preScript = source["preScript"];
+	        this.postScript = source["postScript"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
