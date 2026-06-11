@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { CopyButton } from "@/features/response/components/CopyButton";
 import { tryPretty } from "@/shared/lib/format";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
+import { useThemeStore } from "@/shared/lib/useTheme";
 import { cn } from "@/shared/lib/cn";
 
 export function BodyView({
@@ -16,6 +16,7 @@ export function BodyView({
   contentType: string;
 }) {
   const [raw, setRaw] = useState(false);
+  const theme = useThemeStore((s) => s.resolved);
   const { pretty, ok, kind } = useMemo(
     () => tryPretty(body, contentType),
     [body, contentType],
@@ -71,7 +72,7 @@ export function BodyView({
         {body ? (
           <CodeMirror
             value={value}
-            theme={oneDark}
+            theme={theme}
             extensions={extensions}
             editable={false}
             basicSetup={{

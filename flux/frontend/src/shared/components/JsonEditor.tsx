@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
+import { useThemeStore } from "@/shared/lib/useTheme";
 
 type Props = {
   value: string;
@@ -20,6 +20,7 @@ export function JsonEditor({
   placeholder,
   minHeight = "240px",
 }: Props) {
+  const theme = useThemeStore((s) => s.resolved);
   const extensions = useMemo(
     () => [json(), fluxCmTheme, EditorView.lineWrapping],
     [],
@@ -29,7 +30,7 @@ export function JsonEditor({
     <div style={{ minHeight }} className="h-full flex flex-col">
       <CodeMirror
         value={value}
-        theme={oneDark}
+        theme={theme}
         extensions={extensions}
         editable={!readOnly}
         readOnly={readOnly}

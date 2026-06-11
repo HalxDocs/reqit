@@ -5,32 +5,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surface layers
-        bg: "#0F0F11",
-        surface: "#141416",
-        card: "#1A1A1D",
-        cardHover: "#202024",
-        border: "#26262C",
-        // Plasma cyan accent
+        bg: "var(--color-bg)",
+        surface: "var(--color-surface)",
+        card: "var(--color-card)",
+        cardHover: "var(--color-card-hover)",
+        border: "var(--color-border)",
         cyan: {
-          DEFAULT: "#0891B2",
-          hover: "#06B6D4",
-          dim: "#0E7490",
+          DEFAULT: "var(--color-cyan)",
+          hover: "var(--color-cyan-hover)",
+          dim: "var(--color-cyan-dim)",
         },
-        // Method colors
-        get: "#5B9CF6",
-        post: "#0891B2",
-        put: "#F59E0B",
-        patch: "#C084FC",
-        del: "#F87171",
-        // Status
-        danger: "#F87171",
-        warn: "#E8A44A",
-        success: "#3DFAAF",
-        // Text hierarchy
-        text: "#F2F2F4",
-        subtext: "#A0A0B0",
-        tertiary: "#606072",
+        get: "var(--color-get)",
+        post: "var(--color-post)",
+        put: "var(--color-put)",
+        patch: "var(--color-patch)",
+        del: "var(--color-del)",
+        danger: "var(--color-danger)",
+        warn: "var(--color-warn)",
+        success: "var(--color-success)",
+        text: "var(--color-text)",
+        subtext: "var(--color-subtext)",
+        tertiary: "var(--color-tertiary)",
       },
       fontFamily: {
         sans: ['Geist', 'system-ui', 'sans-serif'],
@@ -65,7 +60,7 @@ const config: Config = {
         lg: '12px',
       },
       ringColor: {
-        DEFAULT: '#0891B2',
+        DEFAULT: 'var(--color-cyan)',
       },
     },
   },

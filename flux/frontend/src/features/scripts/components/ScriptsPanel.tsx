@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { Plus, Trash2 } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
+import { useThemeStore } from "@/shared/lib/useTheme";
 
 export function ScriptsPanel() {
   const preSetVars = useRequestStore((s) => s.preSetVars);
@@ -20,6 +20,7 @@ export function ScriptsPanel() {
   const removeExtractRule = useRequestStore((s) => s.removeExtractRule);
   const setPreScript = useRequestStore((s) => s.setPreScript);
   const setPostScript = useRequestStore((s) => s.setPostScript);
+  const theme = useThemeStore((s) => s.resolved);
 
   const jsExtensions = useMemo(
     () => [javascript(), fluxCmTheme, EditorView.lineWrapping],
@@ -38,7 +39,7 @@ export function ScriptsPanel() {
         <div className="px-4 pb-2" style={{ height: 140 }}>
           <CodeMirror
             value={preScript}
-            theme={oneDark}
+            theme={theme}
             extensions={jsExtensions}
             onChange={(val) => setPreScript(val)}
             placeholder={"// Set variables before request\npm.variables.set(\"token\", \"abc123\");"}
@@ -65,7 +66,7 @@ export function ScriptsPanel() {
         <div className="px-4 pb-2" style={{ height: 140 }}>
           <CodeMirror
             value={postScript}
-            theme={oneDark}
+            theme={theme}
             extensions={jsExtensions}
             onChange={(val) => setPostScript(val)}
             placeholder={"// Extract values from response\npm.response.to.have.status(200);\nconst id = pm.response.json().data.id;\npm.variables.set(\"userId\", id);"}

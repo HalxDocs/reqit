@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
+import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetVersion } from "../../../wailsjs/go/main/App";
 
 export function SettingsModal() {
@@ -70,6 +71,10 @@ export function SettingsModal() {
             </button>
             {saved && <span className="text-11 text-teal">Saved</span>}
           </div>
+        </Section>
+
+        <Section title="Theme">
+          <ThemeSelector />
         </Section>
 
         <Section title="Activity">
