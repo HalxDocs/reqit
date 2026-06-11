@@ -621,17 +621,21 @@ export namespace models {
 	    payload: RequestPayload;
 	    response: ResponseResult;
 	    createdAt: string;
-	
+	    tags: string[];
+	    favorite: boolean;
+
 	    static createFrom(source: any = {}) {
 	        return new HistoryEntry(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	    this.id = source["id"];
 	        this.payload = this.convertValues(source["payload"], RequestPayload);
 	        this.response = this.convertValues(source["response"], ResponseResult);
 	        this.createdAt = source["createdAt"];
+	        this.tags = source["tags"];
+	        this.favorite = source["favorite"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

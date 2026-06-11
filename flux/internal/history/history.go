@@ -14,7 +14,7 @@ import (
 )
 
 const fileName = "history.json"
-const Cap = 50
+const Cap = 500
 
 type wrapper struct {
 	Entries []models.HistoryEntry `json:"entries"`
@@ -78,6 +78,46 @@ func (s *Store) GetAll() ([]models.HistoryEntry, error) {
 	out := make([]models.HistoryEntry, len(s.entries))
 	copy(out, s.entries)
 	return out, nil
+}
+
+func (s *Store) DeleteEntry(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	filtered := make([]models.HistoryEntry, 0, len(s.entries))
+	for _, e := range s.entries {
+		if e.ID != id {
+			filtered = append(filtered, e)
+		}
+	}
+	s.entries = filtered
+	return s.save()
+}
+
+func (s *Store) UpdateEntry(id string, patch map[string]interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.entries {
+		if s.entries[i].ID == id {
+			if tags, ok := patch["tags"]; ok {
+				if t, ok := tags.([]string); ok {
+					s.entries[i].Tags = t
+				}
+			}
+			if fav, ok := patch["favorite"]; ok {
+				if f, ok := fav.(bool); ok {
+					s.entries[i].Favorite = f
+				}
+			}
+			break
+		}
+	}
+	return s.save()
 }
 
 func (s *Store) Clear() error {

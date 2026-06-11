@@ -120,6 +120,8 @@ type HistoryEntry struct {
 	Payload   RequestPayload `json:"payload"`
 	Response  ResponseResult `json:"response"`
 	CreatedAt string         `json:"createdAt"`
+	Tags      []string       `json:"tags,omitempty"`
+	Favorite  bool           `json:"favorite"`
 }
 
 // --- Scripting ---

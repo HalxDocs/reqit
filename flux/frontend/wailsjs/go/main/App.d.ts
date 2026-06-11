@@ -24,6 +24,10 @@ export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
+export function DeleteHistoryEntry(arg1:string):Promise<void>;
+
+export function UpdateHistoryEntry(arg1:string,arg2:any):Promise<void>;
+
 export function CommitAndPush(arg1:string):Promise<void>;
 
 export function ConnectSocket(arg1:string,arg2:string):Promise<void>;

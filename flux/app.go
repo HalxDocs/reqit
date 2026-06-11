@@ -473,6 +473,20 @@ func (a *App) ClearHistory() error {
 	return a.history.Clear()
 }
 
+func (a *App) DeleteHistoryEntry(id string) error {
+	if a.history == nil {
+		return nil
+	}
+	return a.history.DeleteEntry(id)
+}
+
+func (a *App) UpdateHistoryEntry(id string, patch map[string]interface{}) error {
+	if a.history == nil {
+		return nil
+	}
+	return a.history.UpdateEntry(id, patch)
+}
+
 // --- Environments ---
 
 func (a *App) GetEnvironments() (environments.Snapshot, error) {

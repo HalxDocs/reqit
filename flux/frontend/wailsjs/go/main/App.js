@@ -30,6 +30,14 @@ export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
 
+export function DeleteHistoryEntry(arg1) {
+  return window['go']['main']['App']['DeleteHistoryEntry'](arg1);
+}
+
+export function UpdateHistoryEntry(arg1, arg2) {
+  return window['go']['main']['App']['UpdateHistoryEntry'](arg1, arg2);
+}
+
 export function CommitAndPush(arg1) {
   return window['go']['main']['App']['CommitAndPush'](arg1);
 }
