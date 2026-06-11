@@ -204,7 +204,16 @@ export function BodyTab() {
         </div>
       )}
 
-      {(bodyType === "form" || bodyType === "urlencoded") && (
+      {bodyType === "form" && (
+        <KeyValueEditor
+          rows={bodyForm}
+          onAdd={addBodyForm}
+          onUpdate={updateBodyForm}
+          onRemove={removeBodyForm}
+          showTypeToggle
+        />
+      )}
+      {bodyType === "urlencoded" && (
         <KeyValueEditor
           rows={bodyForm}
           onAdd={addBodyForm}

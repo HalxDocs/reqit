@@ -1,9 +1,10 @@
 package models
 
 type Header struct {
-	Key     string `json:"key"`
-	Value   string `json:"value"`
-	Enabled bool   `json:"enabled"`
+	Key       string `json:"key"`
+	Value     string `json:"value"`
+	Enabled   bool   `json:"enabled"`
+	ValueType string `json:"valueType,omitempty"` // "text" | "file"
 }
 
 type RequestPayload struct {

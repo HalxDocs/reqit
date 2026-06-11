@@ -15,6 +15,7 @@ export interface KeyValue {
   key: string;
   value: string;
   enabled: boolean;
+  valueType?: "text" | "file";
 }
 
 export type BodyType = "none" | "json" | "form" | "urlencoded" | "graphql";
