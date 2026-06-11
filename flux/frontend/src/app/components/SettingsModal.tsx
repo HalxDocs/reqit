@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useThemeStore } from "@/shared/lib/useTheme";
+import { getCommands, setUserKeys, resetKeys, getActiveKeys } from "@/shared/lib/commands";
 import { GetVersion } from "../../../wailsjs/go/main/App";
 
 export function SettingsModal() {
@@ -75,6 +76,10 @@ export function SettingsModal() {
 
         <Section title="Theme">
           <ThemeSelector />
+        </Section>
+
+        <Section title="Shortcuts">
+          <ShortcutList />
         </Section>
 
         <Section title="Activity">
@@ -155,6 +160,89 @@ function fmtDate(iso?: string): string {
   } catch {
     return iso;
   }
+}
+
+function ShortcutList() {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    if (editing) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [editing]);
+
+  const cmds = getCommands().filter((c) => c.defaultKeys.length > 0 || c.userKeys);
+
+  return (
+    <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+      {cmds.map((cmd) => (
+        <div key={cmd.id} className="flex items-center justify-between py-1 px-1 rounded-sm hover:bg-cardHover group">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-11 text-tertiary uppercase tracking-wider w-[70px] shrink-0">{cmd.category}</span>
+            <span className="text-12 text-text truncate">{cmd.label}</span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {editing === cmd.id ? (
+              <div className="flex items-center gap-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const keys = editValue.split(",").map((s) => s.trim()).filter(Boolean);
+                      setUserKeys(cmd.id, keys);
+                      setEditing(null);
+                      forceUpdate((n) => n + 1);
+                    } else if (e.key === "Escape") {
+                      setEditing(null);
+                    }
+                  }}
+                  placeholder="meta+k, ctrl+k"
+                  spellCheck={false}
+                  className="w-[140px] h-[22px] px-2 bg-surface border border-border rounded text-11 font-mono text-text outline-none focus:border-cyan"
+                />
+                <button type="button" onClick={() => setEditing(null)} className="text-11 text-subtext hover:text-text">✓</button>
+              </div>
+            ) : (
+              <>
+                <span className="text-11 text-tertiary font-mono">
+                  {getActiveKeys(cmd.id).map(formatKeyBadge).join(" ")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { setEditValue(getActiveKeys(cmd.id).join(", ")); setEditing(cmd.id); }}
+                  className="text-11 text-subtext hover:text-cyan opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  Edit
+                </button>
+                {cmd.userKeys && (
+                  <button
+                    type="button"
+                    onClick={() => { resetKeys(cmd.id); forceUpdate((n) => n + 1); }}
+                    className="text-11 text-subtext hover:text-danger opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    Reset
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatKeyBadge(k: string): string {
+  return k
+    .replace("meta", "⌘")
+    .replace("ctrl", "⌃")
+    .replace("alt", "⌥")
+    .replace("shift", "⇧")
+    .toUpperCase();
 }
 
 function ThemeSelector() {

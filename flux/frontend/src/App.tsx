@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sidebar } from "@/app/layout/Sidebar";
 import { TabBar } from "@/features/tabs/components/TabBar";
 import { UrlBar } from "@/features/request/components/UrlBar";
 import { UrlPreview } from "@/features/request/components/UrlPreview";
 import { RequestPanel } from "@/app/layout/RequestPanel";
 import { ResponsePane } from "@/features/response/components/ResponsePane";
+import { CommandPalette } from "@/shared/components/CommandPalette";
 import { Splitter } from "@/shared/components/Splitter";
 import { SaveRequestModal } from "@/features/collections/components/SaveRequestModal";
 import { EnvironmentsModal } from "@/features/env/components/EnvironmentsModal";
@@ -28,9 +29,12 @@ import { useCollectionStore } from "@/features/collections/stores/useCollectionS
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
+import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
+import { registerCommands } from "@/shared/lib/commands";
+import { useThemeStore } from "@/shared/lib/useTheme";
 import "./App.css";
 
 type Screen = "loading" | "home" | "app";
@@ -100,12 +104,43 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const view = useUIStore((s) => s.view);
   const collections = useCollectionStore((s) => s.collections);
   const runnerColl = runnerCollID ? collections.find((c) => c.id === runnerCollID) : null;
+  const openSaveModal = useUIStore((s) => s.openSaveModal);
+  const openImport = useUIStore((s) => s.openImportModal);
+  const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
+  const openSettings = useUIStore((s) => s.openSettingsModal);
+  const openCodeGen = useUIStore((s) => s.openCodeGenModal);
+  const newTab = useTabsStore((s) => s.newTab);
+  const closeTab = useTabsStore((s) => s.closeTab);
+  const activeID = useTabsStore((s) => s.activeID);
+  const toggleTheme = useThemeStore((s) => s.toggle);
 
-  useKeyboardShortcuts(send);
+  const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
+
+  const commandsInited = useRef(false);
+  useEffect(() => {
+    if (commandsInited.current) return;
+    commandsInited.current = true;
+    registerCommands([
+      { id: "cmd.palette", label: "Show Command Palette", category: "General", defaultKeys: ["meta+k", "ctrl+k"], action: () => setCmdPaletteOpen(true) },
+      { id: "request.send", label: "Send Request", category: "Request", defaultKeys: ["meta+enter", "ctrl+enter"], action: () => { if (!useResponseStore.getState().isLoading) send(); } },
+      { id: "request.save", label: "Save Request", category: "Request", defaultKeys: ["meta+s", "ctrl+s"], action: () => openSaveModal() },
+      { id: "tab.new", label: "New Tab", category: "Tabs", defaultKeys: ["meta+t", "ctrl+t"], action: () => { newTab(); document.getElementById("flux-url-bar")?.focus(); } },
+      { id: "tab.close", label: "Close Tab", category: "Tabs", defaultKeys: ["meta+w", "ctrl+w"], action: () => closeTab(activeID) },
+      { id: "url.focus", label: "Focus URL Bar", category: "Request", defaultKeys: ["meta+e", "ctrl+e"], action: () => { const el = document.getElementById("flux-url-bar") as HTMLInputElement | null; el?.focus(); el?.select(); } },
+      { id: "import.curl", label: "Import cURL", category: "Import", defaultKeys: ["meta+shift+i", "ctrl+shift+i"], action: () => openPasteCurl() },
+      { id: "import.postman", label: "Import Postman", category: "Import", defaultKeys: [], action: () => openImport() },
+      { id: "codegen", label: "Generate Code", category: "Request", defaultKeys: [], action: () => openCodeGen() },
+      { id: "settings", label: "Open Settings", category: "General", defaultKeys: ["meta+,", "ctrl+,"], action: () => openSettings() },
+      { id: "theme.toggle", label: "Toggle Theme", category: "General", defaultKeys: [], action: () => toggleTheme() },
+    ]);
+  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme]);
+
+  useKeyboardShortcuts();
   useTabSync();
 
   return (
     <div className="h-screen w-screen flex bg-bg text-text">
+      <CommandPalette open={cmdPaletteOpen} onClose={() => setCmdPaletteOpen(false)} />
       {/* Mobile: show a "use desktop" message instead of the full app UI */}
       <div className="md:hidden fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center gap-5 p-8 text-center">
         <div className="w-[64px] h-[64px] rounded-2xl bg-cyan/10 flex items-center justify-center">
