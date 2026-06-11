@@ -156,3 +156,31 @@ function fmtDate(iso?: string): string {
     return iso;
   }
 }
+
+function ThemeSelector() {
+  const mode = useThemeStore((s) => s.mode);
+  const setMode = useThemeStore((s) => s.setMode);
+  const options: { value: typeof mode; label: string }[] = [
+    { value: "dark", label: "Dark" },
+    { value: "light", label: "Light" },
+    { value: "system", label: "System" },
+  ];
+  return (
+    <div className="flex gap-2">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => setMode(o.value)}
+          className={`h-[28px] px-3 text-12 rounded-md border transition-colors ${
+            mode === o.value
+              ? "bg-cyan text-white border-cyan"
+              : "bg-card text-subtext border-border hover:text-text hover:border-cyan"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
