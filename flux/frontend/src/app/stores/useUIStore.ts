@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts";
-export type ResponseTab = "body" | "headers" | "cookies";
+export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
 export type WorkspaceView = "http" | "socket";
 
@@ -55,6 +55,12 @@ type UIStore = {
   runnerCollID: string | null;
   openRunner: (collID: string) => void;
   closeRunner: () => void;
+
+  responseSearch: string;
+  setResponseSearch: (q: string) => void;
+
+  responseBodyView: "pretty" | "raw" | "hex";
+  setResponseBodyView: (v: "pretty" | "raw" | "hex") => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -107,4 +113,10 @@ export const useUIStore = create<UIStore>((set) => ({
   runnerCollID: null,
   openRunner: (runnerCollID) => set({ runnerCollID }),
   closeRunner: () => set({ runnerCollID: null }),
+
+  responseSearch: "",
+  setResponseSearch: (responseSearch) => set({ responseSearch }),
+
+  responseBodyView: "pretty",
+  setResponseBodyView: (responseBodyView) => set({ responseBodyView }),
 }));

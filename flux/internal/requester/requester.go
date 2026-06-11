@@ -2,10 +2,12 @@ package requester
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,22 +16,16 @@ import (
 	"flux/internal/models"
 )
 
-
 const defaultTimeout = 30 * time.Second
 
-// sharedTransport is reused for TCP connection pooling.
 var sharedTransport = &http.Transport{
 	MaxIdleConns:        100,
 	MaxIdleConnsPerHost: 10,
 	IdleConnTimeout:     90 * time.Second,
 }
 
-// httpClient is the default client with no cookie jar.
 var httpClient = &http.Client{Transport: sharedTransport}
 
-// Execute runs the given RequestPayload under the supplied context. If jar is
-// non-nil, cookies are automatically stored from Set-Cookie responses and
-// replayed on subsequent requests to the same domain.
 func Execute(ctx context.Context, payload models.RequestPayload, jar http.CookieJar) models.ResponseResult {
 	client := httpClient
 	if jar != nil {
@@ -52,7 +48,6 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		method = http.MethodGet
 	}
 
-	// Apply a fallback timeout if the caller's context has none.
 	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
@@ -67,6 +62,26 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	}
 	applyAuth(req, payload.AuthType, payload.AuthValue)
 
+	var (
+		dnsStart     time.Time
+		dnsEnd       time.Time
+		tcpStart     time.Time
+		tcpEnd       time.Time
+		tlsStart     time.Time
+		tlsEnd       time.Time
+		gotFirstByte time.Time
+	)
+	trace := &httptrace.ClientTrace{
+		DNSStart:             func(_ httptrace.DNSStartInfo) { dnsStart = time.Now() },
+		DNSDone:              func(_ httptrace.DNSDoneInfo) { dnsEnd = time.Now() },
+		ConnectStart:         func(_, _ string) { tcpStart = time.Now() },
+		ConnectDone:          func(_, _ string, _ error) { tcpEnd = time.Now() },
+		TLSHandshakeStart:    func() { tlsStart = time.Now() },
+		TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { tlsEnd = time.Now() },
+		GotFirstResponseByte: func() { gotFirstByte = time.Now() },
+	}
+	req = req.WithContext(httptrace.WithClientTrace(reqCtx, trace))
+
 	resp, err := client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
@@ -80,6 +95,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	defer resp.Body.Close()
 
 	respBody, readErr := io.ReadAll(io.LimitReader(resp.Body, 50*1024*1024))
+	downloadEnd := time.Now()
 	timing := time.Since(start)
 	if readErr != nil {
 		if errors.Is(readErr, context.Canceled) {
@@ -89,8 +105,14 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	}
 
 	headers := flattenHeaders(resp.Header)
+	bodyIsBase64 := isBinaryContentType(resp.Header.Get("Content-Type"))
+	var bodyStr string
+	if bodyIsBase64 {
+		bodyStr = base64.StdEncoding.EncodeToString(respBody)
+	} else {
+		bodyStr = string(respBody)
+	}
 
-	// Collect cookies set by this response for the frontend to display.
 	var setCookies []models.CookieSummary
 	if resp.Request != nil && resp.Request.URL != nil {
 		for _, c := range resp.Cookies() {
@@ -109,15 +131,45 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		}
 	}
 
+	var timingBreakdown *models.TimingBreakdown
+	{
+		var dns, tcp, tlsH, ttfb, download int64
+		if !dnsStart.IsZero() && !dnsEnd.IsZero() {
+			dns = dnsEnd.Sub(dnsStart).Milliseconds()
+		}
+		if !tcpStart.IsZero() && !tcpEnd.IsZero() {
+			tcp = tcpEnd.Sub(tcpStart).Milliseconds()
+		}
+		if !tlsStart.IsZero() && !tlsEnd.IsZero() {
+			tlsH = tlsEnd.Sub(tlsStart).Milliseconds()
+		}
+		if !gotFirstByte.IsZero() {
+			ttfb = gotFirstByte.Sub(start).Milliseconds()
+		}
+		if !gotFirstByte.IsZero() {
+			download = downloadEnd.Sub(gotFirstByte).Milliseconds()
+		}
+		timingBreakdown = &models.TimingBreakdown{
+			DNSLookupMs:    dns,
+			TCPConnectMs:   tcp,
+			TLSHandshakeMs: tlsH,
+			TTFBMs:         ttfb,
+			DownloadMs:     download,
+			TotalMs:        timing.Milliseconds(),
+		}
+	}
+
 	return models.ResponseResult{
-		Status:     resp.Status,
-		StatusCode: resp.StatusCode,
-		Headers:    headers,
-		Body:       string(respBody),
-		TimingMs:   timing.Milliseconds(),
-		SizeBytes:  int64(len(respBody)),
-		Cookies:    setCookies,
-		Error:      "",
+		Status:       resp.Status,
+		StatusCode:   resp.StatusCode,
+		Headers:      headers,
+		Body:         bodyStr,
+		BodyIsBase64: bodyIsBase64,
+		TimingMs:     timing.Milliseconds(),
+		Timing:       timingBreakdown,
+		SizeBytes:    int64(len(respBody)),
+		Cookies:      setCookies,
+		Error:        "",
 	}
 }
 
@@ -204,13 +256,11 @@ func applyAuth(req *http.Request, authType, authValue string) {
 			req.Header.Set("Authorization", "Bearer "+authValue)
 		}
 	case "basic":
-		// authValue is "user:pass"
 		if authValue != "" {
 			encoded := base64.StdEncoding.EncodeToString([]byte(authValue))
 			req.Header.Set("Authorization", "Basic "+encoded)
 		}
 	case "apikey":
-		// authValue is "header:HeaderName:value" or "query:paramName:value"
 		parts := strings.SplitN(authValue, ":", 3)
 		if len(parts) != 3 || parts[2] == "" {
 			return
@@ -233,6 +283,18 @@ func flattenHeaders(h http.Header) map[string]string {
 		out[k] = strings.Join(v, ", ")
 	}
 	return out
+}
+
+func isBinaryContentType(ct string) bool {
+	lower := strings.ToLower(ct)
+	return strings.Contains(lower, "image") ||
+		strings.Contains(lower, "octet-stream") ||
+		strings.Contains(lower, "binary") ||
+		strings.Contains(lower, "pdf") ||
+		strings.Contains(lower, "zip") ||
+		strings.Contains(lower, "gzip") ||
+		strings.Contains(lower, "audio") ||
+		strings.Contains(lower, "video")
 }
 
 func errResult(err error, elapsed time.Duration) models.ResponseResult {

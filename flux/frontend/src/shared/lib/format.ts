@@ -9,14 +9,16 @@ export function formatTiming(ms: number): string {
   return `${(ms / 1000).toFixed(2)} s`;
 }
 
-export type BodyKind = "json" | "xml" | "html" | "text";
+export type BodyKind = "json" | "xml" | "html" | "image" | "binary" | "text";
 
 export function detectBodyKind(body: string, contentType: string): BodyKind {
   const ct = contentType.toLowerCase();
   if (ct.includes("json")) return "json";
   if (ct.includes("xml")) return "xml";
   if (ct.includes("html")) return "html";
-  // Sniff body if header is missing/wrong.
+  if (ct.includes("image")) return "image";
+  if (ct.includes("octet-stream") || ct.includes("binary") || ct.includes("pdf")) return "binary";
+  if (body.length > 0 && !isText(body)) return "binary";
   const t = body.trim();
   if (!t) return "text";
   if (t.startsWith("{") || t.startsWith("[")) return "json";
@@ -24,6 +26,14 @@ export function detectBodyKind(body: string, contentType: string): BodyKind {
   if (t.startsWith("<!DOCTYPE") || t.startsWith("<html")) return "html";
   if (t.startsWith("<")) return "xml";
   return "text";
+}
+
+function isText(s: string): boolean {
+  for (let i = 0; i < Math.min(s.length, 512); i++) {
+    const c = s.charCodeAt(i);
+    if (c === 0 || (c < 32 && c !== 9 && c !== 10 && c !== 13)) return false;
+  }
+  return true;
 }
 
 function prettyJSON(body: string): { pretty: string; ok: boolean } {

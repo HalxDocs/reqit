@@ -46,16 +46,27 @@ type ValidationResult struct {
 	Method     string            `json:"method"`
 }
 
+type TimingBreakdown struct {
+	DNSLookupMs    int64 `json:"dnsLookupMs"`
+	TCPConnectMs   int64 `json:"tcpConnectMs"`
+	TLSHandshakeMs int64 `json:"tlsHandshakeMs"`
+	TTFBMs         int64 `json:"ttfbMs"`
+	DownloadMs     int64 `json:"downloadMs"`
+	TotalMs        int64 `json:"totalMs"`
+}
+
 type ResponseResult struct {
-	Status     string            `json:"status"`
-	StatusCode int               `json:"statusCode"`
-	Headers    map[string]string `json:"headers"`
-	Body       string            `json:"body"`
-	TimingMs   int64             `json:"timingMs"`
-	SizeBytes  int64             `json:"sizeBytes"`
-	Error      string            `json:"error"`
-	Cookies    []CookieSummary   `json:"cookies"`
-	Validation *ValidationResult `json:"validation,omitempty"`
+	Status        string            `json:"status"`
+	StatusCode    int               `json:"statusCode"`
+	Headers       map[string]string `json:"headers"`
+	Body          string            `json:"body"`
+	BodyIsBase64  bool              `json:"bodyIsBase64"`
+	TimingMs      int64             `json:"timingMs"`
+	Timing        *TimingBreakdown  `json:"timing,omitempty"`
+	SizeBytes     int64             `json:"sizeBytes"`
+	Error         string            `json:"error"`
+	Cookies       []CookieSummary   `json:"cookies"`
+	Validation    *ValidationResult `json:"validation,omitempty"`
 }
 
 type SavedResponse struct {

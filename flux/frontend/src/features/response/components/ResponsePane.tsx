@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BookmarkPlus } from "lucide-react";
+import { BookmarkPlus, Search, X } from "lucide-react";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useUIStore, type ResponseTab } from "@/app/stores/useUIStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
@@ -8,6 +8,7 @@ import { StatusBar } from "@/features/response/components/StatusBar";
 import { BodyView } from "@/features/response/components/BodyView";
 import { HeadersView } from "@/features/response/components/HeadersView";
 import { CookiesView } from "@/features/response/components/CookiesView";
+import { TimelineView } from "@/features/response/components/TimelineView";
 import { LoadingState } from "@/features/response/components/LoadingState";
 import { ErrorState } from "@/features/response/components/ErrorState";
 import { SaveCapturedResponse } from "../../../../wailsjs/go/main/App";
@@ -24,11 +25,14 @@ export function ResponsePane() {
   const [saving, setSaving] = useState(false);
 
   const cookieCount = (response?.cookies ?? []).length;
+  const responseSearch = useUIStore((s) => s.responseSearch);
+  const setResponseSearch = useUIStore((s) => s.setResponseSearch);
 
   const TABS: TabItem<ResponseTab>[] = useMemo(() => [
     { id: "body", label: "Body" },
     { id: "headers", label: "Headers" },
     { id: "cookies", label: cookieCount > 0 ? `Cookies (${cookieCount})` : "Cookies" },
+    { id: "timeline", label: "Timeline" },
   ], [cookieCount]);
 
   const currentDomain = useMemo(() => {
@@ -74,18 +78,38 @@ export function ResponsePane() {
       {!isLoading && response && !response.error && (
         <div className="flex items-center justify-between border-b border-border">
           <Tabs tabs={TABS} active={responseTab} onChange={setResponseTab} />
-          {savedContext && (
-            <button
-              type="button"
-              onClick={saveResponse}
-              disabled={saving}
-              className="flex items-center gap-1 mr-3 text-11 text-subtext hover:text-text transition-colors disabled:opacity-50"
-              title="Save response for mock server replay"
-            >
-              <BookmarkPlus size={11} />
-              {saving ? "Saving…" : "Save for Mock"}
-            </button>
-          )}
+          <div className="flex items-center gap-2 mr-3">
+            {responseTab === "body" && (
+              <div className="flex items-center gap-1 bg-surface border border-border rounded-sm px-2 h-[22px]">
+                <Search size={10} className="text-subtext" />
+                <input
+                  type="text"
+                  value={responseSearch}
+                  onChange={(e) => setResponseSearch(e.target.value)}
+                  placeholder="Search body…"
+                  spellCheck={false}
+                  className="bg-transparent text-11 text-text outline-none w-[120px] placeholder:text-tertiary"
+                />
+                {responseSearch && (
+                  <button type="button" onClick={() => setResponseSearch("")} className="text-subtext hover:text-text">
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+            )}
+            {savedContext && (
+              <button
+                type="button"
+                onClick={saveResponse}
+                disabled={saving}
+                className="flex items-center gap-1 text-11 text-subtext hover:text-text transition-colors disabled:opacity-50"
+                title="Save response for mock server replay"
+              >
+                <BookmarkPlus size={11} />
+                {saving ? "Saving…" : "Save for Mock"}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -104,6 +128,7 @@ export function ResponsePane() {
           <BodyView
             body={response.body}
             contentType={response.headers["Content-Type"] ?? response.headers["content-type"] ?? ""}
+            bodyIsBase64={response.bodyIsBase64}
           />
         )}
         {!isLoading && response && !response.error && responseTab === "headers" && (
@@ -111,6 +136,9 @@ export function ResponsePane() {
         )}
         {responseTab === "cookies" && (
           <CookiesView currentDomain={currentDomain} />
+        )}
+        {!isLoading && response && !response.error && responseTab === "timeline" && (
+          <TimelineView />
         )}
       </div>
     </section>

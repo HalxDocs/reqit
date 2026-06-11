@@ -117,12 +117,23 @@ export interface GraphQLSchema {
   types: GraphQLSchemaType[];
 }
 
+export interface TimingBreakdown {
+  dnsLookupMs: number;
+  tcpConnectMs: number;
+  tlsHandshakeMs: number;
+  ttfbMs: number;
+  downloadMs: number;
+  totalMs: number;
+}
+
 export interface ResponseResult {
   status: string;
   statusCode: number;
   headers: Record<string, string>;
   body: string;
+  bodyIsBase64?: boolean;
   timingMs: number;
+  timing?: TimingBreakdown;
   sizeBytes: number;
   error: string;
   cookies: CookieSummary[];
