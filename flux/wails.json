@@ -9,5 +9,24 @@
   "author": {
     "name": "HalxDocs",
     "email": "kamsyejindu@gmail.com"
+  },
+  "info": {
+    "companyName": "HalxDocs",
+    "productName": "reqit",
+    "productVersion": "0.5.0",
+    "copyright": "© 2026 HalxDocs",
+    "comments": "Modern API client"
+  },
+  "nsisType": "installer",
+  "windows": {
+    "webviewInstallMode": "embed",
+    "windowsVersion": "10.0.17763.0"
+  },
+  "mac": {
+    "minimumSystemVersion": "11.0",
+    "appearance": "default"
+  },
+  "linux": {
+    "categories": "Development"
   }
 }

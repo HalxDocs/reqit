@@ -32,6 +32,7 @@ import { useUIStore } from "@/app/stores/useUIStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
+import { useUndoRedo } from "@/shared/lib/useUndoRedo";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { registerCommands } from "@/shared/lib/commands";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -113,6 +114,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const closeTab = useTabsStore((s) => s.closeTab);
   const activeID = useTabsStore((s) => s.activeID);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const { undo, redo } = useUndoRedo();
 
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
 
@@ -132,8 +134,10 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "codegen", label: "Generate Code", category: "Request", defaultKeys: [], action: () => openCodeGen() },
       { id: "settings", label: "Open Settings", category: "General", defaultKeys: ["meta+,", "ctrl+,"], action: () => openSettings() },
       { id: "theme.toggle", label: "Toggle Theme", category: "General", defaultKeys: [], action: () => toggleTheme() },
+      { id: "edit.undo", label: "Undo", category: "Edit", defaultKeys: ["meta+z", "ctrl+z"], action: () => undo() },
+      { id: "edit.redo", label: "Redo", category: "Edit", defaultKeys: ["meta+shift+z", "ctrl+shift+z"], action: () => redo() },
     ]);
-  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme]);
+  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme, undo, redo]);
 
   useKeyboardShortcuts();
   useTabSync();
