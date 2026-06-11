@@ -1,7 +1,8 @@
-import { Code2, Save, Send, X } from "lucide-react";
+import { Code2, Copy, Save, Send, X } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useUIStore } from "@/app/stores/useUIStore";
+import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
 import { MethodSelect } from "@/shared/components/MethodSelect";
 import { buildQueryString, parseQueryString, splitUrl } from "@/shared/lib/url";
 import { uid } from "@/shared/lib/id";
@@ -17,6 +18,39 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const isLoading = useResponseStore((s) => s.isLoading);
   const openSaveModal = useUIStore((s) => s.openSaveModal);
   const openCodeGen = useUIStore((s) => s.openCodeGenModal);
+  const newTab = useTabsStore((s) => s.newTab);
+  const requestState = useRequestStore.getState();
+
+  const handleFork = () => {
+    newTab({
+      title: deriveTitle(requestState) + " (fork)",
+      savedRequestID: null,
+      request: {
+        method: requestState.method,
+        url: requestState.url,
+        params: requestState.params.map((p) => ({ ...p })),
+        headers: requestState.headers.map((h) => ({ ...h })),
+        bodyType: requestState.bodyType,
+        bodyRaw: requestState.bodyRaw,
+        bodyForm: requestState.bodyForm.map((f) => ({ ...f })),
+        authType: requestState.authType,
+        authToken: requestState.authToken,
+        authUser: requestState.authUser,
+        authPass: requestState.authPass,
+        authKeyName: requestState.authKeyName,
+        authKeyValue: requestState.authKeyValue,
+        authKeyIn: requestState.authKeyIn,
+        preSetVars: requestState.preSetVars.map((v) => ({ ...v })),
+        extractRules: requestState.extractRules.map((r) => ({ ...r })),
+        graphqlQuery: requestState.graphqlQuery,
+        graphqlVariables: requestState.graphqlVariables,
+        preScript: requestState.preScript,
+        postScript: requestState.postScript,
+      },
+      response: null,
+      dirty: true,
+    });
+  };
 
   const displayed = url + buildQueryString(params);
 
@@ -69,6 +103,16 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         aria-label="Save request"
       >
         <Save size={14} />
+      </button>
+
+      <button
+        type="button"
+        onClick={handleFork}
+        title="Duplicate to new tab"
+        className="h-[36px] w-[36px] flex items-center justify-center bg-card border border-border hover:border-cyan rounded-md text-subtext hover:text-text transition-colors"
+        aria-label="Fork request"
+      >
+        <Copy size={14} />
       </button>
 
       {isLoading ? (

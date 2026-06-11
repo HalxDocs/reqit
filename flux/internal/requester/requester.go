@@ -1,14 +1,18 @@
 package requester
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -227,17 +231,54 @@ func buildBody(p models.RequestPayload) (io.Reader, string, error) {
 		}
 		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded", nil
 	case "form":
-		values := url.Values{}
+		hasFiles := false
 		for _, kv := range p.BodyForm {
-			if !kv.Enabled || kv.Key == "" {
-				continue
+			if kv.Enabled && kv.ValueType == "file" && kv.Value != "" {
+				hasFiles = true
+				break
 			}
-			values.Add(kv.Key, kv.Value)
 		}
-		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded", nil
+		if !hasFiles {
+			values := url.Values{}
+			for _, kv := range p.BodyForm {
+				if !kv.Enabled || kv.Key == "" {
+					continue
+				}
+				values.Add(kv.Key, kv.Value)
+			}
+			return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded", nil
+		}
+		return buildMultipartBody(p.BodyForm)
 	default:
 		return nil, "", nil
 	}
+}
+
+func buildMultipartBody(form []models.Header) (io.Reader, string, error) {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	for _, kv := range form {
+		if !kv.Enabled || kv.Key == "" {
+			continue
+		}
+		if kv.ValueType == "file" && kv.Value != "" {
+			f, err := os.Open(kv.Value)
+			if err != nil {
+				continue
+			}
+			fw, err := w.CreateFormFile(kv.Key, filepath.Base(kv.Value))
+			if err != nil {
+				f.Close()
+				continue
+			}
+			_, _ = io.Copy(fw, f)
+			f.Close()
+		} else {
+			_ = w.WriteField(kv.Key, kv.Value)
+		}
+	}
+	_ = w.Close()
+	return &buf, w.FormDataContentType(), nil
 }
 
 func applyHeaders(req *http.Request, headers []models.Header) {
