@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Download, Folder, History as HistoryIcon, Settings, Terminal, User, Users, Radio } from "lucide-react";
+import { ChevronDown, Download, Folder, History as HistoryIcon, Moon, Settings, Sun, Terminal, User, Users, Radio } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { cn } from "@/shared/lib/cn";
@@ -9,6 +9,7 @@ import { EnvSwitcher } from "@/features/env/components/EnvSwitcher";
 import { SearchBar } from "@/features/collections/components/SearchBar";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
+import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetGitStatus } from "../../../wailsjs/go/main/App";
 
 export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
@@ -24,6 +25,8 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const activeWs = workspaces.find((w) => w.id === activeID);
 
   const [hasChanges, setHasChanges] = useState(false);
+  const theme = useThemeStore((s) => s.resolved);
+  const toggleTheme = useThemeStore((s) => s.toggle);
   useEffect(() => {
     GetGitStatus().then((s: { hasChanges: boolean }) => setHasChanges(s.hasChanges)).catch(() => {});
   }, []);
@@ -137,6 +140,14 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
               : "Welcome to reqit"}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex items-center justify-center w-[20px] h-[20px] text-subtext hover:text-text transition-colors shrink-0 mr-1"
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+        </button>
         <Settings size={12} className="text-subtext shrink-0" />
       </button>
     </aside>
