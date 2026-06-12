@@ -16,6 +16,11 @@ export interface WirePayload {
   graphqlVariables: string;
   preScript: string;
   postScript: string;
+  grpcService?: string;
+  grpcMethod?: string;
+  mqttTopic?: string;
+  soapAction?: string;
+  soapVersion?: string;
 }
 
 const stripId = (kv: KeyValue) => ({
@@ -36,7 +41,14 @@ export function buildPayload(s: RequestState): WirePayload {
   let authValue = "";
   if (s.authType === "bearer") authValue = resolve(s.authToken);
   if (s.authType === "basic") authValue = `${resolve(s.authUser)}:${resolve(s.authPass)}`;
+  if (s.authType === "digest" || s.authType === "ntlm") authValue = `${resolve(s.authUsername ?? "")}:${resolve(s.authPassword ?? "")}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${resolve(s.authKeyName)}:${resolve(s.authKeyValue)}`;
+  if (s.authType === "oauth2" && s.oauth2Config) {
+    authValue = JSON.stringify({
+      accessToken: s.oauth2Config.accessToken,
+      tokenType: "Bearer",
+    });
+  }
 
   return {
     method: s.method,
@@ -52,6 +64,10 @@ export function buildPayload(s: RequestState): WirePayload {
     graphqlVariables: s.bodyType === "graphql" ? resolve(s.graphqlVariables) : "",
     preScript: s.preScript ?? "",
     postScript: s.postScript ?? "",
+    grpcService: s.bodyType === "grpc" ? s.grpcService : undefined,
+    grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
+    soapAction: s.bodyType === "soap" ? s.soapAction : undefined,
+    soapVersion: s.bodyType === "soap" ? s.soapVersion : undefined,
   };
 }
 
@@ -62,7 +78,11 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
   let authValue = "";
   if (s.authType === "bearer") authValue = s.authToken;
   if (s.authType === "basic") authValue = `${s.authUser}:${s.authPass}`;
+  if (s.authType === "digest" || s.authType === "ntlm") authValue = `${s.authUsername}:${s.authPassword}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;
+  if (s.authType === "oauth2" && s.oauth2Config) {
+    authValue = JSON.stringify({ accessToken: s.oauth2Config.accessToken, tokenType: "Bearer" });
+  }
 
   return {
     method: s.method,
@@ -78,5 +98,9 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     graphqlVariables: s.bodyType === "graphql" ? s.graphqlVariables : "",
     preScript: s.preScript ?? "",
     postScript: s.postScript ?? "",
+    grpcService: s.bodyType === "grpc" ? s.grpcService : undefined,
+    grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
+    soapAction: s.bodyType === "soap" ? s.soapAction : undefined,
+    soapVersion: s.bodyType === "soap" ? s.soapVersion : undefined,
   };
 }

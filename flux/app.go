@@ -470,7 +470,21 @@ func (a *App) OAuth2Refresh(authURL, tokenURL, clientID, clientSecret, scopes, r
 // --- JWT ---
 
 func (a *App) DecodeJWT(token string) *models.JWTDecoded {
-	return jwt.Decode(token)
+	decoded := jwt.Decode(token)
+	header := map[string]interface{}{
+		"alg": decoded.Header.Alg,
+		"typ": decoded.Header.Typ,
+	}
+	if decoded.Header.Kid != "" {
+		header["kid"] = decoded.Header.Kid
+	}
+	return &models.JWTDecoded{
+		Header:  header,
+		Claims:  decoded.Claims,
+		Valid:   decoded.Valid,
+		Expired: decoded.Expired,
+		Error:   decoded.Error,
+	}
 }
 
 // --- gRPC ---

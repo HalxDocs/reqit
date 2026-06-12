@@ -1,12 +1,16 @@
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
+import { OAuth2Flow } from "./OAuth2Flow";
 import type { ApiKeyIn, AuthType } from "@/features/request/types/request";
 
 const TYPES: { id: AuthType; label: string }[] = [
   { id: "none", label: "None" },
   { id: "bearer", label: "Bearer Token" },
   { id: "basic", label: "Basic Auth" },
+  { id: "digest", label: "Digest Auth" },
+  { id: "ntlm", label: "NTLM Auth" },
   { id: "apikey", label: "API Key" },
+  { id: "oauth2", label: "OAuth 2.0" },
 ];
 
 const API_KEY_IN: { id: ApiKeyIn; label: string }[] = [
@@ -23,6 +27,12 @@ export function AuthTab() {
   const setAuthUser = useRequestStore((s) => s.setAuthUser);
   const authPass = useRequestStore((s) => s.authPass);
   const setAuthPass = useRequestStore((s) => s.setAuthPass);
+
+  const authUsername = useRequestStore((s) => s.authUsername);
+  const setAuthUsername = useRequestStore((s) => s.setAuthUsername);
+  const authPassword = useRequestStore((s) => s.authPassword);
+  const setAuthPassword = useRequestStore((s) => s.setAuthPassword);
+
   const authKeyName = useRequestStore((s) => s.authKeyName);
   const setAuthKeyName = useRequestStore((s) => s.setAuthKeyName);
   const authKeyValue = useRequestStore((s) => s.authKeyValue);
@@ -58,16 +68,11 @@ export function AuthTab() {
 
       {authType === "bearer" && (
         <div className="p-4 flex flex-col gap-2">
-          <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-            Token
-          </label>
+          <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Token</label>
           <input
-            type="text"
-            value={authToken}
-            onChange={(e) => setAuthToken(e.target.value)}
+            type="text" value={authToken} onChange={(e) => setAuthToken(e.target.value)}
             placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            spellCheck={false}
-            autoComplete="off"
+            spellCheck={false} autoComplete="off"
             className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
           />
           <p className="text-11 text-subtext mt-1">
@@ -79,25 +84,15 @@ export function AuthTab() {
       {authType === "basic" && (
         <div className="p-4 grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
-            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-              Username
-            </label>
-            <input
-              type="text"
-              value={authUser}
-              onChange={(e) => setAuthUser(e.target.value)}
+            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Username</label>
+            <input type="text" value={authUser} onChange={(e) => setAuthUser(e.target.value)}
               autoComplete="off"
               className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-              Password
-            </label>
-            <input
-              type="password"
-              value={authPass}
-              onChange={(e) => setAuthPass(e.target.value)}
+            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Password</label>
+            <input type="password" value={authPass} onChange={(e) => setAuthPass(e.target.value)}
               autoComplete="off"
               className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
             />
@@ -105,55 +100,60 @@ export function AuthTab() {
         </div>
       )}
 
-      {authType === "apikey" && (
+      {(authType === "digest" || authType === "ntlm") && (
         <div className="p-4 flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-              Add to
-            </label>
-            <div className="flex gap-2">
-              {API_KEY_IN.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setAuthKeyIn(opt.id)}
-                  className={cn(
-                    "px-3 h-[28px] rounded-sm text-12 font-medium transition-colors",
-                    authKeyIn === opt.id
-                      ? "bg-cyan text-white"
-                      : "bg-card text-subtext hover:text-text hover:bg-cardHover",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <p className="text-11 text-subtext mb-1">
+            {authType === "digest" ? "Digest Access Authentication" : "NTLM Authentication"}
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-                Key
-              </label>
-              <input
-                type="text"
-                value={authKeyName}
-                onChange={(e) => setAuthKeyName(e.target.value)}
-                placeholder="X-API-Key"
-                spellCheck={false}
+              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Username</label>
+              <input type="text" value={authUsername} onChange={(e) => setAuthUsername(e.target.value)}
                 autoComplete="off"
                 className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-                Value
-              </label>
-              <input
-                type="text"
-                value={authKeyValue}
-                onChange={(e) => setAuthKeyValue(e.target.value)}
-                spellCheck={false}
+              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Password</label>
+              <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)}
                 autoComplete="off"
+                className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
+              />
+            </div>
+          </div>
+          <p className="text-11 text-subtext mt-1">
+            Uses challenge-response handshake. The server must support {authType === "digest" ? "Digest" : "NTLM"} auth.
+          </p>
+        </div>
+      )}
+
+      {authType === "apikey" && (
+        <div className="p-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
+            <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Add to</label>
+            <div className="flex gap-2">
+              {API_KEY_IN.map((opt) => (
+                <button key={opt.id} type="button" onClick={() => setAuthKeyIn(opt.id)}
+                  className={cn(
+                    "px-3 h-[28px] rounded-sm text-12 font-medium transition-colors",
+                    authKeyIn === opt.id ? "bg-cyan text-white" : "bg-card text-subtext hover:text-text hover:bg-cardHover",
+                  )}
+                >{opt.label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-2">
+              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Key</label>
+              <input type="text" value={authKeyName} onChange={(e) => setAuthKeyName(e.target.value)}
+                placeholder="X-API-Key" spellCheck={false} autoComplete="off"
+                className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Value</label>
+              <input type="text" value={authKeyValue} onChange={(e) => setAuthKeyValue(e.target.value)}
+                spellCheck={false} autoComplete="off"
                 className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
               />
             </div>
@@ -166,6 +166,8 @@ export function AuthTab() {
           </p>
         </div>
       )}
+
+      {authType === "oauth2" && <OAuth2Flow />}
     </div>
   );
 }

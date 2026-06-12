@@ -3,7 +3,6 @@ package soap
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
 )
 
 type Envelope struct {

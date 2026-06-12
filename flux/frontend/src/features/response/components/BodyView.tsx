@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
+import { Download } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
@@ -9,6 +10,8 @@ import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
+import { safeFilename } from "@/shared/lib/download";
+import { DownloadBinaryResponse } from "../../../../wailsjs/go/main/App";
 
 export function BodyView({
   body,
@@ -110,6 +113,23 @@ export function BodyView({
             </span>
           )}
         </div>
+        {(isImage || bodyIsBase64 || kind === "binary") && (
+          <button
+            type="button"
+            onClick={() => {
+              const ext = contentType.split("/").pop() || "bin";
+              const data = bodyIsBase64
+                ? Array.from(atob(body), (c) => c.charCodeAt(0))
+                : Array.from(new TextEncoder().encode(body));
+              DownloadBinaryResponse(data, safeFilename(`response.${ext}`));
+            }}
+            className="h-[28px] px-2 flex items-center gap-1 text-11 text-subtext hover:text-text hover:bg-cardHover rounded-sm transition-colors"
+            title="Download response"
+          >
+            <Download size={12} />
+            Download
+          </button>
+        )}
         <CopyButton text={body} />
       </div>
 

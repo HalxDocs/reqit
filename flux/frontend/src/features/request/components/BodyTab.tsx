@@ -6,6 +6,8 @@ import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
 import { JsonEditor } from "@/shared/components/JsonEditor";
 import { GraphqlEditor } from "@/shared/components/GraphqlEditor";
 import { fetchGraphQLSchema } from "@/features/request/lib/introspectGraphQL";
+import GRPCPanel from "@/features/request/components/GRPCPanel";
+import SOAPPanel from "@/features/request/components/SOAPPanel";
 import type { BodyType, GraphQLSchemaType } from "@/features/request/types/request";
 
 const MODES: { id: BodyType; label: string }[] = [
@@ -14,6 +16,8 @@ const MODES: { id: BodyType; label: string }[] = [
   { id: "graphql", label: "GraphQL" },
   { id: "form", label: "form-data" },
   { id: "urlencoded", label: "x-www-form-urlencoded" },
+  { id: "grpc", label: "gRPC" },
+  { id: "soap", label: "SOAP" },
 ];
 
 function validateJson(body: string): { ok: boolean; error?: string } {
@@ -221,6 +225,10 @@ export function BodyTab() {
           onRemove={removeBodyForm}
         />
       )}
+
+      {bodyType === "grpc" && <GRPCPanel />}
+
+      {bodyType === "soap" && <SOAPPanel />}
     </div>
   );
 }

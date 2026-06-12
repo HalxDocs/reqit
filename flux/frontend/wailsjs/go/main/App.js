@@ -273,3 +273,55 @@ export function UpdateSavedRequest(arg1, arg2, arg3) {
 export function UpdateScriptRules(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateScriptRules'](arg1, arg2, arg3);
 }
+
+export function OAuth2AuthorizeURL(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+  return window['go']['main']['App']['OAuth2AuthorizeURL'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+}
+
+export function OAuth2Exchange(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+  return window['go']['main']['App']['OAuth2Exchange'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+}
+
+export function OAuth2Refresh(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+  return window['go']['main']['App']['OAuth2Refresh'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+}
+
+export function DecodeJWT(arg1) {
+  return window['go']['main']['App']['DecodeJWT'](arg1);
+}
+
+export function GRPCInvoke(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['GRPCInvoke'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function MQTTConnect(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['MQTTConnect'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function MQTTDisconnect() {
+  return window['go']['main']['App']['MQTTDisconnect']();
+}
+
+export function MQTTPublish(arg1, arg2, arg3) {
+  return window['go']['main']['App']['MQTTPublish'](arg1, arg2, arg3);
+}
+
+export function MQTTStatus() {
+  return window['go']['main']['App']['MQTTStatus']();
+}
+
+export function MQTTGetMessages() {
+  return window['go']['main']['App']['MQTTGetMessages']();
+}
+
+export function MQTTClearMessages() {
+  return window['go']['main']['App']['MQTTClearMessages']();
+}
+
+export function BuildSOAPEnvelope(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['BuildSOAPEnvelope'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function DownloadBinaryResponse(arg1, arg2) {
+  return window['go']['main']['App']['DownloadBinaryResponse'](arg1, arg2);
+}

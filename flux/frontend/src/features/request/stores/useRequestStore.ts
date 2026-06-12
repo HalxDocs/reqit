@@ -7,6 +7,7 @@ import type {
   GraphQLSchema,
   HttpMethod,
   KeyValue,
+  OAuth2Config,
   PreSetVar,
   RequestState,
 } from "@/features/request/types/request";
@@ -33,6 +34,8 @@ const initialState: RequestState = {
   authToken: "",
   authUser: "",
   authPass: "",
+  authUsername: "",
+  authPassword: "",
   authKeyName: "X-API-Key",
   authKeyValue: "",
   authKeyIn: "header",
@@ -42,6 +45,16 @@ const initialState: RequestState = {
   graphqlVariables: "",
   preScript: "",
   postScript: "",
+  oauth2Config: undefined,
+  grpcService: "",
+  grpcMethod: "",
+  grpcBody: "",
+  soapAction: "",
+  soapVersion: "1.1",
+  soapBody: "",
+  mqttTopic: "",
+  mqttPayload: "",
+  mqttQoS: 0,
 };
 
 type RequestStore = RequestState & {
@@ -69,9 +82,12 @@ type RequestStore = RequestState & {
   setAuthToken: (s: string) => void;
   setAuthUser: (s: string) => void;
   setAuthPass: (s: string) => void;
+  setAuthUsername: (s: string) => void;
+  setAuthPassword: (s: string) => void;
   setAuthKeyName: (s: string) => void;
   setAuthKeyValue: (s: string) => void;
   setAuthKeyIn: (v: ApiKeyIn) => void;
+  setOAuth2Config: (cfg: OAuth2Config) => void;
 
   addPreSetVar: () => void;
   updatePreSetVar: (id: string, patch: Partial<PreSetVar>) => void;
@@ -88,6 +104,18 @@ type RequestStore = RequestState & {
   setGraphqlSchemaError: (e: string) => void;
   setPreScript: (s: string) => void;
   setPostScript: (s: string) => void;
+
+  setGrpcService: (s: string) => void;
+  setGrpcMethod: (s: string) => void;
+  setGrpcBody: (s: string) => void;
+
+  setSoapAction: (s: string) => void;
+  setSoapVersion: (s: string) => void;
+  setSoapBody: (s: string) => void;
+
+  setMqttTopic: (s: string) => void;
+  setMqttPayload: (s: string) => void;
+  setMqttQoS: (n: number) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -138,9 +166,12 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setAuthToken: (authToken) => set({ authToken }),
   setAuthUser: (authUser) => set({ authUser }),
   setAuthPass: (authPass) => set({ authPass }),
+  setAuthUsername: (authUsername) => set({ authUsername }),
+  setAuthPassword: (authPassword) => set({ authPassword }),
   setAuthKeyName: (authKeyName) => set({ authKeyName }),
   setAuthKeyValue: (authKeyValue) => set({ authKeyValue }),
   setAuthKeyIn: (authKeyIn) => set({ authKeyIn }),
+  setOAuth2Config: (oauth2Config) => set({ oauth2Config }),
 
   setGraphqlQuery: (graphqlQuery) => set({ graphqlQuery }),
   setGraphqlVariables: (graphqlVariables) => set({ graphqlVariables }),
@@ -149,6 +180,18 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setGraphqlSchemaError: (graphqlSchemaError) => set({ graphqlSchemaError }),
   setPreScript: (preScript) => set({ preScript }),
   setPostScript: (postScript) => set({ postScript }),
+
+  setGrpcService: (grpcService) => set({ grpcService }),
+  setGrpcMethod: (grpcMethod) => set({ grpcMethod }),
+  setGrpcBody: (grpcBody) => set({ grpcBody }),
+
+  setSoapAction: (soapAction) => set({ soapAction }),
+  setSoapVersion: (soapVersion) => set({ soapVersion }),
+  setSoapBody: (soapBody) => set({ soapBody }),
+
+  setMqttTopic: (mqttTopic) => set({ mqttTopic }),
+  setMqttPayload: (mqttPayload) => set({ mqttPayload }),
+  setMqttQoS: (mqttQoS) => set({ mqttQoS }),
 
   addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
   updatePreSetVar: (id, patch) =>
@@ -182,6 +225,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
       authToken: "",
       authUser: "",
       authPass: "",
+      authUsername: "",
+      authPassword: "",
       authKeyName: "X-API-Key",
       authKeyValue: "",
       authKeyIn: "header",
@@ -191,6 +236,16 @@ export const useRequestStore = create<RequestStore>((set) => ({
       graphqlVariables: "",
       preScript: "",
       postScript: "",
+      oauth2Config: undefined,
+      grpcService: "",
+      grpcMethod: "",
+      grpcBody: "",
+      soapAction: "",
+      soapVersion: "1.1",
+      soapBody: "",
+      mqttTopic: "",
+      mqttPayload: "",
+      mqttQoS: 0,
       graphqlSchema: null,
       graphqlSchemaLoading: false,
       graphqlSchemaError: "",

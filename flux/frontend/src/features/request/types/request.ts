@@ -18,8 +18,8 @@ export interface KeyValue {
   valueType?: "text" | "file";
 }
 
-export type BodyType = "none" | "json" | "form" | "urlencoded" | "graphql";
-export type AuthType = "none" | "bearer" | "basic" | "apikey";
+export type BodyType = "none" | "json" | "form" | "urlencoded" | "graphql" | "grpc" | "soap";
+export type AuthType = "none" | "bearer" | "basic" | "apikey" | "digest" | "ntlm" | "oauth2";
 export type ApiKeyIn = "header" | "query";
 
 export interface RequestState {
@@ -39,6 +39,24 @@ export interface RequestState {
   authKeyIn: ApiKeyIn;
   preSetVars: PreSetVar[];
   extractRules: ExtractRule[];
+  // OAuth2
+  oauth2Config?: OAuth2Config;
+  // Digest / NTLM
+  authUsername?: string;
+  authPassword?: string;
+  // gRPC
+  grpcService?: string;
+  grpcMethod?: string;
+  grpcBody?: string;
+  // SOAP
+  soapAction?: string;
+  soapVersion?: string;
+  soapBody?: string;
+  // MQTT
+  mqttTopic?: string;
+  mqttPayload?: string;
+  mqttQoS?: number;
+  // GraphQL
   graphqlQuery: string;
   graphqlVariables: string;
   preScript: string;
@@ -95,6 +113,36 @@ export interface MockOverride {
   body: string;
 }
 
+export interface OAuth2Config {
+  authUrl: string;
+  tokenUrl: string;
+  clientId: string;
+  clientSecret: string;
+  scopes: string;
+  redirectUri: string;
+  usePkce: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+}
+
+export interface OAuth2TokenResponse {
+  accessToken: string;
+  refreshToken?: string;
+  tokenType: string;
+  expiresIn: number;
+  expiresAt: number;
+  error?: string;
+}
+
+export interface JWTDecoded {
+  header: Record<string, unknown>;
+  claims: Record<string, unknown>;
+  valid: boolean;
+  expired: boolean;
+  error?: string;
+}
+
 export interface GraphQLFieldTypeRef {
   name: string;
   kind: string;
@@ -116,6 +164,14 @@ export interface GraphQLSchemaType {
 
 export interface GraphQLSchema {
   types: GraphQLSchemaType[];
+}
+
+export interface GRPCResponse {
+  statusCode: number;
+  body: string;
+  error?: string;
+  durationMs: number;
+  headers: Record<string, string>;
 }
 
 export interface TimingBreakdown {
