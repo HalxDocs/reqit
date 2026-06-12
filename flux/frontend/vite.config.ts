@@ -1,9 +1,11 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig(({ mode }) => {
   const isWeb = mode === "web";
+  const isTest = mode === "test";
   return {
     plugins: [react()],
     resolve: {
@@ -19,5 +21,13 @@ export default defineConfig(({ mode }) => {
           },
         }
       : {},
+    test: isTest
+      ? {
+          globals: true,
+          environment: "happy-dom",
+          setupFiles: ["./src/test/setup.ts"],
+          include: ["src/**/*.test.{ts,tsx}"],
+        }
+      : undefined,
   };
 });

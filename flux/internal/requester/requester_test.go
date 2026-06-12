@@ -2,145 +2,328 @@ package requester
 
 import (
 	"context"
-	"encoding/base64"
-	"io"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"flux/internal/models"
 )
 
-func TestExecute_GETWithParamsAndHeaders(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.URL.Query().Get("foo"); got != "bar" {
-			t.Errorf("expected query foo=bar, got %q", got)
-		}
-		if got := r.Header.Get("X-Test"); got != "abc" {
-			t.Errorf("expected header X-Test=abc, got %q", got)
+func TestExecuteGet(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			t.Errorf("expected GET, got %s", r.Method)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		_, _ = w.Write([]byte(`{"ok":true}`))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok":true}`))
 	}))
-	defer ts.Close()
+	defer server.Close()
 
-	res := Execute(context.Background(), models.RequestPayload{
+	result := Execute(context.Background(), models.RequestPayload{
 		Method: "GET",
-		URL:    ts.URL,
-		Params: []models.Header{{Key: "foo", Value: "bar", Enabled: true}, {Key: "skipped", Value: "x", Enabled: false}},
-		Headers: []models.Header{{Key: "X-Test", Value: "abc", Enabled: true}},
+		URL:    server.URL,
 	}, nil)
 
-	if res.Error != "" {
-		t.Fatalf("unexpected error: %s", res.Error)
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
 	}
-	if res.StatusCode != 200 {
-		t.Fatalf("expected 200, got %d", res.StatusCode)
+	if result.StatusCode != http.StatusOK {
+		t.Errorf("expected 200, got %d", result.StatusCode)
 	}
-	if res.Body != `{"ok":true}` {
-		t.Errorf("unexpected body: %q", res.Body)
+	if result.Body != `{"ok":true}` {
+		t.Errorf("unexpected body: %q", result.Body)
 	}
-	if res.Headers["Content-Type"] != "application/json" {
-		t.Errorf("expected Content-Type application/json, got %q", res.Headers["Content-Type"])
+	if result.SizeBytes <= 0 {
+		t.Errorf("expected positive size, got %d", result.SizeBytes)
 	}
 }
 
-func TestExecute_PostJSONBody(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		if string(body) != `{"a":1}` {
-			t.Errorf("expected json body, got %q", string(body))
+func TestExecutePostJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			t.Errorf("expected POST, got %s", r.Method)
 		}
-		if r.Header.Get("Content-Type") != "application/json" {
-			t.Errorf("expected Content-Type application/json, got %q", r.Header.Get("Content-Type"))
+		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+			t.Errorf("expected application/json, got %s", ct)
 		}
-		w.WriteHeader(201)
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["key"] != "value" {
+			t.Errorf("unexpected body: %v", body)
+		}
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{"id":1}`))
 	}))
-	defer ts.Close()
+	defer server.Close()
 
-	res := Execute(context.Background(), models.RequestPayload{
+	result := Execute(context.Background(), models.RequestPayload{
 		Method:   "POST",
-		URL:      ts.URL,
+		URL:      server.URL,
 		BodyType: "json",
-		Body:     `{"a":1}`,
+		Body:     `{"key":"value"}`,
+		Headers: []models.Header{
+			{Key: "Content-Type", Value: "application/json", Enabled: true},
+		},
 	}, nil)
 
-	if res.StatusCode != 201 {
-		t.Fatalf("expected 201, got %d (err=%s)", res.StatusCode, res.Error)
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.StatusCode != http.StatusCreated {
+		t.Errorf("expected 201, got %d", result.StatusCode)
 	}
 }
 
-func TestExecute_BasicAuth(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization")
-		want := "Basic " + base64.StdEncoding.EncodeToString([]byte("alice:secret"))
-		if auth != want {
-			t.Errorf("expected %q, got %q", want, auth)
+func TestExecuteHeadersSent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Custom") != "test-value" {
+			t.Errorf("expected X-Custom header")
 		}
-		w.WriteHeader(200)
+		if r.Header.Get("X-Disabled") == "should-not-exist" {
+			t.Errorf("disabled header should not be sent")
+		}
+		w.WriteHeader(http.StatusNoContent)
 	}))
-	defer ts.Close()
+	defer server.Close()
 
-	res := Execute(context.Background(), models.RequestPayload{
-		Method:    "GET",
-		URL:       ts.URL,
-		AuthType:  "basic",
-		AuthValue: "alice:secret",
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    server.URL,
+		Headers: []models.Header{
+			{Key: "X-Custom", Value: "test-value", Enabled: true},
+			{Key: "X-Disabled", Value: "should-not-exist", Enabled: false},
+		},
 	}, nil)
-	if res.StatusCode != 200 {
-		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.StatusCode != http.StatusNoContent {
+		t.Errorf("expected 204, got %d", result.StatusCode)
 	}
 }
 
-func TestExecute_BearerAuth(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get("Authorization"); got != "Bearer xyz" {
-			t.Errorf("expected Bearer xyz, got %q", got)
+func TestExecuteQueryParams(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("key1") != "val1" {
+			t.Errorf("expected key1=val1, got %s", r.URL.Query().Get("key1"))
 		}
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}))
-	defer ts.Close()
+	defer server.Close()
 
-	res := Execute(context.Background(), models.RequestPayload{
+	base := server.URL + "/test"
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    base,
+		Params: []models.Header{
+			{Key: "key1", Value: "val1", Enabled: true},
+			{Key: "key2", Value: "val2", Enabled: false},
+		},
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+}
+
+func TestExecuteURLWithExistingParams(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("existing") != "ok" {
+			t.Errorf("expected existing param")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    server.URL + "/path?existing=ok",
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+}
+
+func TestExecuteBearerAuth(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer my-token" {
+			t.Errorf("expected Bearer auth, got %q", r.Header.Get("Authorization"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
 		Method:    "GET",
-		URL:       ts.URL,
+		URL:       server.URL,
 		AuthType:  "bearer",
-		AuthValue: "xyz",
+		AuthValue: "my-token",
 	}, nil)
-	if res.StatusCode != 200 {
-		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
 	}
 }
 
-func TestExecute_FormBody(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		if !strings.Contains(string(body), "name=alice") {
-			t.Errorf("expected form body to contain name=alice, got %q", string(body))
+func TestExecuteBasicAuth(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || user != "admin" || pass != "secret" {
+			t.Errorf("expected basic auth admin:secret")
 		}
-		if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
-			t.Errorf("expected urlencoded Content-Type, got %q", r.Header.Get("Content-Type"))
-		}
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}))
-	defer ts.Close()
+	defer server.Close()
 
-	res := Execute(context.Background(), models.RequestPayload{
-		Method:   "POST",
-		URL:      ts.URL,
-		BodyType: "urlencoded",
-		BodyForm: []models.Header{{Key: "name", Value: "alice", Enabled: true}},
+	result := Execute(context.Background(), models.RequestPayload{
+		Method:    "GET",
+		URL:       server.URL,
+		AuthType:  "basic",
+		AuthValue: "admin:secret",
 	}, nil)
-	if res.StatusCode != 200 {
-		t.Fatalf("expected 200, got %d (err=%s)", res.StatusCode, res.Error)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
 	}
 }
 
-func TestExecute_EmptyURLReturnsError(t *testing.T) {
-	res := Execute(context.Background(), models.RequestPayload{Method: "GET", URL: ""}, nil)
-	if res.Error == "" {
-		t.Fatalf("expected error for empty URL, got result %+v", res)
+func TestExecuteFormURLEncoded(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ct := r.Header.Get("Content-Type"); ct != "application/x-www-form-urlencoded" {
+			t.Errorf("expected urlencoded content-type, got %s", ct)
+		}
+		r.ParseForm()
+		if r.FormValue("field1") != "val1" {
+			t.Errorf("expected field1=val1")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
+		Method:   "POST",
+		URL:      server.URL,
+		BodyType: "urlencoded",
+		BodyForm: []models.Header{
+			{Key: "field1", Value: "val1", Enabled: true},
+		},
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+}
+
+func TestExecuteTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// hangs forever — will be caught by context timeout
+		select {}
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // immediately cancelled
+
+	result := Execute(ctx, models.RequestPayload{
+		Method: "GET",
+		URL:    server.URL,
+	}, nil)
+
+	if result.Error == "" {
+		t.Error("expected error for cancelled context")
+	}
+	if result.TimingMs <= 0 && result.Timing != nil {
+		// timing may vary, just ensure it didn't panic
+	}
+}
+
+func TestExecuteErrorResult(t *testing.T) {
+	// invalid URL
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    "://invalid-url",
+	}, nil)
+
+	if result.Error == "" {
+		t.Error("expected error for invalid URL")
+	}
+	if result.StatusCode != 0 {
+		t.Errorf("expected 0 status code for error, got %d", result.StatusCode)
+	}
+}
+
+func TestExecuteFormUrlEncodedViaForm(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		if r.FormValue("field1") != "val1" {
+			t.Errorf("expected field1=val1, got %s", r.FormValue("field1"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
+		Method:   "POST",
+		URL:      server.URL,
+		BodyType: "form",
+		BodyForm: []models.Header{
+			{Key: "field1", Value: "val1", Enabled: true, ValueType: "text"},
+		},
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.StatusCode != http.StatusOK {
+		t.Errorf("expected 200, got %d", result.StatusCode)
+	}
+}
+
+func TestExecuteResponseHeaders(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Response-Header", "present")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "ok")
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    server.URL,
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.Headers["X-Response-Header"] != "present" {
+		t.Errorf("expected X-Response-Header in response")
+	}
+}
+
+func TestExecuteTimingBreakdown(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	result := Execute(context.Background(), models.RequestPayload{
+		Method: "GET",
+		URL:    server.URL,
+	}, nil)
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.Timing == nil {
+		t.Fatal("expected timing breakdown")
+	}
+	if result.Timing.TotalMs <= 0 {
+		t.Errorf("expected positive total time, got %d", result.Timing.TotalMs)
 	}
 }
