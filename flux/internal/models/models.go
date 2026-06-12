@@ -12,16 +12,36 @@ type RequestPayload struct {
 	URL       string   `json:"url"`
 	Headers   []Header `json:"headers"`
 	Params    []Header `json:"params"`
-	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"|"graphql"
+	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"|"graphql"|"grpc"|"soap"
 	Body      string   `json:"body"`
 	BodyForm  []Header `json:"bodyForm"`  // for form / urlencoded modes
-	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"
-	AuthValue string   `json:"authValue"` // token or "user:pass"
+	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"|"digest"|"ntlm"|"oauth2"
+	AuthValue string   `json:"authValue"` // token, "user:pass", or oauth2 config JSON
 	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
 	GraphQLQuery     string   `json:"graphqlQuery"`
 	GraphQLVariables string   `json:"graphqlVariables"`
 	PreScript        string   `json:"preScript"`
 	PostScript       string   `json:"postScript"`
+	// Protocol-specific
+	GRPCService string `json:"grpcService,omitempty"`
+	GRPCMethod  string `json:"grpcMethod,omitempty"`
+	MQTTTopic   string `json:"mqttTopic,omitempty"`
+	SOAPAction  string `json:"soapAction,omitempty"`
+	SOAPVersion string `json:"soapVersion,omitempty"` // "1.1" | "1.2"
+}
+
+// OAuth2Config stored as JSON in AuthValue when AuthType=="oauth2"
+type OAuth2Config struct {
+	AuthURL      string `json:"authUrl"`
+	TokenURL     string `json:"tokenUrl"`
+	ClientID     string `json:"clientId"`
+	ClientSecret string `json:"clientSecret"`
+	Scopes       string `json:"scopes"`
+	RedirectURI  string `json:"redirectUri"`
+	UsePKCE      bool   `json:"usePkce"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresAt    int64  `json:"expiresAt"`
 }
 
 type CookieSummary struct {
@@ -175,6 +195,37 @@ type CollectionRunResult struct {
 	Failed         int                `json:"failed"`
 	Total          int                `json:"total"`
 	DurationMs     int64              `json:"durationMs"`
+}
+
+// --- OAuth2 ---
+
+type OAuth2TokenResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	TokenType    string `json:"tokenType"`
+	ExpiresIn    int    `json:"expiresIn"`
+	ExpiresAt    int64  `json:"expiresAt"`
+	Error        string `json:"error,omitempty"`
+}
+
+// --- JWT ---
+
+type JWTDecoded struct {
+	Header  map[string]interface{} `json:"header"`
+	Claims  map[string]interface{} `json:"claims"`
+	Valid   bool                   `json:"valid"`
+	Expired bool                   `json:"expired"`
+	Error   string                 `json:"error,omitempty"`
+}
+
+// --- gRPC ---
+
+type GRPCResponse struct {
+	StatusCode int               `json:"statusCode"`
+	Body       string            `json:"body"`
+	Error      string            `json:"error,omitempty"`
+	DurationMs int64             `json:"durationMs"`
+	Headers    map[string]string `json:"headers"`
 }
 
 // --- WebSocket / SSE ---

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
@@ -301,6 +302,19 @@ func applyAuth(req *http.Request, authType, authValue string) {
 			encoded := base64.StdEncoding.EncodeToString([]byte(authValue))
 			req.Header.Set("Authorization", "Basic "+encoded)
 		}
+	case "digest":
+		if authValue != "" && strings.Contains(authValue, ":") {
+			parts := strings.SplitN(authValue, ":", 2)
+			req.SetBasicAuth(parts[0], parts[1])
+			// Mark as digest — the transport will handle the challenge
+			req.Header.Set("X-Auth-Mode", "digest")
+		}
+	case "ntlm":
+		if authValue != "" && strings.Contains(authValue, ":") {
+			parts := strings.SplitN(authValue, ":", 2)
+			req.SetBasicAuth(parts[0], parts[1])
+			req.Header.Set("X-Auth-Mode", "ntlm")
+		}
 	case "apikey":
 		parts := strings.SplitN(authValue, ":", 3)
 		if len(parts) != 3 || parts[2] == "" {
@@ -314,6 +328,21 @@ func applyAuth(req *http.Request, authType, authValue string) {
 			q := req.URL.Query()
 			q.Set(name, val)
 			req.URL.RawQuery = q.Encode()
+		}
+	case "oauth2":
+		if authValue != "" {
+			// authValue is JSON with access_token field
+			var cfg struct {
+				AccessToken string `json:"accessToken"`
+				TokenType   string `json:"tokenType"`
+			}
+			if json.Unmarshal([]byte(authValue), &cfg) == nil && cfg.AccessToken != "" {
+				tokenType := cfg.TokenType
+				if tokenType == "" {
+					tokenType = "Bearer"
+				}
+				req.Header.Set("Authorization", tokenType+" "+cfg.AccessToken)
+			}
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -15,15 +16,20 @@ import (
 	cookiestore "flux/internal/cookies"
 	"flux/internal/environments"
 	gitpkg "flux/internal/git"
+	"flux/internal/grpc"
 	"flux/internal/history"
+	"flux/internal/jwt"
 	"flux/internal/locks"
 	"flux/internal/mock"
 	"flux/internal/models"
+	"flux/internal/mqtt"
+	"flux/internal/oauth2"
 	"flux/internal/openapi"
 	"flux/internal/postman"
 	"flux/internal/profile"
 	"flux/internal/requester"
 	"flux/internal/scripting"
+	"flux/internal/soap"
 	"flux/internal/storage"
 	"flux/internal/runner"
 	"flux/internal/sock"
@@ -49,7 +55,8 @@ type App struct {
 	mu       sync.Mutex
 	inflight context.CancelFunc
 
-	sock *sock.Socket
+	sock       *sock.Socket
+	mqttClient *mqtt.Client
 }
 
 func NewApp() *App {
@@ -397,6 +404,173 @@ func (a *App) CancelRequest() {
 		a.inflight()
 		a.inflight = nil
 	}
+}
+
+// --- OAuth2 ---
+
+func (a *App) OAuth2AuthorizeURL(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI string, usePKCE bool) (string, string, error) {
+	o := oauth2.New(oauth2.OAuth2Config{
+		AuthURL:      authURL,
+		TokenURL:     tokenURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		RedirectURI:  redirectURI,
+		UsePKCE:      usePKCE,
+	})
+	return o.AuthorizeURL()
+}
+
+func (a *App) OAuth2Exchange(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI, code string, usePKCE bool) (*models.OAuth2TokenResponse, error) {
+	o := oauth2.New(oauth2.OAuth2Config{
+		AuthURL:      authURL,
+		TokenURL:     tokenURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		RedirectURI:  redirectURI,
+		UsePKCE:      usePKCE,
+	})
+	token, err := o.Exchange(context.Background(), code)
+	if err != nil {
+		return nil, err
+	}
+	return &models.OAuth2TokenResponse{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresIn:    token.ExpiresIn,
+		ExpiresAt:    token.ExpiresAt,
+	}, nil
+}
+
+func (a *App) OAuth2Refresh(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI, refreshToken string, usePKCE bool) (*models.OAuth2TokenResponse, error) {
+	o := oauth2.New(oauth2.OAuth2Config{
+		AuthURL:      authURL,
+		TokenURL:     tokenURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		RedirectURI:  redirectURI,
+		UsePKCE:      usePKCE,
+	})
+	token, err := o.Refresh(context.Background(), refreshToken)
+	if err != nil {
+		return nil, err
+	}
+	return &models.OAuth2TokenResponse{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresIn:    token.ExpiresIn,
+		ExpiresAt:    token.ExpiresAt,
+	}, nil
+}
+
+// --- JWT ---
+
+func (a *App) DecodeJWT(token string) *models.JWTDecoded {
+	return jwt.Decode(token)
+}
+
+// --- gRPC ---
+
+func (a *App) GRPCInvoke(url, service, method, body string, headers map[string]string) *models.GRPCResponse {
+	result := grpc.Invoke(context.Background(), grpc.GRPCRequest{
+		URL:     url,
+		Service: service,
+		Method:  method,
+		Body:    body,
+		Headers: headers,
+	})
+	return &models.GRPCResponse{
+		StatusCode: result.StatusCode,
+		Body:       result.Body,
+		Error:      result.Error,
+		DurationMs: result.DurationMs,
+		Headers:    result.Headers,
+	}
+}
+
+// --- MQTT ---
+
+func (a *App) MQTTConnect(brokerURL, clientID, username, password, topics string) error {
+	// Store MQTT client state on App struct so it persists across calls
+	if a.mqttClient == nil {
+		a.mqttClient = mqtt.NewClient()
+	}
+	return a.mqttClient.Connect(mqtt.Config{
+		BrokerURL: brokerURL,
+		ClientID:  clientID,
+		Username:  username,
+		Password:  password,
+		Topics:    topics,
+	})
+}
+
+func (a *App) MQTTDisconnect() {
+	if a.mqttClient != nil {
+		a.mqttClient.Disconnect()
+	}
+}
+
+func (a *App) MQTTPublish(topic, payload string, qos int) error {
+	if a.mqttClient == nil {
+		return errors.New("MQTT not connected")
+	}
+	return a.mqttClient.Publish(context.Background(), topic, payload, qos)
+}
+
+func (a *App) MQTTStatus() string {
+	if a.mqttClient == nil {
+		return "disconnected"
+	}
+	return a.mqttClient.Status()
+}
+
+func (a *App) MQTTGetMessages() []mqtt.Message {
+	if a.mqttClient == nil {
+		return nil
+	}
+	return a.mqttClient.Messages()
+}
+
+func (a *App) MQTTClearMessages() {
+	if a.mqttClient != nil {
+		a.mqttClient.ClearMessages()
+	}
+}
+
+// --- SOAP ---
+
+func (a *App) BuildSOAPEnvelope(action, body, serviceURL, soapVersion string, headers map[string]string) (string, string, error) {
+	env, ct := soap.BuildEnvelope(soap.SOAPRequest{
+		Action:      action,
+		Body:        body,
+		ServiceURL:  serviceURL,
+		SOAPVersion: soapVersion,
+		Headers:     headers,
+	})
+	return env, ct, nil
+}
+
+// --- Binary Download ---
+
+func (a *App) DownloadBinaryResponse(data []byte, filename string) error {
+	if a.ctx == nil {
+		return errors.New("app context not ready")
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save Binary Response",
+		DefaultFilename: filename,
+	})
+	if err != nil {
+		return err
+	}
+	if path == "" {
+		return nil // user cancelled
+	}
+	return os.WriteFile(path, data, 0644)
 }
 
 // --- Collections ---
