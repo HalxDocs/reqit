@@ -9,10 +9,13 @@ import {environments} from '../models';
 import {main} from '../models';
 import {locks} from '../models';
 import {profile} from '../models';
+import {mqtt} from '../models';
 
 export function AddRequestToCollection(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<models.SavedRequest>;
 
 export function AppDataDir():Promise<string>;
+
+export function BuildSOAPEnvelope(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<string>;
 
 export function CancelRequest():Promise<void>;
 
@@ -36,6 +39,8 @@ export function CreateEnvironment(arg1:string):Promise<models.Environment>;
 
 export function CreateWorkspace(arg1:string,arg2:string,arg3:string):Promise<workspaces.Info>;
 
+export function DecodeJWT(arg1:string):Promise<models.JWTDecoded>;
+
 export function DeleteCollection(arg1:string):Promise<void>;
 
 export function DeleteEnvironment(arg1:string):Promise<void>;
@@ -48,9 +53,13 @@ export function DeleteWorkspace(arg1:string):Promise<void>;
 
 export function DisconnectSocket():Promise<void>;
 
+export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<void>;
+
 export function ExportOpenAPI(arg1:string):Promise<string>;
 
 export function ExportOpenAPIFiles(arg1:string):Promise<Record<string, string>>;
+
+export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
 
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
@@ -93,6 +102,24 @@ export function InvalidateSpec(arg1:string):Promise<void>;
 export function LinkCollectionSpec(arg1:string,arg2:string):Promise<void>;
 
 export function LockCollection(arg1:string):Promise<void>;
+
+export function MQTTClearMessages():Promise<void>;
+
+export function MQTTConnect(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<void>;
+
+export function MQTTDisconnect():Promise<void>;
+
+export function MQTTGetMessages():Promise<Array<mqtt.Message>>;
+
+export function MQTTPublish(arg1:string,arg2:string,arg3:number):Promise<void>;
+
+export function MQTTStatus():Promise<string>;
+
+export function OAuth2AuthorizeURL(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<string>;
+
+export function OAuth2Exchange(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
+
+export function OAuth2Refresh(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
 
 export function OpenWorkspaceFromFolder(arg1:string):Promise<workspaces.Info>;
 
@@ -145,18 +172,3 @@ export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
 
 export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:Array<models.ExtractRule>):Promise<void>;
-
-// --- New v0.5.1 exports ---
-export function OAuth2AuthorizeURL(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<string>;
-export function OAuth2Exchange(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
-export function OAuth2Refresh(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
-export function DecodeJWT(arg1:string):Promise<models.JWTDecoded>;
-export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
-export function MQTTConnect(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<void>;
-export function MQTTDisconnect():Promise<void>;
-export function MQTTPublish(arg1:string,arg2:string,arg3:number):Promise<void>;
-export function MQTTStatus():Promise<string>;
-export function MQTTGetMessages():Promise<Array<models.MQTTMessage>>;
-export function MQTTClearMessages():Promise<void>;
-export function BuildSOAPEnvelope(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<Array<string>>;
-export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<void>;

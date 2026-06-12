@@ -251,6 +251,11 @@ export namespace models {
 	    graphqlVariables: string;
 	    preScript: string;
 	    postScript: string;
+	    grpcService?: string;
+	    grpcMethod?: string;
+	    mqttTopic?: string;
+	    soapAction?: string;
+	    soapVersion?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -272,6 +277,11 @@ export namespace models {
 	        this.graphqlVariables = source["graphqlVariables"];
 	        this.preScript = source["preScript"];
 	        this.postScript = source["postScript"];
+	        this.grpcService = source["grpcService"];
+	        this.grpcMethod = source["grpcMethod"];
+	        this.mqttTopic = source["mqttTopic"];
+	        this.soapAction = source["soapAction"];
+	        this.soapVersion = source["soapVersion"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -517,6 +527,26 @@ export namespace models {
 		}
 	}
 	
+	export class GRPCResponse {
+	    statusCode: number;
+	    body: string;
+	    error?: string;
+	    durationMs: number;
+	    headers: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new GRPCResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.statusCode = source["statusCode"];
+	        this.body = source["body"];
+	        this.error = source["error"];
+	        this.durationMs = source["durationMs"];
+	        this.headers = source["headers"];
+	    }
+	}
 	
 	export class ValidationError {
 	    layer: string;
@@ -684,7 +714,49 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class JWTDecoded {
+	    header: Record<string, any>;
+	    claims: Record<string, any>;
+	    valid: boolean;
+	    expired: boolean;
+	    error?: string;
 	
+	    static createFrom(source: any = {}) {
+	        return new JWTDecoded(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.header = source["header"];
+	        this.claims = source["claims"];
+	        this.valid = source["valid"];
+	        this.expired = source["expired"];
+	        this.error = source["error"];
+	    }
+	}
+	
+	export class OAuth2TokenResponse {
+	    accessToken: string;
+	    refreshToken: string;
+	    tokenType: string;
+	    expiresIn: number;
+	    expiresAt: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OAuth2TokenResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accessToken = source["accessToken"];
+	        this.refreshToken = source["refreshToken"];
+	        this.tokenType = source["tokenType"];
+	        this.expiresIn = source["expiresIn"];
+	        this.expiresAt = source["expiresAt"];
+	        this.error = source["error"];
+	    }
+	}
 	
 	
 	
@@ -781,82 +853,23 @@ export namespace models {
 		    return a;
 		}
 	}
+	
+	
 
-	export class OAuth2TokenResponse {
-	    accessToken: string;
-	    refreshToken: string;
-	    tokenType: string;
-	    expiresIn: number;
-	    expiresAt: number;
-	    error: string;
+}
 
-	    static createFrom(source: any = {}) {
-	        return new OAuth2TokenResponse(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.accessToken = source["accessToken"];
-	        this.refreshToken = source["refreshToken"];
-	        this.tokenType = source["tokenType"];
-	        this.expiresIn = source["expiresIn"];
-	        this.expiresAt = source["expiresAt"];
-	        this.error = source["error"];
-	    }
-	}
-
-	export class JWTDecoded {
-	    header: Record<string, any>;
-	    claims: Record<string, any>;
-	    valid: boolean;
-	    expired: boolean;
-	    error: string;
-
-	    static createFrom(source: any = {}) {
-	        return new JWTDecoded(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.header = source["header"];
-	        this.claims = source["claims"];
-	        this.valid = source["valid"];
-	        this.expired = source["expired"];
-	        this.error = source["error"];
-	    }
-	}
-
-	export class GRPCResponse {
-	    statusCode: number;
-	    body: string;
-	    error: string;
-	    durationMs: number;
-	    headers: Record<string, string>;
-
-	    static createFrom(source: any = {}) {
-	        return new GRPCResponse(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.statusCode = source["statusCode"];
-	        this.body = source["body"];
-	        this.error = source["error"];
-	        this.durationMs = source["durationMs"];
-	        this.headers = source["headers"];
-	    }
-	}
-
-	export class MQTTMessage {
+export namespace mqtt {
+	
+	export class Message {
 	    topic: string;
 	    payload: string;
 	    qos: number;
 	    receivedAt: number;
-
+	
 	    static createFrom(source: any = {}) {
-	        return new MQTTMessage(source);
+	        return new Message(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.topic = source["topic"];
@@ -865,6 +878,7 @@ export namespace models {
 	        this.receivedAt = source["receivedAt"];
 	    }
 	}
+
 }
 
 export namespace profile {
