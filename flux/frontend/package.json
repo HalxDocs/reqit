@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "build:web": "tsc --noEmit && vite build --mode web",
     "preview": "vite preview",
-    "preview:web": "vite preview --mode web --outDir dist-web"
+    "preview:web": "vite preview --mode web --outDir dist-web",
+    "test": "vitest run --mode test",
+    "test:watch": "vitest --mode test"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
