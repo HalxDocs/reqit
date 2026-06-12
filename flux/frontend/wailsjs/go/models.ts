@@ -222,6 +222,7 @@ export namespace models {
 	    key: string;
 	    value: string;
 	    enabled: boolean;
+	    valueType?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Header(source);
@@ -232,6 +233,7 @@ export namespace models {
 	        this.key = source["key"];
 	        this.value = source["value"];
 	        this.enabled = source["enabled"];
+	        this.valueType = source["valueType"];
 	    }
 	}
 	export class RequestPayload {
@@ -570,12 +572,36 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class TimingBreakdown {
+	    dnsLookupMs: number;
+	    tcpConnectMs: number;
+	    tlsHandshakeMs: number;
+	    ttfbMs: number;
+	    downloadMs: number;
+	    totalMs: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TimingBreakdown(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.dnsLookupMs = source["dnsLookupMs"];
+	        this.tcpConnectMs = source["tcpConnectMs"];
+	        this.tlsHandshakeMs = source["tlsHandshakeMs"];
+	        this.ttfbMs = source["ttfbMs"];
+	        this.downloadMs = source["downloadMs"];
+	        this.totalMs = source["totalMs"];
+	    }
+	}
 	export class ResponseResult {
 	    status: string;
 	    statusCode: number;
 	    headers: Record<string, string>;
 	    body: string;
+	    bodyIsBase64: boolean;
 	    timingMs: number;
+	    timing?: TimingBreakdown;
 	    sizeBytes: number;
 	    error: string;
 	    cookies: CookieSummary[];
@@ -591,7 +617,9 @@ export namespace models {
 	        this.statusCode = source["statusCode"];
 	        this.headers = source["headers"];
 	        this.body = source["body"];
+	        this.bodyIsBase64 = source["bodyIsBase64"];
 	        this.timingMs = source["timingMs"];
+	        this.timing = this.convertValues(source["timing"], TimingBreakdown);
 	        this.sizeBytes = source["sizeBytes"];
 	        this.error = source["error"];
 	        this.cookies = this.convertValues(source["cookies"], CookieSummary);
@@ -621,16 +649,16 @@ export namespace models {
 	    payload: RequestPayload;
 	    response: ResponseResult;
 	    createdAt: string;
-	    tags: string[];
+	    tags?: string[];
 	    favorite: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new HistoryEntry(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	    this.id = source["id"];
+	        this.id = source["id"];
 	        this.payload = this.convertValues(source["payload"], RequestPayload);
 	        this.response = this.convertValues(source["response"], ResponseResult);
 	        this.createdAt = source["createdAt"];
@@ -753,6 +781,7 @@ export namespace models {
 		    return a;
 		}
 	}
+	
 	
 
 }

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const CurrentVersion = "v0.5.0"
+const CurrentVersion = "v0.5.1"
 
 const releaseAPI = "https://api.github.com/repos/HalxDocs/reqit/releases/latest"
 

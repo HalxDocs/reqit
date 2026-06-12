@@ -24,10 +24,6 @@ export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
-export function DeleteHistoryEntry(arg1:string):Promise<void>;
-
-export function UpdateHistoryEntry(arg1:string,arg2:any):Promise<void>;
-
 export function CommitAndPush(arg1:string):Promise<void>;
 
 export function ConnectSocket(arg1:string,arg2:string):Promise<void>;
@@ -43,6 +39,8 @@ export function CreateWorkspace(arg1:string,arg2:string,arg3:string):Promise<wor
 export function DeleteCollection(arg1:string):Promise<void>;
 
 export function DeleteEnvironment(arg1:string):Promise<void>;
+
+export function DeleteHistoryEntry(arg1:string):Promise<void>;
 
 export function DeleteSavedRequest(arg1:string):Promise<void>;
 
@@ -139,6 +137,8 @@ export function SwitchWorkspace(arg1:string):Promise<workspaces.Info>;
 export function UnlockCollection(arg1:string):Promise<void>;
 
 export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvVar>):Promise<void>;
+
+export function UpdateHistoryEntry(arg1:string,arg2:Record<string, any>):Promise<void>;
 
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 

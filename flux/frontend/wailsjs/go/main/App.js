@@ -30,14 +30,6 @@ export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
 
-export function DeleteHistoryEntry(arg1) {
-  return window['go']['main']['App']['DeleteHistoryEntry'](arg1);
-}
-
-export function UpdateHistoryEntry(arg1, arg2) {
-  return window['go']['main']['App']['UpdateHistoryEntry'](arg1, arg2);
-}
-
 export function CommitAndPush(arg1) {
   return window['go']['main']['App']['CommitAndPush'](arg1);
 }
@@ -68,6 +60,10 @@ export function DeleteCollection(arg1) {
 
 export function DeleteEnvironment(arg1) {
   return window['go']['main']['App']['DeleteEnvironment'](arg1);
+}
+
+export function DeleteHistoryEntry(arg1) {
+  return window['go']['main']['App']['DeleteHistoryEntry'](arg1);
 }
 
 export function DeleteSavedRequest(arg1) {
@@ -260,6 +256,10 @@ export function UnlockCollection(arg1) {
 
 export function UpdateEnvironment(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateEnvironment'](arg1, arg2, arg3);
+}
+
+export function UpdateHistoryEntry(arg1, arg2) {
+  return window['go']['main']['App']['UpdateHistoryEntry'](arg1, arg2);
 }
 
 export function UpdateProfile(arg1, arg2) {
