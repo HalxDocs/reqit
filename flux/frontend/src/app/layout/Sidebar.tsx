@@ -69,12 +69,13 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
           )}
         </button>
       </div>
-
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 flex flex-col py-2">
         <Section
           icon={<Folder size={12} />}
           label="Collections"
+          className="flex-1 min-h-0 flex flex-col"
           action={
+
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -159,14 +160,16 @@ function Section({
   label,
   action,
   children,
+  className,
 }: {
   icon: React.ReactNode;
   label: string;
   action?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="pb-3">
+    <div className={`pb-3 ${className ?? ""}`.trim()}>
       <div className="px-3 py-2 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-2">
           {icon}

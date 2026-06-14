@@ -105,6 +105,26 @@ export namespace git {
 
 export namespace main {
 	
+	export class ExportMarkdownOpts {
+	    includeHeaders: boolean;
+	    includeBody: boolean;
+	    includeExamples: boolean;
+	    baseUrl: string;
+	    timestamp: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportMarkdownOpts(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.includeHeaders = source["includeHeaders"];
+	        this.includeBody = source["includeBody"];
+	        this.includeExamples = source["includeExamples"];
+	        this.baseUrl = source["baseUrl"];
+	        this.timestamp = source["timestamp"];
+	    }
+	}
 	export class GitStatus {
 	    initialised: boolean;
 	    hasChanges: boolean;
@@ -148,6 +168,30 @@ export namespace main {
 
 export namespace models {
 	
+	export class Assertion {
+	    type: string;
+	    target: string;
+	    value?: string;
+	    script?: string;
+	    statusCode?: number;
+	    maxTimingMs?: number;
+	    bodyContains?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Assertion(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.target = source["target"];
+	        this.value = source["value"];
+	        this.script = source["script"];
+	        this.statusCode = source["statusCode"];
+	        this.maxTimingMs = source["maxTimingMs"];
+	        this.bodyContains = source["bodyContains"];
+	    }
+	}
 	export class ExtractRule {
 	    id: string;
 	    type: string;
@@ -394,6 +438,8 @@ export namespace models {
 	    sizeBytes: number;
 	    error: string;
 	    assertionErrors: string[];
+	    retries?: number;
+	    skipped?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestRunResult(source);
@@ -410,6 +456,8 @@ export namespace models {
 	        this.sizeBytes = source["sizeBytes"];
 	        this.error = source["error"];
 	        this.assertionErrors = source["assertionErrors"];
+	        this.retries = source["retries"];
+	        this.skipped = source["skipped"];
 	    }
 	}
 	export class CollectionRunResult {
@@ -418,6 +466,7 @@ export namespace models {
 	    results: RequestRunResult[];
 	    passed: number;
 	    failed: number;
+	    skipped: number;
 	    total: number;
 	    durationMs: number;
 	
@@ -432,6 +481,7 @@ export namespace models {
 	        this.results = this.convertValues(source["results"], RequestRunResult);
 	        this.passed = source["passed"];
 	        this.failed = source["failed"];
+	        this.skipped = source["skipped"];
 	        this.total = source["total"];
 	        this.durationMs = source["durationMs"];
 	    }
@@ -734,6 +784,117 @@ export namespace models {
 	        this.error = source["error"];
 	    }
 	}
+	export class LoadTestConfig {
+	    request: RequestPayload;
+	    vus: number;
+	    durationSec: number;
+	    rampUpSec: number;
+	    iterations: number;
+	    env?: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadTestConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.request = this.convertValues(source["request"], RequestPayload);
+	        this.vus = source["vus"];
+	        this.durationSec = source["durationSec"];
+	        this.rampUpSec = source["rampUpSec"];
+	        this.iterations = source["iterations"];
+	        this.env = source["env"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class LoadTestSample {
+	    timestampMs: number;
+	    statusCode: number;
+	    timingMs: number;
+	    sizeBytes: number;
+	    error: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadTestSample(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.timestampMs = source["timestampMs"];
+	        this.statusCode = source["statusCode"];
+	        this.timingMs = source["timingMs"];
+	        this.sizeBytes = source["sizeBytes"];
+	        this.error = source["error"];
+	    }
+	}
+	export class LoadTestResult {
+	    config: LoadTestConfig;
+	    samples: LoadTestSample[];
+	    totalReqs: number;
+	    passed: number;
+	    failed: number;
+	    avgTimingMs: number;
+	    p50TimingMs: number;
+	    p95TimingMs: number;
+	    p99TimingMs: number;
+	    durationMs: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoadTestResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.config = this.convertValues(source["config"], LoadTestConfig);
+	        this.samples = this.convertValues(source["samples"], LoadTestSample);
+	        this.totalReqs = source["totalReqs"];
+	        this.passed = source["passed"];
+	        this.failed = source["failed"];
+	        this.avgTimingMs = source["avgTimingMs"];
+	        this.p50TimingMs = source["p50TimingMs"];
+	        this.p95TimingMs = source["p95TimingMs"];
+	        this.p99TimingMs = source["p99TimingMs"];
+	        this.durationMs = source["durationMs"];
+	        this.error = source["error"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	
 	export class OAuth2TokenResponse {
 	    accessToken: string;
@@ -767,6 +928,9 @@ export namespace models {
 	    payload: RequestPayload;
 	    preSetVars?: PreSetVar[];
 	    extractRules?: ExtractRule[];
+	    assertions?: Assertion[];
+	    retries?: number;
+	    condition?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RunnerRequest(source);
@@ -779,6 +943,9 @@ export namespace models {
 	        this.payload = this.convertValues(source["payload"], RequestPayload);
 	        this.preSetVars = this.convertValues(source["preSetVars"], PreSetVar);
 	        this.extractRules = this.convertValues(source["extractRules"], ExtractRule);
+	        this.assertions = this.convertValues(source["assertions"], Assertion);
+	        this.retries = source["retries"];
+	        this.condition = source["condition"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -799,6 +966,49 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class RunnerConfig {
+	    requests: RunnerRequest[];
+	    env?: Record<string, string>;
+	    maxConcurrent?: number;
+	    concurrency?: number;
+	    rampUp?: number;
+	    iterations?: number;
+	    retryDelayMs?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RunnerConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.requests = this.convertValues(source["requests"], RunnerRequest);
+	        this.env = source["env"];
+	        this.maxConcurrent = source["maxConcurrent"];
+	        this.concurrency = source["concurrency"];
+	        this.rampUp = source["rampUp"];
+	        this.iterations = source["iterations"];
+	        this.retryDelayMs = source["retryDelayMs"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	
 	
 	export class SocketMessage {
@@ -833,6 +1043,82 @@ export namespace models {
 	        this.protocol = source["protocol"];
 	        this.url = source["url"];
 	        this.messages = this.convertValues(source["messages"], SocketMessage);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class TestGroup {
+	    id: string;
+	    name: string;
+	    requestId: string;
+	    assertions: Assertion[];
+	    children?: TestGroup[];
+	
+	    static createFrom(source: any = {}) {
+	        return new TestGroup(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.requestId = source["requestId"];
+	        this.assertions = this.convertValues(source["assertions"], Assertion);
+	        this.children = this.convertValues(source["children"], TestGroup);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class TestSuite {
+	    id: string;
+	    name: string;
+	    description?: string;
+	    groups: TestGroup[];
+	    collectionId?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TestSuite(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.groups = this.convertValues(source["groups"], TestGroup);
+	        this.collectionId = source["collectionId"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -4,8 +4,12 @@ import {
   CreateCollection,
   DeleteCollection,
   DeleteSavedRequest,
+  DeleteSavedRequests,
   GetCollections,
+  MoveRequest,
   RenameCollection,
+  ReorderCollection,
+  ReorderRequest,
   UpdateSavedRequest,
 } from "../../../../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../../../../wailsjs/runtime";
@@ -36,7 +40,12 @@ type CollectionStore = {
   updateRequest: (reqID: string, name: string, payload: WirePayload) => Promise<void>;
   renameRequest: (reqID: string, name: string) => Promise<void>;
   deleteRequest: (reqID: string) => Promise<void>;
+  deleteRequests: (reqIDs: string[]) => Promise<void>;
   duplicateRequest: (reqID: string) => Promise<void>;
+
+  reorderCollection: (id: string, newIndex: number) => Promise<void>;
+  reorderRequest: (collID: string, reqID: string, newIndex: number) => Promise<void>;
+  moveRequest: (reqID: string, targetCollID: string) => Promise<void>;
 };
 
 const COLL_EVENT = "collections:changed";
@@ -126,6 +135,12 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
     await get().load();
   },
 
+  deleteRequests: async (reqIDs) => {
+    if (reqIDs.length === 0) return;
+    await DeleteSavedRequests(reqIDs);
+    await get().load();
+  },
+
   duplicateRequest: async (reqID) => {
     const colls = get().collections;
     for (const c of colls) {
@@ -150,6 +165,21 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
       await get().load();
       return;
     }
+  },
+
+  reorderCollection: async (id, newIndex) => {
+    await ReorderCollection(id, newIndex);
+    await get().load();
+  },
+
+  reorderRequest: async (collID, reqID, newIndex) => {
+    await ReorderRequest(collID, reqID, newIndex);
+    await get().load();
+  },
+
+  moveRequest: async (reqID, targetCollID) => {
+    await MoveRequest(reqID, targetCollID);
+    await get().load();
   },
 
   cleanup: () => {

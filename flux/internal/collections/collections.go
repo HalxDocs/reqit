@@ -195,6 +195,145 @@ func (s *Store) DeleteRequest(reqID string) error {
 	return errors.New("request not found")
 }
 
+// ReorderCollection moves a collection to a new position in the list.
+func (s *Store) ReorderCollection(id string, newIndex int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	old := -1
+	for i := range s.collections {
+		if s.collections[i].ID == id {
+			old = i
+			break
+		}
+	}
+	if old == -1 {
+		return errors.New("collection not found")
+	}
+	if newIndex < 0 {
+		newIndex = 0
+	}
+	if newIndex >= len(s.collections) {
+		newIndex = len(s.collections) - 1
+	}
+	if old == newIndex {
+		return nil
+	}
+	c := s.collections[old]
+	s.collections = append(s.collections[:old], s.collections[old+1:]...)
+	s.collections = append(s.collections[:newIndex], append([]models.Collection{c}, s.collections[newIndex:]...)...)
+	return s.save()
+}
+
+// ReorderRequest moves a request within a collection to a new position.
+func (s *Store) ReorderRequest(collID, reqID string, newIndex int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		if s.collections[i].ID != collID {
+			continue
+		}
+		old := -1
+		for j := range s.collections[i].Requests {
+			if s.collections[i].Requests[j].ID == reqID {
+				old = j
+				break
+			}
+		}
+		if old == -1 {
+			return errors.New("request not found")
+		}
+		if newIndex < 0 {
+			newIndex = 0
+		}
+		if newIndex >= len(s.collections[i].Requests) {
+			newIndex = len(s.collections[i].Requests) - 1
+		}
+		if old == newIndex {
+			return nil
+		}
+		req := s.collections[i].Requests[old]
+		s.collections[i].Requests = append(s.collections[i].Requests[:old], s.collections[i].Requests[old+1:]...)
+		s.collections[i].Requests = append(s.collections[i].Requests[:newIndex], append([]models.SavedRequest{req}, s.collections[i].Requests[newIndex:]...)...)
+		return s.save()
+	}
+	return errors.New("collection not found")
+}
+
+// MoveRequest transfers a request from its current collection to a different one.
+func (s *Store) MoveRequest(reqID, targetCollID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	var req *models.SavedRequest
+	srcIdx := -1
+	reqIdx := -1
+	for i := range s.collections {
+		for j := range s.collections[i].Requests {
+			if s.collections[i].Requests[j].ID == reqID {
+				srcIdx = i
+				reqIdx = j
+				req = new(models.SavedRequest)
+				*req = s.collections[i].Requests[j]
+				break
+			}
+		}
+		if req != nil {
+			break
+		}
+	}
+	if req == nil {
+		return errors.New("request not found")
+	}
+	dstIdx := -1
+	for i := range s.collections {
+		if s.collections[i].ID == targetCollID {
+			dstIdx = i
+			break
+		}
+	}
+	if dstIdx == -1 {
+		return errors.New("target collection not found")
+	}
+	if srcIdx == dstIdx {
+		return nil
+	}
+	req.CollID = targetCollID
+	s.collections[srcIdx].Requests = append(s.collections[srcIdx].Requests[:reqIdx], s.collections[srcIdx].Requests[reqIdx+1:]...)
+	s.collections[dstIdx].Requests = append(s.collections[dstIdx].Requests, *req)
+	return s.save()
+}
+
+// DeleteRequests removes multiple requests by ID in a single save operation.
+func (s *Store) DeleteRequests(ids []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	idSet := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		idSet[id] = true
+	}
+	for i := range s.collections {
+		filtered := s.collections[i].Requests[:0]
+		for _, req := range s.collections[i].Requests {
+			if !idSet[req.ID] {
+				filtered = append(filtered, req)
+			}
+		}
+		s.collections[i].Requests = filtered
+	}
+	return s.save()
+}
+
 // SetSpec links an OpenAPI spec file path (relative to workspace) to a collection.
 func (s *Store) SetSpec(collID, specPath string) error {
 	s.mu.Lock()

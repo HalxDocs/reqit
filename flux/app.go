@@ -12,13 +12,16 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"flux/internal/collections"
+	"flux/internal/export/markdown"
 	"flux/internal/contract"
 	cookiestore "flux/internal/cookies"
 	"flux/internal/environments"
+	"flux/internal/external"
 	gitpkg "flux/internal/git"
 	"flux/internal/grpc"
 	"flux/internal/history"
 	"flux/internal/jwt"
+	"flux/internal/loadtest"
 	"flux/internal/locks"
 	"flux/internal/mock"
 	"flux/internal/models"
@@ -27,12 +30,14 @@ import (
 	"flux/internal/openapi"
 	"flux/internal/postman"
 	"flux/internal/profile"
+	"flux/internal/reporter"
 	"flux/internal/requester"
 	"flux/internal/scripting"
 	"flux/internal/soap"
 	"flux/internal/storage"
 	"flux/internal/runner"
 	"flux/internal/sock"
+	"flux/internal/testbuilder"
 	"flux/internal/updater"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
@@ -51,6 +56,7 @@ type App struct {
 	fsWatcher    *watcher.Watcher
 	mockReg      *mock.Registry
 	mockServer   *mock.MockServer
+	testSuites   *testbuilder.Store
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -112,7 +118,11 @@ func (a *App) GetVersion() string {
 // RunCollection executes all requests in a resolved payload set with the given
 // assertions and returns pass/fail results for each request.
 func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
-	return runner.RunCollection(reqs, assertions, a.cookies)
+	return runner.RunCollection(reqs, assertions)
+}
+
+func (a *App) RunCollectionWithConcurrency(reqs []models.RunnerRequest, assertions map[string]models.Assertion, maxConcurrent int) models.CollectionRunResult {
+	return runner.RunCollection(reqs, assertions, maxConcurrent)
 }
 
 // --- OpenAPI Export ---
@@ -216,6 +226,7 @@ func (a *App) mountWorkspace(dir string) {
 	a.environments = environments.NewStore(dir)
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
+	a.testSuites = testbuilder.NewStore(dir)
 
 	// Stop previous watcher if any.
 	if a.fsWatcher != nil {
@@ -645,6 +656,34 @@ func (a *App) DeleteSavedRequest(reqID string) error {
 	return a.collections.DeleteRequest(reqID)
 }
 
+func (a *App) DeleteSavedRequests(reqIDs []string) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	return a.collections.DeleteRequests(reqIDs)
+}
+
+func (a *App) ReorderCollection(id string, newIndex int) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	return a.collections.ReorderCollection(id, newIndex)
+}
+
+func (a *App) ReorderRequest(collID, reqID string, newIndex int) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	return a.collections.ReorderRequest(collID, reqID, newIndex)
+}
+
+func (a *App) MoveRequest(reqID, targetCollID string) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	return a.collections.MoveRequest(reqID, targetCollID)
+}
+
 // --- History ---
 
 func (a *App) GetHistory() ([]models.HistoryEntry, error) {
@@ -1068,6 +1107,238 @@ func (a *App) SaveResponseToRequest(colID, reqID string) error {
 	// This is called after SendRequest; the last response is stored on a.history.
 	// We'll take it from the response store — frontend passes the response explicitly.
 	return nil // See SaveCapturedResponse below.
+}
+
+// --- Test Suites ---
+
+func (a *App) CreateTestSuite(name, description, collID string) (models.TestSuite, error) {
+	if a.testSuites == nil {
+		return models.TestSuite{}, errors.New("no active workspace")
+	}
+	return a.testSuites.Create(name, description, collID)
+}
+
+func (a *App) GetTestSuites() []models.TestSuite {
+	if a.testSuites == nil {
+		return nil
+	}
+	return a.testSuites.GetAll()
+}
+
+func (a *App) UpdateTestSuite(ts models.TestSuite) error {
+	if a.testSuites == nil {
+		return errors.New("no active workspace")
+	}
+	return a.testSuites.Update(ts)
+}
+
+func (a *App) DeleteTestSuite(id string) error {
+	if a.testSuites == nil {
+		return errors.New("no active workspace")
+	}
+	return a.testSuites.Delete(id)
+}
+
+func (a *App) AddTestGroup(suiteID, parentID string, group models.TestGroup) error {
+	if a.testSuites == nil {
+		return errors.New("no active workspace")
+	}
+	return a.testSuites.AddGroup(suiteID, parentID, group)
+}
+
+func (a *App) UpdateTestGroup(suiteID string, group models.TestGroup) error {
+	if a.testSuites == nil {
+		return errors.New("no active workspace")
+	}
+	return a.testSuites.UpdateGroup(suiteID, group)
+}
+
+func (a *App) DeleteTestGroup(suiteID, groupID string) error {
+	if a.testSuites == nil {
+		return errors.New("no active workspace")
+	}
+	return a.testSuites.DeleteGroup(suiteID, groupID)
+}
+
+// --- Load Testing ---
+
+func (a *App) RunLoadTest(config models.LoadTestConfig) models.LoadTestResult {
+	return loadtest.RunLoadTest(config, a.cookies)
+}
+
+// --- Extra Runner Config / Enhanced Runner ---
+
+func (a *App) RunCollectionWithConfig(config models.RunnerConfig) models.CollectionRunResult {
+	reqs := config.Requests
+	assertionsMap := make(map[string]models.Assertion)
+	return runner.RunCollection(reqs, assertionsMap, config.MaxConcurrent)
+}
+
+// --- Reports ---
+
+func (a *App) GenerateJSONReport(result models.CollectionRunResult) (string, error) {
+	return reporter.GenerateJSONReport(result)
+}
+
+func (a *App) GenerateHTMLReport(result models.CollectionRunResult, loadResult *models.LoadTestResult) (string, error) {
+	return reporter.GenerateHTMLReport(result, loadResult)
+}
+
+func (a *App) ExportReportAsJSON(result models.CollectionRunResult) (string, error) {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return "", errors.New("no active workspace")
+	}
+	return reporter.ExportRunResultToJSON(result, dir)
+}
+
+func (a *App) ExportReportAsHTML(result models.CollectionRunResult, loadResult *models.LoadTestResult) (string, error) {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return "", errors.New("no active workspace")
+	}
+	return reporter.ExportRunResultToHTML(result, loadResult, dir)
+}
+
+// --- External Runner Generation ---
+
+func (a *App) GeneratePlaywrightTest(collID string, useTS bool) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			return external.GeneratePlaywrightTest(c, c.Requests, nil, useTS)
+		}
+	}
+	return "", fmt.Errorf("collection not found: %s", collID)
+}
+
+func (a *App) GenerateJestTest(collID string, useTS bool) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			return external.GenerateJestTest(c, c.Requests, nil, useTS)
+		}
+	}
+	return "", fmt.Errorf("collection not found: %s", collID)
+}
+
+func (a *App) GenerateCLIRunner(collID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			return external.GenerateCLIRunner(c, c.Requests)
+		}
+	}
+	return "", fmt.Errorf("collection not found: %s", collID)
+}
+
+func (a *App) GenerateGitHubAction(collID, runnerFilename string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	collections, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range collections {
+		if c.ID == collID {
+			return external.GenerateGitHubAction(c, runnerFilename)
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+func (a *App) GenerateGitLabCI(collID, runnerFilename string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	collections, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range collections {
+		if c.ID == collID {
+			return external.GenerateGitLabCI(c, runnerFilename)
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+func (a *App) SaveGeneratedTest(content, filename string) (string, error) {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return "", errors.New("no active workspace")
+	}
+	return external.SaveTestFile(content, dir, filename)
+}
+
+type ExportMarkdownOpts struct {
+	IncludeHeaders  bool `json:"includeHeaders"`
+	IncludeBody     bool `json:"includeBody"`
+	IncludeExamples bool `json:"includeExamples"`
+	BaseURL         string `json:"baseUrl"`
+	Timestamp       bool `json:"timestamp"`
+}
+
+func (a *App) ExportCollectionMarkdown(colID string, opts ExportMarkdownOpts) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	var col *models.Collection
+	for i := range all {
+		if all[i].ID == colID {
+			col = &all[i]
+			break
+		}
+	}
+	if col == nil {
+		return "", errors.New("collection not found")
+	}
+	mo := markdown.ExportOptions{
+		IncludeHeaders:   opts.IncludeHeaders,
+		IncludeBody:      opts.IncludeBody,
+		IncludeExamples:  opts.IncludeExamples,
+		BaseURL:          opts.BaseURL,
+		Timestamp:        opts.Timestamp,
+	}
+	g := markdown.New(mo)
+	md, err := g.Generate(col)
+	if err != nil {
+		return "", err
+	}
+
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return "", errors.New("no active workspace")
+	}
+	filename := col.Name + "_api_docs.md"
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, []byte(md), 0644); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 func (a *App) SaveCapturedResponse(colID, reqID string, resp models.SavedResponse) error {

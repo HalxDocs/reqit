@@ -161,10 +161,33 @@ type ExtractRule struct {
 
 // --- Collection Runner ---
 
+type AssertionType string
+
+const (
+	AssertStatusCode     AssertionType = "statusCode"
+	AssertMaxTiming     AssertionType = "maxTiming"
+	AssertBodyContains  AssertionType = "bodyContains"
+	AssertBodyMatch     AssertionType = "bodyMatch"      // regex match
+	AssertBodyNotMatch  AssertionType = "bodyNotMatch"   // regex not match
+	AssertJSONPath      AssertionType = "jsonPath"       // JSON path value comparison
+	AssertHeader        AssertionType = "header"         // header value check
+	AssertCookie        AssertionType = "cookie"         // cookie value check
+	AssertVarEqual      AssertionType = "varEqual"       // variable-to-variable equality
+	AssertVarNotEqual   AssertionType = "varNotEqual"    // variable-to-variable inequality
+	AssertJSONSchema    AssertionType = "jsonSchema"     // JSON Schema validation
+	AssertCustomScript  AssertionType = "customScript"   // custom JS assertion
+)
+
 type Assertion struct {
-	StatusCode   int    `json:"statusCode,omitempty"`
-	MaxTimingMs  int64  `json:"maxTimingMs,omitempty"`
-	BodyContains string `json:"bodyContains,omitempty"`
+	Type   AssertionType `json:"type"`
+	Target string        `json:"target"` // header name, cookie name, JSON path, regex, var name, schema JSON
+	Value  string        `json:"value,omitempty"` // expected value (empty for schema/script)
+	Script string        `json:"script,omitempty"` // custom JS assertion script
+
+	// Legacy fields (kept for backward compatibility with existing runner modal)
+	StatusCode     int   `json:"statusCode,omitempty"`
+	MaxTimingMs    int64 `json:"maxTimingMs,omitempty"`
+	BodyContains   string `json:"bodyContains,omitempty"`
 }
 
 type RunnerRequest struct {
@@ -173,6 +196,19 @@ type RunnerRequest struct {
 	Payload      RequestPayload `json:"payload"`
 	PreSetVars   []PreSetVar    `json:"preSetVars,omitempty"`
 	ExtractRules []ExtractRule  `json:"extractRules,omitempty"`
+	Assertions   []Assertion    `json:"assertions,omitempty"`
+	Retries      int            `json:"retries,omitempty"`      // retry up to N times on failure
+	Condition    string         `json:"condition,omitempty"`   // JS condition to decide whether to run
+}
+
+type RunnerConfig struct {
+	Requests         []RunnerRequest            `json:"requests"`
+	Env              map[string]string          `json:"env,omitempty"`
+	MaxConcurrent    int                        `json:"maxConcurrent,omitempty"`    // semaphore size for concurrent runner (default 5)
+	Concurrency      int                        `json:"concurrency,omitempty"`      // max VUs for load test
+	RampUp           int                        `json:"rampUp,omitempty"`           // ramp-up duration in seconds
+	Iterations       int                        `json:"iterations,omitempty"`       // iterations per VU
+	RetryDelayMs     int                        `json:"retryDelayMs,omitempty"`
 }
 
 type RequestRunResult struct {
@@ -185,6 +221,8 @@ type RequestRunResult struct {
 	SizeBytes       int64    `json:"sizeBytes"`
 	Error           string   `json:"error"`
 	AssertionErrors []string `json:"assertionErrors"`
+	Retries         int      `json:"retries,omitempty"`
+	Skipped         bool     `json:"skipped,omitempty"`
 }
 
 type CollectionRunResult struct {
@@ -193,8 +231,90 @@ type CollectionRunResult struct {
 	Results        []RequestRunResult `json:"results"`
 	Passed         int                `json:"passed"`
 	Failed         int                `json:"failed"`
+	Skipped        int                `json:"skipped"`
 	Total          int                `json:"total"`
 	DurationMs     int64              `json:"durationMs"`
+}
+
+// --- Test Suites / Visual Test Builder ---
+
+type TestSuite struct {
+	ID          string       `json:"id"`
+	Name        string       `json:"name"`
+	Description string       `json:"description,omitempty"`
+	Groups      []TestGroup  `json:"groups"`
+	CollID      string       `json:"collectionId,omitempty"`
+}
+
+type TestGroup struct {
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	RequestID string   `json:"requestId"` // references a SavedRequest or RunnerRequest
+	Assertions []Assertion `json:"assertions"`
+	Children  []TestGroup `json:"children,omitempty"` // nested groups
+}
+
+// --- Load / Performance Testing ---
+
+type LoadTestConfig struct {
+	Request     RequestPayload `json:"request"`
+	VUs         int            `json:"vus"`         // virtual users
+	DurationSec int            `json:"durationSec"` // test duration
+	RampUpSec   int            `json:"rampUpSec"`   // ramp-up time
+	Iterations  int            `json:"iterations"`  // total iterations (0 = run for duration)
+	Env         map[string]string `json:"env,omitempty"`
+}
+
+type LoadTestSample struct {
+	TimestampMs int64 `json:"timestampMs"`
+	StatusCode  int   `json:"statusCode"`
+	TimingMs    int64 `json:"timingMs"`
+	SizeBytes   int64 `json:"sizeBytes"`
+	Error       bool  `json:"error"`
+}
+
+type LoadTestResult struct {
+	Config     LoadTestConfig    `json:"config"`
+	Samples    []LoadTestSample  `json:"samples"`
+	TotalReqs  int               `json:"totalReqs"`
+	Passed     int               `json:"passed"`
+	Failed     int               `json:"failed"`
+	AvgTimingMs float64          `json:"avgTimingMs"`
+	P50TimingMs float64          `json:"p50TimingMs"`
+	P95TimingMs float64          `json:"p95TimingMs"`
+	P99TimingMs float64          `json:"p99TimingMs"`
+	DurationMs int64             `json:"durationMs"`
+	Error      string            `json:"error,omitempty"`
+}
+
+// --- Reports ---
+
+type ReportSection string
+
+const (
+	ReportSummary  ReportSection = "summary"
+	ReportRequests ReportSection = "requests"
+	ReportLoadTest ReportSection = "loadTest"
+	ReportFailures ReportSection = "failures"
+)
+
+type TestReport struct {
+	Title          string                `json:"title"`
+	CreatedAt      string                `json:"createdAt"`
+	RunResult      *CollectionRunResult  `json:"runResult,omitempty"`
+	LoadResult     *LoadTestResult       `json:"loadResult,omitempty"`
+	Sections       []ReportSection       `json:"sections"`
+	HTML           string                `json:"html,omitempty"` // rendered HTML report
+}
+
+// --- External Runner Compliance ---
+
+type ExternalRunnerConfig struct {
+	Type            string `json:"type"`            // "playwright" | "jest" | "cli"
+	CollectionID    string `json:"collectionId"`
+	OutputDir       string `json:"outputDir"`
+	GenerateTestFile bool  `json:"generateTestFile"`
+	TestFilePath    string `json:"testFilePath,omitempty"`
 }
 
 // --- OAuth2 ---

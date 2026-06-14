@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/shared/components/Modal";
-import { RunCollection } from "../../../../wailsjs/go/main/App";
+import {
+  RunCollection,
+  ExportReportAsHTML,
+  ExportReportAsJSON,
+} from "../../../../wailsjs/go/main/App";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
-import type { models } from "../../../../wailsjs/go/models";
-
-interface AssertionShape {
-  statusCode?: number;
-  maxTimingMs?: number;
-  bodyContains?: string;
-}
+import { AssertionEditor } from "@/features/assertions/components/AssertionEditor";
+import { FileText, Download } from "lucide-react";
+import { models } from "../../../../wailsjs/go/models";
+import { toast } from "@/app/stores/useToastStore";
 
 interface Props {
   open: boolean;
@@ -21,13 +22,15 @@ const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g;
 export function RunnerModal({ open, onClose, collection }: Props) {
   const resolve = useEnvStore((s) => s.resolve);
 
-  const [assertions, setAssertions] = useState<Record<string, AssertionShape>>({});
+  const [assertions, setAssertions] = useState<Record<string, models.Assertion[]>>({});
+  const [retries, setRetries] = useState<Record<string, number>>({});
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<models.CollectionRunResult | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setAssertions({});
+    setRetries({});
     setResult(null);
     setRunning(false);
   }, [open]);
@@ -39,14 +42,16 @@ export function RunnerModal({ open, onClose, collection }: Props) {
       payload: resolvePayload(r.payload, resolve),
       preSetVars: r.preSetVars,
       extractRules: r.extractRules,
+      assertions: assertions[r.id] || [],
+      retries: retries[r.id] || 0,
     }));
-  }, [collection, resolve]) as any;
+  }, [collection, resolve, assertions, retries]) as any;
 
   const handleRun = async () => {
     setRunning(true);
     setResult(null);
     try {
-      const res = await RunCollection(resolvedRequests as any, assertions);
+      const res = await RunCollection(resolvedRequests as any, {} as any);
       setResult(res);
     } catch (e) {
       console.error(e);
@@ -55,16 +60,29 @@ export function RunnerModal({ open, onClose, collection }: Props) {
     }
   };
 
-  const updateAssertion = (reqID: string, partial: Partial<AssertionShape>) => {
-    setAssertions((prev) => {
-      const cur = prev[reqID] || { statusCode: 0, maxTimingMs: 0, bodyContains: "" };
-      return { ...prev, [reqID]: { ...cur, ...partial } };
-    });
+  const handleExportJSON = async () => {
+    if (!result) return;
+    try {
+      const path = await ExportReportAsJSON(result);
+      toast.success(`Report saved: ${path}`);
+    } catch (e) {
+      toast.error(String(e));
+    }
+  };
+
+  const handleExportHTML = async () => {
+    if (!result) return;
+    try {
+      const path = await ExportReportAsHTML(result, {} as any);
+      toast.success(`Report saved: ${path}`);
+    } catch (e) {
+      toast.error(String(e));
+    }
   };
 
   return (
     <Modal open={open} onClose={onClose} title={`Run: ${collection.name}`}>
-      <div className="flex flex-col gap-4 min-w-[520px] max-w-[600px]">
+      <div className="flex flex-col gap-4 min-w-[580px] max-w-[700px]">
         {/* Summary */}
         {result && (
           <div className={`flex items-center gap-3 px-4 py-3 rounded-lg text-13 font-semibold ${
@@ -73,32 +91,34 @@ export function RunnerModal({ open, onClose, collection }: Props) {
             <span>{result.passed}/{result.total} passed</span>
             <span className="text-subtext font-normal">· {result.durationMs}ms</span>
             {result.failed > 0 && <span>· {result.failed} failed</span>}
+            {result.skipped > 0 && <span>· {result.skipped} skipped</span>}
           </div>
         )}
 
         {/* Request list */}
         <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto">
           {collection.requests.map((req) => {
-            const a = assertions[req.id] || {};
+            const a = assertions[req.id] || [];
+            const retryCount = retries[req.id] || 0;
             const res = result?.results.find((r) => r.requestId === req.id);
             return (
               <div key={req.id} className="bg-card border border-border rounded-lg p-3 flex flex-col gap-2">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                   <span className="text-12 font-semibold text-text">{req.name}</span>
-                  {res && (
-                    <span className={`text-11 font-bold ${res.passed ? "text-teal" : "text-danger"}`}>
-                      {res.passed ? "PASS" : "FAIL"}
-                    </span>
-                  )}
-                  {res && !res.error && (
-                    <span className="text-11 text-subtext ml-2">
-                      {res.statusCode} · {res.timingMs}ms
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {res && (
+                      <span className={`text-11 font-bold ${res.passed ? "text-teal" : res.skipped ? "text-subtext" : "text-danger"}`}>
+                        {res.skipped ? "SKIP" : res.passed ? "PASS" : "FAIL"}
+                      </span>
+                    )}
+                    {res && !res.error && (
+                      <span className="text-11 text-subtext">
+                        {res.statusCode} · {res.timingMs}ms{(res.retries ?? 0) > 0 ? ` (${res.retries} retries)` : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Error / Assertion errors */}
                 {res?.error && (
                   <div className="text-11 text-danger break-words">{res.error}</div>
                 )}
@@ -106,39 +126,23 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                   <div key={i} className="text-11 text-amber-400 break-words">{err}</div>
                 ))}
 
-                {/* Assertion inputs (shown while not running and before run) */}
                 {!running && !result && (
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-10 text-subtext uppercase tracking-wider">Status</label>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-10 text-subtext uppercase tracking-wider shrink-0">Retries</label>
                       <input
                         type="number"
-                        placeholder="200"
-                        value={a.statusCode || ""}
-                        onChange={(e) => updateAssertion(req.id, { statusCode: e.target.value ? parseInt(e.target.value) : 0 })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
+                        min={0}
+                        max={10}
+                        value={retryCount}
+                        onChange={(e) => setRetries((prev) => ({ ...prev, [req.id]: parseInt(e.target.value) || 0 }))}
+                        className="h-[24px] w-[60px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
                       />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-10 text-subtext uppercase tracking-wider">Max ms</label>
-                      <input
-                        type="number"
-                        placeholder="3000"
-                        value={a.maxTimingMs || ""}
-                        onChange={(e) => updateAssertion(req.id, { maxTimingMs: e.target.value ? parseInt(e.target.value) : 0 })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-10 text-subtext uppercase tracking-wider">Body contains</label>
-                      <input
-                        type="text"
-                        placeholder='"ok"'
-                        value={a.bodyContains}
-                        onChange={(e) => updateAssertion(req.id, { bodyContains: e.target.value })}
-                        className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
-                      />
-                    </div>
+                    <AssertionEditor
+                      assertions={a}
+                      onChange={(next) => setAssertions((prev) => ({ ...prev, [req.id]: next }))}
+                    />
                   </div>
                 )}
               </div>
@@ -147,24 +151,50 @@ export function RunnerModal({ open, onClose, collection }: Props) {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-[32px] px-3 text-12 text-subtext hover:text-text rounded-md transition-colors"
-          >
-            Close
-          </button>
-          {!result && (
+        <div className="flex justify-between items-center pt-2">
+          <div className="flex gap-1">
+            {result && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleExportJSON}
+                  className="flex items-center gap-1 h-[28px] px-2 text-11 text-subtext hover:text-text bg-card border border-border rounded transition-colors"
+                  title="Export JSON report"
+                >
+                  <FileText size={11} />
+                  JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportHTML}
+                  className="flex items-center gap-1 h-[28px] px-2 text-11 text-subtext hover:text-text bg-card border border-border rounded transition-colors"
+                  title="Export HTML report"
+                >
+                  <Download size={11} />
+                  HTML
+                </button>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={handleRun}
-              disabled={running}
-              className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+              onClick={onClose}
+              className="h-[32px] px-3 text-12 text-subtext hover:text-text rounded-md transition-colors"
             >
-              {running ? "Running…" : "Run"}
+              Close
             </button>
-          )}
+            {!result && (
+              <button
+                type="button"
+                onClick={handleRun}
+                disabled={running}
+                className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+              >
+                {running ? "Running…" : "Run"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

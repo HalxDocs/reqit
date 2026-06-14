@@ -3,15 +3,17 @@
 import {models} from '../models';
 import {updater} from '../models';
 import {workspaces} from '../models';
+import {main} from '../models';
 import {git} from '../models';
 import {cookies} from '../models';
 import {environments} from '../models';
-import {main} from '../models';
 import {locks} from '../models';
 import {profile} from '../models';
 import {mqtt} from '../models';
 
 export function AddRequestToCollection(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<models.SavedRequest>;
+
+export function AddTestGroup(arg1:string,arg2:string,arg3:models.TestGroup):Promise<void>;
 
 export function AppDataDir():Promise<string>;
 
@@ -37,6 +39,8 @@ export function CreateCollection(arg1:string):Promise<models.Collection>;
 
 export function CreateEnvironment(arg1:string):Promise<models.Environment>;
 
+export function CreateTestSuite(arg1:string,arg2:string,arg3:string):Promise<models.TestSuite>;
+
 export function CreateWorkspace(arg1:string,arg2:string,arg3:string):Promise<workspaces.Info>;
 
 export function DecodeJWT(arg1:string):Promise<models.JWTDecoded>;
@@ -49,17 +53,43 @@ export function DeleteHistoryEntry(arg1:string):Promise<void>;
 
 export function DeleteSavedRequest(arg1:string):Promise<void>;
 
+export function DeleteSavedRequests(arg1:Array<string>):Promise<void>;
+
+export function DeleteTestGroup(arg1:string,arg2:string):Promise<void>;
+
+export function DeleteTestSuite(arg1:string):Promise<void>;
+
 export function DeleteWorkspace(arg1:string):Promise<void>;
 
 export function DisconnectSocket():Promise<void>;
 
 export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<void>;
 
+export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;
+
 export function ExportOpenAPI(arg1:string):Promise<string>;
 
 export function ExportOpenAPIFiles(arg1:string):Promise<Record<string, string>>;
 
+export function ExportReportAsHTML(arg1:models.CollectionRunResult,arg2:models.LoadTestResult):Promise<string>;
+
+export function ExportReportAsJSON(arg1:models.CollectionRunResult):Promise<string>;
+
 export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
+
+export function GenerateCLIRunner(arg1:string):Promise<string>;
+
+export function GenerateGitHubAction(arg1:string,arg2:string):Promise<string>;
+
+export function GenerateGitLabCI(arg1:string,arg2:string):Promise<string>;
+
+export function GenerateHTMLReport(arg1:models.CollectionRunResult,arg2:models.LoadTestResult):Promise<string>;
+
+export function GenerateJSONReport(arg1:models.CollectionRunResult):Promise<string>;
+
+export function GenerateJestTest(arg1:string,arg2:boolean):Promise<string>;
+
+export function GeneratePlaywrightTest(arg1:string,arg2:boolean):Promise<string>;
 
 export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
@@ -86,6 +116,8 @@ export function GetMockStatus():Promise<main.MockStatus>;
 export function GetProfile():Promise<profile.Profile>;
 
 export function GetSocketState():Promise<models.SocketState>;
+
+export function GetTestSuites():Promise<Array<models.TestSuite>>;
 
 export function GetVersion():Promise<string>;
 
@@ -115,6 +147,8 @@ export function MQTTPublish(arg1:string,arg2:string,arg3:number):Promise<void>;
 
 export function MQTTStatus():Promise<string>;
 
+export function MoveRequest(arg1:string,arg2:string):Promise<void>;
+
 export function OAuth2AuthorizeURL(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<string>;
 
 export function OAuth2Exchange(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
@@ -137,9 +171,21 @@ export function RenameCollection(arg1:string,arg2:string):Promise<void>;
 
 export function RenameWorkspace(arg1:string,arg2:string):Promise<void>;
 
+export function ReorderCollection(arg1:string,arg2:number):Promise<void>;
+
+export function ReorderRequest(arg1:string,arg2:string,arg3:number):Promise<void>;
+
 export function RunCollection(arg1:Array<models.RunnerRequest>,arg2:Record<string, models.Assertion>):Promise<models.CollectionRunResult>;
 
+export function RunCollectionWithConcurrency(arg1:Array<models.RunnerRequest>,arg2:Record<string, models.Assertion>,arg3:number):Promise<models.CollectionRunResult>;
+
+export function RunCollectionWithConfig(arg1:models.RunnerConfig):Promise<models.CollectionRunResult>;
+
+export function RunLoadTest(arg1:models.LoadTestConfig):Promise<models.LoadTestResult>;
+
 export function SaveCapturedResponse(arg1:string,arg2:string,arg3:models.SavedResponse):Promise<void>;
+
+export function SaveGeneratedTest(arg1:string,arg2:string):Promise<string>;
 
 export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
 
@@ -172,3 +218,7 @@ export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
 
 export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:Array<models.ExtractRule>):Promise<void>;
+
+export function UpdateTestGroup(arg1:string,arg2:models.TestGroup):Promise<void>;
+
+export function UpdateTestSuite(arg1:models.TestSuite):Promise<void>;

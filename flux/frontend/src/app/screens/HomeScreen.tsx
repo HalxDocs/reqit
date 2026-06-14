@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
@@ -29,9 +29,10 @@ import {
   Search01Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
+import { Trash2 } from "lucide-react";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
-import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
+
 import { CreateWorkspaceModal } from "@/features/workspace/components/CreateWorkspaceModal";
 import { PickFolder } from "../../../wailsjs/go/main/App";
 import { toast } from "@/app/stores/useToastStore";
@@ -352,10 +353,12 @@ function fmtDate(iso: string): string {
 function WorkspaceCard({
   ws,
   onOpen,
+  onDelete,
   busy,
 }: {
   ws: workspaces.Info;
   onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
   busy: boolean;
 }) {
   const initials = ws.name
@@ -366,43 +369,53 @@ function WorkspaceCard({
     .slice(0, 2);
 
   return (
-    <button
-      type="button"
-      onClick={() => !busy && onOpen(ws.id)}
-      disabled={busy}
-      className="group text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-cyan/50 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan disabled:opacity-60"
-    >
-      <div className="h-1.5 w-full" style={{ backgroundColor: ws.color || "#3B82F6" }} />
-      <div className="p-5 flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className="w-[44px] h-[44px] rounded-xl flex items-center justify-center text-white text-14 font-bold shrink-0"
-            style={{ backgroundColor: ws.color || "#3B82F6" }}
-          >
-            {initials}
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={() => !busy && onOpen(ws.id)}
+        disabled={busy}
+        className="w-full text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-cyan/50 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan disabled:opacity-60"
+      >
+        <div className="h-1.5 w-full" style={{ backgroundColor: ws.color || "#3B82F6" }} />
+        <div className="p-5 flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <div
+              className="w-[44px] h-[44px] rounded-xl flex items-center justify-center text-white text-14 font-bold shrink-0"
+              style={{ backgroundColor: ws.color || "#3B82F6" }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="text-14 font-semibold text-text truncate leading-tight">{ws.name}</div>
+              {ws.description && (
+                <div className="text-12 text-subtext truncate mt-0.5">{ws.description}</div>
+              )}
+            </div>
           </div>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <div className="text-14 font-semibold text-text truncate leading-tight">{ws.name}</div>
-            {ws.description && (
-              <div className="text-12 text-subtext truncate mt-0.5">{ws.description}</div>
-            )}
+          <div className="flex items-center justify-between">
+            <span className="text-11 text-subtext">{fmtDate(ws.lastOpenedAt)}</span>
+            <span
+              className="flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded-full transition-all group-hover:scale-105"
+              style={{
+                color: ws.color || "#3B82F6",
+                backgroundColor: (ws.color || "#3B82F6") + "22",
+              }}
+            >
+              Open
+              <HugeiconsIcon icon={ArrowRight01Icon} size={10} color="currentColor" />
+            </span>
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-11 text-subtext">{fmtDate(ws.lastOpenedAt)}</span>
-          <span
-            className="flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded-full transition-all group-hover:scale-105"
-            style={{
-              color: ws.color || "#3B82F6",
-              backgroundColor: (ws.color || "#3B82F6") + "22",
-            }}
-          >
-            Open
-            <HugeiconsIcon icon={ArrowRight01Icon} size={10} color="currentColor" />
-          </span>
-        </div>
-      </div>
-    </button>
+      </button>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete(ws.id); }}
+        className="absolute top-2 right-2 w-[28px] h-[28px] flex items-center justify-center rounded-lg bg-danger/90 text-white opacity-0 group-hover:opacity-100 hover:bg-danger transition-all duration-200"
+        title="Delete workspace"
+      >
+        <Trash2 size={12} />
+      </button>
+    </div>
   );
 }
 
@@ -411,19 +424,29 @@ type View = "landing" | "workspaces" | "docs";
 export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const workspaceList = useWorkspaceStore((s) => s.workspaces);
   const switchWs = useWorkspaceStore((s) => s.switch);
+  const removeWs = useWorkspaceStore((s) => s.remove);
   const openFromFolder = useWorkspaceStore((s) => s.openFromFolder);
-  const resetTabs = useTabsStore((s) => s.resetTabs);
   const stars = useGitHubStars("HalxDocs/reqit");
 
   const [view, setView] = useState<View>("landing");
   const [createOpen, setCreateOpen] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
 
+  const handleDelete = useCallback(async (id: string) => {
+    const ws = workspaceList.find((w) => w.id === id);
+    if (!ws) return;
+    if (!confirm(`Delete workspace "${ws.name}"? The folder on disk will not be removed.`)) return;
+    try {
+      await removeWs(id);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete workspace");
+    }
+  }, [workspaceList, removeWs]);
+
   const handleOpen = async (id: string) => {
     setSwitching(id);
     try {
       await switchWs(id);
-      resetTabs();
       await onEnter();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not open workspace");
@@ -515,6 +538,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
             workspaces={workspaceList}
             switching={switching}
             onOpen={handleOpen}
+            onDelete={handleDelete}
             onCreate={() => setCreateOpen(true)}
           />
         )}
@@ -826,11 +850,13 @@ function WorkspacesView({
   workspaces: wsList,
   switching,
   onOpen,
+  onDelete,
   onCreate,
 }: {
   workspaces: workspaces.Info[];
   switching: string | null;
   onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
   onCreate: () => void;
 }) {
   return (
@@ -876,7 +902,7 @@ function WorkspacesView({
                     <div className="w-5 h-5 rounded-full border-2 border-cyan border-t-transparent animate-spin" />
                   </div>
                 )}
-                <WorkspaceCard ws={ws} onOpen={onOpen} busy={switching !== null} />
+                <WorkspaceCard ws={ws} onOpen={onOpen} onDelete={onDelete} busy={switching !== null} />
               </div>
             ))}
           </div>

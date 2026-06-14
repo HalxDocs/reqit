@@ -6,6 +6,10 @@ export function AddRequestToCollection(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddRequestToCollection'](arg1, arg2, arg3);
 }
 
+export function AddTestGroup(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddTestGroup'](arg1, arg2, arg3);
+}
+
 export function AppDataDir() {
   return window['go']['main']['App']['AppDataDir']();
 }
@@ -54,6 +58,10 @@ export function CreateEnvironment(arg1) {
   return window['go']['main']['App']['CreateEnvironment'](arg1);
 }
 
+export function CreateTestSuite(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CreateTestSuite'](arg1, arg2, arg3);
+}
+
 export function CreateWorkspace(arg1, arg2, arg3) {
   return window['go']['main']['App']['CreateWorkspace'](arg1, arg2, arg3);
 }
@@ -78,6 +86,18 @@ export function DeleteSavedRequest(arg1) {
   return window['go']['main']['App']['DeleteSavedRequest'](arg1);
 }
 
+export function DeleteSavedRequests(arg1) {
+  return window['go']['main']['App']['DeleteSavedRequests'](arg1);
+}
+
+export function DeleteTestGroup(arg1, arg2) {
+  return window['go']['main']['App']['DeleteTestGroup'](arg1, arg2);
+}
+
+export function DeleteTestSuite(arg1) {
+  return window['go']['main']['App']['DeleteTestSuite'](arg1);
+}
+
 export function DeleteWorkspace(arg1) {
   return window['go']['main']['App']['DeleteWorkspace'](arg1);
 }
@@ -90,6 +110,10 @@ export function DownloadBinaryResponse(arg1, arg2) {
   return window['go']['main']['App']['DownloadBinaryResponse'](arg1, arg2);
 }
 
+export function ExportCollectionMarkdown(arg1, arg2) {
+  return window['go']['main']['App']['ExportCollectionMarkdown'](arg1, arg2);
+}
+
 export function ExportOpenAPI(arg1) {
   return window['go']['main']['App']['ExportOpenAPI'](arg1);
 }
@@ -98,8 +122,44 @@ export function ExportOpenAPIFiles(arg1) {
   return window['go']['main']['App']['ExportOpenAPIFiles'](arg1);
 }
 
+export function ExportReportAsHTML(arg1, arg2) {
+  return window['go']['main']['App']['ExportReportAsHTML'](arg1, arg2);
+}
+
+export function ExportReportAsJSON(arg1) {
+  return window['go']['main']['App']['ExportReportAsJSON'](arg1);
+}
+
 export function GRPCInvoke(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['GRPCInvoke'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function GenerateCLIRunner(arg1) {
+  return window['go']['main']['App']['GenerateCLIRunner'](arg1);
+}
+
+export function GenerateGitHubAction(arg1, arg2) {
+  return window['go']['main']['App']['GenerateGitHubAction'](arg1, arg2);
+}
+
+export function GenerateGitLabCI(arg1, arg2) {
+  return window['go']['main']['App']['GenerateGitLabCI'](arg1, arg2);
+}
+
+export function GenerateHTMLReport(arg1, arg2) {
+  return window['go']['main']['App']['GenerateHTMLReport'](arg1, arg2);
+}
+
+export function GenerateJSONReport(arg1) {
+  return window['go']['main']['App']['GenerateJSONReport'](arg1);
+}
+
+export function GenerateJestTest(arg1, arg2) {
+  return window['go']['main']['App']['GenerateJestTest'](arg1, arg2);
+}
+
+export function GeneratePlaywrightTest(arg1, arg2) {
+  return window['go']['main']['App']['GeneratePlaywrightTest'](arg1, arg2);
 }
 
 export function GetActiveContributors() {
@@ -152,6 +212,10 @@ export function GetProfile() {
 
 export function GetSocketState() {
   return window['go']['main']['App']['GetSocketState']();
+}
+
+export function GetTestSuites() {
+  return window['go']['main']['App']['GetTestSuites']();
 }
 
 export function GetVersion() {
@@ -210,6 +274,10 @@ export function MQTTStatus() {
   return window['go']['main']['App']['MQTTStatus']();
 }
 
+export function MoveRequest(arg1, arg2) {
+  return window['go']['main']['App']['MoveRequest'](arg1, arg2);
+}
+
 export function OAuth2AuthorizeURL(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
   return window['go']['main']['App']['OAuth2AuthorizeURL'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
@@ -254,12 +322,36 @@ export function RenameWorkspace(arg1, arg2) {
   return window['go']['main']['App']['RenameWorkspace'](arg1, arg2);
 }
 
+export function ReorderCollection(arg1, arg2) {
+  return window['go']['main']['App']['ReorderCollection'](arg1, arg2);
+}
+
+export function ReorderRequest(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ReorderRequest'](arg1, arg2, arg3);
+}
+
 export function RunCollection(arg1, arg2) {
   return window['go']['main']['App']['RunCollection'](arg1, arg2);
 }
 
+export function RunCollectionWithConcurrency(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RunCollectionWithConcurrency'](arg1, arg2, arg3);
+}
+
+export function RunCollectionWithConfig(arg1) {
+  return window['go']['main']['App']['RunCollectionWithConfig'](arg1);
+}
+
+export function RunLoadTest(arg1) {
+  return window['go']['main']['App']['RunLoadTest'](arg1);
+}
+
 export function SaveCapturedResponse(arg1, arg2, arg3) {
   return window['go']['main']['App']['SaveCapturedResponse'](arg1, arg2, arg3);
+}
+
+export function SaveGeneratedTest(arg1, arg2) {
+  return window['go']['main']['App']['SaveGeneratedTest'](arg1, arg2);
 }
 
 export function SaveResponseToRequest(arg1, arg2) {
@@ -324,4 +416,12 @@ export function UpdateSavedRequest(arg1, arg2, arg3) {
 
 export function UpdateScriptRules(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateScriptRules'](arg1, arg2, arg3);
+}
+
+export function UpdateTestGroup(arg1, arg2) {
+  return window['go']['main']['App']['UpdateTestGroup'](arg1, arg2);
+}
+
+export function UpdateTestSuite(arg1) {
+  return window['go']['main']['App']['UpdateTestSuite'](arg1);
 }

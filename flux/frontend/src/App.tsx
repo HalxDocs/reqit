@@ -56,6 +56,9 @@ export default function App() {
     Promise.all([loadWorkspaces(), loadProfile()]).catch(() => {});
   }, [loadWorkspaces, loadProfile]);
 
+  const resetTabs = useTabsStore((s) => s.resetTabs);
+  const clearResponse = useResponseStore((s) => s.clearResponse);
+
   useEffect(() => {
     if (!wsLoaded) return;
     if (!activeWorkspaceID) {
@@ -72,7 +75,8 @@ export default function App() {
   }, [wsLoaded]);
 
   const enterApp = async () => {
-    hydrateTabs();
+    resetTabs();
+    clearResponse();
     await Promise.all([loadCollections(), loadHistory(), loadEnvs()]);
     setScreen("app");
   };
