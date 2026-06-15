@@ -140,3 +140,167 @@ export function toPythonRequests(p: WirePayload): string {
 
   return lines.join("\n");
 }
+
+export function toGo(p: WirePayload): string {
+  const url = buildFinalUrl(p);
+  const method = p.method.toUpperCase();
+  const hdrs = finalHeaders(p);
+  const lines: string[] = [
+    'import (',
+    '    "bytes"',
+    '    "encoding/json"',
+    '    "fmt"',
+    '    "io"',
+    '    "net/http"',
+    ')',
+    '',
+    'func main() {',
+    `    url := ${escapeGo(url)}`,
+  ];
+
+  let bodyVar = "";
+  if (p.bodyType === "json" && p.body.trim()) {
+    bodyVar = "    body := []byte(`" + p.body.trim() + "`)";
+    lines.push(bodyVar);
+  } else if ((p.bodyType === "form" || p.bodyType === "urlencoded") && formBody(p)) {
+    bodyVar = `    body := []byte(${escapeGo(formBody(p))})`;
+    lines.push(bodyVar);
+  }
+
+  lines.push(`    req, err := http.NewRequest("${method}", url, nil)`);
+  if (bodyVar) {
+    lines[lines.length - 1] = `    req, err := http.NewRequest("${method}", url, bytes.NewReader(body))`;
+  }
+  lines.push("    if err != nil {");
+  lines.push("        panic(err)");
+  lines.push("    }");
+
+  for (const [k, v] of hdrs) {
+    lines.push(`    req.Header.Set(${escapeGo(k)}, ${escapeGo(v)})`);
+  }
+
+  lines.push("");
+  lines.push("    resp, err := http.DefaultClient.Do(req)");
+  lines.push("    if err != nil {");
+  lines.push("        panic(err)");
+  lines.push("    }");
+  lines.push("    defer resp.Body.Close()");
+  lines.push("");
+  lines.push('    data, err := io.ReadAll(resp.Body)');
+  lines.push("    if err != nil {");
+  lines.push("        panic(err)");
+  lines.push("    }");
+  lines.push("");
+  lines.push('    fmt.Println(string(data))');
+  lines.push("}");
+
+  return lines.join("\n");
+}
+
+const escapeGo = (s: string) => {
+  const q = '"';
+  return q + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n") + q;
+};
+
+export function toJava(p: WirePayload): string {
+  const url = buildFinalUrl(p);
+  const method = p.method.toUpperCase();
+  const hdrs = finalHeaders(p);
+  const lines: string[] = [
+    "import java.net.HttpURLConnection;",
+    "import java.net.URL;",
+    "import java.io.*;",
+    "import java.nio.charset.StandardCharsets;",
+    "",
+    "public class ApiRequest {",
+    "    public static void main(String[] args) throws Exception {",
+    `        URL url = new URL("${escapeJava(url)}");`,
+    `        HttpURLConnection conn = (HttpURLConnection) url.openConnection();`,
+    `        conn.setRequestMethod("${method}");`,
+  ];
+
+  for (const [k, v] of hdrs) {
+    lines.push(`        conn.setRequestProperty("${escapeJava(k)}", "${escapeJava(v)}");`);
+  }
+
+  if (p.bodyType === "json" && p.body.trim()) {
+    lines.push("        conn.setDoOutput(true);");
+    lines.push(`        String jsonBody = "${escapeJava(p.body.trim())}";`);
+    lines.push("        try (OutputStream os = conn.getOutputStream()) {");
+    lines.push("            byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);");
+    lines.push("            os.write(input, 0, input.length);");
+    lines.push("        }");
+  } else if ((p.bodyType === "form" || p.bodyType === "urlencoded") && formBody(p)) {
+    lines.push("        conn.setDoOutput(true);");
+    lines.push(`        String body = "${escapeJava(formBody(p))}";`);
+    lines.push("        try (OutputStream os = conn.getOutputStream()) {");
+    lines.push("            byte[] input = body.getBytes(StandardCharsets.UTF_8);");
+    lines.push("            os.write(input, 0, input.length);");
+    lines.push("        }");
+  }
+
+  lines.push("");
+  lines.push("        int status = conn.getResponseCode();");
+  lines.push("        BufferedReader reader = new BufferedReader(");
+  lines.push("            new InputStreamReader(status >= 400 ? conn.getErrorStream() : conn.getInputStream())));");
+  lines.push("        String line;");
+  lines.push("        StringBuilder response = new StringBuilder();");
+  lines.push("        while ((line = reader.readLine()) != null) {");
+  lines.push("            response.append(line);");
+  lines.push("        }");
+  lines.push("        reader.close();");
+  lines.push("        System.out.println(response.toString());");
+  lines.push("        conn.disconnect();");
+  lines.push("    }");
+  lines.push("}");
+
+  return lines.join("\n");
+}
+
+const escapeJava = (s: string) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+
+export function toCurlShort(p: WirePayload): string {
+  const url = buildFinalUrl(p);
+  const method = p.method.toUpperCase();
+  const hdrs = finalHeaders(p);
+  const parts: string[] = [];
+
+  if (method !== "GET") {
+    parts.push(`-X ${method}`);
+  }
+  for (const [k, v] of hdrs) {
+    parts.push(`-H '${k}: ${v}'`);
+  }
+  if (p.bodyType === "json" && p.body.trim()) {
+    parts.push(`-d '${p.body.trim()}'`);
+  } else if ((p.bodyType === "form" || p.bodyType === "urlencoded") && formBody(p)) {
+    parts.push(`-d '${formBody(p)}'`);
+  }
+  parts.push(`'${url}'`);
+
+  return `curl ${parts.join(" ")}`;
+}
+
+export function toCurlPowerShell(p: WirePayload): string {
+  const url = buildFinalUrl(p);
+  const hdrs = finalHeaders(p);
+  const method = p.method.toUpperCase();
+  const lines: string[] = [];
+
+  lines.push(`$headers = @{`);
+  for (const [k, v] of hdrs) {
+    lines.push(`    "${k}" = "${v}"`);
+  }
+  lines.push("}");
+
+  let bodyArg = "";
+  if (p.bodyType === "json" && p.body.trim()) {
+    lines.push(`$body = '${p.body.trim()}'`);
+    bodyArg = " -Body $body -ContentType 'application/json'";
+  } else if ((p.bodyType === "form" || p.bodyType === "urlencoded") && formBody(p)) {
+    bodyArg = ` -Body '${formBody(p)}'`;
+  }
+
+  lines.push(`Invoke-RestMethod -Uri '${url}' -Method ${method} -Headers $headers${bodyArg}`);
+  return lines.join("\n");
+}

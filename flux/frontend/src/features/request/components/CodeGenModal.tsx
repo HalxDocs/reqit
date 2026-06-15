@@ -1,18 +1,24 @@
 import { useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
+import { Button } from "@/shared/components/Button";
+import { IconButton } from "@/shared/components/IconButton";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { buildPayload } from "@/features/request/lib/buildPayload";
-import { toCurl, toJsFetch, toPythonRequests } from "@/shared/lib/codegen";
+import { toCurl, toJsFetch, toPythonRequests, toGo, toJava, toCurlShort, toCurlPowerShell } from "@/shared/lib/codegen";
 import { cn } from "@/shared/lib/cn";
 
-type Lang = "curl" | "fetch" | "python";
+type Lang = "curl" | "curl-short" | "curl-ps" | "fetch" | "python" | "go" | "java";
 
 const LANGS: { id: Lang; label: string }[] = [
   { id: "curl", label: "cURL" },
+  { id: "curl-short", label: "cURL (short)" },
+  { id: "curl-ps", label: "cURL (PowerShell)" },
   { id: "fetch", label: "JavaScript (fetch)" },
   { id: "python", label: "Python (requests)" },
+  { id: "go", label: "Go (net/http)" },
+  { id: "java", label: "Java (HttpURLConnection)" },
 ];
 
 function useRequestSnapshot() {
@@ -57,9 +63,15 @@ export function CodeGenModal() {
   const code = useMemo(() => {
     if (!open) return "";
     const payload = buildPayload(requestSnapshot);
-    if (lang === "curl") return toCurl(payload);
-    if (lang === "fetch") return toJsFetch(payload);
-    return toPythonRequests(payload);
+    switch (lang) {
+      case "curl": return toCurl(payload);
+      case "curl-short": return toCurlShort(payload);
+      case "curl-ps": return toCurlPowerShell(payload);
+      case "fetch": return toJsFetch(payload);
+      case "python": return toPythonRequests(payload);
+      case "go": return toGo(payload);
+      case "java": return toJava(payload);
+    }
   }, [open, lang, requestSnapshot]);
 
   const copy = async () => {
@@ -75,15 +87,15 @@ export function CodeGenModal() {
 
   return (
     <Modal open={open} onClose={close} title="Generate code">
-      <div className="flex flex-col gap-3 w-[600px] max-w-full">
-        <div className="flex items-center gap-1 border-b border-border">
+      <div className="flex flex-col gap-3 w-[680px] max-w-full">
+        <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
           {LANGS.map((l) => (
             <button
               key={l.id}
               type="button"
               onClick={() => setLang(l.id)}
               className={cn(
-                "relative px-3 h-[32px] text-12 font-semibold transition-colors",
+                "relative px-3 h-[32px] text-12 font-semibold transition-colors whitespace-nowrap shrink-0",
                 lang === l.id ? "text-text" : "text-subtext hover:text-text",
               )}
             >
@@ -100,21 +112,11 @@ export function CodeGenModal() {
         </pre>
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={close}
-            className="h-[32px] px-3 text-12 text-subtext hover:text-text rounded-md transition-colors"
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            onClick={copy}
-            className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md flex items-center gap-2 transition-all"
-          >
+          <Button variant="ghost" onClick={close}>Close</Button>
+          <Button variant="primary" onClick={copy}>
             <Copy size={12} />
             <span>Copy</span>
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

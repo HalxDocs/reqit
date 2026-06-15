@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  CheckSquare, ChevronDown, ChevronRight, Copy, Download, Eye,
-  FileCode2, MoreVertical, Pencil, Plus, Square, Trash2, Unlink,
+  CheckSquare, ChevronDown, ChevronRight, Copy,
+  FileCode2, Pencil, Plus, Square, Trash2,
 } from "lucide-react";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { decodePayload } from "@/shared/lib/loadPayload";
 import { MethodBadge } from "@/shared/components/MethodBadge";
+import { CollectionMenu } from "./CollectionMenu";
 import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
@@ -552,42 +553,4 @@ function search(offsets: number[], t: number): number {
   return lo;
 }
 
-function CollectionMenu({ hasSpec, specPath, onRename, onExport, onExportOpenAPI, onPreviewOpenAPI, onExportMarkdown, onLinkSpec, onUnlinkSpec, onDelete, onRun }: {
-  hasSpec: boolean; specPath: string; onRename: () => void; onExport: () => void;
-  onExportOpenAPI?: () => void; onPreviewOpenAPI?: () => void; onExportMarkdown?: () => void; onLinkSpec: () => void; onUnlinkSpec: () => void; onDelete: () => void; onRun?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-      <button type="button" onClick={() => setOpen((o) => !o)}
-        className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all p-1 rounded-sm" aria-label="Actions">
-        <MoreVertical size={12} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[170px]">
-            <button type="button" onClick={() => { setOpen(false); onRename(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover">Rename</button>
-            <button type="button" onClick={() => { setOpen(false); onExport(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><Download size={12} />Export as JSON</button>
-            {onExportOpenAPI && <button type="button" onClick={() => { setOpen(false); onExportOpenAPI(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><FileCode2 size={12} />Export OpenAPI</button>}
-            {onPreviewOpenAPI && <button type="button" onClick={() => { setOpen(false); onPreviewOpenAPI(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><Eye size={12} />Preview API Docs</button>}
-            {onExportMarkdown && <button type="button" onClick={() => { setOpen(false); onExportMarkdown(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><Download size={12} />Export Markdown</button>}
-            {onRun && <button type="button" onClick={() => { setOpen(false); onRun(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover">Run</button>}
-            <div className="border-t border-border my-1" />
-            {hasSpec ? (
-              <>
-                <div className="px-3 py-1 text-10 text-subtext/60 font-mono truncate max-w-[170px]" title={specPath}>{specPath}</div>
-                <button type="button" onClick={() => { setOpen(false); onLinkSpec(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><FileCode2 size={12} className="text-cyan" />Change Spec</button>
-                <button type="button" onClick={() => { setOpen(false); onUnlinkSpec(); }} className="w-full px-3 py-1.5 text-left text-12 text-subtext hover:bg-cardHover flex items-center gap-2"><Unlink size={12} />Unlink Spec</button>
-              </>
-            ) : (
-              <button type="button" onClick={() => { setOpen(false); onLinkSpec(); }} className="w-full px-3 py-1.5 text-left text-12 text-text hover:bg-cardHover flex items-center gap-2"><FileCode2 size={12} className="text-cyan" />Link OpenAPI Spec</button>
-            )}
-            <div className="border-t border-border my-1" />
-            <button type="button" onClick={() => { setOpen(false); onDelete(); }} className="w-full px-3 py-1.5 text-left text-12 text-danger hover:bg-cardHover">Delete</button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+

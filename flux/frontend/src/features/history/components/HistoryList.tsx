@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Heart, Search, Star, Trash2, X } from "lucide-react";
+import { toast } from "@/app/stores/useToastStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
@@ -18,13 +19,21 @@ export function HistoryList() {
   const setLoadedRequestID = useUIStore((s) => s.setLoadedRequestID);
   const filter = useUIStore((s) => s.sidebarFilter);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   const [showFavorites, setShowFavorites] = useState(false);
+
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [search]);
   const [showExport, setShowExport] = useState(false);
 
   const entries = useMemo(() => {
     let e = allEntries;
     if (showFavorites) e = e.filter((en) => en.favorite);
-    const q = (filter || search).trim().toLowerCase();
+    const q = (filter || debouncedSearch).trim().toLowerCase();
     if (q) {
       e = e.filter(
         (en) =>
@@ -62,6 +71,7 @@ export function HistoryList() {
     try {
       await UpdateHistoryEntry(id, { favorite: !current });
       await reload();
+      toast.success(current ? "Removed from favourites" : "Added to favourites");
     } catch {}
   };
 

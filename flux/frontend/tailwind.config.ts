@@ -26,6 +26,15 @@ const config: Config = {
         text: "var(--color-text)",
         subtext: "var(--color-subtext)",
         tertiary: "var(--color-tertiary)",
+        sidebar: {
+          active: "var(--sidebar-active-bg)",
+          accent: "var(--sidebar-active-accent)",
+          hover: "var(--sidebar-hover-bg)",
+          muted: "var(--sidebar-text-muted)",
+          hoverText: "var(--sidebar-text-hover)",
+          border: "var(--sidebar-border)",
+          sync: "var(--sidebar-git-sync)",
+        },
       },
       fontFamily: {
         sans: ['Geist', 'system-ui', 'sans-serif'],

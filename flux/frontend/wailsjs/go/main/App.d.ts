@@ -5,31 +5,47 @@ import {updater} from '../models';
 import {workspaces} from '../models';
 import {main} from '../models';
 import {git} from '../models';
+import {interceptor} from '../models';
 import {cookies} from '../models';
 import {environments} from '../models';
 import {locks} from '../models';
+import {plugin} from '../models';
 import {profile} from '../models';
+import {openapi} from '../models';
+import {telemetry} from '../models';
 import {mqtt} from '../models';
 
+export function AddMaskingRule(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function AddRequestToCollection(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<models.SavedRequest>;
+
+export function AddSSOProvider(arg1:string):Promise<void>;
+
+export function AddSpecEndpoint(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function AddTestGroup(arg1:string,arg2:string,arg3:models.TestGroup):Promise<void>;
 
 export function AppDataDir():Promise<string>;
 
+export function AuthenticateSSO(arg1:string,arg2:string):Promise<string>;
+
 export function BuildSOAPEnvelope(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<string>;
 
 export function CancelRequest():Promise<void>;
 
-export function CheckForUpdates():Promise<updater.UpdateInfo>;
+export function CheckForUpdates():Promise<updater.UpdateManifest>;
 
 export function ClearAllCookies():Promise<void>;
+
+export function ClearCapturedRequests():Promise<void>;
 
 export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
 export function CommitAndPush(arg1:string):Promise<void>;
+
+export function ConfigureVault(arg1:string):Promise<void>;
 
 export function ConnectSocket(arg1:string,arg2:string):Promise<void>;
 
@@ -39,6 +55,8 @@ export function CreateCollection(arg1:string):Promise<models.Collection>;
 
 export function CreateEnvironment(arg1:string):Promise<models.Environment>;
 
+export function CreateSpec(arg1:string,arg2:string):Promise<string>;
+
 export function CreateTestSuite(arg1:string,arg2:string,arg3:string):Promise<models.TestSuite>;
 
 export function CreateWorkspace(arg1:string,arg2:string,arg3:string):Promise<workspaces.Info>;
@@ -46,6 +64,8 @@ export function CreateWorkspace(arg1:string,arg2:string,arg3:string):Promise<wor
 export function DecodeJWT(arg1:string):Promise<models.JWTDecoded>;
 
 export function DeleteCollection(arg1:string):Promise<void>;
+
+export function DeleteEncryptionKey():Promise<void>;
 
 export function DeleteEnvironment(arg1:string):Promise<void>;
 
@@ -67,9 +87,17 @@ export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<v
 
 export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;
 
+export function ExportExtension(arg1:string):Promise<void>;
+
+export function ExportHoppscotch(arg1:string):Promise<string>;
+
+export function ExportInsomnia(arg1:string):Promise<string>;
+
 export function ExportOpenAPI(arg1:string):Promise<string>;
 
 export function ExportOpenAPIFiles(arg1:string):Promise<Record<string, string>>;
+
+export function ExportPostman(arg1:string):Promise<string>;
 
 export function ExportReportAsHTML(arg1:models.CollectionRunResult,arg2:models.LoadTestResult):Promise<string>;
 
@@ -77,7 +105,15 @@ export function ExportReportAsJSON(arg1:models.CollectionRunResult):Promise<stri
 
 export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
 
+export function GRPCStreamInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<string>;
+
 export function GenerateCLIRunner(arg1:string):Promise<string>;
+
+export function GenerateCLIRunnerScript(arg1:string):Promise<string>;
+
+export function GenerateCurl(arg1:string,arg2:string):Promise<string>;
+
+export function GenerateEncryptionKey():Promise<void>;
 
 export function GenerateGitHubAction(arg1:string,arg2:string):Promise<string>;
 
@@ -87,6 +123,8 @@ export function GenerateHTMLReport(arg1:models.CollectionRunResult,arg2:models.L
 
 export function GenerateJSONReport(arg1:models.CollectionRunResult):Promise<string>;
 
+export function GenerateJenkins(arg1:string,arg2:string):Promise<string>;
+
 export function GenerateJestTest(arg1:string,arg2:boolean):Promise<string>;
 
 export function GeneratePlaywrightTest(arg1:string,arg2:boolean):Promise<string>;
@@ -95,39 +133,115 @@ export function GetActiveContributors():Promise<Array<git.Contributor>>;
 
 export function GetActiveWorkspace():Promise<workspaces.Info>;
 
+export function GetAirGapConfig():Promise<string>;
+
+export function GetBadges():Promise<string>;
+
 export function GetBranches():Promise<Array<string>>;
 
+export function GetCapturedRequests():Promise<Array<interceptor.CapturedRequest>>;
+
 export function GetCollections():Promise<Array<models.Collection>>;
+
+export function GetCommunityConfig():Promise<string>;
 
 export function GetCookies():Promise<Array<cookies.CookieInfo>>;
 
 export function GetEnvironments():Promise<environments.Snapshot>;
 
+export function GetFeatureRequests():Promise<string>;
+
+export function GetGitConflictFiles():Promise<Array<string>>;
+
+export function GetGitDiff(arg1:string,arg2:string):Promise<Array<git.DiffEntry>>;
+
+export function GetGitDiffContent(arg1:string):Promise<string>;
+
 export function GetGitLog(arg1:number):Promise<Array<git.CommitInfo>>;
+
+export function GetGitStashList():Promise<Array<git.StashEntry>>;
 
 export function GetGitStatus():Promise<main.GitStatus>;
 
 export function GetHistory():Promise<Array<models.HistoryEntry>>;
 
+export function GetInterceptorStatus():Promise<main.InterceptorStatus>;
+
 export function GetLocks():Promise<Record<string, locks.LockInfo>>;
+
+export function GetMaskingRules():Promise<string>;
 
 export function GetMockStatus():Promise<main.MockStatus>;
 
+export function GetPlugins():Promise<Array<plugin.RegisteredPlugin>>;
+
 export function GetProfile():Promise<profile.Profile>;
+
+export function GetRecipe(arg1:string):Promise<string>;
+
+export function GetRecipeCategories():Promise<Array<string>>;
+
+export function GetRecipes():Promise<string>;
+
+export function GetSSOProviders():Promise<string>;
 
 export function GetSocketState():Promise<models.SocketState>;
 
+export function GetSpecEndpoints(arg1:string):Promise<Array<openapi.EndpointSummary>>;
+
+export function GetTelemetryConfig():Promise<main.TelemetryConfig>;
+
+export function GetTelemetryEvents(arg1:number):Promise<Array<telemetry.Event>>;
+
+export function GetTelemetryPreview():Promise<string>;
+
 export function GetTestSuites():Promise<Array<models.TestSuite>>;
+
+export function GetTierCategories():Promise<Array<string>>;
+
+export function GetTiers():Promise<string>;
+
+export function GetVaultConfig():Promise<string>;
 
 export function GetVersion():Promise<string>;
 
 export function GetWorkspaces():Promise<Array<workspaces.Info>>;
 
+export function GitMergeBranch(arg1:string):Promise<void>;
+
+export function GitPopStash():Promise<void>;
+
 export function GitPull():Promise<void>;
+
+export function GitResolveConflictOurs(arg1:string):Promise<void>;
+
+export function GitResolveConflictTheirs(arg1:string):Promise<void>;
+
+export function GitStash():Promise<string>;
+
+export function GraphQLExecute(arg1:string):Promise<string>;
+
+export function GraphQLIntrospect(arg1:string,arg2:string):Promise<string>;
+
+export function HasEncryptionKey():Promise<boolean>;
+
+export function ImportHoppscotch(arg1:string,arg2:string):Promise<number>;
+
+export function ImportInsomnia(arg1:string,arg2:string):Promise<number>;
+
+export function ImportOpenAPI(arg1:string):Promise<openapi.ImportResult>;
 
 export function ImportPostman(arg1:string,arg2:string):Promise<number>;
 
+export function ImportPostmanEnvironment(arg1:string,arg2:string):Promise<string>;
+
+export function ImportPostmanFull(arg1:string,arg2:string):Promise<string>;
+
 export function InitGit(arg1:string,arg2:string):Promise<void>;
+
+export function InstallPlugin(arg1:string):Promise<void>;
+
+export function InstallUpdate(arg1:updater.UpdateManifest):Promise<void>;
 
 export function InvalidateSpec(arg1:string):Promise<void>;
 
@@ -147,6 +261,8 @@ export function MQTTPublish(arg1:string,arg2:string,arg3:number):Promise<void>;
 
 export function MQTTStatus():Promise<string>;
 
+export function MaskText(arg1:string):Promise<string>;
+
 export function MoveRequest(arg1:string,arg2:string):Promise<void>;
 
 export function OAuth2AuthorizeURL(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<string>;
@@ -157,15 +273,41 @@ export function OAuth2Refresh(arg1:string,arg2:string,arg3:string,arg4:string,ar
 
 export function OpenWorkspaceFromFolder(arg1:string):Promise<workspaces.Info>;
 
+export function ParseCurl(arg1:string):Promise<string>;
+
 export function PickFile(arg1:string,arg2:string):Promise<string>;
 
 export function PickFolder(arg1:string):Promise<string>;
 
 export function PreviewOpenAPI(arg1:string):Promise<void>;
 
+export function PullFromStoplight(arg1:string,arg2:string):Promise<string>;
+
+export function PullFromSwaggerHub(arg1:string,arg2:string,arg3:string,arg4:string):Promise<string>;
+
+export function PushToStoplight(arg1:string,arg2:string,arg3:string):Promise<main.RegistryPushResult>;
+
+export function PushToSwaggerHub(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<main.RegistryPushResult>;
+
+export function QueryAuditLog(arg1:number,arg2:number,arg3:string,arg4:string,arg5:string,arg6:string):Promise<string>;
+
+export function RBACCheck(arg1:string,arg2:string,arg3:string,arg4:string):Promise<boolean>;
+
+export function RBACGrant(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+
+export function RBACList(arg1:string,arg2:string):Promise<string>;
+
+export function RBACRevoke(arg1:string,arg2:string):Promise<void>;
+
 export function ReadFileText(arg1:string):Promise<string>;
 
 export function RelocateWorkspace(arg1:string,arg2:string):Promise<void>;
+
+export function RemoveMaskingRule(arg1:string):Promise<void>;
+
+export function RemoveSSOProvider(arg1:string):Promise<void>;
+
+export function RemoveSpecEndpoint(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function RenameCollection(arg1:string,arg2:string):Promise<void>;
 
@@ -189,23 +331,43 @@ export function SaveGeneratedTest(arg1:string,arg2:string):Promise<string>;
 
 export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
 
+export function SendNotification(arg1:string,arg2:string):Promise<void>;
+
 export function SendRequest(arg1:models.RequestPayload):Promise<models.ResponseResult>;
 
 export function SendSocketMessage(arg1:string):Promise<void>;
 
 export function SetActiveEnvironment(arg1:string):Promise<void>;
 
+export function SetAirGapConfig(arg1:string):Promise<void>;
+
+export function SetDiscordURL(arg1:string):Promise<void>;
+
+export function SetEncryptionPassphrase(arg1:string):Promise<void>;
+
 export function SetEnvVar(arg1:string,arg2:string):Promise<void>;
 
 export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
 
+export function SetTelemetryEnabled(arg1:boolean):Promise<void>;
+
+export function StartInterceptor():Promise<number>;
+
 export function StartMockServer(arg1:number):Promise<main.MockStatus>;
+
+export function StopInterceptor():Promise<void>;
 
 export function StopMockServer():Promise<void>;
 
 export function SwitchBranch(arg1:string):Promise<void>;
 
 export function SwitchWorkspace(arg1:string):Promise<workspaces.Info>;
+
+export function ToggleMaskingRule(arg1:string,arg2:boolean):Promise<void>;
+
+export function ToggleMockRecording(arg1:boolean):Promise<void>;
+
+export function ToggleSSOProvider(arg1:string):Promise<void>;
 
 export function UnlockCollection(arg1:string):Promise<void>;
 
@@ -222,3 +384,9 @@ export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:
 export function UpdateTestGroup(arg1:string,arg2:models.TestGroup):Promise<void>;
 
 export function UpdateTestSuite(arg1:models.TestSuite):Promise<void>;
+
+export function UpvoteFeatureRequest(arg1:string):Promise<void>;
+
+export function VaultGetSecret(arg1:string):Promise<string>;
+
+export function VaultSetSecret(arg1:string,arg2:string):Promise<void>;

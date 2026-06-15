@@ -307,6 +307,45 @@ api-tests:
     - merge_requests
 `
 
+const jenkinsTemplate = `// Auto-generated Jenkins pipeline from reqit collection: {{.Name}}
+// Generated at {{.Timestamp}}
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                sh 'npm ci || npm install'
+            }
+        }
+
+        stage('Run API Tests') {
+            steps {
+                sh 'node {{.RunnerFilename}}'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'results.xml'
+        }
+        failure {
+            emailext(
+                subject: "[reqit] {{.Name}} failed",
+                to: '\${DEFAULT_RECIPIENTS}',
+                body: "API tests failed. Check the build log."
+            )
+        }
+    }
+}`
+
 type cicdData struct {
 	Name           string
 	Timestamp      string
@@ -329,6 +368,15 @@ func GenerateGitLabCI(collection models.Collection, runnerFilename string) (stri
 		RunnerFilename: runnerFilename,
 	}
 	return executeStepTemplate(gitlabCITemplate, data)
+}
+
+func GenerateJenkins(collection models.Collection, runnerFilename string) (string, error) {
+	data := cicdData{
+		Name:           collection.Name,
+		Timestamp:      time.Now().Format(time.RFC3339),
+		RunnerFilename: runnerFilename,
+	}
+	return executeStepTemplate(jenkinsTemplate, data)
 }
 
 func executeStepTemplate(tpl string, data cicdData) (string, error) {

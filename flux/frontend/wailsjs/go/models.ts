@@ -100,6 +100,69 @@ export namespace git {
 	        this.lastSeen = source["lastSeen"];
 	    }
 	}
+	export class DiffEntry {
+	    path: string;
+	    added: number;
+	    deleted: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DiffEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.added = source["added"];
+	        this.deleted = source["deleted"];
+	    }
+	}
+	export class StashEntry {
+	    index: number;
+	    ref: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StashEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.index = source["index"];
+	        this.ref = source["ref"];
+	        this.message = source["message"];
+	    }
+	}
+
+}
+
+export namespace interceptor {
+	
+	export class CapturedRequest {
+	    id: string;
+	    method: string;
+	    url: string;
+	    headers: Record<string, string>;
+	    body: string;
+	    timestamp: number;
+	    tabUrl: string;
+	    tabTitle: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CapturedRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.method = source["method"];
+	        this.url = source["url"];
+	        this.headers = source["headers"];
+	        this.body = source["body"];
+	        this.timestamp = source["timestamp"];
+	        this.tabUrl = source["tabUrl"];
+	        this.tabTitle = source["tabTitle"];
+	    }
+	}
 
 }
 
@@ -143,12 +206,29 @@ export namespace main {
 	        this.remoteUrl = source["remoteUrl"];
 	    }
 	}
+	export class InterceptorStatus {
+	    running: boolean;
+	    port: number;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new InterceptorStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.running = source["running"];
+	        this.port = source["port"];
+	        this.count = source["count"];
+	    }
+	}
 	export class MockStatus {
 	    running: boolean;
 	    port: number;
 	    routeCount: number;
 	    baseUrl: string;
 	    routes: string[];
+	    recording: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new MockStatus(source);
@@ -161,6 +241,31 @@ export namespace main {
 	        this.routeCount = source["routeCount"];
 	        this.baseUrl = source["baseUrl"];
 	        this.routes = source["routes"];
+	        this.recording = source["recording"];
+	    }
+	}
+	export class RegistryPushResult {
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RegistryPushResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	    }
+	}
+	export class TelemetryConfig {
+	    enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new TelemetryConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
 	    }
 	}
 
@@ -1167,6 +1272,162 @@ export namespace mqtt {
 
 }
 
+export namespace openapi {
+	
+	export class EndpointSummary {
+	    method: string;
+	    path: string;
+	    summary: string;
+	    description?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EndpointSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.method = source["method"];
+	        this.path = source["path"];
+	        this.summary = source["summary"];
+	        this.description = source["description"];
+	    }
+	}
+	export class ImportResult {
+	    collections: models.Collection[];
+	    endpoints: number;
+	    specTitle: string;
+	    specVersion: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collections = this.convertValues(source["collections"], models.Collection);
+	        this.endpoints = source["endpoints"];
+	        this.specTitle = source["specTitle"];
+	        this.specVersion = source["specVersion"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace plugin {
+	
+	export class Hooks {
+	    authProvider?: string;
+	    visualizer?: string;
+	    codegen?: string;
+	    preRequest?: string;
+	    postRequest?: string;
+	    mockRule?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Hooks(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.authProvider = source["authProvider"];
+	        this.visualizer = source["visualizer"];
+	        this.codegen = source["codegen"];
+	        this.preRequest = source["preRequest"];
+	        this.postRequest = source["postRequest"];
+	        this.mockRule = source["mockRule"];
+	    }
+	}
+	export class Manifest {
+	    name: string;
+	    version: string;
+	    description?: string;
+	    author?: string;
+	    hooks: Hooks;
+	
+	    static createFrom(source: any = {}) {
+	        return new Manifest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.version = source["version"];
+	        this.description = source["description"];
+	        this.author = source["author"];
+	        this.hooks = this.convertValues(source["hooks"], Hooks);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class RegisteredPlugin {
+	    Manifest: Manifest;
+	    Dir: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RegisteredPlugin(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Manifest = this.convertValues(source["Manifest"], Manifest);
+	        this.Dir = source["Dir"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace profile {
 	
 	export class Profile {
@@ -1196,23 +1457,80 @@ export namespace profile {
 
 }
 
-export namespace updater {
+export namespace telemetry {
 	
-	export class UpdateInfo {
-	    version: string;
-	    downloadUrl: string;
-	    releaseUrl: string;
+	export class Event {
+	    type: string;
+	    name: string;
+	    ts: number;
+	    metadata?: Record<string, any>;
 	
 	    static createFrom(source: any = {}) {
-	        return new UpdateInfo(source);
+	        return new Event(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.name = source["name"];
+	        this.ts = source["ts"];
+	        this.metadata = source["metadata"];
+	    }
+	}
+
+}
+
+export namespace updater {
+	
+	export class PlatformAsset {
+	    url: string;
+	    sha256: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PlatformAsset(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.sha256 = source["sha256"];
+	    }
+	}
+	export class UpdateManifest {
+	    version: string;
+	    notes: string;
+	    pub_date: string;
+	    platforms: Record<string, PlatformAsset>;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateManifest(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.version = source["version"];
-	        this.downloadUrl = source["downloadUrl"];
-	        this.releaseUrl = source["releaseUrl"];
+	        this.notes = source["notes"];
+	        this.pub_date = source["pub_date"];
+	        this.platforms = this.convertValues(source["platforms"], PlatformAsset, true);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

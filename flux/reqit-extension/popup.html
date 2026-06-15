@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>reqit Interceptor</title>
+  <style>
+    body { width: 280px; padding: 12px; font-family: system-ui, sans-serif; font-size: 13px; }
+    h2 { margin: 0 0 8px; font-size: 15px; }
+    .status { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+    .dot.active { background: #22c55e; }
+    label { display: block; margin: 6px 0 2px; }
+    input { width: 100%; box-sizing: border-box; padding: 4px 6px; }
+    button { margin-top: 8px; width: 100%; padding: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>reqit Interceptor</h2>
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Disconnected</span>
+  </div>
+  <label>Proxy Port</label>
+  <input type="number" id="proxyPort" value="0" min="1024" max="65535">
+  <button id="toggleBtn">Connect</button>
+  <script src="popup.js"></script>
+</body>
+</html>

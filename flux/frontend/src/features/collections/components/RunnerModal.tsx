@@ -73,7 +73,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
   const handleExportHTML = async () => {
     if (!result) return;
     try {
-      const path = await ExportReportAsHTML(result, {} as any);
+      const path = await ExportReportAsHTML(result, null as any);
       toast.success(`Report saved: ${path}`);
     } catch (e) {
       toast.error(String(e));

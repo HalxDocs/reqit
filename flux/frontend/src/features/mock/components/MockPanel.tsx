@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { Server, Square, Copy, Zap, ChevronDown, ChevronUp } from "lucide-react";
+import { Server, Square, Copy, Zap, ChevronDown, ChevronUp, Radio, Disc } from "lucide-react";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import {
   StartMockServer,
   StopMockServer,
   GetMockStatus,
+  ToggleMockRecording,
 } from "../../../../wailsjs/go/main/App";
 import type { main } from "../../../../wailsjs/go/models";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { Button } from "@/shared/components/Button";
 
 const DEFAULT_PORT = 4321;
 
@@ -53,18 +55,18 @@ export function MockPanel() {
     }
   };
 
+  const toggleRecording = async () => {
+    if (!status) return;
+    await ToggleMockRecording(!status.recording);
+    toast("success", status.recording ? "Recording stopped" : "Recording started — traffic will be captured as mock routes");
+  };
+
   if (!status?.running) {
     return (
-      <button
-        type="button"
-        onClick={start}
-        disabled={starting}
-        className="flex items-center gap-1.5 px-2 py-1 text-11 text-subtext hover:text-text border border-border rounded-md transition-colors disabled:opacity-50"
-        title="Start local mock server"
-      >
+      <Button variant="ghost" onClick={start} disabled={starting}>
         <Server size={11} />
         {starting ? "Starting…" : "Mock Server"}
-      </button>
+      </Button>
     );
   }
 
@@ -84,6 +86,11 @@ export function MockPanel() {
       <button type="button" onClick={copy} className="p-0.5 text-subtext hover:text-text" title="Copy base URL">
         <Copy size={10} />
       </button>
+      <button type="button" onClick={toggleRecording}
+        className={status.recording ? "p-0.5 text-danger" : "p-0.5 text-subtext hover:text-text"}
+        title={status.recording ? "Stop recording" : "Start recording real traffic"}>
+        {status.recording ? <Disc size={10} className="animate-pulse" /> : <Radio size={10} />}
+      </button>
       <button type="button" onClick={stop} className="p-0.5 text-subtext hover:text-danger transition-colors" title="Stop mock server">
         <Square size={10} />
       </button>
@@ -95,7 +102,7 @@ export function MockPanel() {
             Mocked routes
           </div>
           <ul className="flex flex-col gap-1">
-            {status.routes.map((r) => (
+            {status.routes.map((r: string) => (
               <li key={r} className="text-11 font-mono text-subtext">{r}</li>
             ))}
           </ul>

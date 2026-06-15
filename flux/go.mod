@@ -3,18 +3,22 @@ module flux
 go 1.25
 
 require (
+	github.com/blang/semver/v4 v4.0.0
 	github.com/dop251/goja v0.0.0-20260607120635-348e6bea910d
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/getkin/kin-openapi v0.138.0
 	github.com/go-git/go-git/v5 v5.18.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/minio/selfupdate v0.6.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/wailsapp/wails/v2 v2.12.0
 	github.com/zalando/go-keyring v0.2.8
+	golang.org/x/crypto v0.45.0
 )
 
 require (
+	aead.dev/minisign v0.2.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -65,7 +69,6 @@ require (
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect

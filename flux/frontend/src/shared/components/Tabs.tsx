@@ -6,13 +6,15 @@ export function Tabs<T extends string>({
   tabs,
   active,
   onChange,
+  className,
 }: {
   tabs: TabItem<T>[];
   active: T;
   onChange: (id: T) => void;
+  className?: string;
 }) {
   return (
-    <div className="flex border-b border-border">
+    <div className={cn("flex border-b border-border bg-surface", className)}>
       {tabs.map((tab) => {
         const isActive = active === tab.id;
         return (
@@ -21,13 +23,17 @@ export function Tabs<T extends string>({
             type="button"
             onClick={() => onChange(tab.id)}
             className={cn(
-              "relative px-4 h-[36px] text-12 font-semibold transition-colors",
-              isActive ? "text-text" : "text-subtext hover:text-text",
+              "relative px-4 h-[34px] text-12 font-medium transition-all",
+              isActive
+                ? "text-cyan"
+                : "text-subtext hover:text-text",
             )}
           >
-            {tab.label}
+            <span className={isActive ? "text-cyan" : undefined}>
+              {tab.label}
+            </span>
             {isActive && (
-              <span className="absolute left-3 right-3 -bottom-px h-[2px] bg-cyan rounded-full" />
+              <span className="absolute left-3 right-3 bottom-0 h-[2px] bg-cyan rounded-full" />
             )}
           </button>
         );

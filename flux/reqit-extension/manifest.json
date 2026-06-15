@@ -1,0 +1,26 @@
+{
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "reqit Interceptor"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "description": "Capture HTTP/S requests and send them to reqit for testing.",
+  "host_permissions": [
+    "\u003call_urls\u003e"
+  ],
+  "icons": {
+    "128": "icons/icon128.png",
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png"
+  },
+  "manifest_version": 3,
+  "name": "reqit Interceptor",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs"
+  ],
+  "version": "1.0.0"
+}

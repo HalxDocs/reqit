@@ -13,13 +13,23 @@ import { ImportPostmanModal } from "@/shared/components/ImportPostmanModal";
 import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
 import { WelcomeModal } from "@/app/components/WelcomeModal";
+import { DocsPanel } from "@/features/docs/components/DocsPanel";
+import { SpecEditor } from "@/features/spec/components/SpecEditor";
+import { IntegrationsPanel } from "@/features/integrations/components/IntegrationsPanel";
+import { InterceptorPanel } from "@/features/interceptor/components/InterceptorPanel";
+import { PRPreviewPanel } from "@/features/pr/components/PRPreviewPanel";
+import { MigrationPanel } from "@/features/migration/components/MigrationPanel";
+import { SecurityPanel } from "@/features/security/components/SecurityPanel";
+import { GrowthPanel } from "@/features/growth/components/GrowthPanel";
+import { GraphQLPanel } from "@/features/graphql/components/GraphQLPanel";
+import { GRPCPanel } from "@/features/grpc/components/GRPCPanel";
+
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
 import { TeamModal } from "@/features/git/components/TeamModal";
 import { RunnerModal } from "@/features/collections/components/RunnerModal";
 import { SocketPanel } from "@/features/websocket/components/SocketPanel";
 import { ToastHost } from "@/shared/components/ToastHost";
 import { UpdateBanner } from "@/shared/components/UpdateBanner";
-import { MockPanel } from "@/features/mock/components/MockPanel";
 import { HomeScreen } from "@/app/screens/HomeScreen";
 import { useSendRequest } from "@/features/request/hooks/useSendRequest";
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
@@ -175,14 +185,31 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <Sidebar onGoHome={onGoHome} />
       {view === "socket" ? (
         <SocketPanel />
+      ) : view === "docs" ? (
+        <DocsPanel />
+      ) : view === "spec" ? (
+        <SpecEditor />
+      ) : view === "integrations" ? (
+        <IntegrationsPanel />
+      ) : view === "interceptor" ? (
+        <InterceptorPanel />
+      ) : view === "pr" ? (
+        <PRPreviewPanel />
+      ) : view === "security" ? (
+        <SecurityPanel />
+      ) : view === "migration" ? (
+        <MigrationPanel />
+      ) : view === "growth" ? (
+        <GrowthPanel />
+      ) : view === "graphql" ? (
+        <GraphQLPanel />
+      ) : view === "grpc" ? (
+        <GRPCPanel />
       ) : (
       <div className="flex-1 flex flex-col min-w-0">
-        <UpdateBanner />
         <TabBar />
         <UrlBar onSend={send} />
-        <div className="flex items-center px-3 py-1 border-b border-border relative">
-          <MockPanel />
-        </div>
+        <UpdateBanner />
         <UrlPreview />
         <div className="flex-1 flex min-h-0">
           <RequestPanel width={width} />

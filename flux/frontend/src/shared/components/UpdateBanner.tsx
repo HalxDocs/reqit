@@ -1,38 +1,24 @@
-import { useEffect, useState } from "react";
-import { Download, X, ArrowUpCircle } from "lucide-react";
-import { EventsOn } from "../../../wailsjs/runtime/runtime";
-import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
-import { CheckForUpdates } from "../../../wailsjs/go/main/App";
-
-interface UpdateInfo {
-  version: string;
-  downloadUrl: string;
-  releaseUrl: string;
-}
+import { Download, X, ArrowUpCircle, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useUpdater } from "@/app/hooks/useUpdater";
+import { Button } from "./Button";
+import { IconButton } from "./IconButton";
 
 export function UpdateBanner() {
-  const [update, setUpdate] = useState<UpdateInfo | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const { update, installing, done, error, install, dismiss } = useUpdater();
 
-  useEffect(() => {
-    CheckForUpdates().then((info) => {
-      if (info) {
-        setUpdate(info);
-        setDismissed(false);
-      }
-    });
-    const off = EventsOn("update:available", (info: UpdateInfo) => {
-      setUpdate(info);
-      setDismissed(false);
-    });
-    return () => { if (typeof off === "function") off(); };
-  }, []);
+  if (done) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-2 bg-teal/10 border-b border-teal/20 shrink-0">
+        <CheckCircle2 size={14} className="text-teal shrink-0" />
+        <span className="text-12 text-text flex-1">
+          Update installed. Please restart reqit to apply the changes.
+        </span>
+        <IconButton onClick={dismiss} tooltip="Dismiss"><X size={13} /></IconButton>
+      </div>
+    );
+  }
 
-  if (!update || dismissed) return null;
-
-  const openDownload = () => {
-    BrowserOpenURL(update.downloadUrl || update.releaseUrl);
-  };
+  if (!update) return null;
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-cyan/10 border-b border-cyan/20 shrink-0">
@@ -40,23 +26,17 @@ export function UpdateBanner() {
       <span className="text-12 text-text flex-1">
         <span className="font-semibold text-cyan">reqit {update.version}</span> is available —
         you're on an older version.
+        {error && (
+          <span className="ml-2 text-11 text-danger">
+            <AlertCircle size={11} className="inline mr-1" />{error}
+          </span>
+        )}
       </span>
-      <button
-        type="button"
-        onClick={openDownload}
-        className="flex items-center gap-1.5 h-[24px] px-3 text-11 font-semibold bg-cyan text-white rounded-lg hover:bg-cyan-hover transition-colors shrink-0"
-      >
-        <Download size={11} />
-        Download
-      </button>
-      <button
-        type="button"
-        onClick={() => setDismissed(true)}
-        className="text-subtext hover:text-text transition-colors shrink-0"
-        aria-label="Dismiss"
-      >
-        <X size={13} />
-      </button>
+      <Button variant="primary" onClick={install} disabled={installing}>
+        {installing ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
+        {installing ? "Installing…" : "Install"}
+      </Button>
+      <IconButton onClick={dismiss} tooltip="Dismiss"><X size={13} /></IconButton>
     </div>
   );
 }

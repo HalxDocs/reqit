@@ -29,7 +29,8 @@ import {
   Search01Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
-import { Trash2 } from "lucide-react";
+import { BookOpen, Trash2 } from "lucide-react";
+import { BLOG_POSTS } from "@/features/blog/blogData";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 
@@ -719,6 +720,39 @@ function LandingView({
                 ))}
               </div>
               <span className="text-12 text-subtext">{s.desc}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Blog */}
+      <section className="flex flex-col gap-4 sm:gap-5">
+        <div className="flex items-center gap-2">
+          <BookOpen size={14} className="text-subtext" />
+          <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em]">
+            Latest from the blog
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {BLOG_POSTS.map((post) => (
+            <div
+              key={post.slug}
+              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 transition-colors cursor-default"
+            >
+              <div className="flex items-center gap-2 text-11 text-subtext">
+                <span>{post.date}</span>
+                <span>·</span>
+                <span>{post.readTime}</span>
+              </div>
+              <h3 className="text-13 font-bold text-text leading-snug">{post.title}</h3>
+              <p className="text-12 text-subtext leading-relaxed flex-1">{post.description}</p>
+              <div className="flex items-center gap-1.5 mt-auto">
+                {post.tags.map((t) => (
+                  <span key={t} className="px-2 py-0.5 bg-surface border border-border rounded-sm text-10 font-mono text-subtext">
+                    {t}
+                  </span>
+                ))}
+              </div>
             </div>
           ))}
         </div>

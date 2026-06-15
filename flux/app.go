@@ -2,43 +2,63 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"github.com/blang/semver/v4"
+
+	"flux/internal/audit"
 	"flux/internal/collections"
-	"flux/internal/export/markdown"
 	"flux/internal/contract"
 	cookiestore "flux/internal/cookies"
+	"flux/internal/crypto"
+	curlpkg "flux/internal/curl"
 	"flux/internal/environments"
 	"flux/internal/external"
+	"flux/internal/export/markdown"
 	gitpkg "flux/internal/git"
+	graphqlpkg "flux/internal/graphqlpkg"
 	"flux/internal/grpc"
+	"flux/internal/growth"
 	"flux/internal/history"
+	"flux/internal/hoppscotch"
+	"flux/internal/insomnia"
+	"flux/internal/interceptor"
 	"flux/internal/jwt"
 	"flux/internal/loadtest"
 	"flux/internal/locks"
+	"flux/internal/masker"
 	"flux/internal/mock"
 	"flux/internal/models"
 	"flux/internal/mqtt"
 	"flux/internal/oauth2"
 	"flux/internal/openapi"
+	"flux/internal/plugin"
 	"flux/internal/postman"
 	"flux/internal/profile"
+	regpkg "flux/internal/registry"
 	"flux/internal/reporter"
 	"flux/internal/requester"
+	"flux/internal/rbac"
 	"flux/internal/scripting"
 	"flux/internal/soap"
+	"flux/internal/sso"
 	"flux/internal/storage"
 	"flux/internal/runner"
 	"flux/internal/sock"
+	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
+	traypkg "flux/internal/tray"
 	"flux/internal/updater"
+	"flux/internal/vault"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
 )
@@ -50,6 +70,7 @@ type App struct {
 	history      *history.Store
 	environments *environments.Store
 	profile      *profile.Store
+	airgap       *profile.AirGapStore
 	git          *gitpkg.Store
 	locks        *locks.Store
 	cookies      *cookiestore.Store
@@ -57,6 +78,18 @@ type App struct {
 	mockReg      *mock.Registry
 	mockServer   *mock.MockServer
 	testSuites   *testbuilder.Store
+	plugins      *plugin.Manager
+	interceptor  *interceptor.Proxy
+	telemetry    *telemetry.Store
+	tray         *traypkg.Tray
+	crypto       *crypto.Store
+	vault        vault.Provider
+	vaultCfg     vault.Config
+	sso          *sso.Store
+	masker       *masker.Engine
+	audit        *audit.Store
+	rbac         *rbac.Store
+	growth       *growth.Store
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -70,12 +103,56 @@ func NewApp() *App {
 		workspaces: workspaces.NewStore(),
 		profile:    profile.NewStore(),
 		sock:       sock.New(),
+		tray:       traypkg.New(),
 	}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	_ = a.profile.MarkLaunch()
+
+	// Init air-gap config.
+	if dataDir, err := a.AppDataDir(); err == nil {
+		a.airgap = profile.NewAirGap(dataDir)
+	}
+
+	// Init telemetry (opt-in, defaults to off).
+	if dataDir, err := a.AppDataDir(); err == nil {
+		a.telemetry = telemetry.New(dataDir)
+		if a.airgap == nil || !a.airgap.Get().TelemetryDisabled {
+			a.telemetry.Track(telemetry.EventLaunch, "app_start", map[string]interface{}{
+				"version": updater.CurrentVersion,
+			})
+		}
+	}
+
+	// Init interceptor (browser traffic capture proxy).
+	if dataDir, err := a.AppDataDir(); err == nil {
+		if a.airgap == nil || !a.airgap.Get().InterceptorDisabled {
+			a.interceptor = interceptor.New(dataDir)
+			a.interceptor.OnCapture(func(cr interceptor.CapturedRequest) {
+				runtime.EventsEmit(a.ctx, "interceptor:captured", cr)
+			})
+		}
+	}
+
+	// Init security subsystems.
+	if dataDir, err := a.AppDataDir(); err == nil {
+		a.crypto = crypto.New(dataDir)
+		a.sso = sso.New(dataDir)
+		_ = a.sso.Load()
+		a.masker = masker.New()
+		a.audit = audit.New(dataDir)
+		a.rbac = rbac.New(dataDir)
+	}
+
+	// Init growth & community subsystems.
+	if dataDir, err := a.AppDataDir(); err == nil {
+		a.growth = growth.New(dataDir)
+	}
+
+	// Wire tray and notify context.
+	a.tray.SetContext(ctx)
 
 	// Migrate legacy flat-file data into a Default workspace if needed.
 	_ = a.workspaces.Migrate()
@@ -86,13 +163,26 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	// Check for updates in the background — emit event if one is found.
-	go func() {
-		info, found, err := updater.Check()
-		if err != nil || !found {
-			return
+	if a.airgap == nil || !a.airgap.Get().UpdateCheckDisabled {
+		go func() {
+			u := &updater.Updater{
+				CurrentVersion: updater.CurrentVersion,
+				OnUpdateFound: func(m updater.UpdateManifest) {
+					runtime.EventsEmit(a.ctx, "update:available", m)
+				},
+			}
+			u.CheckInBackground(a.ctx)
+		}()
+	}
+
+	// Initialize plugin system.
+	if a.airgap == nil || !a.airgap.Get().PluginDownloadsDisabled {
+		if dataDir, err := a.AppDataDir(); err == nil {
+			if pm, err := plugin.NewManager(dataDir); err == nil {
+				a.plugins = pm
+			}
 		}
-		runtime.EventsEmit(a.ctx, "update:available", info)
-	}()
+	}
 
 	// Wire socket event callbacks.
 	a.sock.OnEvent(func(msg models.SocketMessage) {
@@ -103,16 +193,82 @@ func (a *App) startup(ctx context.Context) {
 	})
 }
 
-func (a *App) CheckForUpdates() *updater.UpdateInfo {
-	info, found, err := updater.Check()
-	if err != nil || !found {
+func (a *App) CheckForUpdates() *updater.UpdateManifest {
+	m, err := (&updater.Updater{CurrentVersion: updater.CurrentVersion}).FetchManifest(a.ctx)
+	if err != nil {
 		return nil
 	}
-	return &info
+	current, _ := semver.ParseTolerant(updater.CurrentVersion)
+	latest, _ := semver.ParseTolerant(m.Version)
+	if latest.GT(current) {
+		return m
+	}
+	return nil
 }
 
 func (a *App) GetVersion() string {
 	return updater.CurrentVersion
+}
+
+func (a *App) CreateSpec(title, version string) (string, error) {
+	sd := openapi.NewSpecDesign(title, version)
+	path := fmt.Sprintf("%s.openapi.json", strings.ReplaceAll(strings.ToLower(title), " ", "-"))
+	if err := sd.Save(); err != nil {
+		return "", fmt.Errorf("save spec: %w", err)
+	}
+	return path, nil
+}
+
+func (a *App) AddSpecEndpoint(specPath, method, path, summary string) error {
+	sd, err := openapi.LoadSpecDesign(specPath)
+	if err != nil {
+		return err
+	}
+	sd.AddEndpoint(method, path, summary)
+	return sd.Save()
+}
+
+func (a *App) GetSpecEndpoints(specPath string) ([]openapi.EndpointSummary, error) {
+	sd, err := openapi.LoadSpecDesign(specPath)
+	if err != nil {
+		return nil, err
+	}
+	return sd.Endpoints(), nil
+}
+
+func (a *App) RemoveSpecEndpoint(specPath, method, path string) error {
+	sd, err := openapi.LoadSpecDesign(specPath)
+	if err != nil {
+		return err
+	}
+	sd.RemoveEndpoint(method, path)
+	return sd.Save()
+}
+
+func (a *App) GetPlugins() []plugin.RegisteredPlugin {
+	if a.plugins == nil {
+		return nil
+	}
+	return a.plugins.Registry.List()
+}
+
+func (a *App) InstallPlugin(sourceDir string) error {
+	dataDir, err := a.AppDataDir()
+	if err != nil {
+		return err
+	}
+	if err := plugin.InstallPlugin(dataDir, sourceDir); err != nil {
+		return err
+	}
+	if a.plugins != nil {
+		return a.plugins.Registry.Discover()
+	}
+	return nil
+}
+
+func (a *App) InstallUpdate(manifest updater.UpdateManifest) error {
+	u := &updater.Updater{CurrentVersion: updater.CurrentVersion}
+	return u.Apply(a.ctx, manifest)
 }
 
 // RunCollection executes all requests in a resolved payload set with the given
@@ -221,6 +377,9 @@ func (a *App) GetSocketState() models.SocketState {
 // mountWorkspace reinitializes the scoped stores with a new data directory.
 // Called at startup and whenever the user switches workspaces.
 func (a *App) mountWorkspace(dir string) {
+	// Ensure .reqit/ directory structure exists for Git-native storage.
+	_ = gitpkg.ReqitInit(dir)
+
 	a.collections = collections.NewStore(dir)
 	a.history = history.NewStore(dir)
 	a.environments = environments.NewStore(dir)
@@ -353,18 +512,28 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 	a.inflight = cancel
 	a.mu.Unlock()
 
-	if vars, err := scripting.RunPreScript(payload.PreScript, &payload); err == nil && len(vars) > 0 {
-		if a.environments != nil {
-			_ = a.environments.MergeVars(vars)
-		}
+	vars, logs, pass, fail, err := scripting.RunPreScript(payload.PreScript, &payload)
+	if err != nil {
+		// Log pre-script error but continue
+	}
+	if len(vars) > 0 && a.environments != nil {
+		_ = a.environments.MergeVars(vars)
+	}
+	if len(logs) > 0 || pass > 0 || fail > 0 {
+		runtime.EventsEmit(a.ctx, "script:result", scripting.ExtractEnv(&scripting.ScriptEnv{Vars: vars, Logs: logs, Pass: pass, Fail: fail}))
 	}
 
 	result := requester.Execute(ctx, payload, a.cookies)
 
-	if vars, err := scripting.RunPostScript(payload.PostScript, &payload, &result); err == nil && len(vars) > 0 {
-		if a.environments != nil {
-			_ = a.environments.MergeVars(vars)
-		}
+	vars2, logs2, pass2, fail2, err2 := scripting.RunPostScript(payload.PostScript, &payload, &result)
+	if err2 != nil {
+		// Log post-script error but continue
+	}
+	if len(vars2) > 0 && a.environments != nil {
+		_ = a.environments.MergeVars(vars2)
+	}
+	if len(logs2) > 0 || pass2 > 0 || fail2 > 0 {
+		runtime.EventsEmit(a.ctx, "script:result", scripting.ExtractEnv(&scripting.ScriptEnv{Vars: vars2, Logs: logs2, Pass: pass2, Fail: fail2}))
 	}
 
 	a.mu.Lock()
@@ -498,6 +667,48 @@ func (a *App) DecodeJWT(token string) *models.JWTDecoded {
 	}
 }
 
+// --- GraphQL ---
+
+type GraphQLRequest struct {
+	URL       string            `json:"url"`
+	Query     string            `json:"query"`
+	Variables string            `json:"variables"`
+	Headers   map[string]string `json:"headers"`
+}
+
+type GraphQLResponse struct {
+	Data       interface{} `json:"data"`
+	Errors     interface{} `json:"errors"`
+	StatusCode int         `json:"statusCode"`
+	TimingMs   int64       `json:"timingMs"`
+}
+
+func (a *App) GraphQLExecute(reqJSON string) (string, error) {
+	var req GraphQLRequest
+	if err := json.Unmarshal([]byte(reqJSON), &req); err != nil {
+		return "", fmt.Errorf("graphql: invalid request: %w", err)
+	}
+	resp := graphqlpkg.Execute(graphqlpkg.Request{
+		URL:       req.URL,
+		Query:     req.Query,
+		Variables: req.Variables,
+		Headers:   req.Headers,
+	})
+	return graphqlpkg.MarshalResponse(resp)
+}
+
+func (a *App) GraphQLIntrospect(url string, headersJSON string) (string, error) {
+	var headers map[string]string
+	if err := json.Unmarshal([]byte(headersJSON), &headers); err != nil {
+		headers = map[string]string{}
+	}
+	data, err := graphqlpkg.Introspect(url, headers)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 // --- gRPC ---
 
 func (a *App) GRPCInvoke(url, service, method, body string, headers map[string]string) *models.GRPCResponse {
@@ -515,6 +726,21 @@ func (a *App) GRPCInvoke(url, service, method, body string, headers map[string]s
 		DurationMs: result.DurationMs,
 		Headers:    result.Headers,
 	}
+}
+
+func (a *App) GRPCStreamInvoke(url, service, method, body string, headers map[string]string) (string, error) {
+	result := grpc.StreamInvoke(context.Background(), grpc.GRPCRequest{
+		URL:     url,
+		Service: service,
+		Method:  method,
+		Body:    body,
+		Headers: headers,
+	})
+	b, err := json.Marshal(result)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 // --- MQTT ---
@@ -805,6 +1031,233 @@ func (a *App) ImportPostman(targetCollID, jsonData string) (int, error) {
 	return len(requests), nil
 }
 
+// ImportPostmanFull parses a Postman collection including variables, scripts, and collection-level auth.
+func (a *App) ImportPostmanFull(jsonData, targetCollID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	if targetCollID == "" {
+		return "", errors.New("target collection is required")
+	}
+	result, err := postman.ParseFull([]byte(jsonData), targetCollID)
+	if err != nil {
+		return "", err
+	}
+	for _, r := range result.Requests {
+		if _, err := a.collections.AddRequest(targetCollID, r.Name, r.Payload); err != nil {
+			return "", err
+		}
+	}
+	// Transpile any pm.* scripts
+	transpiled := make([]string, len(result.Scripts))
+	for i, s := range result.Scripts {
+		transpiled[i] = postman.TranspileScript(s)
+	}
+	out, _ := json.Marshal(map[string]interface{}{
+		"requests":    len(result.Requests),
+		"variables":   result.Variables,
+		"scripts":     transpiled,
+		"collectionAuth": result.Auth,
+	})
+	runtime.EventsEmit(a.ctx, "collections:changed")
+	return string(out), nil
+}
+
+// ImportPostmanEnvironment parses a Postman environment file.
+func (a *App) ImportPostmanEnvironment(jsonData, envName string) (string, error) {
+	if a.environments == nil {
+		return "", errors.New("no active workspace")
+	}
+	envData, err := postman.ParseEnvironment([]byte(jsonData))
+	if err != nil {
+		return "", err
+	}
+	name := envName
+	if name == "" {
+		name = envData.Name
+	}
+	env, err := a.environments.Create(name)
+	if err != nil {
+		return "", err
+	}
+	// Add variables to the new environment
+	vars := []models.EnvVar{}
+	for _, v := range envData.Values {
+		if v.Enabled {
+			vars = append(vars, models.EnvVar{Key: v.Key, Value: v.Value, Enabled: true})
+		}
+	}
+	if err := a.environments.Update(env.ID, env.Name, vars); err != nil {
+		return "", err
+	}
+	runtime.EventsEmit(a.ctx, "environments:changed")
+	return name, nil
+}
+
+// ExportPostman exports collections to Postman v2.1 format.
+func (a *App) ExportPostman(collID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			data, err := postman.Export(c.Requests, c.Name, "")
+			if err != nil {
+				return "", err
+			}
+			return string(data), nil
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+// ImportInsomnia parses an Insomnia export file.
+func (a *App) ImportInsomnia(jsonData, targetCollID string) (int, error) {
+	if a.collections == nil {
+		return 0, errors.New("no active workspace")
+	}
+	if targetCollID == "" {
+		return 0, errors.New("target collection is required")
+	}
+	result, err := insomnia.Import([]byte(jsonData), targetCollID)
+	if err != nil {
+		return 0, err
+	}
+	for _, r := range result.Requests {
+		if _, err := a.collections.AddRequest(targetCollID, r.Name, r.Payload); err != nil {
+			return 0, err
+		}
+	}
+	runtime.EventsEmit(a.ctx, "collections:changed")
+	return len(result.Requests), nil
+}
+
+// ExportInsomnia exports collections to Insomnia JSON format.
+func (a *App) ExportInsomnia(collID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			data, err := insomnia.Export(c.Requests, c.Name)
+			if err != nil {
+				return "", err
+			}
+			return string(data), nil
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+// ImportHoppscotch parses a Hoppscotch export file.
+func (a *App) ImportHoppscotch(jsonData, targetCollID string) (int, error) {
+	if a.collections == nil {
+		return 0, errors.New("no active workspace")
+	}
+	if targetCollID == "" {
+		return 0, errors.New("target collection is required")
+	}
+	requests, err := hoppscotch.Import([]byte(jsonData), targetCollID)
+	if err != nil {
+		return 0, err
+	}
+	for _, r := range requests {
+		if _, err := a.collections.AddRequest(targetCollID, r.Name, r.Payload); err != nil {
+			return 0, err
+		}
+	}
+	runtime.EventsEmit(a.ctx, "collections:changed")
+	return len(requests), nil
+}
+
+// ExportHoppscotch exports collections to Hoppscotch JSON format.
+func (a *App) ExportHoppscotch(collID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			data, err := hoppscotch.Export(c.Requests, c.Name)
+			if err != nil {
+				return "", err
+			}
+			return string(data), nil
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+// ParseCurl parses a cURL command and returns the request data as JSON.
+func (a *App) ParseCurl(curlCmd string) (string, error) {
+	result, err := curlpkg.ParseCurlString(curlCmd)
+	if err != nil {
+		return "", err
+	}
+	payload := curlpkg.ToRequestPayload(result)
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// GenerateCurl generates a cURL command from a saved request.
+func (a *App) GenerateCurl(collID, reqID string) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range all {
+		if c.ID == collID {
+			for _, r := range c.Requests {
+				if r.ID == reqID {
+					return curlpkg.GenerateCurl(r.Payload), nil
+				}
+			}
+		}
+	}
+	return "", errors.New("request not found")
+}
+
+func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
+	if a.collections == nil {
+		return nil, errors.New("no active workspace")
+	}
+	result, err := openapi.Import(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, coll := range result.Collections {
+		created, cerr := a.collections.CreateCollection(coll.Name)
+		if cerr != nil {
+			return nil, cerr
+		}
+		for _, req := range coll.Requests {
+			req.CollID = created.ID
+			if _, aerr := a.collections.AddRequest(created.ID, req.Name, req.Payload); aerr != nil {
+				return nil, aerr
+			}
+		}
+	}
+	runtime.EventsEmit(a.ctx, "collections:changed")
+	return result, nil
+}
+
 // --- Native dialogs ---
 
 func (a *App) PickFile(title string, filter string) (string, error) {
@@ -944,6 +1397,249 @@ func (a *App) GetGitLog(limit int) ([]gitpkg.CommitInfo, error) {
 	return a.git.GetLog(limit)
 }
 
+// --- Git (advanced) ---
+
+func (a *App) GitStash() (string, error) {
+	if a.git == nil {
+		return "", errors.New("git not initialised")
+	}
+	return a.git.Stash()
+}
+
+func (a *App) GitPopStash() error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.PopStash()
+}
+
+func (a *App) GetGitStashList() ([]gitpkg.StashEntry, error) {
+	if a.git == nil {
+		return nil, errors.New("git not initialised")
+	}
+	return a.git.GetStashList()
+}
+
+func (a *App) GitMergeBranch(branch string) error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.MergeBranch(branch)
+}
+
+func (a *App) GetGitDiff(from, to string) ([]gitpkg.DiffEntry, error) {
+	if a.git == nil {
+		return nil, errors.New("git not initialised")
+	}
+	return a.git.GetDiff(from, to)
+}
+
+func (a *App) GetGitDiffContent(path string) (string, error) {
+	if a.git == nil {
+		return "", errors.New("git not initialised")
+	}
+	return a.git.GetDiffContent(path)
+}
+
+func (a *App) GetGitConflictFiles() ([]string, error) {
+	if a.git == nil {
+		return nil, errors.New("git not initialised")
+	}
+	return a.git.GetConflictFiles()
+}
+
+func (a *App) GitResolveConflictOurs(path string) error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.ResolveConflictOurs(path)
+}
+
+func (a *App) GitResolveConflictTheirs(path string) error {
+	if a.git == nil {
+		return errors.New("git not initialised")
+	}
+	return a.git.ResolveConflictTheirs(path)
+}
+
+// --- Interceptor (Browser Traffic Capture) ---
+
+type InterceptorStatus struct {
+	Running bool `json:"running"`
+	Port    int  `json:"port"`
+	Count   int  `json:"count"`
+}
+
+func (a *App) StartInterceptor() (int, error) {
+	if a.interceptor == nil {
+		return 0, errors.New("interceptor not initialised")
+	}
+	port, err := a.interceptor.Start()
+	if err != nil {
+		return 0, err
+	}
+	if a.telemetry != nil {
+		a.telemetry.Track(telemetry.EventIntegration, "interceptor_start", nil)
+	}
+	return port, nil
+}
+
+func (a *App) StopInterceptor() error {
+	if a.interceptor == nil {
+		return errors.New("interceptor not initialised")
+	}
+	return a.interceptor.Stop()
+}
+
+func (a *App) GetInterceptorStatus() InterceptorStatus {
+	if a.interceptor == nil {
+		return InterceptorStatus{}
+	}
+	return InterceptorStatus{
+		Running: a.interceptor.IsRunning(),
+		Port:    a.interceptor.Port(),
+		Count:   len(a.interceptor.GetCaptured()),
+	}
+}
+
+func (a *App) GetCapturedRequests() []interceptor.CapturedRequest {
+	if a.interceptor == nil {
+		return nil
+	}
+	return a.interceptor.GetCaptured()
+}
+
+func (a *App) ClearCapturedRequests() {
+	if a.interceptor != nil {
+		a.interceptor.ClearCaptured()
+	}
+}
+
+// ExportExtension writes the Chrome extension source to a directory.
+func (a *App) ExportExtension(dir string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	// Write manifest
+	if err := os.WriteFile(filepath.Join(dir, "manifest.json"), interceptor.ChromeExtensionManifest("reqit Interceptor"), 0644); err != nil {
+		return err
+	}
+	// Write embedded assets
+	if err := os.WriteFile(filepath.Join(dir, "background.js"), []byte(interceptor.BackgroundJS), 0644); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "popup.html"), []byte(interceptor.PopupHTML), 0644); err != nil {
+		return err
+	}
+	// Create icon placeholders
+	iconsDir := filepath.Join(dir, "icons")
+	_ = os.MkdirAll(iconsDir, 0755)
+	return nil
+}
+
+// --- Telemetry ---
+
+type TelemetryConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+func (a *App) GetTelemetryConfig() TelemetryConfig {
+	if a.telemetry == nil {
+		return TelemetryConfig{Enabled: false}
+	}
+	return TelemetryConfig{Enabled: a.telemetry.IsEnabled()}
+}
+
+func (a *App) SetTelemetryEnabled(enabled bool) {
+	if a.telemetry != nil {
+		a.telemetry.SetEnabled(enabled)
+	}
+}
+
+func (a *App) GetTelemetryPreview() string {
+	if a.telemetry == nil {
+		return ""
+	}
+	return a.telemetry.Preview()
+}
+
+func (a *App) GetTelemetryEvents(limit int) []telemetry.Event {
+	if a.telemetry == nil {
+		return nil
+	}
+	return a.telemetry.GetRecentEvents(limit)
+}
+
+// --- Notifications ---
+
+func (a *App) SendNotification(title, message string) {
+	if a.tray != nil {
+		a.tray.ShowNotification(title, message)
+	}
+}
+
+// --- External Registry (SwaggerHub / Stoplight) ---
+
+type RegistryPushResult struct {
+	URL string `json:"url"`
+}
+
+func (a *App) PushToSwaggerHub(specJSON, apiKey, owner, name, version string) (*RegistryPushResult, error) {
+	client := regpkg.NewSwaggerHubClient(apiKey, owner, name)
+	if version != "" {
+		client.SetVersion(version)
+	}
+	result, err := client.Push([]byte(specJSON))
+	if err != nil {
+		return nil, err
+	}
+	if a.telemetry != nil {
+		a.telemetry.Track(telemetry.EventIntegration, "swaggerhub_push", nil)
+	}
+	return &RegistryPushResult{URL: result.URL}, nil
+}
+
+func (a *App) PullFromSwaggerHub(apiKey, owner, name, version string) (string, error) {
+	client := regpkg.NewSwaggerHubClient(apiKey, owner, name)
+	if version != "" {
+		client.SetVersion(version)
+	}
+	data, err := client.Pull()
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func (a *App) PushToStoplight(specJSON, apiToken, projectSlug string) (*RegistryPushResult, error) {
+	client := regpkg.NewStoplightClient(apiToken, projectSlug)
+	result, err := client.Push([]byte(specJSON))
+	if err != nil {
+		return nil, err
+	}
+	if a.telemetry != nil {
+		a.telemetry.Track(telemetry.EventIntegration, "stoplight_push", nil)
+	}
+	return &RegistryPushResult{URL: result.URL}, nil
+}
+
+func (a *App) PullFromStoplight(apiToken, projectSlug string) (string, error) {
+	client := regpkg.NewStoplightClient(apiToken, projectSlug)
+	data, err := client.Pull()
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// --- CLI Runner Script ---
+
+func (a *App) GenerateCLIRunnerScript(collectionName string) string {
+	dir, _ := a.workspaces.ActiveDir()
+	exe, _ := os.Executable()
+	return traypkg.CLIRunnerTemplate(exe, dir, collectionName)
+}
+
 // --- Locks ---
 
 func (a *App) LockCollection(id string) error {
@@ -984,6 +1680,265 @@ func (a *App) GetActiveContributors() ([]gitpkg.Contributor, error) {
 		return []gitpkg.Contributor{}, nil
 	}
 	return a.git.GetActiveContributors()
+}
+
+// --- Security: E2EE Crypto ---
+
+func (a *App) HasEncryptionKey() bool {
+	if a.crypto == nil {
+		return false
+	}
+	return a.crypto.HasKey()
+}
+
+func (a *App) GenerateEncryptionKey() error {
+	if a.crypto == nil {
+		return errors.New("crypto not initialised")
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("system", audit.ActionConfig, "crypto", "key", "", map[string]string{"action": "generate"})
+	}
+	return a.crypto.GenerateKey()
+}
+
+func (a *App) SetEncryptionPassphrase(passphrase string) error {
+	if a.crypto == nil {
+		return errors.New("crypto not initialised")
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("system", audit.ActionConfig, "crypto", "passphrase", "", nil)
+	}
+	return a.crypto.SetKey(passphrase)
+}
+
+func (a *App) DeleteEncryptionKey() error {
+	if a.crypto == nil {
+		return errors.New("crypto not initialised")
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("system", audit.ActionConfig, "crypto", "key", "", map[string]string{"action": "delete"})
+	}
+	return a.crypto.DeleteKey()
+}
+
+// --- Security: Secret Vault ---
+
+func (a *App) ConfigureVault(cfgJSON string) error {
+	if a.airgap != nil && a.airgap.Get().VaultAccessDisabled {
+		return errors.New("vault access disabled by air-gap configuration")
+	}
+	cfg, err := vault.UnmarshalConfig(cfgJSON)
+	if err != nil {
+		return err
+	}
+	p, err := vault.New(cfg)
+	if err != nil {
+		return err
+	}
+	a.vault = p
+	a.vaultCfg = cfg
+	if a.audit != nil {
+		_ = a.audit.Log("system", audit.ActionConfig, "vault", cfg.Type, "", nil)
+	}
+	return nil
+}
+
+func (a *App) GetVaultConfig() string {
+	data, _ := vault.MarshalConfig(a.vaultCfg)
+	return data
+}
+
+func (a *App) VaultGetSecret(path string) (string, error) {
+	if a.vault == nil {
+		return "", errors.New("no vault configured")
+	}
+	if a.airgap != nil && a.airgap.Get().VaultAccessDisabled {
+		return "", errors.New("vault access disabled by air-gap configuration")
+	}
+	return a.vault.GetSecret(path)
+}
+
+func (a *App) VaultSetSecret(path, value string) error {
+	if a.vault == nil {
+		return errors.New("no vault configured")
+	}
+	if a.airgap != nil && a.airgap.Get().VaultAccessDisabled {
+		return errors.New("vault access disabled by air-gap configuration")
+	}
+	return a.vault.SetSecret(path, value)
+}
+
+// --- Security: Enterprise SSO ---
+
+func (a *App) GetSSOProviders() string {
+	if a.sso == nil {
+		return "[]"
+	}
+	providers := a.sso.List()
+	data, _ := sso.MarshalProviders(providers)
+	return data
+}
+
+func (a *App) AddSSOProvider(cfgJSON string) error {
+	if a.sso == nil {
+		return errors.New("sso not initialised")
+	}
+	cfg, err := sso.UnmarshalProvider(cfgJSON)
+	if err != nil {
+		return err
+	}
+	if err := a.sso.Add(cfg); err != nil {
+		return err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("system", audit.ActionConfig, "sso", cfg.ID, "", nil)
+	}
+	return a.sso.Save()
+}
+
+func (a *App) RemoveSSOProvider(id string) error {
+	if a.sso == nil {
+		return errors.New("sso not initialised")
+	}
+	if err := a.sso.Remove(id); err != nil {
+		return err
+	}
+	return a.sso.Save()
+}
+
+func (a *App) ToggleSSOProvider(id string) error {
+	if a.sso == nil {
+		return errors.New("sso not initialised")
+	}
+	if err := a.sso.ToggleEnabled(id); err != nil {
+		return err
+	}
+	return a.sso.Save()
+}
+
+func (a *App) AuthenticateSSO(providerID, emailHint string) (string, error) {
+	if a.sso == nil {
+		return "", errors.New("sso not initialised")
+	}
+	if a.airgap != nil && a.airgap.Get().SSODisabled {
+		return "", errors.New("SSO disabled by air-gap configuration")
+	}
+	profile, err := a.sso.Authenticate(providerID, emailHint)
+	if err != nil {
+		return "", err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log(profile.Email, audit.ActionLogin, "sso", providerID, "", nil)
+	}
+	data, _ := sso.MarshalUserProfile(profile)
+	return data, nil
+}
+
+// --- Security: Data Masking ---
+
+func (a *App) GetMaskingRules() string {
+	if a.masker == nil {
+		return "[]"
+	}
+	rules := a.masker.List()
+	data, _ := masker.MarshalRules(rules)
+	return data
+}
+
+func (a *App) AddMaskingRule(name, pattern, replacement string) error {
+	if a.masker == nil {
+		return errors.New("masker not initialised")
+	}
+	return a.masker.AddRule(name, pattern, replacement)
+}
+
+func (a *App) RemoveMaskingRule(name string) {
+	if a.masker != nil {
+		a.masker.RemoveRule(name)
+	}
+}
+
+func (a *App) ToggleMaskingRule(name string, enabled bool) {
+	if a.masker != nil {
+		a.masker.SetEnabled(name, enabled)
+	}
+}
+
+func (a *App) MaskText(text string) string {
+	if a.masker == nil {
+		return text
+	}
+	return a.masker.Mask(text)
+}
+
+// --- Security: Audit Trail ---
+
+func (a *App) QueryAuditLog(limit, offset int, actor, action, resource, workspaceID string) string {
+	if a.audit == nil {
+		return "[]"
+	}
+	entries, err := a.audit.Query(limit, offset, actor, action, resource, workspaceID)
+	if err != nil {
+		return "[]"
+	}
+	data, _ := audit.MarshalEntries(entries)
+	return string(data)
+}
+
+// --- Security: RBAC ---
+
+func (a *App) RBACCheck(userID, resourceID, resourceType, permission string) bool {
+	if a.rbac == nil {
+		return true
+	}
+	return a.rbac.Check(userID, resourceID, rbac.ResourceType(resourceType), rbac.Permission(permission))
+}
+
+func (a *App) RBACGrant(userID, resourceID, resourceType, role string) error {
+	if a.rbac == nil {
+		return errors.New("rbac not initialised")
+	}
+	return a.rbac.Grant(userID, resourceID, rbac.ResourceType(resourceType), rbac.Role(role))
+}
+
+func (a *App) RBACRevoke(userID, resourceID string) error {
+	if a.rbac == nil {
+		return errors.New("rbac not initialised")
+	}
+	return a.rbac.Revoke(userID, resourceID)
+}
+
+func (a *App) RBACList(userID, resourceID string) string {
+	if a.rbac == nil {
+		return "[]"
+	}
+	entries := a.rbac.List(userID, resourceID)
+	data, _ := rbac.MarshalACEs(entries)
+	return data
+}
+
+// --- Security: Air-Gapped Configuration ---
+
+func (a *App) GetAirGapConfig() string {
+	if a.airgap == nil {
+		cfg := profile.AirGapConfig{}
+		data, _ := profile.MarshalAirGap(cfg)
+		return data
+	}
+	cfg := a.airgap.Get()
+	data, _ := profile.MarshalAirGap(cfg)
+	return data
+}
+
+func (a *App) SetAirGapConfig(cfgJSON string) error {
+	if a.airgap == nil {
+		return errors.New("airgap not initialised")
+	}
+	cfg, err := profile.UnmarshalAirGap(cfgJSON)
+	if err != nil {
+		return err
+	}
+	return a.airgap.Set(cfg)
 }
 
 // --- Cookies ---
@@ -1030,6 +1985,7 @@ type MockStatus struct {
 	RouteCount int      `json:"routeCount"`
 	BaseURL    string   `json:"baseUrl"`
 	Routes     []string `json:"routes"`
+	Recording  bool     `json:"recording"`
 }
 
 func (a *App) StartMockServer(port int) (MockStatus, error) {
@@ -1049,6 +2005,7 @@ func (a *App) StartMockServer(port int) (MockStatus, error) {
 		RouteCount: a.mockReg.Count(),
 		BaseURL:    fmt.Sprintf("http://localhost:%d", port),
 		Routes:     a.mockReg.Routes(),
+		Recording:  a.mockServer.Recording().Enabled(),
 	}
 	runtime.EventsEmit(a.ctx, "mock:started", s)
 	return s, nil
@@ -1079,7 +2036,23 @@ func (a *App) GetMockStatus() MockStatus {
 		RouteCount: a.mockReg.Count(),
 		BaseURL:    fmt.Sprintf("http://localhost:%d", a.mockServer.Port),
 		Routes:     a.mockReg.Routes(),
+		Recording:  a.mockServer.Recording().Enabled(),
 	}
+}
+
+func (a *App) ToggleMockRecording(enable bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.mockServer == nil {
+		return errors.New("mock server not running")
+	}
+	if enable {
+		a.mockServer.Recording().Enable()
+	} else {
+		a.mockServer.Recording().Disable()
+	}
+	runtime.EventsEmit(a.ctx, "mock:updated", a.GetMockStatus())
+	return nil
 }
 
 func (a *App) SetRouteOverride(colID, reqID string, o models.MockOverride) error {
@@ -1185,19 +2158,47 @@ func (a *App) GenerateHTMLReport(result models.CollectionRunResult, loadResult *
 }
 
 func (a *App) ExportReportAsJSON(result models.CollectionRunResult) (string, error) {
-	dir, err := a.workspaces.ActiveDir()
-	if err != nil || dir == "" {
-		return "", errors.New("no active workspace")
+	if a.ctx == nil {
+		return "", errors.New("app context not ready")
 	}
-	return reporter.ExportRunResultToJSON(result, dir)
+	jsonStr, err := reporter.GenerateJSONReport(result)
+	if err != nil {
+		return "", err
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save JSON Report",
+		DefaultFilename: fmt.Sprintf("report-%s.json", time.Now().Format("20060102-150405")),
+		Filters:         []runtime.FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil // user cancelled
+	}
+	return path, os.WriteFile(path, []byte(jsonStr), 0644)
 }
 
 func (a *App) ExportReportAsHTML(result models.CollectionRunResult, loadResult *models.LoadTestResult) (string, error) {
-	dir, err := a.workspaces.ActiveDir()
-	if err != nil || dir == "" {
-		return "", errors.New("no active workspace")
+	if a.ctx == nil {
+		return "", errors.New("app context not ready")
 	}
-	return reporter.ExportRunResultToHTML(result, loadResult, dir)
+	htmlStr, err := reporter.GenerateHTMLReport(result, loadResult)
+	if err != nil {
+		return "", err
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save HTML Report",
+		DefaultFilename: fmt.Sprintf("report-%s.html", time.Now().Format("20060102-150405")),
+		Filters:         []runtime.FileFilter{{DisplayName: "HTML", Pattern: "*.html"}},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil // user cancelled
+	}
+	return path, os.WriteFile(path, []byte(htmlStr), 0644)
 }
 
 // --- External Runner Generation ---
@@ -1282,12 +2283,42 @@ func (a *App) GenerateGitLabCI(collID, runnerFilename string) (string, error) {
 	return "", errors.New("collection not found")
 }
 
-func (a *App) SaveGeneratedTest(content, filename string) (string, error) {
-	dir, err := a.workspaces.ActiveDir()
-	if err != nil || dir == "" {
+func (a *App) GenerateJenkins(collID, runnerFilename string) (string, error) {
+	if a.collections == nil {
 		return "", errors.New("no active workspace")
 	}
-	return external.SaveTestFile(content, dir, filename)
+	collections, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	for _, c := range collections {
+		if c.ID == collID {
+			return external.GenerateJenkins(c, runnerFilename)
+		}
+	}
+	return "", errors.New("collection not found")
+}
+
+func (a *App) SaveGeneratedTest(content, filename string) (string, error) {
+	if a.ctx == nil {
+		return "", errors.New("app context not ready")
+	}
+	ext := filepath.Ext(filename)
+	if ext == "" {
+		ext = ".js"
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save Generated Test",
+		DefaultFilename: filename,
+		Filters:         []runtime.FileFilter{{DisplayName: "All Files", Pattern: "*" + ext}},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil // user cancelled
+	}
+	return path, os.WriteFile(path, []byte(content), 0644)
 }
 
 type ExportMarkdownOpts struct {
@@ -1329,16 +2360,22 @@ func (a *App) ExportCollectionMarkdown(colID string, opts ExportMarkdownOpts) (s
 		return "", err
 	}
 
-	dir, err := a.workspaces.ActiveDir()
-	if err != nil || dir == "" {
-		return "", errors.New("no active workspace")
+	if a.ctx == nil {
+		return "", errors.New("app context not ready")
 	}
 	filename := col.Name + "_api_docs.md"
-	path := filepath.Join(dir, filename)
-	if err := os.WriteFile(path, []byte(md), 0644); err != nil {
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save Markdown API Documentation",
+		DefaultFilename: filename,
+		Filters:         []runtime.FileFilter{{DisplayName: "Markdown", Pattern: "*.md"}},
+	})
+	if err != nil {
 		return "", err
 	}
-	return path, nil
+	if path == "" {
+		return "", nil // user cancelled
+	}
+	return path, os.WriteFile(path, []byte(md), 0644)
 }
 
 func (a *App) SaveCapturedResponse(colID, reqID string, resp models.SavedResponse) error {
@@ -1408,6 +2445,101 @@ func extractMockPath(raw string) string {
 		}
 	}
 	return s
+}
+
+// ---------------------------------------------------------------------------
+// Growth & Community — Wails bindings
+// ---------------------------------------------------------------------------
+
+func (a *App) GetTiers() (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	return growth.MarshalTiers(a.growth.GetTiers())
+}
+
+func (a *App) GetTierCategories() []string {
+	if a.growth == nil {
+		return nil
+	}
+	return a.growth.GetTierCategories()
+}
+
+func (a *App) GetRecipes() (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	return growth.MarshalRecipes(a.growth.GetRecipes())
+}
+
+func (a *App) GetRecipe(id string) (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	r, ok := a.growth.GetRecipe(id)
+	if !ok {
+		return "", fmt.Errorf("recipe %q not found", id)
+	}
+	return growth.MarshalRecipe(r)
+}
+
+func (a *App) GetRecipeCategories() []string {
+	if a.growth == nil {
+		return nil
+	}
+	return a.growth.GetRecipeCategories()
+}
+
+func (a *App) GetCommunityConfig() (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	return growth.MarshalCommunityConfig(a.growth.GetCommunityConfig())
+}
+
+func (a *App) SetDiscordURL(url string) error {
+	if a.growth == nil {
+		return errors.New("growth not initialised")
+	}
+	a.growth.SetDiscordURL(url)
+	a.track("community", "set_discord_url", nil)
+	return nil
+}
+
+func (a *App) GetFeatureRequests() (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	return growth.MarshalFeatureRequests(a.growth.GetFeatureRequestsByVotes())
+}
+
+func (a *App) UpvoteFeatureRequest(id string) error {
+	if a.growth == nil {
+		return errors.New("growth not initialised")
+	}
+	err := a.growth.UpvoteFeatureRequest(id)
+	if err == nil {
+		a.track("roadmap", "upvote", map[string]interface{}{"id": id})
+	}
+	return err
+}
+
+func (a *App) GetBadges() (string, error) {
+	if a.growth == nil {
+		return "", errors.New("growth not initialised")
+	}
+	return growth.MarshalBadges(a.growth.GetBadges())
+}
+
+// track is an internal helper for telemetry (no-op if telemetry is nil/disabled)
+func (a *App) track(category, action string, metadata map[string]interface{}) {
+	if a.telemetry == nil || !a.telemetry.IsEnabled() {
+		return
+	}
+	if a.growth == nil {
+		return
+	}
+	a.telemetry.Track(telemetry.EventFeature, category+":"+action, metadata)
 }
 
 

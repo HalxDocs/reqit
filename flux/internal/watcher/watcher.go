@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -62,11 +61,10 @@ func (w *Watcher) loop() {
 				})
 				w.mu.Unlock()
 			}
-		case err, ok := <-w.fw.Errors:
+		case _, ok := <-w.fw.Errors:
 			if !ok {
 				return
 			}
-			log.Println("watcher:", err)
 		}
 	}
 }

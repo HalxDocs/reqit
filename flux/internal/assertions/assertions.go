@@ -236,9 +236,20 @@ func runCustomScript(ctx *Context, script string) string {
 		return &expectWrapper{vm: vm, val: val}
 	})
 
-	_, err := vm.RunString(script)
-	if err != nil {
-		return fmt.Sprintf("script error: %v", err)
+	var scriptErr error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				scriptErr = fmt.Errorf("script panic: %v", r)
+			}
+		}()
+		_, err := vm.RunString(script)
+		if err != nil {
+			scriptErr = fmt.Errorf("script error: %v", err)
+		}
+	}()
+	if scriptErr != nil {
+		return scriptErr.Error()
 	}
 
 	_ = assertionResult

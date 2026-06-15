@@ -1,102 +1,105 @@
 package updater
 
 import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime"
-	"strings"
 	"time"
+
+	"github.com/blang/semver/v4"
+	"github.com/minio/selfupdate"
 )
 
-const CurrentVersion = "v0.6.0"
+// CurrentVersion is the running version. Override at build time:
+//
+//	wails build -ldflags "-X 'flux/internal/updater.CurrentVersion=v0.7.0'"
+var CurrentVersion = "v0.0.0-dev"
 
-const releaseAPI = "https://api.github.com/repos/HalxDocs/reqit/releases/latest"
+var (
+	manifestURL = "https://github.com/HalxDocs/reqit/releases/latest/download/latest.json"
 
-type Release struct {
-	TagName string  `json:"tag_name"`
-	HTMLURL string  `json:"html_url"`
-	Assets  []Asset `json:"assets"`
+	// Reusable HTTP client: keep-alive, connection pooling, timeout.
+	httpClient = &http.Client{
+		Timeout: 8 * time.Second,
+	}
+)
+
+type Updater struct {
+	CurrentVersion string
+	OnUpdateFound  func(manifest UpdateManifest)
 }
 
-type Asset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
-}
-
-type UpdateInfo struct {
-	Version     string `json:"version"`
-	DownloadURL string `json:"downloadUrl"`
-	ReleaseURL  string `json:"releaseUrl"`
-}
-
-func Check() (UpdateInfo, bool, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(releaseAPI)
+func (u *Updater) CheckInBackground(ctx context.Context) {
+	manifest, err := u.FetchManifest(ctx)
 	if err != nil {
-		return UpdateInfo{}, false, err
+		return
+	}
+	current, err := semver.ParseTolerant(u.CurrentVersion)
+	if err != nil {
+		return
+	}
+	latest, err := semver.ParseTolerant(manifest.Version)
+	if err != nil {
+		return
+	}
+	if latest.GT(current) && u.OnUpdateFound != nil {
+		u.OnUpdateFound(*manifest)
+	}
+}
+
+func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
+	asset, ok := manifest.AssetForCurrentPlatform()
+	if !ok {
+		return fmt.Errorf("no asset available for platform %s", assetName())
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, asset.URL, nil)
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("download failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return UpdateInfo{}, false, fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read body: %w", err)
 	}
 
-	var rel Release
-	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
-		return UpdateInfo{}, false, err
+	sum := sha256.Sum256(data)
+	if hex.EncodeToString(sum[:]) != asset.SHA256 {
+		return fmt.Errorf("checksum mismatch — update aborted")
 	}
 
-	if !isNewer(rel.TagName, CurrentVersion) {
-		return UpdateInfo{}, false, nil
-	}
-
-	info := UpdateInfo{
-		Version:    rel.TagName,
-		ReleaseURL: rel.HTMLURL,
-	}
-	target := assetName()
-	for _, a := range rel.Assets {
-		if a.Name == target {
-			info.DownloadURL = a.BrowserDownloadURL
-			break
-		}
-	}
-	if info.DownloadURL == "" {
-		info.DownloadURL = rel.HTMLURL
-	}
-	return info, true, nil
+	return selfupdate.Apply(bytes.NewReader(data), selfupdate.Options{})
 }
 
-func isNewer(latest, current string) bool {
-	latest = strings.TrimPrefix(latest, "v")
-	current = strings.TrimPrefix(current, "v")
-	lp := versionParts(latest)
-	cp := versionParts(current)
-	for i := 0; i < 3; i++ {
-		if lp[i] > cp[i] {
-			return true
-		}
-		if lp[i] < cp[i] {
-			return false
-		}
+func (u *Updater) FetchManifest(ctx context.Context) (*UpdateManifest, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, manifestURL, nil)
+	if err != nil {
+		return nil, err
 	}
-	return false
-}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-func versionParts(v string) [3]int {
-	var major, minor, patch int
-	fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &patch)
-	return [3]int{major, minor, patch}
+	var m UpdateManifest
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		return nil, err
+	}
+	return &m, nil
 }
 
 func assetName() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "reqit-windows-amd64.exe"
-	case "darwin":
-		return "reqit-macos-universal.zip"
-	default:
-		return "reqit-linux-amd64"
-	}
+	return runtime.GOOS + "-" + runtime.GOARCH
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Download, Folder, History as HistoryIcon, Moon, Settings, Sun, Terminal, User, Users, Radio } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, Webhook, Code2, Server } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { cn } from "@/shared/lib/cn";
@@ -11,6 +11,60 @@ import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetGitStatus } from "../../../wailsjs/go/main/App";
+
+function NavItem({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full h-[30px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
+        active
+          ? "bg-cyan/10 text-cyan font-semibold"
+          : "text-subtext hover:text-text hover:bg-cardHover",
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+      {active && <span className="ml-auto text-10 text-cyan/60">active</span>}
+    </button>
+  );
+}
+
+function CollapsibleSection({
+  label,
+  defaultOpen,
+  children,
+}: {
+  label: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen ?? false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full h-[26px] px-3 flex items-center gap-1.5 text-11 font-semibold uppercase tracking-wider text-subtext/60 hover:text-subtext transition-colors"
+      >
+        {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+        <span>{label}</span>
+      </button>
+      {open && <div className="flex flex-col gap-px mt-0.5 mb-1">{children}</div>}
+    </div>
+  );
+}
 
 export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openImport = useUIStore((s) => s.openImportModal);
@@ -51,31 +105,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         <SearchBar />
       </div>
 
-      <div className="px-3 py-2 border-b border-border">
-        <button
-          type="button"
-          onClick={() => setView(view === "socket" ? "http" : "socket")}
-          className={cn(
-            "w-full h-[34px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
-            view === "socket"
-              ? "bg-cyan/10 text-cyan font-semibold"
-              : "text-subtext hover:text-text hover:bg-cardHover",
-          )}
-        >
-          <Radio size={14} />
-          <span>WebSocket / SSE</span>
-          {view === "socket" && (
-            <span className="ml-auto text-10 text-cyan/60 font-normal">active</span>
-          )}
-        </button>
-      </div>
-      <nav className="flex-1 flex flex-col py-2">
+      {/* ===== COLLECTIONS + HISTORY (PRIME REAL ESTATE) ===== */}
+      <nav className="flex-1 min-h-0 flex flex-col overflow-y-auto">
         <Section
           icon={<Folder size={12} />}
           label="Collections"
-          className="flex-1 min-h-0 flex flex-col"
           action={
-
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -95,6 +130,26 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
               >
                 <Download size={12} />
               </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const { PickFile, ImportOpenAPI } = await import("../../../wailsjs/go/main/App");
+                  const path = await PickFile("Select OpenAPI spec", "*.yaml;*.yml;*.json");
+                  if (!path) return;
+                  const { toast } = await import("@/app/stores/useToastStore");
+                  try {
+                    const result = await ImportOpenAPI(path);
+                    toast.success(`Imported ${result.endpoints} endpoints from "${result.specTitle}"`);
+                  } catch (e) {
+                    toast.error(String(e));
+                  }
+                }}
+                className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
+                aria-label="Import OpenAPI spec"
+                title="Import OpenAPI spec as collections"
+              >
+                <FileCode2 size={12} />
+              </button>
             </div>
           }
         >
@@ -104,53 +159,127 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         <Section icon={<HistoryIcon size={12} />} label="History">
           <HistoryList />
         </Section>
+
+        {/* ===== COMPACT TOOLS SECTION (AT BOTTOM OF SCROLL) ===== */}
+        <div className="mt-auto border-t border-border pt-1 pb-2">
+          <CollapsibleSection label="Tools" defaultOpen={false}>
+            <NavItem
+              icon={<Radio size={13} />}
+              label="WebSocket / SSE"
+              active={view === "socket"}
+              onClick={() => setView(view === "socket" ? "http" : "socket")}
+            />
+            <NavItem
+              icon={<Code2 size={13} />}
+              label="GraphQL"
+              active={view === "graphql"}
+              onClick={() => setView(view === "graphql" ? "http" : "graphql")}
+            />
+            <NavItem
+              icon={<Server size={13} />}
+              label="gRPC"
+              active={view === "grpc"}
+              onClick={() => setView(view === "grpc" ? "http" : "grpc")}
+            />
+            <NavItem
+              icon={<FileEdit size={13} />}
+              label="API Designer"
+              active={view === "spec"}
+              onClick={() => setView(view === "spec" ? "http" : "spec")}
+            />
+            <NavItem
+              icon={<Book size={13} />}
+              label="API Reference"
+              active={view === "docs"}
+              onClick={() => setView(view === "docs" ? "http" : "docs")}
+            />
+            <NavItem
+              icon={<GitPullRequest size={13} />}
+              label="Git & PR Preview"
+              active={view === "pr"}
+              onClick={() => setView(view === "pr" ? "http" : "pr")}
+            />
+            <NavItem
+              icon={<Webhook size={13} />}
+              label="Interceptor"
+              active={view === "interceptor"}
+              onClick={() => setView(view === "interceptor" ? "http" : "interceptor")}
+            />
+            <NavItem
+              icon={<Shield size={13} />}
+              label="Security"
+              active={view === "security"}
+              onClick={() => setView(view === "security" ? "http" : "security")}
+            />
+            <NavItem
+              icon={<Download size={13} />}
+              label="Integrations"
+              active={view === "integrations"}
+              onClick={() => setView(view === "integrations" ? "http" : "integrations")}
+            />
+            <NavItem
+              icon={<ArrowLeftRight size={13} />}
+              label="Migration"
+              active={view === "migration"}
+              onClick={() => setView(view === "migration" ? "http" : "migration")}
+            />
+            <NavItem
+              icon={<Rocket size={13} />}
+              label="Growth"
+              active={view === "growth"}
+              onClick={() => setView(view === "growth" ? "http" : "growth")}
+            />
+          </CollapsibleSection>
+        </div>
       </nav>
 
-      {/* Team button */}
-      <button
-        type="button"
-        onClick={openTeam}
-        className="border-t border-border h-[40px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
-        title="Team — invite members, sync, commit"
-      >
-        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0 relative">
-          <Users size={12} />
-          {hasChanges && (
-            <span className="absolute -top-0.5 -right-0.5 w-[7px] h-[7px] rounded-full bg-amber-400 border border-surface" />
-          )}
-        </div>
-        <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
-        <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={openSettings}
-        className="border-t border-border h-[44px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left"
-      >
-        <div className="w-[24px] h-[24px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0">
-          <User size={12} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-12 text-text truncate">
-            {profile?.name?.trim() || "Set up profile"}
-          </div>
-          <div className="text-11 text-subtext truncate">
-            {profile && profile.requestCount > 0
-              ? `${profile.requestCount} request${profile.requestCount === 1 ? "" : "s"} sent`
-              : "Welcome to reqit"}
-          </div>
-        </div>
+      {/* ===== STICKY BOTTOM: TEAM + SETTINGS ===== */}
+      <div className="border-t border-border shrink-0">
         <button
           type="button"
-          onClick={toggleTheme}
-          className="flex items-center justify-center w-[20px] h-[20px] text-subtext hover:text-text transition-colors shrink-0 mr-1"
-          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          onClick={openTeam}
+          className="w-full h-[36px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
+          title="Team — invite members, sync, commit"
         >
-          {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+          <div className="w-[22px] h-[22px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0 relative">
+            <Users size={11} />
+            {hasChanges && (
+              <span className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full bg-amber-400 border border-surface" />
+            )}
+          </div>
+          <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
+          <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
         </button>
-        <Settings size={12} className="text-subtext shrink-0" />
-      </button>
+
+        <button
+          type="button"
+          onClick={openSettings}
+          className="w-full h-[40px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left"
+        >
+          <div className="w-[22px] h-[22px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0">
+            <User size={11} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-12 text-text truncate">
+              {profile?.name?.trim() || "Set up profile"}
+            </div>
+            <div className="text-11 text-subtext truncate">
+              {profile && profile.requestCount > 0
+                ? `${profile.requestCount} request${profile.requestCount === 1 ? "" : "s"} sent`
+                : "Welcome to reqit"}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-[20px] h-[20px] text-subtext hover:text-text transition-colors shrink-0 mr-1"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+          </button>
+          <Settings size={12} className="text-subtext shrink-0" />
+        </button>
+      </div>
     </aside>
   );
 }
@@ -169,8 +298,8 @@ function Section({
   className?: string;
 }) {
   return (
-    <div className={`pb-3 ${className ?? ""}`.trim()}>
-      <div className="px-3 py-2 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
+    <div className={`pb-2 ${className ?? ""}`.trim()}>
+      <div className="px-3 py-1.5 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-2">
           {icon}
           <span>{label}</span>

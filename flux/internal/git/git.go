@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -310,4 +313,206 @@ func LoadConfig(dir string) (GitConfig, error) {
 	}
 	var cfg GitConfig
 	return cfg, json.Unmarshal(data, &cfg)
+}
+
+// gitExec runs a git command in the store's directory.
+func (s *Store) gitExec(args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = s.dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("git %s: %s: %w", strings.Join(args, " "), strings.TrimSpace(string(out)), err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// Stash saves uncommitted changes and returns the stash description.
+func (s *Store) Stash() (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.gitExec("stash", "push", "-m", "reqit auto-stash")
+}
+
+// PopStash restores the most recent stash.
+func (s *Store) PopStash() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.gitExec("stash", "pop")
+	return err
+}
+
+// StashEntry holds info about a stashed change.
+type StashEntry struct {
+	Index int    `json:"index"`
+	Ref   string `json:"ref"`
+	Message string `json:"message"`
+}
+
+// GetStashList returns all stash entries by parsing `git stash list`.
+func (s *Store) GetStashList() ([]StashEntry, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	raw, err := s.gitExec("stash", "list", "--format=%H\t%gs")
+	if err != nil {
+		// No stashes is not an error.
+		if strings.Contains(err.Error(), "stash") {
+			return []StashEntry{}, nil
+		}
+		return nil, err
+	}
+	if raw == "" {
+		return []StashEntry{}, nil
+	}
+	var entries []StashEntry
+	for i, line := range strings.Split(raw, "\n") {
+		parts := strings.SplitN(line, "\t", 2)
+		ref := parts[0]
+		msg := ""
+		if len(parts) > 1 {
+			msg = parts[1]
+		}
+		if len(ref) > 7 {
+			ref = ref[:7]
+		}
+		entries = append(entries, StashEntry{Index: i, Ref: ref, Message: msg})
+	}
+	return entries, nil
+}
+
+// MergeBranch merges the given branch into the current branch.
+func (s *Store) MergeBranch(branch string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.gitExec("merge", "--no-edit", branch)
+	return err
+}
+
+// DiffEntry represents a single changed file.
+type DiffEntry struct {
+	Path    string `json:"path"`
+	Added   int    `json:"added"`
+	Deleted int    `json:"deleted"`
+}
+
+// GetDiff returns the diff between two refs. If from is empty, compares HEAD to working tree.
+func (s *Store) GetDiff(from, to string) ([]DiffEntry, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	args := []string{"diff", "--numstat"}
+	if from != "" {
+		args = append(args, from)
+		if to != "" {
+			args = append(args, to)
+		}
+	}
+	raw, err := s.gitExec(args...)
+	if err != nil {
+		// Try as working tree diff
+		status, err := s.gitExec("status", "--porcelain")
+		if err != nil {
+			return nil, err
+		}
+		return parsePorcelain(status), nil
+	}
+	return parseNumStat(raw), nil
+}
+
+func parseNumStat(raw string) []DiffEntry {
+	var entries []DiffEntry
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue
+		}
+		added, _ := strconv.Atoi(parts[0])
+		deleted, _ := strconv.Atoi(parts[1])
+		entries = append(entries, DiffEntry{
+			Path:    strings.Join(parts[2:], " "),
+			Added:   added,
+			Deleted: deleted,
+		})
+	}
+	return entries
+}
+
+// DiffContent holds the full diff text for a single file.
+type DiffContent struct {
+	Path    string   `json:"path"`
+	RawDiff string   `json:"rawDiff"`
+	Added   int      `json:"added"`
+	Deleted int      `json:"deleted"`
+}
+
+// GetDiffContent returns the full diff text for tracked file changes.
+func (s *Store) GetDiffContent(path string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.gitExec("diff", "--", path)
+}
+
+// GetConflictFiles returns paths of files with merge conflicts.
+func (s *Store) GetConflictFiles() ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	raw, err := s.gitExec("diff", "--name-only", "--diff-filter=U")
+	if err != nil {
+		// Fallback: check for conflict markers in status
+		status, statusErr := s.gitExec("status", "--porcelain")
+		if statusErr != nil {
+			return nil, err
+		}
+		var conflicted []string
+		for _, line := range strings.Split(status, "\n") {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "UU") || strings.HasPrefix(line, "AA") || strings.HasPrefix(line, "DD") {
+				conflicted = append(conflicted, strings.TrimSpace(line[2:]))
+			}
+		}
+		return conflicted, nil
+	}
+	return strings.Fields(raw), nil
+}
+
+// ResolveConflictOurs resolves a conflicted file using the "ours" version.
+func (s *Store) ResolveConflictOurs(path string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.gitExec("checkout", "--ours", path)
+	if err != nil {
+		return fmt.Errorf("resolve --ours: %w", err)
+	}
+	_, err = s.gitExec("add", path)
+	return err
+}
+
+// ResolveConflictTheirs resolves a conflicted file using the "theirs" version.
+func (s *Store) ResolveConflictTheirs(path string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.gitExec("checkout", "--theirs", path)
+	if err != nil {
+		return fmt.Errorf("resolve --theirs: %w", err)
+	}
+	_, err = s.gitExec("add", path)
+	return err
+}
+
+func parsePorcelain(raw string) []DiffEntry {
+	var entries []DiffEntry
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if len(line) < 4 {
+			continue
+		}
+		path := strings.TrimSpace(line[3:])
+		entries = append(entries, DiffEntry{Path: path, Added: 0, Deleted: 0})
+	}
+	return entries
 }

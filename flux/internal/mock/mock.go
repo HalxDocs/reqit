@@ -92,13 +92,22 @@ func matchPath(pattern, actual string) bool {
 
 // MockServer runs a real net/http server on a local port.
 type MockServer struct {
-	registry *Registry
-	server   *http.Server
-	Port     int
+	registry  *Registry
+	rules     *RulesEngine
+	state     *StateStore
+	recording *RecordingSink
+	server    *http.Server
+	Port      int
 }
 
 func NewMockServer(r *Registry, port int) *MockServer {
-	ms := &MockServer{registry: r, Port: port}
+	ms := &MockServer{
+		registry:  r,
+		rules:     NewRulesEngine(nil),
+		state:     NewStateStore(),
+		recording: NewRecordingSink(r),
+		Port:      port,
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", ms.handle)
 	ms.server = &http.Server{
@@ -107,6 +116,13 @@ func NewMockServer(r *Registry, port int) *MockServer {
 	}
 	return ms
 }
+
+func (ms *MockServer) SetRules(rules []Rule) {
+	ms.rules = NewRulesEngine(rules)
+}
+
+func (ms *MockServer) Recording() *RecordingSink { return ms.recording }
+func (ms *MockServer) State() *StateStore         { return ms.state }
 
 func (ms *MockServer) Start() {
 	go func() { _ = ms.server.ListenAndServe() }()
@@ -127,6 +143,18 @@ func (ms *MockServer) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 1. Try rules engine first (priority order).
+	qp := ParseQueryParams(r.URL.RawQuery)
+	hdrs := make(map[string]string)
+	for k := range r.Header {
+		hdrs[k] = r.Header.Get(k)
+	}
+	if resp, ok := ms.rules.Evaluate(r.Method, r.URL.Path, hdrs, qp); ok {
+		ms.writeResponse(w, resp)
+		return
+	}
+
+	// 2. Fall back to static registry.
 	resp, ok := ms.registry.Get(r.Method, r.URL.Path)
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
@@ -135,6 +163,10 @@ func (ms *MockServer) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ms.writeResponse(w, resp)
+}
+
+func (ms *MockServer) writeResponse(w http.ResponseWriter, resp MockResponse) {
 	if resp.DelayMs > 0 {
 		time.Sleep(time.Duration(resp.DelayMs) * time.Millisecond)
 	}
@@ -147,5 +179,14 @@ func (ms *MockServer) handle(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("X-Mock-Server", "reqit")
 	w.WriteHeader(resp.StatusCode)
-	_ = json.NewEncoder(w).Encode(resp.Body)
+
+	// Apply dynamic variable substitution to body strings.
+	switch b := resp.Body.(type) {
+	case string:
+		_, _ = w.Write([]byte(MockVariables(b)))
+	case json.RawMessage:
+		_, _ = w.Write([]byte(MockVariables(string(b))))
+	default:
+		_ = json.NewEncoder(w).Encode(b)
+	}
 }

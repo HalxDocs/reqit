@@ -33,6 +33,16 @@
     --surface: var(--color-surface);
     --card: var(--color-card);
     --border: var(--color-border);
+
+    /* Sidebar-specific tokens per design spec */
+    --sidebar-active-bg: #1C3A5E;
+    --sidebar-active-accent: #00D9FF;
+    --sidebar-hover-bg: #1C2333;
+    --sidebar-text-muted: #8B949E;
+    --sidebar-text-hover: #E6EDF3;
+    --sidebar-border: #30363D;
+    --sidebar-git-sync: #3FB950;
+
     color-scheme: dark;
   }
 
@@ -108,6 +118,14 @@
   *:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--color-cyan);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
