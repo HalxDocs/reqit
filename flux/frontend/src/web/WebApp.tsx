@@ -19,6 +19,7 @@ import {
   TerminalIcon,
 } from "@hugeicons/core-free-icons";
 import { DOC_SECTIONS } from "../shared/lib/docs";
+import { BLOG_POSTS } from "../features/blog/blogData";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -468,6 +469,42 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
               className="bg-surface border border-border rounded-xl overflow-hidden hover:border-cyan/30 transition-all group"
             >
               <img src={s.src} alt={s.alt} className="w-full h-auto block group-hover:scale-[1.02] transition-transform duration-500" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Blog */}
+      <section>
+        <div className="text-center mb-6">
+          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Blog</p>
+          <h2
+            className="text-22 sm:text-26 font-bold text-text"
+            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
+          >
+            Latest from the blog
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {BLOG_POSTS.map((post) => (
+            <div
+              key={post.slug}
+              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-11 text-subtext">
+                <span>{post.date}</span>
+                <span>·</span>
+                <span>{post.readTime}</span>
+              </div>
+              <h3 className="text-13 font-bold text-text leading-snug">{post.title}</h3>
+              <p className="text-12 text-subtext leading-relaxed flex-1">{post.description}</p>
+              <div className="flex items-center gap-1.5 mt-auto">
+                {post.tags.map((t) => (
+                  <span key={t} className="px-2 py-0.5 bg-surface border border-border rounded-sm text-10 font-mono text-subtext">
+                    {t}
+                  </span>
+                ))}
+              </div>
             </div>
           ))}
         </div>

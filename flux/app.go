@@ -1531,6 +1531,9 @@ func (a *App) ExportExtension(dir string) error {
 	if err := os.WriteFile(filepath.Join(dir, "popup.html"), []byte(interceptor.PopupHTML), 0644); err != nil {
 		return err
 	}
+	if err := os.WriteFile(filepath.Join(dir, "popup.js"), []byte(interceptor.PopupJS), 0644); err != nil {
+		return err
+	}
 	// Create icon placeholders
 	iconsDir := filepath.Join(dir, "icons")
 	_ = os.MkdirAll(iconsDir, 0755)
