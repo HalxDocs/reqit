@@ -32,7 +32,7 @@ function renderMarkdown(text: string): string {
     .replace(/<p class="[^"]*">\s*<br \/>/g, '<p class="text-13 text-subtext leading-relaxed mb-3">');
 }
 
-function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => void }) {
+export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => void }) {
   const html = renderMarkdown(post.content);
   return (
     <div className="h-full flex flex-col overflow-y-auto">

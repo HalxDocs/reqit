@@ -29,8 +29,9 @@ import {
   Search01Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
-import { BookOpen, Trash2 } from "lucide-react";
-import { BLOG_POSTS } from "@/features/blog/blogData";
+import { BookOpen, Trash2, ArrowLeft, Calendar, Clock, Tag } from "lucide-react";
+import { BLOG_POSTS, type BlogPost } from "@/features/blog/blogData";
+import { BlogContent } from "@/features/blog/components/BlogPanel";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 
@@ -432,6 +433,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const [view, setView] = useState<View>("landing");
   const [createOpen, setCreateOpen] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
+  const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
 
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);
@@ -527,14 +529,45 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto">
-        {view === "landing" && (
+        {blogPost ? (
+          <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8">
+            <button
+              type="button"
+              onClick={() => setBlogPost(null)}
+              className="flex items-center gap-1.5 text-12 text-subtext hover:text-text transition-colors mb-6"
+            >
+              <ArrowLeft size={14} />
+              <span>Back to blog</span>
+            </button>
+            <h1 className="text-22 font-bold text-text leading-snug mb-3">{blogPost.title}</h1>
+            <div className="flex items-center gap-4 text-12 text-subtext mb-8">
+              <span className="flex items-center gap-1.5">
+                <Calendar size={12} />
+                {blogPost.date}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock size={12} />
+                {blogPost.readTime}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Tag size={12} />
+                {blogPost.tags.map((t) => (
+                  <span key={t} className="bg-card px-2 py-0.5 rounded-sm text-11 font-mono text-subtext">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <BlogContent post={blogPost} onBack={() => setBlogPost(null)} />
+          </div>
+        ) : view === "landing" ? (
           <LandingView
             onGoToWorkspaces={() => setView("workspaces")}
             onGoDocs={() => setView("docs")}
             stars={stars}
+            onReadBlogPost={setBlogPost}
           />
-        )}
-        {view === "workspaces" && (
+        ) : view === "workspaces" ? (
           <WorkspacesView
             workspaces={workspaceList}
             switching={switching}
@@ -542,8 +575,9 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
             onDelete={handleDelete}
             onCreate={() => setCreateOpen(true)}
           />
-        )}
-        {view === "docs" && <DocsView />}
+        ) : view === "docs" ? (
+          <DocsView />
+        ) : null}
       </main>
 
       <CreateWorkspaceModal
@@ -567,10 +601,12 @@ function LandingView({
   onGoToWorkspaces,
   onGoDocs,
   stars,
+  onReadBlogPost,
 }: {
   onGoToWorkspaces: () => void;
   onGoDocs: () => void;
   stars: number | null;
+  onReadBlogPost: (post: BlogPost) => void;
 }) {
   return (
     <div className="max-w-[860px] mx-auto px-4 sm:px-6 py-10 sm:py-14 flex flex-col gap-12 sm:gap-16">
@@ -735,9 +771,11 @@ function LandingView({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {BLOG_POSTS.map((post) => (
-            <div
+            <button
               key={post.slug}
-              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 transition-colors cursor-default"
+              type="button"
+              onClick={() => onReadBlogPost(post)}
+              className="text-left bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all cursor-pointer"
             >
               <div className="flex items-center gap-2 text-11 text-subtext">
                 <span>{post.date}</span>
@@ -753,7 +791,7 @@ function LandingView({
                   </span>
                 ))}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
