@@ -1163,4 +1163,255 @@ Your data is yours. Always. reqit is designed so you never have to wonder "is th
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
+  {
+    slug: "explainer-cli",
+    title: "What is CLI Mode? Running reqit from the terminal",
+    description: "You usually click buttons to send API requests. CLI mode lets you do it from the terminal — perfect for scripts, automation, and CI/CD.",
+    date: "2026-06-16",
+    readTime: "3 min read",
+    tags: ["explainer", "cli", "automation"],
+    category: "Testing & Automation",
+    content: `Most of the time, you use reqit by clicking buttons. You type a URL, click Send, and see the response. That is the graphical way.
+
+**CLI mode is different.** You open your terminal, type a command like \`reqit run my-collection --env staging\`, and reqit fires all the requests, runs assertions, and prints a report — all without opening a single window.
+
+## A real-life story
+
+Dennis deploys his app every Friday. After every deployment, he needs to check that 20 critical API endpoints still work. He used to open reqit, click each request one by one, and check the responses. It took 10 minutes and he sometimes missed a failed request.
+
+Now Dennis runs a single command:
+
+\`\`\`bash
+reqit run smoke-tests --env production --report json
+\`\`\`
+
+Reqit fires all 20 requests, checks every assertion, and prints:
+
+\`\`\`
+✓ GET /health → 200 (42ms)
+✓ POST /login → 200 (156ms)
+✓ GET /users → 200 (89ms)
+✗ POST /checkout → 500 (234ms) — expected 200
+...
+
+Failed: 1 / 20
+\`\`\`
+
+Dennis knows in 3 seconds whether the deployment is good.
+
+## How it works
+
+Reqit CLI runs a **collection** — any collection you already have in your workspace. It:
+
+1. Loads every request in the collection
+2. Sends each request
+3. Runs any assertions you configured (status code, response time, body checks)
+4. Prints a pass/fail report
+5. Exits with code 0 if all pass, or code 1 if any fail
+
+## Common use cases
+
+- **CI/CD pipelines** — add \`reqit run smoke-tests\` to your GitHub Actions or GitLab CI config
+- **Pre-deploy checks** — run a collection before every deployment
+- **Nightly monitoring** — schedule a collection run with a cron job and email the report
+- **Onboarding** — new team members run the collection to verify their setup
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-interceptor",
+    title: "What is the Interceptor? A bridge between your browser and reqit",
+    description: "Ever wanted to capture what your browser sends to an API and replay it in reqit? The interceptor does exactly that.",
+    date: "2026-06-16",
+    readTime: "3 min read",
+    tags: ["explainer", "interceptor", "capture"],
+    category: "Core Concepts",
+    content: `Imagine you are using a website and you want to see what API calls it makes. Maybe you are debugging why a page is not loading, or you want to reuse an API request in your own app.
+
+**The interceptor is a browser extension that captures every HTTP request your browser makes and sends it to reqit.**
+
+## A real-life story
+
+Leila is debugging a checkout page on her e-commerce site. The page shows an error after clicking "Place Order" but the error message is not helpful.
+
+She opens Chrome, clicks the reqit Interceptor icon, and turns it on. Then she refreshes the page and clicks "Place Order" again.
+
+In reqit, a list of captured requests appears:
+- \`POST /api/cart/add\` — succeeded
+- \`POST /api/checkout\` — failed with 500
+
+Leila clicks the failed request in reqit. She sees the full request body, headers, and the 500 error response. The response says "payment_gateway_timeout". She knows the problem is with the payment service — not her frontend code.
+
+## How to use it
+
+1. Install the reqit Interceptor extension from the Chrome Web Store
+2. Start reqit and make sure the proxy is running (check your settings for the port number)
+3. Click the extension icon in Chrome and enter the port number
+4. Click **Connect**
+5. Browse normally — every API call is captured in reqit's history
+
+## What gets captured
+
+- All HTTP requests from your browser (GET, POST, PUT, PATCH, DELETE)
+- Request method, URL, headers, and body
+- Response status and timing
+- Which tab made the request
+
+## Privacy
+
+The interceptor only sends requests to your local reqit instance at \`127.0.0.1\`. Nothing is sent to the cloud. Nothing is logged externally. You are the only one who sees your traffic.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-cicd",
+    title: "Running reqit in CI/CD: Automated API testing in your pipeline",
+    description: "Every time you push code, your CI runs tests. Now it can also run your API collections. Catch broken endpoints before they reach production.",
+    date: "2026-06-16",
+    readTime: "3 min read",
+    tags: ["explainer", "ci-cd", "automation", "testing"],
+    category: "Testing & Automation",
+    content: `When you push code to GitHub, your CI pipeline runs unit tests, builds the app, and deploys it. But what about your API? If the backend returns a 500 or changes a response field, your tests still pass — but your app is broken.
+
+**Reqit collections can run in CI/CD pipelines.** Add one command to your workflow file and every push runs your API tests automatically.
+
+## A real-life story
+
+Fatima's team uses GitHub Actions. Every time someone pushes to main, the pipeline builds the app and deploys it to staging. Last week, a developer changed the login API to return \`{ "token": "abc" }\` instead of \`{ "access_token": "abc" }\`. The frontend broke. Nobody noticed until a manual test 3 hours later.
+
+Fatima adds a step to the pipeline:
+
+\`\`\`yaml
+- name: Run API tests
+  run: reqit run api-smoke-tests --env staging
+\`\`\`
+
+Next push, the pipeline runs the collection. The login request expects \`access_token\` but gets \`token\`. The assertion fails. The pipeline stops. The developer gets a red X on their PR. They fix the API before merging.
+
+## The full workflow
+
+1. Create a collection called \`smoke-tests\` with all your critical endpoints
+2. Add assertions: check status codes, response fields, response times
+3. Add \`reqit run smoke-tests\` to your CI config
+4. Every push checks your API automatically
+
+## CI configuration examples
+
+### GitHub Actions
+\`\`\`yaml
+- uses: actions/checkout@v4
+- run: reqit run smoke-tests --env staging
+\`\`\`
+
+### GitLab CI
+\`\`\`yaml
+script:
+  - reqit run smoke-tests --env staging
+\`\`\`
+
+## Exit codes
+
+Reqit exits with:
+- **0** — all requests passed their assertions
+- **1** — one or more requests failed
+
+Your CI pipeline can use these exit codes to pass or fail the build automatically.
+
+## Reports
+
+Add \`--report junit\` or \`--report json\` to output test results in standard formats. You can upload them to your CI dashboard just like unit test reports.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-themes",
+    title: "What are Themes? Making reqit look the way you want",
+    description: "Some people like dark mode. Some like light mode. Some want cyan accents. Themes let you make reqit look exactly how you prefer.",
+    date: "2026-06-16",
+    readTime: "2 min read",
+    tags: ["explainer", "themes", "customization"],
+    category: "Developer Experience",
+    content: `Have you ever used an app and thought "I wish this was darker" or "I wish the colors were different"? Some apps only give you one look. reqit gives you choices.
+
+**Themes change the colors of reqit — the background, the text, the accents, the buttons. You pick what looks good to you.**
+
+## A real-life story
+
+Hiro works in a dark office with dim lighting. Dark mode helps him focus. His colleague Maria works near a bright window. She prefers a lighter interface.
+
+Hiro opens Settings → Theme and picks **Dark**. The background turns deep charcoal. The text turns white. The accent color stays cyan.
+
+Maria picks **Light**. The background turns white. The text turns dark. Everything is crisp and readable in the sunlight.
+
+Both are happy. Both use the same app. Neither squints.
+
+## What themes affect
+
+- Background color (main, sidebar, cards)
+- Text color (headings, body, subtle labels)
+- Accent colors (the cyan highlight used everywhere)
+- Border colors
+- Code editor colors
+- Status colors (green for success, red for errors)
+
+## How to change your theme
+
+1. Open Settings (click your profile or press Ctrl+K and type "settings")
+2. Find the **Theme** section
+3. Pick **Dark**, **Light**, or **System** (follows your OS setting)
+4. The change happens instantly — no restart needed
+
+## The System option
+
+If you pick **System**, reqit watches your OS theme setting. When your computer switches to dark mode at night, reqit switches too. When it goes back to light mode in the morning, reqit follows. You never think about it.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-vault",
+    title: "What is the Vault? A locked box for your secrets",
+    description: "API keys, tokens, and passwords should not sit in plain text files. The Vault keeps them encrypted so only you can read them.",
+    date: "2026-06-16",
+    readTime: "3 min read",
+    tags: ["explainer", "vault", "security", "secrets"],
+    category: "Developer Experience",
+    content: `Imagine you write your ATM pin on a sticky note and stick it to your monitor. Everyone who walks past can see it. That is what happens when you put API keys in plain text files.
+
+**The Vault is a locked box for your secrets.** You put your API keys, tokens, and passwords inside. The Vault encrypts them. Only you can unlock the box.
+
+## A real-life story
+
+Omar works on a team of 6 developers. Each developer has their own API key for the payment service. The keys are stored in environment files that live in the project folder.
+
+One day, Omar accidentally commits his environment file to Git. His payment API key — worth thousands of dollars in potential fraud — is now on GitHub for anyone to find.
+
+Omar switches to the Vault:
+1. He removes all secrets from environment files
+2. He adds them to the Vault: \`VAULT_PAYMENT_KEY = sk_live_abc123\`
+3. He locks the Vault with a master password
+4. Now his environment file just says \`{{VAULT_PAYMENT_KEY}}\` — no actual secret
+
+If he accidentally commits the environment file again, it contains only variable names, not real secrets.
+
+## How the Vault works
+
+1. Open the Vault from Settings or the sidebar
+2. Set a master password (this encrypts everything)
+3. Add your secrets as key/value pairs
+4. Reference them in any request as \`{{VAULT_KEY_NAME}}\`
+5. The Vault decrypts them only when reqit sends a request
+
+## Security features
+
+- **Encrypted at rest** — vault data is AES-256 encrypted on disk
+- **Master password** — you choose it, reqit never stores it
+- **Locks automatically** — the vault locks after 5 minutes of inactivity
+- **Per-workspace** — each workspace has its own vault. Projects stay isolated.
+
+## What the Vault is not
+
+The Vault is not a cloud service. Your secrets never leave your computer. It is not a replacement for a proper secrets manager in production (like HashiCorp Vault or AWS Secrets Manager). It is for local development — keeping secrets out of your Git history and off your screen.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
 ];
