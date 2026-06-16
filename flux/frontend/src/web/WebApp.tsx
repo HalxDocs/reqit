@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BookOpen } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CodeIcon,
@@ -19,8 +20,7 @@ import {
   TerminalIcon,
 } from "@hugeicons/core-free-icons";
 import { DOC_SECTIONS } from "../shared/lib/docs";
-import { BLOG_POSTS, type BlogPost } from "../features/blog/blogData";
-import { BlogContent } from "../features/blog/components/BlogPanel";
+import { BlogPage } from "../features/blog/components/BlogPanel";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -321,7 +321,7 @@ function ApiPlayground() {
   );
 }
 
-function HomePage({ goToDocs, stars, onReadBlogPost }: { goToDocs: () => void; stars: number | null; onReadBlogPost: (post: BlogPost) => void }) {
+function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | null }) {
   return (
     <>
       {/* Hero — full width, centered */}
@@ -475,43 +475,7 @@ function HomePage({ goToDocs, stars, onReadBlogPost }: { goToDocs: () => void; s
         </div>
       </section>
 
-      {/* Blog */}
-      <section>
-        <div className="text-center mb-6">
-          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Blog</p>
-          <h2
-            className="text-22 sm:text-26 font-bold text-text"
-            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
-          >
-            Latest from the blog
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {BLOG_POSTS.map((post) => (
-            <button
-              key={post.slug}
-              type="button"
-              onClick={() => onReadBlogPost(post)}
-              className="text-left bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-2 text-11 text-subtext">
-                <span>{post.date}</span>
-                <span>·</span>
-                <span>{post.readTime}</span>
-              </div>
-              <h3 className="text-13 font-bold text-text leading-snug">{post.title}</h3>
-              <p className="text-12 text-subtext leading-relaxed flex-1">{post.description}</p>
-              <div className="flex items-center gap-1.5 mt-auto">
-                {post.tags.map((t) => (
-                  <span key={t} className="px-2 py-0.5 bg-surface border border-border rounded-sm text-10 font-mono text-subtext">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+
 
       {/* CTA */}
       <section className="bg-card border border-border rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center gap-5">
@@ -632,12 +596,7 @@ function DocsPage({ goHome }: { goHome: () => void }) {
 }
 
 export function WebApp() {
-  const [page, setPage] = useState<"home" | "docs">("home");
-  const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
-  const mainRef = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    if (blogPost) window.scrollTo(0, 0);
-  }, [blogPost]);
+  const [page, setPage] = useState<"home" | "docs" | "blog">("home");
   const stars = useGitHubStars("HalxDocs/reqit");
 
   return (
@@ -660,6 +619,14 @@ export function WebApp() {
             </a>
             <button
               type="button"
+              onClick={() => setPage("blog")}
+              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
+            >
+              <BookOpen size={13} />
+              <span>Blog</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setPage("docs")}
               className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
             >
@@ -679,30 +646,13 @@ export function WebApp() {
       </header>
 
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-12 sm:py-20 flex flex-col gap-16 sm:gap-24">
-        {blogPost ? (
-          <section>
-            <button
-              type="button"
-              onClick={() => setBlogPost(null)}
-              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all self-start mb-6"
-            >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-              <span>Back to blog</span>
-            </button>
-            <h1 className="text-22 font-bold text-text leading-snug mb-3" style={{ fontFamily: 'Syne, system-ui, sans-serif' }}>{blogPost.title}</h1>
-            <div className="flex items-center gap-4 text-12 text-subtext mb-8">
-              <span>{blogPost.date}</span>
-              <span>·</span>
-              <span>{blogPost.readTime}</span>
-              <div className="flex items-center gap-1.5">
-                {blogPost.tags.map((t) => (
-                  <span key={t} className="bg-card px-2 py-0.5 rounded-sm text-11 font-mono text-subtext">{t}</span>
-                ))}
-              </div>
-            </div>
-            <BlogContent post={blogPost} onBack={() => setBlogPost(null)} />
-          </section>
-        ) : page === "home" ? <HomePage goToDocs={() => setPage("docs")} stars={stars} onReadBlogPost={setBlogPost} /> : <DocsPage goHome={() => setPage("home")} />}
+        {page === "home" ? (
+          <HomePage goToDocs={() => setPage("docs")} stars={stars} />
+        ) : page === "docs" ? (
+          <DocsPage goHome={() => setPage("home")} />
+        ) : page === "blog" ? (
+          <BlogPage onBack={() => setPage("home")} />
+        ) : null}
 
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">
           <div className="w-[32px] h-px bg-border" />

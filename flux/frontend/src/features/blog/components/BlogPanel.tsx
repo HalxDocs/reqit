@@ -1,32 +1,20 @@
-import { useState } from "react";
-import { ArrowLeft, BookOpen, Clock, Tag, Calendar } from "lucide-react";
-import { BLOG_POSTS, type BlogPost } from "@/features/blog/blogData";
-import { cn } from "@/shared/lib/cn";
+import { useState, useMemo } from "react";
+import { ArrowLeft, BookOpen, Clock, Tag, Calendar, Search, Bookmark } from "lucide-react";
+import { BLOG_POSTS, CATEGORIES, type BlogPost } from "@/features/blog/blogData";
 
 function renderMarkdown(text: string): string {
   return text
-    // Bold
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-text">$1</strong>')
-    // Inline code
     .replace(/`([^`]+)`/g, '<code class="bg-card px-1.5 py-0.5 rounded-sm text-12 font-mono text-cyan">$1</code>')
-    // Links
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-cyan underline hover:brightness-110">$1</a>')
-    // Headers (##)
     .replace(/^## (.+)$/gm, '<h2 class="text-16 font-bold text-text mt-6 mb-2">$1</h2>')
-    // Bold list items with dash
     .replace(/^- \*\*(.+?)\*\*(.*)$/gm, '<li class="ml-4 text-13 text-text list-disc"><strong class="font-semibold">$1</strong>$2</li>')
-    // Regular list items with dash
     .replace(/^- (.+)$/gm, '<li class="ml-4 text-13 text-text list-disc">$1</li>')
-    // Numbered list items
     .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 text-13 text-text list-decimal">$1. $2</li>')
-    // Paragraphs (double newline)
     .replace(/\n\n/g, '</p><p class="text-13 text-subtext leading-relaxed mb-3">')
-    // Single newlines within paragraphs
     .replace(/\n/g, '<br />')
-    // Wrap in paragraph
     .replace(/^/, '<p class="text-13 text-subtext leading-relaxed mb-3">')
     .replace(/$/, "</p>")
-    // Clean up nested
     .replace(/<p class="[^"]*"><\/p>/g, "")
     .replace(/<br \/>\s*<\/p>/g, "</p>")
     .replace(/<p class="[^"]*">\s*<br \/>/g, '<p class="text-13 text-subtext leading-relaxed mb-3">');
@@ -43,7 +31,7 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
           className="flex items-center gap-1.5 text-12 text-subtext hover:text-text transition-colors"
         >
           <ArrowLeft size={14} />
-          <span>Back</span>
+          <span>Back to blog</span>
         </button>
       </div>
       <div className="flex-1 px-6 py-5 max-w-[720px]">
@@ -72,60 +60,178 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
   );
 }
 
-export function BlogPanel() {
+const CATEGORY_ICONS: Record<string, string> = {
+  "All": "⊞",
+  "Core Concepts": "◆",
+  "Testing & Automation": "⚡",
+  "Protocols & APIs": "⇄",
+  "Collaboration & Workflow": "◎",
+  "Developer Experience": "☆",
+  "Engineering": "⚙",
+  "Tutorials": "⊳",
+  "Philosophy": "◈",
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  "Core Concepts": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "Testing & Automation": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "Protocols & APIs": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "Collaboration & Workflow": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  "Developer Experience": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  "Engineering": "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  "Tutorials": "bg-violet-500/10 text-violet-400 border-violet-500/20",
+  "Philosophy": "bg-sky-500/10 text-sky-400 border-sky-500/20",
+};
+
+export function BlogPage({ onBack }: { onBack?: () => void }) {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    return BLOG_POSTS.filter((post) => {
+      if (activeCategory !== "All" && post.category !== activeCategory) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          post.title.toLowerCase().includes(q) ||
+          post.description.toLowerCase().includes(q) ||
+          post.tags.some((t) => t.toLowerCase().includes(q)) ||
+          post.category.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [activeCategory, searchQuery]);
 
   if (selectedPost) {
     return <BlogContent post={selectedPost} onBack={() => setSelectedPost(null)} />;
   }
 
+  const categoryCounts: Record<string, number> = {};
+  BLOG_POSTS.forEach((p) => {
+    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+  });
+
   return (
     <div className="h-full flex flex-col bg-bg">
-      <div className="shrink-0 px-6 py-4 border-b border-border">
-        <div className="flex items-center gap-2.5">
-          <div className="w-[28px] h-[28px] rounded-lg bg-cyan/10 flex items-center justify-center">
-            <BookOpen size={14} className="text-cyan" />
+      <div className="shrink-0 px-6 py-5 border-b border-border">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center">
+              <BookOpen size={15} className="text-cyan" />
+            </div>
+            <div>
+              <h1 className="text-16 font-bold text-text">Blog & Guides</h1>
+              <p className="text-11 text-subtext">Feature explainers, tutorials, and engineering deep-dives</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-14 font-bold text-text">Blog</h1>
-            <p className="text-11 text-subtext">Stories, guides, and engineering deep-dives</p>
-          </div>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all"
+            >
+              <ArrowLeft size={13} />
+              <span>Back</span>
+            </button>
+          )}
+        </div>
+
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext/50 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search posts by title, description, or tag..."
+            className="w-full h-[36px] pl-9 pr-3 bg-card border border-border rounded-lg text-12 text-text placeholder:text-subtext/30 outline-none focus:border-cyan/50 transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {CATEGORIES.map((cat) => {
+            const count = cat === "All" ? BLOG_POSTS.length : (categoryCounts[cat] || 0);
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 flex items-center gap-1.5 h-[28px] px-3 text-11 font-semibold rounded-full border transition-all ${
+                  activeCategory === cat
+                    ? "bg-cyan/10 text-cyan border-cyan/30"
+                    : "bg-card text-subtext border-border hover:border-cyan/30 hover:text-text"
+                }`}
+              >
+                <span className="text-[10px]">{CATEGORY_ICONS[cat] || "⊞"}</span>
+                <span>{cat}</span>
+                <span className={`text-10 font-mono ml-0.5 ${activeCategory === cat ? "text-cyan/60" : "text-subtext/40"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="flex flex-col gap-3 max-w-[640px]">
-          {BLOG_POSTS.map((post) => (
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Search size={28} className="text-subtext/20 mb-3" />
+            <p className="text-13 text-subtext">No posts match your search</p>
             <button
-              key={post.slug}
               type="button"
-              onClick={() => setSelectedPost(post)}
-              className="text-left bg-surface border border-border rounded-xl p-4 hover:border-cyan/30 hover:bg-cardHover transition-all group"
+              onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+              className="mt-2 text-12 text-cyan hover:underline"
             >
-              <h2 className="text-14 font-semibold text-text group-hover:text-cyan transition-colors mb-1.5">
-                {post.title}
-              </h2>
-              <p className="text-12 text-subtext leading-relaxed mb-3">{post.description}</p>
-              <div className="flex items-center gap-3 text-11 text-subtext">
-                <span className="flex items-center gap-1">
-                  <Calendar size={10} />
-                  {post.date}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={10} />
-                  {post.readTime}
-                </span>
-                <div className="flex gap-1.5 ml-auto">
-                  {post.tags.map((t) => (
-                    <span key={t} className="bg-card px-2 py-0.5 rounded-sm text-10 font-mono text-tertiary">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              Clear filters
             </button>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {filtered.map((post) => (
+              <button
+                key={post.slug}
+                type="button"
+                onClick={() => setSelectedPost(post)}
+                className="text-left bg-card border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CATEGORY_COLORS[post.category] || "bg-card text-subtext border-border"}`}>
+                    <Bookmark size={8} />
+                    {post.category}
+                  </span>
+                </div>
+                <h2 className="text-13 font-semibold text-text group-hover:text-cyan transition-colors leading-snug">
+                  {post.title}
+                </h2>
+                <p className="text-11 text-subtext leading-relaxed flex-1 line-clamp-3">
+                  {post.description}
+                </p>
+                <div className="flex items-center gap-2.5 text-10 text-subtext/60 mt-auto">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={9} />
+                    {post.date}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={9} />
+                    {post.readTime}
+                  </span>
+                  <div className="flex gap-1 ml-auto">
+                    {post.tags.slice(0, 2).map((t) => (
+                      <span key={t} className="bg-surface px-1.5 py-0.5 rounded-sm text-9 font-mono text-tertiary">
+                        {t}
+                      </span>
+                    ))}
+                    {post.tags.length > 2 && (
+                      <span className="text-9 text-subtext/40">+{post.tags.length - 2}</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

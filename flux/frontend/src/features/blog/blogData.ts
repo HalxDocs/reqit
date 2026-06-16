@@ -5,8 +5,21 @@ export interface BlogPost {
   date: string;
   readTime: string;
   tags: string[];
+  category: string;
   content: string;
 }
+
+export const CATEGORIES = [
+  "All",
+  "Core Concepts",
+  "Testing & Automation",
+  "Protocols & APIs",
+  "Collaboration & Workflow",
+  "Developer Experience",
+  "Engineering",
+  "Tutorials",
+  "Philosophy",
+] as const;
 
 export const BLOG_POSTS: BlogPost[] = [
   {
@@ -16,6 +29,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: "2026-06-10",
     readTime: "4 min read",
     tags: ["tutorial", "import", "postman"],
+    category: "Tutorials",
     content: `Every time I open Postman on my work laptop it takes 8 seconds to load, asks me to log in, and reminds me I've used 3 of 5 free team collections. My team had 47 collections spread across 6 workspace accounts. We were paying $12/month per person for something that should be a file on disk.
 
 I spent an afternoon migrating everything to reqit. The import took 30 seconds. The whole team switched in a day.
@@ -63,6 +77,7 @@ Our team went from 6 Postman workspace accounts to a single Git repository. Coll
     date: "2026-06-08",
     readTime: "5 min read",
     tags: ["engineering", "gitops", "architecture"],
+    category: "Engineering",
     content: `Every API client I have used stores collections in a database. Postman stores them in a cloud DB. Insomnia stores them in a local DB. Bruno stores them as files.
 
 Reqit stores them as plain JSON files in a .reqit/ directory inside your project. This decision drives everything else in the product.
@@ -110,6 +125,7 @@ Two developers editing the same request at the same time get a merge conflict, j
     date: "2026-06-05",
     readTime: "4 min read",
     tags: ["philosophy", "privacy", "engineering"],
+    category: "Philosophy",
     content: `Postman's installer is 340MB. It takes 5-10 seconds to cold start on a 2022 laptop. It requires an account and phones home on every launch.
 
 Reqit's installer is under 20MB. It starts in under 400ms. It requires nothing but a download.
@@ -153,6 +169,7 @@ No usage analytics. We rely on GitHub issues, Discord, and direct feedback.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "collections", "beginner"],
+    category: "Core Concepts",
     content: `Imagine you have a desk covered in papers. Some are for shopping. Some are for school. Some are for your games. When you put each group of papers into its own folder, your desk becomes clean and you can find anything fast.
 
 **Collections in reqit work exactly like those folders.**
@@ -203,6 +220,7 @@ When your API grows from 5 requests to 50, you need organization. Collections ar
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "http", "beginner"],
+    category: "Core Concepts",
     content: `Imagine you want to ask your friend for a recipe. You write a letter, put it in an envelope, write their address, and drop it in a mailbox. Your friend gets it, reads it, writes the recipe on a new piece of paper, and mails it back.
 
 **An HTTP request is exactly that — a letter from your computer to another computer.**
@@ -244,6 +262,7 @@ That is it. An API is just a bunch of these letter exchanges, and reqit is the p
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "environments", "beginner"],
+    category: "Core Concepts",
     content: `Imagine you have a coloring book page with a house, a tree, and a sun. You color it with your crayons. Now your friend wants to color the same page with different colors. You do not need a new book — you just use different crayons.
 
 **Environments are those crayons for your API requests.**
@@ -290,6 +309,7 @@ You write your request once. You test it everywhere. You never accidentally send
     date: "2026-06-15",
     readTime: "4 min read",
     tags: ["explainer", "auth", "security"],
+    category: "Core Concepts",
     content: `Imagine you walk into a building with a security guard. The guard asks "who are you?" You show your ID card. The guard checks it and lets you in.
 
 **Authentication in APIs is the same thing.** Your request needs to prove who it is before the server lets it in. The ID card for APIs is called an **auth token** or **API key**.
@@ -341,6 +361,7 @@ Instead of remembering all these different ID card types, reqit has an **Auth ta
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "mock", "testing"],
+    category: "Testing & Automation",
     content: `When you were a kid, you probably played "pretend". You pretended to be a chef, a teacher, or a superhero. You did not need real tools — your imagination was enough.
 
 **A mock server is pretend for your API.**
@@ -383,6 +404,7 @@ Without a mock server, frontend developers either wait for the backend to be rea
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "runner", "testing"],
+    category: "Testing & Automation",
     content: `Imagine you own a toy factory with 100 different toys. Every morning, you need to check that every toy works. Picking up each one and testing it by hand takes hours. Now imagine a robot that tests all 100 toys in seconds and hands you a list of the broken ones.
 
 **A collection runner is that robot for your API requests.**
@@ -428,6 +450,7 @@ A runner turns your collection from a list of requests into a test suite. You ar
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "git", "collaboration"],
+    category: "Collaboration & Workflow",
     content: `Have you ever saved a game, made a mistake, and loaded your old save to fix it? That is what Git does for your files. It is like a time machine for your work.
 
 **Reqit stores collections as plain JSON files.** This is a big deal because it means you can put them in Git — the same tool developers use for code.
@@ -472,6 +495,7 @@ Reqit stores collections as files. Files go in Git. Git is a time machine. You n
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "websocket", "realtime"],
+    category: "Protocols & APIs",
     content: `With regular HTTP (letters), you send a request and get a response. Conversation over. If you want more data, you send another letter.
 
 **WebSocket is different.** You open a connection (dial the phone), and both sides can talk anytime. The server does not have to wait for you to ask — it can send data whenever it wants.
@@ -516,6 +540,7 @@ Modern apps are real-time. Chat, live notifications, collaborative editing, live
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "graphql", "api"],
+    category: "Protocols & APIs",
     content: `Imagine you go to a restaurant and order "the full meal." The waiter brings you soup, salad, steak, fries, dessert, and a drink. But you only wanted the steak and fries. You have to eat through everything to get to what you need. And you pay for everything.
 
 **That is how REST APIs work.** You ask for a user, and the API returns the user's name, email, address, phone number, profile picture, friends list, settings, and 50 other fields. But your screen only needs the name.
@@ -570,6 +595,7 @@ Mobile apps love GraphQL because less data means faster load times. Frontend tea
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "scripts", "automation"],
+    category: "Core Concepts",
     content: `Imagine you are filling out a form at the doctor's office. Before you see the doctor, a nurse takes your temperature and writes it down. After you see the doctor, another nurse checks your blood pressure.
 
 **Scripting in reqit works the same way.** You can run code **before** a request and **after** a request.
@@ -616,6 +642,7 @@ In the Scripts tab of any request, you write JavaScript that runs before and aft
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "workspaces", "organization"],
+    category: "Collaboration & Workflow",
     content: `If you work on multiple projects, you know the pain of mixed-up papers. A request for the shopping app is next to a request for the weather app. Environments for one project leak into another. The cookie from the login page of one app messes up the other.
 
 **Workspaces are the solution.** Each workspace is a completely separate world with its own collections, environments, history, and cookies.
@@ -670,6 +697,7 @@ Think of reqit as a desk organizer. Each workspace is a drawer. Open one drawer,
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "import", "export"],
+    category: "Collaboration & Workflow",
     content: `When you were a kid and got a new toy box, you probably dumped all your toys from the old box into the new one. You did not want to lose your favorite action figure or building blocks.
 
 **Import and export do the same thing for your API collections.**
@@ -716,6 +744,7 @@ Reqlet does not lock you in. Your data comes in, your data goes out. You own it.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "contract-testing", "testing"],
+    category: "Testing & Automation",
     content: `If your friend says "I will meet you at the park at 3pm," you expect them to be at the park at 3pm. If they show up at 5pm or at the library instead, the promise is broken.
 
 **An API spec (OpenAPI) is a promise.** It says: "If you call GET /users, you will get back a list of users with names and emails." Contract testing checks that the API actually keeps its promise.
@@ -765,6 +794,7 @@ APIs change. Teams make mistakes. Documentation goes out of date. Contract testi
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "history", "beginner"],
+    category: "Developer Experience",
     content: `Have you ever said "I did that thing last week but I cannot remember how"? It happens to everyone. Your brain is not a computer — it forgets things.
 
 **History is your memory for API requests.** Every request you send in reqit is automatically saved to the history list. You can go back days, weeks, or months and see exactly what you sent.
@@ -807,6 +837,7 @@ History is automatic. You do not have to remember to save. You do not have to or
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "codegen", "developer-experience"],
+    category: "Developer Experience",
     content: `Imagine you just figured out the perfect way to call an API. The URL is right, the headers are correct, the body is perfect. Now you need to write code that does the same thing in your app.
 
 You open a new file and start typing. You check the URL 3 times. You forget one header. You get the JSON body wrong. You spend 10 minutes debugging.
@@ -849,6 +880,7 @@ You tested the request in reqit. You know it works. The generated code is guaran
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "shortcuts", "productivity"],
+    category: "Developer Experience",
     content: `Imagine you are playing a video game. Every time you want to jump, you have to click a button on the screen with your mouse. That would be slow and frustrating. Real games let you press a key — W, A, S, D, Space — and things happen instantly.
 
 **Reqit gives you the same power.** Instead of clicking buttons on the screen, you press keys on your keyboard and things happen instantly.
@@ -891,6 +923,7 @@ Every time you take your hand off the keyboard to use the mouse, you lose moment
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "grpc", "protocol"],
+    category: "Protocols & APIs",
     content: `Imagine you need to send a package across town. You can use a regular mail truck that stops at every house — or you can use a courier on a motorcycle that goes directly to the destination, fast.
 
 **gRPC is the motorcycle courier.** It is a way for computers to talk to each other that is much faster and more efficient than regular HTTP.
@@ -941,6 +974,7 @@ Reqit supports both, so you can use the right tool for each job.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "api-design", "openapi"],
+    category: "Developer Experience",
     content: `Before an architect builds a house, they draw a blueprint. The blueprint shows where every room goes, where the doors are, where the windows are. The builders follow the blueprint so they know exactly what to build.
 
 **The API Designer is a blueprint for your API.** You describe every endpoint, every parameter, every response — and then your backend team builds the API to match the blueprint.
@@ -991,6 +1025,7 @@ If you already have an OpenAPI spec (from Swagger Editor, Stoplight, or any othe
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "cookies", "beginner"],
+    category: "Core Concepts",
     content: `When you visit a website for the first time, the server might give you a cookie. Not a real cookie — a small piece of data that says "this visitor is Alice." The next time you visit, your browser shows the cookie and the server remembers you.
 
 **Cookies are how servers remember who you are between requests.** Without cookies, you would have to log in on every single page.
@@ -1033,6 +1068,7 @@ Many APIs use cookies for authentication and session management. Without a cooki
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "load-testing", "performance"],
+    category: "Testing & Automation",
     content: `Imagine you own a ice cream shop. On a normal day, 10 customers come in. Your one server can handle them easily. But on a hot summer day, 100 people show up at once. Will your shop handle it?
 
 **Load testing is simulating 100 customers to find out before the hot day arrives.**
@@ -1081,6 +1117,7 @@ You do not need to set up a separate tool like k6 or JMeter. You do not need to 
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "privacy", "philosophy"],
+    category: "Developer Experience",
     content: `Imagine a toy that reports everything you do with it back to the toy company. "You pressed button A 5 times. You played with it for 3 hours. You live in this city." That is telemetry, and many apps do it without asking.
 
 **Reqit does the opposite.** Telemetry is completely turned off by default. If you want to help us improve reqit, you can turn it on in Settings. And even then, we show you exactly what data would be sent.

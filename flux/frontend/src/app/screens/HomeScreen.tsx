@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
@@ -29,9 +29,8 @@ import {
   Search01Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
-import { BookOpen, Trash2, ArrowLeft, Calendar, Clock, Tag } from "lucide-react";
-import { BLOG_POSTS, type BlogPost } from "@/features/blog/blogData";
-import { BlogContent } from "@/features/blog/components/BlogPanel";
+import { BookOpen, Trash2 } from "lucide-react";
+import { BlogPage } from "@/features/blog/components/BlogPanel";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 
@@ -421,7 +420,7 @@ function WorkspaceCard({
   );
 }
 
-type View = "landing" | "workspaces" | "docs";
+type View = "landing" | "workspaces" | "docs" | "blog";
 
 export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const workspaceList = useWorkspaceStore((s) => s.workspaces);
@@ -433,12 +432,8 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const [view, setView] = useState<View>("landing");
   const [createOpen, setCreateOpen] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
-  const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
 
   const mainRef = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    if (blogPost && mainRef.current) mainRef.current.scrollTop = 0;
-  }, [blogPost]);
 
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);
@@ -478,7 +473,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
       {/* Top bar */}
       <header className="h-[56px] px-4 sm:px-6 flex items-center justify-between border-b border-border shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
-          {(view === "workspaces" || view === "docs") && (
+          {(view === "workspaces" || view === "docs" || view === "blog") && (
             <button
               type="button"
               onClick={() => setView("landing")}
@@ -503,6 +498,14 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
             <span className="font-mono text-11 min-w-[24px] text-center">
               {stars === null ? "—" : fmtStars(stars)}
             </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("blog")}
+            className="hidden sm:flex items-center gap-2 h-[32px] px-3 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
+          >
+            <BookOpen size={13} />
+            <span>Blog</span>
           </button>
           <button
             type="button"
@@ -534,43 +537,11 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto" ref={mainRef as React.RefObject<HTMLDivElement>}>
-        {blogPost ? (
-          <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8">
-            <button
-              type="button"
-              onClick={() => setBlogPost(null)}
-              className="flex items-center gap-1.5 text-12 text-subtext hover:text-text transition-colors mb-6"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to blog</span>
-            </button>
-            <h1 className="text-22 font-bold text-text leading-snug mb-3">{blogPost.title}</h1>
-            <div className="flex items-center gap-4 text-12 text-subtext mb-8">
-              <span className="flex items-center gap-1.5">
-                <Calendar size={12} />
-                {blogPost.date}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock size={12} />
-                {blogPost.readTime}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <Tag size={12} />
-                {blogPost.tags.map((t) => (
-                  <span key={t} className="bg-card px-2 py-0.5 rounded-sm text-11 font-mono text-subtext">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <BlogContent post={blogPost} onBack={() => setBlogPost(null)} />
-          </div>
-        ) : view === "landing" ? (
+        {view === "landing" ? (
           <LandingView
             onGoToWorkspaces={() => setView("workspaces")}
             onGoDocs={() => setView("docs")}
             stars={stars}
-            onReadBlogPost={setBlogPost}
           />
         ) : view === "workspaces" ? (
           <WorkspacesView
@@ -582,6 +553,8 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
           />
         ) : view === "docs" ? (
           <DocsView />
+        ) : view === "blog" ? (
+          <BlogPage onBack={() => setView("landing")} />
         ) : null}
       </main>
 
@@ -606,12 +579,10 @@ function LandingView({
   onGoToWorkspaces,
   onGoDocs,
   stars,
-  onReadBlogPost,
 }: {
   onGoToWorkspaces: () => void;
   onGoDocs: () => void;
   stars: number | null;
-  onReadBlogPost: (post: BlogPost) => void;
 }) {
   return (
     <div className="max-w-[860px] mx-auto px-4 sm:px-6 py-10 sm:py-14 flex flex-col gap-12 sm:gap-16">
@@ -766,40 +737,7 @@ function LandingView({
         </div>
       </section>
 
-      {/* Blog */}
-      <section className="flex flex-col gap-4 sm:gap-5">
-        <div className="flex items-center gap-2">
-          <BookOpen size={14} className="text-subtext" />
-          <p className="text-[10px] font-semibold text-subtext uppercase tracking-[0.14em]">
-            Latest from the blog
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {BLOG_POSTS.map((post) => (
-            <button
-              key={post.slug}
-              type="button"
-              onClick={() => onReadBlogPost(post)}
-              className="text-left bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-2 text-11 text-subtext">
-                <span>{post.date}</span>
-                <span>·</span>
-                <span>{post.readTime}</span>
-              </div>
-              <h3 className="text-13 font-bold text-text leading-snug">{post.title}</h3>
-              <p className="text-12 text-subtext leading-relaxed flex-1">{post.description}</p>
-              <div className="flex items-center gap-1.5 mt-auto">
-                {post.tags.map((t) => (
-                  <span key={t} className="px-2 py-0.5 bg-surface border border-border rounded-sm text-10 font-mono text-subtext">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+
 
       {/* Footer */}
       <footer className="flex flex-col items-center gap-2 pt-2 pb-4">
