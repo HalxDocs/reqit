@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
@@ -435,6 +435,11 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const [switching, setSwitching] = useState<string | null>(null);
   const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
 
+  const mainRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (blogPost && mainRef.current) mainRef.current.scrollTop = 0;
+  }, [blogPost]);
+
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);
     if (!ws) return;
@@ -528,7 +533,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" ref={mainRef as React.RefObject<HTMLDivElement>}>
         {blogPost ? (
           <div className="max-w-[720px] mx-auto px-4 sm:px-6 py-8">
             <button

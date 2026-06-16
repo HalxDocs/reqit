@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CodeIcon,
@@ -634,6 +634,10 @@ function DocsPage({ goHome }: { goHome: () => void }) {
 export function WebApp() {
   const [page, setPage] = useState<"home" | "docs">("home");
   const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (blogPost) window.scrollTo(0, 0);
+  }, [blogPost]);
   const stars = useGitHubStars("HalxDocs/reqit");
 
   return (

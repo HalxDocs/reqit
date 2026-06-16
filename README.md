@@ -11,6 +11,7 @@
   <a href="#"><img src="https://img.shields.io/badge/telemetry-zero-6B7280?style=flat-square" alt="Zero telemetry" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5B9CF6?style=flat-square" alt="MIT License" /></a>
   <a href="https://github.com/HalxDocs/reqit/stargazers"><img src="https://img.shields.io/github/stars/HalxDocs/reqit?style=flat-square&label=stars" alt="GitHub Stars" /></a>
+  <a href="https://github.com/HalxDocs/reqit/releases/latest"><img src="https://img.shields.io/github/downloads/HalxDocs/reqit/total?style=flat-square&label=downloads" alt="GitHub Downloads" /></a>
 </p>
 
 <p align="center">
