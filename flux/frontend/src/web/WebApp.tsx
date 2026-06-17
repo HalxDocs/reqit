@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { BookOpen } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -595,63 +595,91 @@ function DocsPage({ goHome }: { goHome: () => void }) {
   );
 }
 
+const PAGES = [
+  { id: "home" as const, label: "Home", icon: "⊞", path: "/" },
+  { id: "blog" as const, label: "Blog", icon: "✎", path: "/blog" },
+  { id: "docs" as const, label: "Documentation", icon: "⊡", path: "/documentation" },
+];
+
+function pageFromPath(): "home" | "docs" | "blog" {
+  const p = window.location.pathname;
+  if (p === "/blog" || p === "/blog/") return "blog";
+  if (p === "/documentation" || p === "/documentation/") return "docs";
+  return "home";
+}
+
 export function WebApp() {
-  const [page, setPage] = useState<"home" | "docs" | "blog">("home");
+  const [page, setPage] = useState<"home" | "docs" | "blog">(pageFromPath);
   const stars = useGitHubStars("HalxDocs/reqit");
+
+  const navigate = useCallback((to: "home" | "docs" | "blog") => {
+    setPage(to);
+    const entry = PAGES.find((p) => p.id === to);
+    if (entry) window.history.pushState({ page: to }, "", entry.path);
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => setPage(pageFromPath());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-[56px] flex items-center justify-between">
           <img src={reqitLogo} alt="reqit" className="h-[28px] sm:h-[32px] w-auto object-contain" />
-          <div className="flex items-center gap-2">
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
-            >
-              <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-              <span className="font-mono text-11 min-w-[22px] text-center tabular-nums">
-                {stars === null ? "—" : fmtStars(stars)}
-              </span>
-            </a>
-            <button
-              type="button"
-              onClick={() => setPage("blog")}
-              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
-            >
-              <BookOpen size={13} />
-              <span>Blog</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage("docs")}
-              className="hidden sm:flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all"
-            >
-              <HugeiconsIcon icon={Book01Icon} size={13} color="currentColor" />
-              <span>Docs</span>
-            </button>
-            <button
-              type="button"
-              onClick={download}
-              className="hidden sm:flex items-center gap-1.5 h-[32px] px-4 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-lg transition-colors"
-            >
-              <HugeiconsIcon icon={Download02Icon} size={13} color="currentColor" />
-              <span>Download</span>
-            </button>
-          </div>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all shrink-0"
+          >
+            <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+            <span className="font-mono text-11 min-w-[22px] text-center tabular-nums">
+              {stars === null ? "—" : fmtStars(stars)}
+            </span>
+          </a>
         </div>
       </header>
 
+      <div className="sticky top-[56px] z-30 bg-bg border-b border-border">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-[46px] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          {PAGES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => navigate(p.id)}
+              className={`shrink-0 flex items-center gap-1.5 h-[30px] px-3 text-12 font-semibold rounded-full border transition-all ${
+                page === p.id
+                  ? "bg-cyan/10 text-cyan border-cyan/30"
+                  : "text-subtext border-border hover:border-cyan/30 hover:text-text"
+              }`}
+            >
+              <span className="text-[10px]">{p.icon}</span>
+              <span>{p.label}</span>
+            </button>
+          ))}
+          <div className="flex-1 min-w-[8px]" />
+          <button
+            type="button"
+            onClick={download}
+            className="shrink-0 flex items-center gap-1.5 h-[30px] px-3.5 text-12 font-bold text-white bg-cyan hover:bg-cyan-hover rounded-full transition-all"
+          >
+            <HugeiconsIcon icon={Download02Icon} size={12} color="currentColor" />
+            <span>Download</span>
+          </button>
+        </div>
+      </div>
+
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-12 sm:py-20 flex flex-col gap-16 sm:gap-24">
         {page === "home" ? (
-          <HomePage goToDocs={() => setPage("docs")} stars={stars} />
+          <HomePage goToDocs={() => navigate("docs")} stars={stars} />
         ) : page === "docs" ? (
-          <DocsPage goHome={() => setPage("home")} />
+          <DocsPage goHome={() => navigate("home")} />
         ) : page === "blog" ? (
-          <BlogPage onBack={() => setPage("home")} />
+          <BlogPage onBack={() => navigate("home")} />
         ) : null}
 
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">
