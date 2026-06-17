@@ -601,28 +601,51 @@ const PAGES = [
   { id: "docs" as const, label: "Documentation", icon: "⊡", path: "/documentation" },
 ];
 
-function pageFromPath(): "home" | "docs" | "blog" {
+function parsePage(): { page: "home" | "docs" | "blog"; blogSlug?: string } {
   const p = window.location.pathname;
-  if (p === "/blog" || p === "/blog/") return "blog";
-  if (p === "/documentation" || p === "/documentation/") return "docs";
-  return "home";
+  const blogMatch = p.match(/^\/blog\/(.+)$/);
+  if (blogMatch) return { page: "blog", blogSlug: blogMatch[1] };
+  if (p === "/blog" || p === "/blog/") return { page: "blog" };
+  if (p === "/documentation" || p === "/documentation/") return { page: "docs" };
+  return { page: "home" };
 }
 
 export function WebApp() {
-  const [page, setPage] = useState<"home" | "docs" | "blog">(pageFromPath);
+  const init = parsePage();
+  const [page, setPage] = useState<"home" | "docs" | "blog">(init.page);
+  const [blogSlug, setBlogSlug] = useState<string | undefined>(init.blogSlug);
   const stars = useGitHubStars("HalxDocs/reqit");
 
-  const navigate = useCallback((to: "home" | "docs" | "blog") => {
-    setPage(to);
-    const entry = PAGES.find((p) => p.id === to);
-    if (entry) window.history.pushState({ page: to }, "", entry.path);
+  const navigate = useCallback((to: "home" | "docs" | "blog", slug?: string) => {
+    setBlogSlug(slug);
+    if (to === "home") {
+      setPage("home");
+      window.history.pushState({}, "", "/");
+    } else if (to === "docs") {
+      setPage("docs");
+      window.history.pushState({}, "", "/documentation");
+    } else if (to === "blog" && slug) {
+      setPage("blog");
+      window.history.pushState({}, "", `/blog/${slug}`);
+    } else {
+      setPage("blog");
+      window.history.pushState({}, "", "/blog");
+    }
   }, []);
 
   useEffect(() => {
-    const onPop = () => setPage(pageFromPath());
+    const onPop = () => {
+      const parsed = parsePage();
+      setPage(parsed.page);
+      setBlogSlug(parsed.blogSlug);
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  const handleSelectPost = useCallback((slug: string) => {
+    navigate("blog", slug);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -652,7 +675,7 @@ export function WebApp() {
               type="button"
               onClick={() => navigate(p.id)}
               className={`shrink-0 flex items-center gap-1.5 h-[30px] px-3 text-12 font-semibold rounded-full border transition-all ${
-                page === p.id
+                (page === p.id) && (p.id !== "blog" || !blogSlug)
                   ? "bg-cyan/10 text-cyan border-cyan/30"
                   : "text-subtext border-border hover:border-cyan/30 hover:text-text"
               }`}
@@ -679,7 +702,7 @@ export function WebApp() {
         ) : page === "docs" ? (
           <DocsPage goHome={() => navigate("home")} />
         ) : page === "blog" ? (
-          <BlogPage onBack={() => navigate("home")} />
+          <BlogPage key={blogSlug || "listing"} initialSlug={blogSlug} onBack={() => navigate("home")} onSelectPost={handleSelectPost} />
         ) : null}
 
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">

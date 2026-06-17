@@ -11,14 +11,12 @@ export interface BlogPost {
 
 export const CATEGORIES = [
   "All",
+  "API Fundamentals",
   "Core Concepts",
   "Testing & Automation",
   "Protocols & APIs",
   "Collaboration & Workflow",
   "Developer Experience",
-  "Engineering",
-  "Tutorials",
-  "Philosophy",
 ] as const;
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -29,7 +27,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: "2026-06-10",
     readTime: "4 min read",
     tags: ["tutorial", "import", "postman"],
-    category: "Tutorials",
+    category: "Developer Experience",
     content: `Every time I open Postman on my work laptop it takes 8 seconds to load, asks me to log in, and reminds me I've used 3 of 5 free team collections. My team had 47 collections spread across 6 workspace accounts. We were paying $12/month per person for something that should be a file on disk.
 
 I spent an afternoon migrating everything to reqit. The import took 30 seconds. The whole team switched in a day.
@@ -77,7 +75,7 @@ Our team went from 6 Postman workspace accounts to a single Git repository. Coll
     date: "2026-06-08",
     readTime: "5 min read",
     tags: ["engineering", "gitops", "architecture"],
-    category: "Engineering",
+    category: "Collaboration & Workflow",
     content: `Every API client I have used stores collections in a database. Postman stores them in a cloud DB. Insomnia stores them in a local DB. Bruno stores them as files.
 
 Reqit stores them as plain JSON files in a .reqit/ directory inside your project. This decision drives everything else in the product.
@@ -125,7 +123,7 @@ Two developers editing the same request at the same time get a merge conflict, j
     date: "2026-06-05",
     readTime: "4 min read",
     tags: ["philosophy", "privacy", "engineering"],
-    category: "Philosophy",
+    category: "Developer Experience",
     content: `Postman's installer is 340MB. It takes 5-10 seconds to cold start on a 2022 laptop. It requires an account and phones home on every launch.
 
 Reqit's installer is under 20MB. It starts in under 400ms. It requires nothing but a download.
@@ -1411,6 +1409,315 @@ If he accidentally commits the environment file again, it contains only variable
 ## What the Vault is not
 
 The Vault is not a cloud service. Your secrets never leave your computer. It is not a replacement for a proper secrets manager in production (like HashiCorp Vault or AWS Secrets Manager). It is for local development — keeping secrets out of your Git history and off your screen.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-what-is-an-api",
+    title: "What is an API? A waiter between your app and the kitchen",
+    description: "Every time your phone shows weather, sends a message, or loads a feed, it talks to an API. This is what an API is and how it works.",
+    date: "2026-06-17",
+    readTime: "4 min read",
+    tags: ["explainer", "api", "fundamentals", "beginner"],
+    category: "API Fundamentals",
+    content: `Imagine you are sitting in a restaurant. You look at the menu, decide what you want, and tell the waiter. The waiter goes to the kitchen, tells the chef, and comes back with your food. You never go into the kitchen yourself. The waiter is the bridge between you and the kitchen.
+
+**An API is that waiter.** It stands between your app (the customer) and a server (the kitchen). Your app sends a request (places an order), and the API delivers a response (brings the food). You do not need to know how the kitchen works. You just need to know how to order from the menu.
+
+## A real-life example
+
+Open your weather app. It shows the temperature, humidity, and forecast. Where does that data come from?
+
+Your weather app sends a request to a weather API: "Give me the weather for Lagos." The API checks its database, finds the current weather, and sends it back. Your app displays it. You see the temperature.
+
+You never connected to the weather database directly. You never wrote SQL queries. You just asked the API, and the API handled everything else.
+
+## How APIs talk: HTTP
+
+Most APIs on the internet speak a language called **HTTP**. When your app sends an HTTP request, it has four parts:
+
+1. **URL** — the address of the thing you want (like \`https://api.weather.com/weather/lagos\`)
+2. **Method** — what you want to do (GET means "read", POST means "create")
+3. **Headers** — extra information (like "send the response in JSON format")
+4. **Body** — data you are sending (only for creating or updating)
+
+The server sends back a **response** with:
+
+1. **Status code** — a number that tells you if it worked (200 = OK, 404 = not found, 500 = server error)
+2. **Body** — the actual data, usually in JSON format
+3. **Headers** — extra information about the response
+
+## Methods — the verbs of APIs
+
+| Method | What it does | Real-life equivalent |
+|--------|-------------|---------------------|
+| **GET** | Read data | Looking at the menu |
+| **POST** | Create new data | Placing a new order |
+| **PUT** | Replace everything | Changing your entire order |
+| **PATCH** | Update one part | Adding extra cheese to your order |
+| **DELETE** | Remove data | Cancelling your order |
+
+## Status codes — the kitchen's reply
+
+| Code | Meaning | Real-life equivalent |
+|------|---------|---------------------|
+| **200** | OK, here is your data | "Here is your food" |
+| **201** | Created successfully | "Your order has been placed" |
+| **400** | Bad request — you made a mistake | "We do not have that item on the menu" |
+| **401** | Unauthorized — who are you? | "I need to see your ID first" |
+| **404** | Not found | "That item is not on the menu" |
+| **500** | Server error — something broke | "The kitchen is on fire" |
+
+## JSON — the language APIs use
+
+When an API responds, it usually sends data in a format called **JSON**. It looks like this:
+
+\`\`\`json
+{
+  "city": "Lagos",
+  "temperature": 32,
+  "humidity": 78,
+  "forecast": "Sunny"
+}
+\`\`\`
+
+This is text that both humans and computers can read easily.
+
+## Summary
+
+An API is just a waiter. Your app tells it what it wants, the API talks to the server, and brings back the result. Every app you use — Instagram, Twitter, WhatsApp, your banking app — talks to APIs all day long. Understanding APIs means understanding how the modern internet works.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-http-methods",
+    title: "HTTP Methods Explained: GET, POST, PUT, PATCH, DELETE",
+    description: "Each HTTP method is a different verb for a different action. This guide covers every method with real-world examples.",
+    date: "2026-06-17",
+    readTime: "4 min read",
+    tags: ["explainer", "http", "methods", "rest"],
+    category: "API Fundamentals",
+    content: `If you speak to an API, you need to use the right verb. Saying "give me the menu" is different from saying "here is my order." HTTP methods are those verbs.
+
+**Each HTTP method tells the server what you want to do with the data.** There are five main methods you will use every day.
+
+## GET — "Show me something"
+
+GET is the most common method. You use it whenever you want to read data without changing anything.
+
+**Real life:** You walk into a library and ask "Do you have 'The Great Gatsby'?" The librarian checks and says yes or no. Nothing changes. You just asked.
+
+**API example:**
+\`\`\`
+GET /api/books
+→ Returns a list of all books
+\`\`\`
+
+\`\`\`
+GET /api/books/42
+→ Returns the book with ID 42
+\`\`\`
+
+**Rule:** GET never changes data. It only reads.
+
+## POST — "Create something new"
+
+POST tells the server to add a new item. It is like saying "here is a new book, please add it to the collection."
+
+**Real life:** You go to the library counter and say "I wrote a new book. Please add it to the catalog." The librarian creates a new entry.
+
+**API example:**
+\`\`\`
+POST /api/books
+Body: { "title": "My New Book", "author": "Alice" }
+→ Returns 201 Created with the new book's ID
+\`\`\`
+
+**Rule:** POST creates new data. The server assigns an ID.
+
+## PUT — "Replace everything"
+
+PUT replaces an entire item. If the item exists, it overwrites it. If it does not exist, it creates it.
+
+**Real life:** You borrowed a book and lost it. You buy a replacement copy and tell the librarian "replace the old entry with this new copy." The old entry is completely replaced.
+
+**API example:**
+\`\`\`
+PUT /api/books/42
+Body: { "title": "Completely New Title", "author": "Bob" }
+→ Replaces everything about book 42
+\`\`\`
+
+**Rule:** PUT replaces the whole resource. If you forget to include a field, it gets removed.
+
+## PATCH — "Update one part"
+
+PATCH is like PUT but you only send the fields you want to change. Everything else stays the same.
+
+**Real life:** You moved to a new address. You tell the library "please update just my address." Your name, phone number, and membership remain unchanged.
+
+**API example:**
+\`\`\`
+PATCH /api/books/42
+Body: { "title": "New Title Only" }
+→ Only the title changes. Author and other fields stay.
+\`\`\`
+
+**Rule:** PATCH is for partial updates. Send only what changed.
+
+## DELETE — "Remove this"
+
+DELETE removes an item permanently.
+
+**Real life:** You return a book and tell the librarian "you can remove this from my account." The record is deleted.
+
+**API example:**
+\`\`\`
+DELETE /api/books/42
+→ Returns 200 OK or 204 No Content
+\`\`\`
+
+**Rule:** DELETE is permanent. There is no undo (usually).
+
+## HEAD and OPTIONS — less common but useful
+
+**HEAD** is like GET but the server only sends back headers — no body. Use it to check if a resource exists or to see headers without downloading the full response.
+
+**OPTIONS** asks the server "what methods are allowed on this endpoint?" The server replies with something like \`Allow: GET, POST, DELETE\`.
+
+## Idempotence — the fancy word
+
+Some methods are **idempotent** — calling them once or 100 times gives the same result.
+
+- **GET, PUT, DELETE, HEAD, OPTIONS** — idempotent. Calling GET /books/42 ten times always returns the same book.
+- **POST, PATCH** — NOT idempotent. Calling POST /books ten times creates ten books.
+
+## Summary
+
+| Method | Action | Has body | Idempotent |
+|--------|--------|----------|------------|
+| GET | Read | No | Yes |
+| POST | Create | Yes | No |
+| PUT | Replace all | Yes | Yes |
+| PATCH | Update part | Yes | No |
+| DELETE | Remove | No | Yes |
+
+Use the right method, and your API will understand exactly what you want.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "explainer-json-apis",
+    title: "What is JSON? The language APIs speak",
+    description: "JSON is how APIs send data back and forth. It is simple enough for a computer to read and easy enough for a human to understand.",
+    date: "2026-06-17",
+    readTime: "3 min read",
+    tags: ["explainer", "json", "data", "beginner"],
+    category: "API Fundamentals",
+    content: `When two people speak different languages, they need a translator. When your app talks to an API, they need a common format for data. That format is **JSON** (JavaScript Object Notation).
+
+**JSON is a way of writing data that both humans and computers can read.** It looks like a list of labels with values.
+
+## The building blocks
+
+JSON has only a few rules. Learn these and you can read any API response.
+
+### Objects — a thing with properties
+
+An object is wrapped in curly braces \`{}\` and contains key-value pairs:
+
+\`\`\`json
+{
+  "name": "Alice",
+  "age": 30,
+  "city": "Lagos"
+}
+\`\`\`
+
+Think of this as a person: name is Alice, age is 30, city is Lagos.
+
+### Arrays — a list of things
+
+An array is wrapped in square brackets \`[]\` and contains items separated by commas:
+
+\`\`\`json
+["apple", "banana", "cherry"]
+\`\`\`
+
+### Nesting — objects inside objects
+
+This is where JSON gets powerful. You can put objects inside objects:
+
+\`\`\`json
+{
+  "user": {
+    "name": "Alice",
+    "address": {
+      "city": "Lagos",
+      "street": "123 Main St"
+    },
+    "hobbies": ["reading", "coding", "swimming"]
+  }
+}
+\`\`\`
+
+## Data types in JSON
+
+| Type | Example | Description |
+|------|---------|-------------|
+| String | "hello" | Text in double quotes |
+| Number | 42 or 3.14 | Integer or decimal |
+| Boolean | true or false | Yes or no |
+| Null | null | Nothing / empty |
+| Array | [1, 2, 3] | A list |
+| Object | {"key": "value"} | A collection of properties |
+
+## A real API response
+
+Here is what a real API might return when you ask for a user's profile:
+
+\`\`\`json
+{
+  "id": 12345,
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "isActive": true,
+  "createdAt": "2026-01-15T08:30:00Z",
+  "tags": ["premium", "developer"],
+  "profile": {
+    "bio": "Full-stack developer",
+    "avatar": "https://example.com/avatars/12345.jpg"
+  }
+}
+\`\`\`
+
+## Why JSON won
+
+There are other formats (XML, YAML, Protobuf), but JSON won because:
+
+1. **It is simple** — you can learn it in 5 minutes
+2. **It is text** — open it in any editor
+3. **Every language reads it** — JavaScript, Python, Go, Rust, all of them
+4. **It is fast** — computers can parse JSON very quickly
+
+## Pretty-printed vs minified
+
+APIs usually send **minified** JSON (no spaces, no newlines) to save bandwidth:
+
+\`\`\`json
+{"id":12345,"name":"Alice"}
+\`\`\`
+
+Reqit automatically **pretty-prints** JSON responses so you can read them:
+
+\`\`\`json
+{
+  "id": 12345,
+  "name": "Alice"
+}
+\`\`\`
+
+Reqit also color-codes keys, strings, and numbers so you can scan responses at a glance.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },

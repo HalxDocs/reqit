@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, BookOpen, Clock, Tag, Calendar, Search, Bookmark } from "lucide-react";
 import { BLOG_POSTS, CATEGORIES, type BlogPost } from "@/features/blog/blogData";
 
@@ -62,29 +62,27 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
 
 const CATEGORY_ICONS: Record<string, string> = {
   "All": "⊞",
+  "API Fundamentals": "◉",
   "Core Concepts": "◆",
   "Testing & Automation": "⚡",
   "Protocols & APIs": "⇄",
   "Collaboration & Workflow": "◎",
   "Developer Experience": "☆",
-  "Engineering": "⚙",
-  "Tutorials": "⊳",
-  "Philosophy": "◈",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
+  "API Fundamentals": "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
   "Core Concepts": "bg-blue-500/10 text-blue-400 border-blue-500/20",
   "Testing & Automation": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   "Protocols & APIs": "bg-purple-500/10 text-purple-400 border-purple-500/20",
   "Collaboration & Workflow": "bg-amber-500/10 text-amber-400 border-amber-500/20",
   "Developer Experience": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  "Engineering": "bg-rose-500/10 text-rose-400 border-rose-500/20",
-  "Tutorials": "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  "Philosophy": "bg-sky-500/10 text-sky-400 border-sky-500/20",
 };
 
-export function BlogPage({ onBack }: { onBack?: () => void }) {
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+export function BlogPage({ onBack, initialSlug, onSelectPost }: { onBack?: () => void; initialSlug?: string; onSelectPost?: (slug: string) => void }) {
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(
+    () => initialSlug ? BLOG_POSTS.find(p => p.slug === initialSlug) || null : null
+  );
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -104,8 +102,19 @@ export function BlogPage({ onBack }: { onBack?: () => void }) {
     });
   }, [activeCategory, searchQuery]);
 
+  const handleSelectPost = useCallback((post: BlogPost) => {
+    setSelectedPost(post);
+    window.history.pushState({ page: "blog", slug: post.slug }, "", `/blog/${post.slug}`);
+    if (onSelectPost) onSelectPost(post.slug);
+  }, [onSelectPost]);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedPost(null);
+    window.history.pushState({ page: "blog" }, "", "/blog");
+  }, []);
+
   if (selectedPost) {
-    return <BlogContent post={selectedPost} onBack={() => setSelectedPost(null)} />;
+    return <BlogContent post={selectedPost} onBack={handleBackToList} />;
   }
 
   const categoryCounts: Record<string, number> = {};
@@ -224,7 +233,7 @@ export function BlogPage({ onBack }: { onBack?: () => void }) {
               <button
                 key={post.slug}
                 type="button"
-                onClick={() => setSelectedPost(post)}
+                onClick={() => handleSelectPost(post)}
                 className="text-left bg-card border border-border rounded-xl p-4 sm:p-5 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover hover:shadow-lg hover:shadow-black/5 transition-all group"
               >
                 <div className="flex items-center gap-1.5">
