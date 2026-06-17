@@ -23,20 +23,20 @@ function renderMarkdown(text: string): string {
 export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => void }) {
   const html = renderMarkdown(post.content);
   return (
-    <div className="h-full flex flex-col overflow-y-auto">
-      <div className="shrink-0 px-6 py-4 border-b border-border flex items-center gap-3">
+    <div className="w-full flex flex-col">
+      <div className="shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 text-12 text-subtext hover:text-text transition-colors"
+          className="flex items-center gap-1.5 text-12 sm:text-13 text-subtext hover:text-text transition-colors"
         >
           <ArrowLeft size={14} />
           <span>Back to blog</span>
         </button>
       </div>
-      <div className="flex-1 px-6 py-5 max-w-[720px]">
-        <h1 className="text-20 font-bold text-text leading-snug mb-3">{post.title}</h1>
-        <div className="flex items-center gap-4 text-12 text-subtext mb-6">
+      <div className="w-full max-w-[720px] mx-auto px-4 sm:px-6 py-5">
+        <h1 className="text-17 sm:text-20 font-bold text-text leading-snug mb-3">{post.title}</h1>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-12 text-subtext mb-6">
           <span className="flex items-center gap-1.5">
             <Calendar size={12} />
             {post.date}
@@ -45,8 +45,8 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
             <Clock size={12} />
             {post.readTime}
           </span>
-          <div className="flex items-center gap-1.5">
-            <Tag size={12} />
+          <div className="flex items-center flex-wrap gap-1.5">
+            <Tag size={12} className="shrink-0" />
             {post.tags.map((t) => (
               <span key={t} className="bg-card px-2 py-0.5 rounded-sm text-11 font-mono text-subtext">
                 {t}
@@ -54,7 +54,7 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
             ))}
           </div>
         </div>
-        <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="prose prose-invert max-w-none w-full overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />
       </div>
     </div>
   );
@@ -114,117 +114,150 @@ export function BlogPage({ onBack }: { onBack?: () => void }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-bg">
-      <div className="shrink-0 px-6 sm:px-8 lg:px-10 py-6 sm:py-7 border-b border-border">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-[36px] h-[36px] rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
-              <BookOpen size={17} className="text-cyan" />
+    <div className="w-full flex flex-col bg-bg">
+      <div className="shrink-0 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 border-b border-border">
+        <div className="flex items-start sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] rounded-lg sm:rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
+              <BookOpen size={15} className="text-cyan sm:w-[17px]" />
             </div>
-            <div>
-              <h1 className="text-17 sm:text-18 font-bold text-text">Blog & Guides</h1>
-              <p className="text-12 sm:text-13 text-subtext mt-0.5">Feature explainers, tutorials, and engineering deep-dives</p>
+            <div className="min-w-0">
+              <h1 className="text-16 sm:text-18 font-bold text-text truncate">Blog & Guides</h1>
+              <p className="text-11 sm:text-13 text-subtext mt-0.5 hidden sm:block">Feature explainers, tutorials, and engineering deep-dives</p>
             </div>
           </div>
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center gap-1.5 h-[32px] px-3 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all"
+              className="shrink-0 flex items-center gap-1.5 h-[30px] px-2.5 sm:px-3 text-12 sm:text-13 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all"
             >
               <ArrowLeft size={14} />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
           )}
         </div>
 
-        <div className="relative mb-5">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtext/40 pointer-events-none" />
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext/40 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search posts by title, description, or tag..."
-            className="w-full h-[40px] pl-10 pr-4 bg-card border border-border rounded-xl text-13 text-text placeholder:text-subtext/30 outline-none focus:border-cyan/50 transition-colors"
+            placeholder="Search posts..."
+            className="w-full h-[36px] sm:h-[40px] pl-9 sm:pl-10 pr-3 sm:pr-4 bg-card border border-border rounded-lg sm:rounded-xl text-12 sm:text-13 text-text placeholder:text-subtext/30 outline-none focus:border-cyan/50 transition-colors"
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {CATEGORIES.map((cat) => {
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          {CATEGORIES.slice(0, 5).map((cat) => {
             const count = cat === "All" ? BLOG_POSTS.length : (categoryCounts[cat] || 0);
             return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 flex items-center gap-1.5 h-[30px] px-3.5 text-12 font-semibold rounded-full border transition-all ${
+                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 h-[26px] sm:h-[30px] px-2.5 sm:px-3.5 text-11 sm:text-12 font-semibold rounded-full border transition-all ${
                   activeCategory === cat
                     ? "bg-cyan/10 text-cyan border-cyan/30"
                     : "bg-card text-subtext border-border hover:border-cyan/30 hover:text-text"
                 }`}
               >
-                <span className="text-[11px]">{CATEGORY_ICONS[cat] || "⊞"}</span>
-                <span>{cat}</span>
-                <span className={`text-11 font-mono ml-0.5 ${activeCategory === cat ? "text-cyan/60" : "text-subtext/40"}`}>
+                <span className="text-[10px] sm:text-[11px]">{CATEGORY_ICONS[cat] || "⊞"}</span>
+                <span className="hidden sm:inline">{cat}</span>
+                <span className="sm:hidden text-[10px]">{cat === "All" ? "All" : cat.split(" ")[0]}</span>
+                <span className={`text-10 sm:text-11 font-mono ${activeCategory === cat ? "text-cyan/60" : "text-subtext/40"}`}>
                   {count}
                 </span>
               </button>
             );
           })}
+          {CATEGORIES.length > 5 && (
+            <div className="relative group">
+              <button
+                type="button"
+                className="shrink-0 flex items-center gap-1 h-[26px] sm:h-[30px] px-2.5 text-11 sm:text-12 font-semibold rounded-full border border-border text-subtext hover:border-cyan/30 hover:text-text bg-card transition-all"
+              >
+                <span>...</span>
+                <span className="text-10 sm:text-11 font-mono text-subtext/40">{CATEGORIES.slice(5).reduce((s, c) => s + (categoryCounts[c] || 0), 0)}</span>
+              </button>
+              <div className="absolute top-full left-0 mt-1 z-20 bg-card border border-border rounded-xl shadow-xl p-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                {CATEGORIES.slice(5).map((cat) => {
+                  const count = categoryCounts[cat] || 0;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setActiveCategory(cat)}
+                      className={`block w-full text-left px-3 py-1.5 text-12 rounded-lg transition-colors ${
+                        activeCategory === cat ? "bg-cyan/10 text-cyan" : "text-subtext hover:text-text hover:bg-surface"
+                      }`}
+                    >
+                      <span className="text-[10px] mr-1.5">{CATEGORY_ICONS[cat] || "⊞"}</span>
+                      {cat}
+                      <span className="text-10 font-mono text-subtext/40 ml-1">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 sm:px-8 lg:px-10 py-5 sm:py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Search size={32} className="text-subtext/20 mb-4" />
-            <p className="text-14 text-subtext font-medium">No posts match your search</p>
+          <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+            <Search size={28} className="text-subtext/20 mb-3" />
+            <p className="text-13 sm:text-14 text-subtext font-medium">No posts match your search</p>
             <button
               type="button"
               onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
-              className="mt-3 text-13 text-cyan hover:underline"
+              className="mt-2 sm:mt-3 text-12 sm:text-13 text-cyan hover:underline"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
             {filtered.map((post) => (
               <button
                 key={post.slug}
                 type="button"
                 onClick={() => setSelectedPost(post)}
-                className="text-left bg-card border border-border rounded-xl p-5 sm:p-6 flex flex-col gap-3.5 hover:border-cyan/30 hover:bg-cardHover hover:shadow-lg hover:shadow-black/5 transition-all group"
+                className="text-left bg-card border border-border rounded-xl p-4 sm:p-5 flex flex-col gap-3 hover:border-cyan/30 hover:bg-cardHover hover:shadow-lg hover:shadow-black/5 transition-all group"
               >
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${CATEGORY_COLORS[post.category] || "bg-card text-subtext border-border"}`}>
-                    <Bookmark size={9} />
-                    {post.category}
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CATEGORY_COLORS[post.category] || "bg-card text-subtext border-border"}`}>
+                    <Bookmark size={8} />
+                    <span className="hidden sm:inline">{post.category}</span>
+                    <span className="sm:hidden">{post.category === "Developer Experience" ? "DX" : post.category.split(" ")[0]}</span>
                   </span>
                 </div>
-                <h2 className="text-14 sm:text-15 font-semibold text-text group-hover:text-cyan transition-colors leading-snug">
+                <h2 className="text-13 sm:text-14 font-semibold text-text group-hover:text-cyan transition-colors leading-snug">
                   {post.title}
                 </h2>
-                <p className="text-12 sm:text-13 text-subtext leading-relaxed flex-1 line-clamp-3">
+                <p className="text-11 sm:text-12 text-subtext leading-relaxed flex-1 line-clamp-2 sm:line-clamp-3">
                   {post.description}
                 </p>
-                <div className="flex items-center gap-3 text-11 text-subtext/50 mt-auto pt-1">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar size={10} />
-                    {post.date}
+                <div className="flex items-center gap-2 sm:gap-3 text-10 sm:text-11 text-subtext/50 mt-auto pt-0.5">
+                  <span className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+                    <Calendar size={9} />
+                    <span className="hidden sm:inline">{post.date}</span>
+                    <span className="sm:hidden">{post.date.slice(5)}</span>
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock size={10} />
-                    {post.readTime}
+                  <span className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+                    <Clock size={9} />
+                    {post.readTime.replace(" min read", "m")}
                   </span>
-                  <div className="flex gap-1.5 ml-auto">
-                    {post.tags.slice(0, 2).map((t) => (
-                      <span key={t} className="bg-surface px-2 py-0.5 rounded-sm text-10 font-mono text-tertiary">
+                  <div className="flex gap-1 sm:gap-1.5 ml-auto">
+                    {post.tags.slice(0, 1).map((t) => (
+                      <span key={t} className="bg-surface px-1.5 py-0.5 rounded-sm text-9 sm:text-10 font-mono text-tertiary">
                         {t}
                       </span>
                     ))}
-                    {post.tags.length > 2 && (
-                      <span className="text-10 text-subtext/40">+{post.tags.length - 2}</span>
+                    {post.tags.length > 1 && (
+                      <span className="text-9 sm:text-10 text-subtext/40">+{post.tags.length - 1}</span>
                     )}
                   </div>
                 </div>
