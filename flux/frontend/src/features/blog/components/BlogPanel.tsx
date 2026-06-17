@@ -79,7 +79,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Developer Experience": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
 };
 
-export function BlogPage({ onBack, initialSlug, onSelectPost }: { onBack?: () => void; initialSlug?: string; onSelectPost?: (slug: string) => void }) {
+export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { onBack?: () => void; initialSlug?: string; onSelectPost?: (slug: string) => void; scrollToTop?: () => void }) {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(
     () => initialSlug ? BLOG_POSTS.find(p => p.slug === initialSlug) || null : null
   );
@@ -106,12 +106,14 @@ export function BlogPage({ onBack, initialSlug, onSelectPost }: { onBack?: () =>
     setSelectedPost(post);
     window.history.pushState({ page: "blog", slug: post.slug }, "", `/blog/${post.slug}`);
     if (onSelectPost) onSelectPost(post.slug);
-  }, [onSelectPost]);
+    scrollToTop?.();
+  }, [onSelectPost, scrollToTop]);
 
   const handleBackToList = useCallback(() => {
     setSelectedPost(null);
     window.history.pushState({ page: "blog" }, "", "/blog");
-  }, []);
+    scrollToTop?.();
+  }, [scrollToTop]);
 
   if (selectedPost) {
     return <BlogContent post={selectedPost} onBack={handleBackToList} />;

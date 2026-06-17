@@ -643,6 +643,10 @@ export function WebApp() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, blogSlug]);
+
   const handleSelectPost = useCallback((slug: string) => {
     navigate("blog", slug);
   }, [navigate]);
@@ -702,7 +706,7 @@ export function WebApp() {
         ) : page === "docs" ? (
           <DocsPage goHome={() => navigate("home")} />
         ) : page === "blog" ? (
-          <BlogPage key={blogSlug || "listing"} initialSlug={blogSlug} onBack={() => navigate("home")} onSelectPost={handleSelectPost} />
+          <BlogPage key={blogSlug || "listing"} initialSlug={blogSlug} onBack={() => navigate("home")} onSelectPost={handleSelectPost} scrollToTop={() => window.scrollTo(0, 0)} />
         ) : null}
 
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">

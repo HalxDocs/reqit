@@ -435,6 +435,10 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
 
   const mainRef = useRef<HTMLElement>(null);
 
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [view]);
+
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);
     if (!ws) return;
@@ -554,7 +558,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
         ) : view === "docs" ? (
           <DocsView />
         ) : view === "blog" ? (
-          <BlogPage onBack={() => setView("landing")} />
+          <BlogPage onBack={() => setView("landing")} scrollToTop={() => mainRef.current?.scrollTo(0, 0)} />
         ) : null}
       </main>
 
