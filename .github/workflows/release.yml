@@ -33,7 +33,7 @@ jobs:
 
       - name: Build (Windows/amd64)
         working-directory: flux
-        run: wails build -platform windows/amd64 -o reqit
+        run: wails build -platform windows/amd64 -o reqit -ldflags "-X 'flux/internal/updater.CurrentVersion=${{ github.ref_name }}'"
 
       - name: Copy artifact
         shell: bash
@@ -74,7 +74,7 @@ jobs:
 
       - name: Build (macOS universal)
         working-directory: flux
-        run: wails build -platform darwin/universal -o reqit
+        run: wails build -platform darwin/universal -o reqit -ldflags "-X 'flux/internal/updater.CurrentVersion=${{ github.ref_name }}'"
 
       - name: Package as zip
         run: |
@@ -116,7 +116,7 @@ jobs:
 
       - name: Build (Linux/amd64)
         working-directory: flux
-        run: wails build -platform linux/amd64 -o reqit
+        run: wails build -platform linux/amd64 -o reqit -ldflags "-X 'flux/internal/updater.CurrentVersion=${{ github.ref_name }}'"
 
       - name: Copy artifact
         run: |
@@ -133,6 +133,8 @@ jobs:
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
@@ -140,6 +142,39 @@ jobs:
 
       - name: List artifacts
         run: ls -lh release-artifacts/
+
+      - name: Compute SHA256 checksums
+        id: checksums
+        run: |
+          cd release-artifacts
+          echo "win_sha=$(sha256sum reqit-windows-amd64.exe | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "mac_sha=$(sha256sum reqit-macos-universal.zip | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_sha=$(sha256sum reqit-linux-amd64 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Generate latest.json manifest
+        run: |
+          TAG="${{ github.ref_name }}"
+          cat > release-artifacts/latest.json <<EOF
+          {
+            "version": "${TAG}",
+            "notes": "See release notes at https://github.com/HalxDocs/reqit/releases/tag/${TAG}",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "windows-amd64": {
+                "url": "https://github.com/HalxDocs/reqit/releases/download/${TAG}/reqit-windows-amd64.exe",
+                "sha256": "${{ steps.checksums.outputs.win_sha }}"
+              },
+              "darwin-universal": {
+                "url": "https://github.com/HalxDocs/reqit/releases/download/${TAG}/reqit-macos-universal.zip",
+                "sha256": "${{ steps.checksums.outputs.mac_sha }}"
+              },
+              "linux-amd64": {
+                "url": "https://github.com/HalxDocs/reqit/releases/download/${TAG}/reqit-linux-amd64",
+                "sha256": "${{ steps.checksums.outputs.linux_sha }}"
+              }
+            }
+          }
+          EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
