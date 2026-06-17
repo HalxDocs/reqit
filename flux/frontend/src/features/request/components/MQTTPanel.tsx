@@ -98,6 +98,13 @@ export default function MQTTPanel() {
     };
   }, [status]);
 
+  // Disconnect on unmount
+  useEffect(() => {
+    return () => {
+      MQTTDisconnect().catch(() => {});
+    };
+  }, []);
+
   // Auto-scroll to bottom
   useEffect(() => {
     logEnd.current?.scrollIntoView({ behavior: "smooth" });

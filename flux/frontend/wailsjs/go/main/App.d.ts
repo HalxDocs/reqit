@@ -103,6 +103,8 @@ export function ExportReportAsHTML(arg1:models.CollectionRunResult,arg2:models.L
 
 export function ExportReportAsJSON(arg1:models.CollectionRunResult):Promise<string>;
 
+export function FetchSpecFromURL(arg1:string):Promise<string>;
+
 export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
 
 export function GRPCStreamInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<string>;

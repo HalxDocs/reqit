@@ -199,6 +199,7 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
     let activeID = get().activeID;
     if (activeID === id) {
       const neighbor = next[idx] ?? next[idx - 1] ?? next[0];
+      if (!neighbor) return;
       activeID = neighbor.id;
       useRequestStore.getState().loadState(neighbor.request);
       useResponseStore.setState({

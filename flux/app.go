@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1980,6 +1982,60 @@ func (a *App) LinkCollectionSpec(collID, specPath string) error {
 func (a *App) InvalidateSpec(specPath string) {
 	dir, _ := a.workspaces.ActiveDir()
 	contract.Cache.Invalidate(filepath.Join(dir, specPath))
+}
+
+// FetchSpecFromURL downloads an OpenAPI spec from a URL, saves it to the
+// workspace folder, and returns the relative path suitable for LinkCollectionSpec.
+func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil {
+		return "", err
+	}
+
+	// Determine filename from the URL path.
+	name := "openapi-spec.json"
+	if u, err2 := http.NewRequest("GET", rawURL, nil); err2 == nil {
+		if p := u.URL.Path; p != "" {
+			if base := filepath.Base(p); base != "." && base != "/" {
+				name = base
+			}
+		}
+	}
+	// Ensure it has a valid extension.
+	if !strings.HasSuffix(name, ".json") && !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".yml") {
+		name += ".json"
+	}
+
+	resp, err := http.Get(rawURL) //nolint:gosec
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch spec from URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("spec URL returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Validate that it looks like JSON or YAML (basic check).
+	trimmed := strings.TrimSpace(string(body))
+	if len(trimmed) == 0 {
+		return "", errors.New("spec URL returned empty content")
+	}
+	if trimmed[0] != '{' && trimmed[0] != '[' && !strings.Contains(trimmed, "openapi") && !strings.Contains(trimmed, "swagger") {
+		return "", errors.New("URL does not appear to contain an OpenAPI spec")
+	}
+
+	dst := filepath.Join(dir, name)
+	if err := os.WriteFile(dst, body, 0644); err != nil {
+		return "", fmt.Errorf("failed to save spec file: %w", err)
+	}
+
+	return name, nil
 }
 
 // --- Mock Server ---

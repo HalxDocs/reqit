@@ -15,7 +15,7 @@ export function useUpdater() {
         const dismissed = localStorage.getItem("dismissed-version");
         if (dismissed !== m.version) setUpdate(m);
       }
-    });
+    }).catch(() => {});
     const off = EventsOn("update:available", (m: updater.UpdateManifest) => {
       const dismissed = localStorage.getItem("dismissed-version");
       if (dismissed !== m.version) setUpdate(m);

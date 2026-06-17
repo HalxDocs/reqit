@@ -20,6 +20,7 @@ import {
   LinkCollectionSpec,
   InvalidateSpec,
   PickFile,
+  FetchSpecFromURL,
 } from "../../../../wailsjs/go/main/App";
 import type { main, models } from "../../../../wailsjs/go/models";
 import type { HttpMethod } from "@/features/request/types/request";
@@ -165,16 +166,29 @@ export function CollectionsTree() {
   };
 
   const handleLinkSpec = async (collID: string) => {
+    const url = prompt("Enter OpenAPI spec URL (leave empty to pick a local file):", "http://localhost:3000/openapi.json");
+    if (url === null) return;
+
     try {
-      const fp = await PickFile("Select OpenAPI Spec", "*.yaml;*.yml;*.json");
-      if (!fp) return;
-      const ws = await GetActiveWorkspace();
-      const dir = ws.dataDir.replace(/\\/g, "/");
-      const n = fp.replace(/\\/g, "/");
-      if (!n.startsWith(dir)) { toast.error("Spec file must be inside your workspace folder"); return; }
-      await LinkCollectionSpec(collID, n.slice(dir.length).replace(/^\//, ""));
-      await loadCollections();
-      toast.success("Spec linked");
+      if (url.trim()) {
+        // URL mode — fetch and save
+        toast.info("Downloading spec from URL...");
+        const relativePath = await FetchSpecFromURL(url.trim());
+        await LinkCollectionSpec(collID, relativePath);
+        await loadCollections();
+        toast.success("Spec linked from URL");
+      } else {
+        // File picker mode
+        const fp = await PickFile("Select OpenAPI Spec", "*.yaml;*.yml;*.json");
+        if (!fp) return;
+        const ws = await GetActiveWorkspace();
+        const dir = ws.dataDir.replace(/\\/g, "/");
+        const n = fp.replace(/\\/g, "/");
+        if (!n.startsWith(dir)) { toast.error("Spec file must be inside your workspace folder"); return; }
+        await LinkCollectionSpec(collID, n.slice(dir.length).replace(/^\//, ""));
+        await loadCollections();
+        toast.success("Spec linked");
+      }
     } catch (e) { toast.error(String(e)); }
   };
 

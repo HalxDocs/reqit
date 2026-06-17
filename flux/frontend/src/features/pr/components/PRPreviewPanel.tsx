@@ -26,7 +26,7 @@ export function PRPreviewPanel() {
   const [newBranch, setNewBranch] = useState("");
 
   const refresh = async () => {
-    setStatus(await GetGitStatus());
+    try { setStatus(await GetGitStatus()); } catch {}
     try { setBranches(await GetBranches()); } catch {}
     try { setStashes(await GetGitStashList()); } catch {}
   };
@@ -36,20 +36,20 @@ export function PRPreviewPanel() {
     try { setDiff(await GetGitDiff("", "")); } catch { setDiff([]); }
   };
 
-  const handleStash = async () => { await GitStash(); refresh(); };
-  const handlePop = async () => { await GitPopStash(); refresh(); };
+  const handleStash = async () => { try { await GitStash(); } catch {} refresh(); };
+  const handlePop = async () => { try { await GitPopStash(); } catch {} refresh(); };
 
   const handleMerge = async () => {
     if (!targetBranch) return;
-    await GitMergeBranch(targetBranch);
+    try { await GitMergeBranch(targetBranch); } catch {}
     refresh();
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };
 
-  const handleSwitch = async (branch: string) => { await SwitchBranch(branch); refresh(); };
+  const handleSwitch = async (branch: string) => { try { await SwitchBranch(branch); } catch {} refresh(); };
   const handleCreateBranch = async () => {
     if (!newBranch) return;
-    await CreateBranch(newBranch);
+    try { await CreateBranch(newBranch); } catch {}
     setNewBranch("");
     refresh();
   };

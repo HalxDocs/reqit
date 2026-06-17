@@ -97,7 +97,10 @@ export function GraphQLPanel() {
     ws.onmessage = (event) => {
       try {
         const msg: SubMessage = JSON.parse(event.data);
-        setSubMsg((prev) => [...prev, msg]);
+        setSubMsg((prev) => {
+          const next = [...prev, msg];
+          return next.length > 500 ? next.slice(-500) : next;
+        });
         if (msg.type === "complete" || msg.type === "error") {
           ws.close();
           setSubActive(false);

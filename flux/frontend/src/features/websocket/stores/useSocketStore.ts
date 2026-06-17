@@ -24,9 +24,14 @@ type SocketStore = {
 const MSG_EVENT = "socket:message";
 const STATUS_EVENT = "socket:status";
 
+const MAX_MESSAGES = 1000;
+
 export const useSocketStore = create<SocketStore>((set, get) => {
   EventsOn(MSG_EVENT, (msg: models.SocketMessage) => {
-    set((s) => ({ messages: [...s.messages, msg] }));
+    set((s) => {
+      const next = [...s.messages, msg];
+      return { messages: next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next };
+    });
   });
   EventsOn(STATUS_EVENT, (status: string) => {
     set({ status });

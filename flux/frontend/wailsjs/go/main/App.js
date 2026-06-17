@@ -178,6 +178,10 @@ export function ExportReportAsJSON(arg1) {
   return window['go']['main']['App']['ExportReportAsJSON'](arg1);
 }
 
+export function FetchSpecFromURL(arg1) {
+  return window['go']['main']['App']['FetchSpecFromURL'](arg1);
+}
+
 export function GRPCInvoke(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['GRPCInvoke'](arg1, arg2, arg3, arg4, arg5);
 }

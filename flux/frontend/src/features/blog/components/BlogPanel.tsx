@@ -2,11 +2,32 @@ import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, BookOpen, Clock, Tag, Calendar, Search, Bookmark } from "lucide-react";
 import { BLOG_POSTS, CATEGORIES, type BlogPost } from "@/features/blog/blogData";
 
+function isSafeUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return ["http:", "https:", "mailto:"].includes(u.protocol);
+  } catch {
+    return url.startsWith("#") || url.startsWith("/");
+  }
+}
+
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+    .replace(/on\w+="[^"]*"/gi, "")
+    .replace(/on\w+='[^']*'/gi, "");
+}
+
 function renderMarkdown(text: string): string {
-  return text
+  const html = text
+    .replace(/```([\s\S]*?)```/g, '<pre class="bg-bg border border-border rounded-lg p-3 my-3 overflow-x-auto"><code class="text-12 font-mono text-cyan">$1</code></pre>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-text">$1</strong>')
     .replace(/`([^`]+)`/g, '<code class="bg-card px-1.5 py-0.5 rounded-sm text-12 font-mono text-cyan">$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-cyan underline hover:brightness-110">$1</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+      const safeUrl = isSafeUrl(url) ? url : "#";
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan underline hover:brightness-110">${text}</a>`;
+    })
     .replace(/^## (.+)$/gm, '<h2 class="text-16 font-bold text-text mt-6 mb-2">$1</h2>')
     .replace(/^- \*\*(.+?)\*\*(.*)$/gm, '<li class="ml-4 text-13 text-text list-disc"><strong class="font-semibold">$1</strong>$2</li>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 text-13 text-text list-disc">$1</li>')
@@ -18,6 +39,7 @@ function renderMarkdown(text: string): string {
     .replace(/<p class="[^"]*"><\/p>/g, "")
     .replace(/<br \/>\s*<\/p>/g, "</p>")
     .replace(/<p class="[^"]*">\s*<br \/>/g, '<p class="text-13 text-subtext leading-relaxed mb-3">');
+  return sanitizeHtml(html);
 }
 
 export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => void }) {

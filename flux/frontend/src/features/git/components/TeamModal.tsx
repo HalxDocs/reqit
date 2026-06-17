@@ -21,7 +21,7 @@ interface CommitInfo { hash: string; message: string; author: string; when: stri
 interface Contributor { name: string; email: string; commits: number; lastSeen: string; }
 
 function initials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+  return (name || "").split(" ").map((w) => w[0]).filter(Boolean).join("").toUpperCase().slice(0, 2) || "?";
 }
 
 function timeAgo(iso: string) {

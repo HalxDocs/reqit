@@ -76,9 +76,9 @@ export default function App() {
     } else {
       // Existing active workspace on startup — go straight in.
       hydrateTabs();
-      void Promise.all([loadCollections(), loadHistory(), loadEnvs()]).then(() =>
-        setScreen("app"),
-      );
+      void Promise.all([loadCollections(), loadHistory(), loadEnvs()])
+        .then(() => setScreen("app"))
+        .catch(() => setScreen("app"));
     }
   // Only run when the initial load resolves, not on every store change.
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -55,7 +55,7 @@ export function OAuth2Flow() {
         cfg.redirectUri,
         cfg.usePkce,
       );
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     } catch (e) {
       setError(String(e));
     } finally {

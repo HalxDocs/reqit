@@ -1721,4 +1721,80 @@ Reqit also color-codes keys, strings, and numbers so you can scan responses at a
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
+  {
+    slug: "explainer-openapi-spec-linking",
+    title: "How to link an OpenAPI spec to your collection",
+    description: "Have an OpenAPI spec running on localhost? Link it to a collection in reqit and every response gets validated against your blueprint automatically.",
+    date: "2026-06-17",
+    readTime: "3 min read",
+    tags: ["explainer", "openapi", "spec", "contract-testing"],
+    category: "API Fundamentals",
+    content: `You wrote an OpenAPI spec. Your API is running on localhost. Now you want reqit to check that every response matches the spec. Here is how to link them.
+
+## The problem
+
+You have a spec file that describes what your API should return. Your API is running at something like \`http://localhost:3000\`. Every time you change the backend, you want to know if the responses still match the spec. Checking manually is slow and easy to forget.
+
+## The solution
+
+reqit can link an OpenAPI spec to any collection. Once linked, every request you send in that collection gets validated against the spec automatically. You see a green badge when things match and a red badge when they do not.
+
+## How to do it
+
+### Step 1 — Get your spec URL
+
+Your API probably serves its OpenAPI spec at one of these endpoints:
+
+\`\`\`
+http://localhost:3000/openapi.json
+http://localhost:3000/swagger.json
+http://localhost:3000/api-docs
+http://localhost:3000/docs/openapi.json
+\`\`\`
+
+Open that URL in your browser. If you see JSON with \`"openapi"\` or \`"swagger"\` at the top, you found it.
+
+### Step 2 — Link it in reqit
+
+1. Right-click the collection you want to link
+2. Click the three dots (⋮)
+3. Click **Link OpenAPI Spec**
+4. Paste your URL (e.g. \`http://localhost:3000/openapi.json\`)
+5. Hit Enter
+
+reqit downloads the spec, saves it to your workspace, and links it to the collection.
+
+### Step 3 — Send a request
+
+Pick any request in the collection and hit Send. Look at the status bar. You will see one of two things:
+
+- **✓ Contract OK** — the response matches the spec
+- **✗ 2 violations** — something does not match
+
+Click the badge to see exactly what went wrong.
+
+## What gets checked
+
+reqit validates three things:
+
+1. **Status code** — is it one of the codes the spec declares?
+2. **Response body** — does the JSON match the schema the spec defines?
+3. **Required fields** — are all required properties present?
+
+If the spec says \`GET /users\` returns \`200\` with a \`name\` field, and your API returns \`200\` without \`name\`, reqit flags it.
+
+## Updating the spec
+
+If your API changes and the spec gets updated, just link it again with the new URL. reqit replaces the old spec with the new one.
+
+## Unlinking
+
+Right-click the collection → ⋮ → **Unlink Spec**. Validation stops.
+
+## Why this matters
+
+Without contract testing, you find out about breaking changes when your frontend crashes in production. With reqit, you find out in 3 seconds.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
 ];

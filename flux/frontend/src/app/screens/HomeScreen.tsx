@@ -362,12 +362,12 @@ function WorkspaceCard({
   onDelete: (id: string) => void;
   busy: boolean;
 }) {
-  const initials = ws.name
+  const initials = (ws.name || "?")
     .split(/\s+/)
     .map((w) => w[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "?";
 
   return (
     <div className="relative group">

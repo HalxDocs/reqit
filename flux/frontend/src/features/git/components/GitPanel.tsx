@@ -36,7 +36,7 @@ interface Contributor {
 }
 
 function initials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+  return (name || "").split(" ").map((w) => w[0]).filter(Boolean).join("").toUpperCase().slice(0, 2) || "?";
 }
 
 function timeAgo(iso: string) {
