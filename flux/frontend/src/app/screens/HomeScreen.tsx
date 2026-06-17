@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
@@ -435,9 +435,14 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
 
   const mainRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     mainRef.current?.scrollTo(0, 0);
   }, [view]);
+
+  // Also scroll to top on initial mount
+  useLayoutEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, []);
 
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);

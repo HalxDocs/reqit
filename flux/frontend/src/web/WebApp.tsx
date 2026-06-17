@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { BookOpen } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -643,9 +643,14 @@ export function WebApp() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [page, blogSlug]);
+
+  // Also scroll to top on initial mount (handles direct URL navigation like /blog/slug)
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSelectPost = useCallback((slug: string) => {
     navigate("blog", slug);
