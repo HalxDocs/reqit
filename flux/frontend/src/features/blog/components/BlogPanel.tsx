@@ -14,13 +14,19 @@ function isSafeUrl(url: string): boolean {
 function sanitizeHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
     .replace(/on\w+="[^"]*"/gi, "")
     .replace(/on\w+='[^']*'/gi, "");
 }
 
 function renderMarkdown(text: string): string {
   const html = text
+    .replace(/\[video\]\(([^)]+)\)/g, (_, url) => {
+      if (/youtu(\.be\/|be\.com\/)/.test(url)) {
+        const id = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+        if (id) return `<div class="relative w-full pt-[56.25%] my-4 rounded-lg overflow-hidden border border-border"><iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe></div>`;
+      }
+      return `<video class="w-full rounded-lg border border-border my-4" controls preload="metadata"><source src="${url}" /></video>`;
+    })
     .replace(/```([\s\S]*?)```/g, '<pre class="bg-bg border border-border rounded-lg p-3 my-3 overflow-x-auto"><code class="text-12 font-mono text-cyan">$1</code></pre>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-text">$1</strong>')
     .replace(/`([^`]+)`/g, '<code class="bg-card px-1.5 py-0.5 rounded-sm text-12 font-mono text-cyan">$1</code>')

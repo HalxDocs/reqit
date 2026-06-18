@@ -1731,6 +1731,8 @@ Reqit also color-codes keys, strings, and numbers so you can scan responses at a
     category: "API Fundamentals",
     content: `You wrote an OpenAPI spec. Your API is running on localhost. Now you want reqit to check that every response matches the spec. Here is how to link them.
 
+[video](https://youtu.be/C-HM2YHjrUY)
+
 ## The problem
 
 You have a spec file that describes what your API should return. Your API is running at something like \`http://localhost:3000\`. Every time you change the backend, you want to know if the responses still match the spec. Checking manually is slow and easy to forget.
