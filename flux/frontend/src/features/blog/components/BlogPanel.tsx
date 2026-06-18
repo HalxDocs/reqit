@@ -2,6 +2,115 @@ import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, BookOpen, Clock, Tag, Calendar, Search, Bookmark } from "lucide-react";
 import { BLOG_POSTS, CATEGORIES, type BlogPost } from "@/features/blog/blogData";
 
+const SYNONYMS: Record<string, string[]> = {
+  "openai": ["openapi", "spec", "swagger"],
+  "openapi": ["openai", "spec", "swagger"],
+  "spec": ["openapi", "openai", "swagger", "specification"],
+  "swagger": ["openapi", "spec"],
+  "link": ["linking", "connect", "integrate", "link"],
+  "linking": ["link", "connect", "integrate"],
+  "connect": ["link", "linking", "integrate"],
+  "integrate": ["link", "linking", "connect", "integration"],
+  "import": ["migrate", "migration", "postman", "bring"],
+  "export": ["share", "output", "generate"],
+  "postman": ["import", "migrate", "workspace"],
+  "test": ["testing", "assertion", "validate", "check", "runner"],
+  "testing": ["test", "assertion", "validate", "check"],
+  "mock": ["fake", "pretend", "stub", "mock server"],
+  "fake": ["mock", "stub", "pretend"],
+  "websocket": ["ws", "realtime", "real-time", "socket", "ws"],
+  "realtime": ["websocket", "real-time", "sse", "streaming"],
+  "grpc": ["grpc-web", "protocol", "binary"],
+  "graphql": ["gql", "query", "mutation", "schema"],
+  "auth": ["authentication", "login", "token", "oauth", "bearer", "api key"],
+  "authentication": ["auth", "login", "token", "oauth"],
+  "oauth": ["oauth2", "authorization", "token", "pkce"],
+  "jwt": ["token", "bearer", "claims", "auth"],
+  "git": ["version control", "commit", "branch", "merge", "stash"],
+  "version control": ["git", "commit", "branch"],
+  "ci/cd": ["cicd", "pipeline", "github actions", "gitlab ci", "jenkins", "automation"],
+  "automation": ["scripting", "runner", "ci/cd", "cli", "pipeline"],
+  "cli": ["terminal", "command line", "headless", "scripting"],
+  "terminal": ["cli", "command line"],
+  "load test": ["performance", "stress", "load testing", "benchmark"],
+  "performance": ["load test", "speed", "timing", "latency"],
+  "environment": ["env", "variables", "config", "settings", "dev", "staging", "prod"],
+  "variable": ["environment", "env", "interpolation", "placeholder"],
+  "collection": ["folder", "group", "organize", "requests"],
+  "cookie": ["session", "cookie jar", "auth"],
+  "history": ["log", "past requests", "previous"],
+  "shortcut": ["keyboard", "hotkey", "keybinding", "ctrl"],
+  "theme": ["dark mode", "light mode", "appearance", "colors"],
+  "vault": ["secrets", "passwords", "api keys", "encryption"],
+  "security": ["auth", "vault", "encryption", "enterprise", "sso"],
+  "enterprise": ["sso", "rbac", "audit", "security", "team"],
+  "team": ["collaboration", "share", "invite", "enterprise"],
+  "share": ["export", "collaborate", "team", "invite"],
+  "json": ["data", "format", "response", "body"],
+  "response": ["status", "body", "headers", "timing"],
+  "request": ["send", "api call", "endpoint", "method"],
+  "api": ["rest", "endpoint", "http", "request", "response"],
+  "rest": ["api", "http", "endpoint"],
+  "http": ["rest", "api", "method", "get", "post", "put", "delete"],
+  "design": ["blueprint", "spec", "openapi", "api designer"],
+  "code": ["generate", "snippet", "codegen", "javascript", "python", "curl"],
+  "report": ["json", "html", "results", "analytics"],
+  "soap": ["wsdl", "envelope", "xml"],
+  "mqtt": ["iot", "publish", "subscribe", "broker"],
+  "sse": ["server-sent events", "streaming", "event source"],
+};
+
+function fuzzyMatch(query: string, text: string): number {
+  const q = query.toLowerCase();
+  const t = text.toLowerCase();
+  if (t.includes(q)) return 100;
+  const words = q.split(/\s+/);
+  let score = 0;
+  let matched = 0;
+  for (const word of words) {
+    if (word.length < 2) continue;
+    if (t.includes(word)) {
+      score += 20;
+      matched++;
+    } else {
+      for (const syn of SYNONYMS[word] || []) {
+        if (t.includes(syn)) {
+          score += 10;
+          matched++;
+          break;
+        }
+      }
+    }
+  }
+  return words.length > 0 ? (matched / words.length) * score : 0;
+}
+
+function searchPost(query: string, post: BlogPost): number {
+  let score = 0;
+  const q = query.toLowerCase();
+
+  score += fuzzyMatch(query, post.title) * 3;
+  score += fuzzyMatch(query, post.description) * 2;
+  score += fuzzyMatch(query, post.category) * 1.5;
+  post.tags.forEach((t) => { score += fuzzyMatch(query, t) * 1; });
+
+  const contentLower = post.content.toLowerCase();
+  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  for (const word of words) {
+    if (contentLower.includes(word)) {
+      score += 5;
+    }
+    for (const syn of SYNONYMS[word] || []) {
+      if (contentLower.includes(syn)) {
+        score += 3;
+        break;
+      }
+    }
+  }
+
+  return score;
+}
+
 function isSafeUrl(url: string): boolean {
   try {
     const u = new URL(url);
@@ -122,19 +231,37 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
   }, []);
 
   const filtered = useMemo(() => {
-    return sortedPosts.filter((post) => {
+    let posts = sortedPosts.filter((post) => {
       if (activeCategory !== "All" && post.category !== activeCategory) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          post.title.toLowerCase().includes(q) ||
-          post.description.toLowerCase().includes(q) ||
-          post.tags.some((t) => t.toLowerCase().includes(q)) ||
-          post.category.toLowerCase().includes(q)
-        );
-      }
       return true;
     });
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const words = q.split(/\s+/).filter((w) => w.length >= 2);
+      const scored = posts.map((post) => {
+        let score = 0;
+        score += fuzzyMatch(q, post.title) * 4;
+        score += fuzzyMatch(q, post.description) * 2;
+        score += fuzzyMatch(q, post.category) * 1.5;
+        post.tags.forEach((t) => { score += fuzzyMatch(q, t) * 1.5; });
+        const contentLower = post.content.toLowerCase();
+        for (const word of words) {
+          if (contentLower.includes(word)) score += 5;
+          for (const syn of SYNONYMS[word] || []) {
+            if (contentLower.includes(syn)) { score += 3; break; }
+          }
+        }
+        for (const word of words) {
+          for (const syn of SYNONYMS[word] || []) {
+            const titleLower = post.title.toLowerCase();
+            if (titleLower.includes(word) || titleLower.includes(syn)) { score += 10; break; }
+          }
+        }
+        return { post, score };
+      });
+      return scored.filter((s) => s.score > 5).sort((a, b) => b.score - a.score).map((s) => s.post);
+    }
+    return posts;
   }, [sortedPosts, activeCategory, searchQuery]);
 
   const handleSelectPost = useCallback((post: BlogPost) => {
@@ -190,7 +317,7 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search posts..."
+            placeholder="Try &quot;link openapi&quot;, &quot;mock server&quot;, &quot;git storage&quot;, &quot;auth&quot;..."
             className="w-full h-[36px] sm:h-[40px] pl-9 sm:pl-10 pr-3 sm:pr-4 bg-card border border-border rounded-lg sm:rounded-xl text-12 sm:text-13 text-text placeholder:text-subtext/30 outline-none focus:border-cyan/50 transition-colors"
           />
         </div>
@@ -255,14 +382,26 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
             <Search size={28} className="text-subtext/20 mb-3" />
-            <p className="text-13 sm:text-14 text-subtext font-medium">No posts match your search</p>
-            <button
-              type="button"
-              onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
-              className="mt-2 sm:mt-3 text-12 sm:text-13 text-cyan hover:underline"
-            >
-              Clear filters
-            </button>
+            <p className="text-13 sm:text-14 text-subtext font-medium">No posts match "{searchQuery}"</p>
+            <p className="text-11 sm:text-12 text-subtext/50 mt-1.5 max-w-[280px]">Try simpler words like "openapi", "mock", "auth", "git", or "graphql"</p>
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-12 sm:text-13 text-cyan hover:underline"
+              >
+                Clear search
+              </button>
+              {activeCategory !== "All" && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+                  className="text-12 sm:text-13 text-subtext hover:text-text hover:underline"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
