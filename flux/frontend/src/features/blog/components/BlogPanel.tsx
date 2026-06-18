@@ -114,8 +114,15 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const sortedPosts = useMemo(() => {
+    const pinned = BLOG_POSTS.find(p => p.slug === "explainer-openapi-spec-linking");
+    const rest = BLOG_POSTS.filter(p => p.slug !== "explainer-openapi-spec-linking");
+    rest.sort((a, b) => b.date.localeCompare(a.date));
+    return pinned ? [pinned, ...rest] : rest;
+  }, []);
+
   const filtered = useMemo(() => {
-    return BLOG_POSTS.filter((post) => {
+    return sortedPosts.filter((post) => {
       if (activeCategory !== "All" && post.category !== activeCategory) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -128,7 +135,7 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
       }
       return true;
     });
-  }, [activeCategory, searchQuery]);
+  }, [sortedPosts, activeCategory, searchQuery]);
 
   const handleSelectPost = useCallback((post: BlogPost) => {
     setSelectedPost(post);

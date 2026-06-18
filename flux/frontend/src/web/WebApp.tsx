@@ -616,6 +616,12 @@ export function WebApp() {
   const [blogSlug, setBlogSlug] = useState<string | undefined>(init.blogSlug);
   const stars = useGitHubStars("HalxDocs/reqit");
 
+  // Prevent browser scroll restoration so every navigation starts at top
+  useEffect(() => {
+    history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+  }, []);
+
   const navigate = useCallback((to: "home" | "docs" | "blog", slug?: string) => {
     setBlogSlug(slug);
     if (to === "home") {
