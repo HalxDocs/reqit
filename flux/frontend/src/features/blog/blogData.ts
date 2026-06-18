@@ -1799,4 +1799,304 @@ Without contract testing, you find out about breaking changes when your frontend
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
+  {
+    slug: "what-is-reqit",
+    title: "What is reqit? Everything you need to know",
+    description: "reqit is a local-first, open-source API client that runs in under 400ms. No account. No cloud. No telemetry. Just a fast tool that does everything Postman does — and a lot more.",
+    date: "2026-06-18",
+    readTime: "12 min read",
+    tags: ["overview", "features", "open-source", "api-client"],
+    category: "Core Concepts",
+    content: `Every app on your phone talks to an API. When you check the weather, order food, or send a message, your phone sends a request to a server and gets data back. **reqit is a tool that lets you send those requests, test those APIs, and make sure they work — all from your computer.**
+
+Think of it like a Swiss Army knife for APIs. One tool that does everything: send requests, test responses, mock servers, load testing, Git integration, and a lot more. And it all runs on your machine. No account. No cloud. No data leaving your laptop.
+
+## Why reqit exists
+
+Most API tools today have the same problem: they want your money and your data.
+
+Postman requires an account. It phones home on every launch. It stores your collections in their cloud. If they change their pricing (which they have, multiple times), you are stuck. Insomnia moved to cloud-first. Hoppscotch is browser-only. Every tool wants you to log in, sync to their servers, and trust them with your API keys.
+
+reqit was built because a different approach is possible. A tool that starts in under 400ms, weighs under 20MB, stores everything as plain JSON files on your disk, and never requires an account, a cloud connection, or telemetry. You own your data. Always.
+
+## The basics
+
+reqit is an API client. You type a URL, pick a method (GET, POST, PUT, PATCH, DELETE), add headers or a body, hit Send, and see the response. That is the core.
+
+But reqit goes far beyond the basics. Here is everything it can do.
+
+## Sending requests
+
+**7 protocols.** Not just HTTP. reqit speaks:
+
+- **HTTP/HTTPS** — every method, with full header and body control
+- **WebSocket** — connect, send, receive messages in real time
+- **Server-Sent Events (SSE)** — stream data from the server
+- **GraphQL** — queries, mutations, subscriptions, and schema introspection
+- **gRPC** — unary and streaming calls via gRPC-web
+- **SOAP** — SOAP 1.1/1.2 envelope builder
+- **MQTT** — publish and subscribe with QoS levels 0, 1, and 2
+
+Every request supports query parameters, headers, multiple body types (JSON, form-data, URL-encoded, raw text, GraphQL, gRPC, SOAP), and full authentication.
+
+## Authentication
+
+**7 auth types**, all built in:
+
+- **Bearer Token** — paste your token, reqit adds the header
+- **Basic Auth** — username and password, auto-encoded
+- **API Key** — custom header name and value
+- **Digest Auth** — nonce-based challenge response
+- **NTLM** — Windows authentication
+- **OAuth2** — full authorize/exchange/refresh flow with PKCE support
+- **JWT Decoder** — paste a JWT and see the header, claims, and expiry instantly
+
+You never have to manually add auth headers. reqit handles it for every request.
+
+## Collections
+
+Collections are folders for your API requests. reqit organizes them as **plain JSON files** on your disk. This is a big deal because it means:
+
+- You can put them in **Git** — diff, branch, review, merge, like code
+- You can **drag and drop** to reorder requests
+- You can **search and filter** by name
+- You can **batch select** and move or delete multiple requests at once
+- You can **duplicate** a request with one click
+- You can **link an OpenAPI spec** to a collection for contract testing
+
+Collections handle 1000+ items with zero lag thanks to virtual scrolling.
+
+## Environments
+
+Environments are variable sets for different servers. Create a Dev environment with \`BASE_URL = http://localhost:3000\` and a Prod environment with \`BASE_URL = https://api.yourapp.com\`. Switch between them with one click. Every \`{{BASE_URL}}\` in your URLs, headers, and bodies updates instantly.
+
+You can have as many environments as you want. Each workspace gets its own set.
+
+## Mock server
+
+reqit has a built-in mock server. Save a response from any request, start the mock server, and it replays that response on \`http://localhost:4321\`. Your frontend talks to the mock instead of the real API.
+
+You can:
+- Add **delays** to simulate slow servers
+- **Override status codes** to test error handling
+- **Override response bodies** to test edge cases
+- Match **path parameters** like \`/users/:id\`
+- Use **CORS** headers by default
+- See a header \`X-Mock-Server: reqit\` on every mock response
+
+## Contract testing
+
+Link an OpenAPI spec to a collection. Every request you send gets validated against the spec. You see a green **Contract OK** badge or a red **N violations** badge in the status bar.
+
+Click the badge to see exactly what went wrong: which field is missing, which status code does not match, which header is unexpected. You find breaking changes in 3 seconds instead of 3 hours.
+
+## Collection runner
+
+The runner executes every request in a collection and tells you which passed and which failed. It supports:
+
+- **Sequential** and **concurrent** execution (configurable workers)
+- **Retries** with backoff on failures
+- **Conditional execution** — run a request only if a condition is met
+- **12 assertion types** — status code, timing, body contains, body match regex, JSON path, header, cookie, variable equal, variable not equal, JSON schema, custom script
+- **Test suites** — organize assertions into nested groups
+
+After a run, you get a full pass/fail report with per-request timing.
+
+## Load testing
+
+reqit can simulate traffic. Set the number of virtual users, the duration, and the request. reqit fires it repeatedly and reports:
+
+- **Response time** — average, fastest, slowest
+- **Throughput** — requests per second
+- **Error rate** — percentage of failures
+- **Latency percentiles** — p50, p95, p99
+
+No need to set up k6 or JMeter. It is built in.
+
+## Scripting
+
+Every request has a Scripts tab. You write JavaScript that runs:
+
+- **Before** the request (pre-request) — generate tokens, set variables, compute signatures
+- **After** the response (post-response) — extract data, validate results, chain requests
+
+reqit uses the goja JavaScript engine. Scripts can read and write environment variables, so data flows automatically between requests.
+
+## Git integration
+
+reqit stores collections as JSON files in a \`.reqit/\` directory. This means you can use Git for everything:
+
+- **git diff** — see exactly what changed in a request
+- **git branch** — each feature branch carries its own collections
+- **git pull request** — API changes show up in code reviews
+- **git stash** — save changes and come back later
+- **git merge** — combine branches with conflict resolution
+
+reqit has a built-in Git client. You can commit, push, pull, branch, stash, and merge — all from the sidebar. Conflict resolution includes a visual merge UI for JSON, headers, and form-data.
+
+## Import and export
+
+**Import from:**
+- Postman (v2.1 with full pm.* script transpilation)
+- Insomnia
+- Hoppscotch
+- OpenAPI (YAML/JSON)
+- cURL commands
+- Postman environments
+
+**Export to:**
+- Postman, Insomnia, Hoppscotch formats
+- OpenAPI JSON
+- OpenAPI HTML (self-contained Swagger UI)
+- cURL commands
+- Markdown documentation
+- JavaScript fetch, Python requests code snippets
+
+No vendor lock-in. Your data comes in, your data goes out.
+
+## API designer
+
+Design your API before writing code. reqit has an OpenAPI designer where you can:
+
+- Create and edit OpenAPI specs
+- Add endpoints with methods, parameters, and responses
+- Push specs to SwaggerHub or Stoplight
+- Pull specs from SwaggerHub or Stoplight
+- Generate collections from specs
+
+The API Designer uses the standard OpenAPI format. Your frontend team can start building screens while the backend team builds the actual API — both working from the same blueprint.
+
+## CI/CD generation
+
+reqit can generate CI/CD pipeline files from your collections:
+
+- **GitHub Actions** — generates \`.github/workflows/\` YAML
+- **GitLab CI** — generates \`.gitlab-ci.yml\`
+- **Jenkins** — generates a \`Jenkinsfile\`
+- **Playwright tests** — generates browser test files
+- **Jest tests** — generates unit test files
+
+Add \`reqit run smoke-tests --env staging\` to your pipeline. Every push checks your API automatically.
+
+## CLI mode
+
+Run reqit from the terminal:
+
+\`\`\`bash
+reqit run my-collection --env production --output json
+\`\`\`
+
+Fires every request, runs assertions, prints a report. Exit code 0 means all pass. Exit code 1 means something failed. Perfect for CI/CD, nightly monitoring, or scripted workflows.
+
+## Workspace management
+
+Each workspace is a separate world. Create workspaces for different projects. Each one has its own collections, environments, history, and cookies.
+
+- **Create, rename, delete** workspaces
+- **Open from folder** — point reqit at any directory
+- **Relocate** — move a workspace to a new location
+- **File watcher** — changes outside reqit are detected automatically
+- **Cross-device sync** — drop your workspace folder into Dropbox or OneDrive
+
+## Interceptor
+
+The interceptor is a Chrome extension that captures every HTTP request your browser makes. Install it, connect it to reqit, and every API call your browser makes appears in reqit's history.
+
+- Capture requests from any website
+- See full request details (method, URL, headers, body)
+- Send captured requests directly to your workspace
+- All traffic stays local — nothing leaves your machine
+
+## Cookies
+
+reqit has a built-in cookie jar. When a server sends a \`Set-Cookie\` header, reqit stores it. On the next request to the same domain, reqit sends the cookie back. Like a browser, but you can see and control every cookie.
+
+- Auto-capture and auto-replay
+- Per-domain clear
+- Full cookie viewer with attributes
+
+## History
+
+Every request you send is automatically logged. Click any history entry to restore the full request — URL, method, headers, body, auth. Search by URL or method. Tag entries. Favorite important ones.
+
+## Code generation
+
+Click a button and reqit generates code for your request:
+
+- **cURL** — paste into any terminal
+- **JavaScript fetch** — for web apps
+- **Python requests** — for scripts and backends
+
+The generated code matches exactly what you tested. No typos. No forgotten headers.
+
+## Themes
+
+Dark mode. Light mode. System auto-detect. Pick what looks good to you. The change is instant — no restart needed.
+
+## Security and enterprise
+
+reqit is built for teams that care about security:
+
+- **OAuth2 with PKCE** — full authorization flow
+- **JWT Decoder** — see claims and expiry inline
+- **Enterprise SSO** — SAML 2.0 and OpenID Connect
+- **E2EE encryption** — AES-256-GCM with Argon2id key derivation
+- **Secret Vault** — integration with 1Password, HashiCorp Vault, AWS Secrets Manager
+- **Data Masker** — regex-based masking for tokens and API keys
+- **RBAC** — Viewer, Editor, Administrator roles
+- **Audit Trail** — append-only, tamper-evident log of every action
+- **Air-Gap Mode** — disable all network features for high-security environments
+
+## Keyboard shortcuts
+
+Every action is keyboard-accessible:
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Enter | Send request |
+| Ctrl+S | Save request |
+| Ctrl+T | New tab |
+| Ctrl+W | Close tab |
+| Ctrl+E | Focus URL bar |
+| Ctrl+K | Command palette |
+| Ctrl+Z | Undo |
+
+The command palette (Ctrl+K) searches every feature. Type what you want to do and press Enter.
+
+## Reporting
+
+After a collection run or load test, generate a report:
+
+- **JSON report** — machine-readable with full details
+- **HTML report** — styled with summary, request results, failures, load test analytics
+
+Save reports via native file dialog. Share with your team.
+
+## The architecture
+
+reqit is built with:
+
+- **Go** backend (compiled to a single binary)
+- **React + TypeScript** frontend
+- **Wails v2** for the bridge between them
+- **Tailwind CSS** for styling
+- **Zustand** for state management
+
+The installer is under 20MB. Startup is under 400ms. No Electron. No embedded browser. No Node.js runtime. Just a native binary and a web view.
+
+## Open source
+
+reqit is MIT licensed. The code is on GitHub. You can read every line, report issues, contribute features, or fork it for your own use.
+
+## Getting started
+
+1. Download reqit from [GitHub Releases](https://github.com/HalxDocs/reqit/releases)
+2. Install it (under 20MB, takes 5 seconds)
+3. Open a workspace or create a new one
+4. Create a collection, add a request, hit Send
+
+No account. No login. No cloud. Just open and go.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
 ];
