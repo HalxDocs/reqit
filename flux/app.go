@@ -18,6 +18,7 @@ import (
 	"github.com/blang/semver/v4"
 
 	"flux/internal/audit"
+	aipkg "flux/internal/ai"
 	"flux/internal/collections"
 	"flux/internal/contract"
 	cookiestore "flux/internal/cookies"
@@ -92,6 +93,7 @@ type App struct {
 	audit        *audit.Store
 	rbac         *rbac.Store
 	growth       *growth.Store
+	ai           *aipkg.Settings
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -391,6 +393,10 @@ func (a *App) mountWorkspace(dir string) {
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
 	a.testSuites = testbuilder.NewStore(dir)
+
+	// Init AI settings for this workspace.
+	a.ai = aipkg.NewSettings(dir)
+	a.ai.Load()
 
 	// Stop previous watcher if any.
 	if a.fsWatcher != nil {
@@ -2604,4 +2610,176 @@ func (a *App) track(category, action string, metadata map[string]interface{}) {
 	a.telemetry.Track(telemetry.EventFeature, category+":"+action, metadata)
 }
 
+// --- AI ---
+
+type AISettingsResult struct {
+	Enabled  bool   `json:"enabled"`
+	Provider string `json:"provider"`
+	APIKey   string `json:"apiKey"`
+	BaseURL  string `json:"baseUrl"`
+	Model    string `json:"model"`
+}
+
+func (a *App) GetAISettings() AISettingsResult {
+	if a.ai == nil {
+		return AISettingsResult{}
+	}
+	cfg := a.ai.Get()
+	return AISettingsResult{
+		Enabled:  a.ai.IsConfigured(),
+		Provider: string(cfg.Provider),
+		APIKey:   cfg.APIKey,
+		BaseURL:  cfg.BaseURL,
+		Model:    cfg.Model,
+	}
+}
+
+func (a *App) SaveAISettings(provider, apiKey, baseURL, model string) error {
+	if a.ai == nil {
+		dir, err := a.workspaces.ActiveDir()
+		if err != nil {
+			return err
+		}
+		a.ai = aipkg.NewSettings(dir)
+	}
+	cfg := aipkg.Config{
+		Provider: aipkg.Provider(provider),
+		APIKey:   apiKey,
+		BaseURL:  baseURL,
+		Model:    model,
+	}
+	return a.ai.Save(cfg)
+}
+
+func (a *App) DiagnoseWithAI(payload models.RequestPayload, response models.ResponseResult) (string, error) {
+	if a.ai == nil || !a.ai.IsConfigured() {
+		return "", errors.New("AI not configured — go to Settings to add your API key")
+	}
+	cfg := a.ai.Get()
+
+	bodyPreview := response.Body
+	if len(bodyPreview) > 2000 {
+		bodyPreview = bodyPreview[:2000] + "... (truncated)"
+	}
+
+	systemMsg := `You are an API debugging assistant. Analyze the request and response, then provide a clear diagnosis. Be concise and actionable. Format your response in markdown.`
+
+	userMsg := fmt.Sprintf(`## Request
+**%s %s**
+
+**Headers:**
+%s
+
+**Body:**
+%s
+
+## Response
+**Status: %d %s**
+**Time: %dms**
+
+**Response Headers:**
+%s
+
+**Response Body:**
+%s
+
+%s
+
+Diagnose the issue. Explain what went wrong, why, and how to fix it. If the request succeeded, confirm it looks correct and suggest any improvements.`,
+		payload.Method, payload.URL,
+		formatHeaders(payload.Headers),
+		payload.Body,
+		response.StatusCode, response.Status, response.TimingMs,
+		formatResponseHeaders(response.Headers),
+		bodyPreview,
+		formatValidation(response.Validation),
+	)
+
+	messages := []aipkg.Message{
+		{Role: "system", Content: systemMsg},
+		{Role: "user", Content: userMsg},
+	}
+
+	return aipkg.Chat(cfg, messages)
+}
+
+func (a *App) GenerateAssertions(payload models.RequestPayload, response models.ResponseResult) (string, error) {
+	if a.ai == nil || !a.ai.IsConfigured() {
+		return "", errors.New("AI not configured — go to Settings to add your API key")
+	}
+	cfg := a.ai.Get()
+
+	bodyPreview := response.Body
+	if len(bodyPreview) > 3000 {
+		bodyPreview = bodyPreview[:3000] + "... (truncated)"
+	}
+
+	systemMsg := `You are an API test assertion generator. Given a request and response, generate test assertions in reqit's JSON format. Return ONLY a JSON array of assertions, no explanation.
+
+Assertion types:
+- {"type":"statusCode","target":"200"} — exact status code match
+- {"type":"maxTiming","target":"5000"} — max response time in ms
+- {"type":"bodyContains","target":"text"} — response body contains text
+- {"type":"bodyMatch","target":"regex"} — response body matches regex
+- {"type":"jsonPath","target":"$.field","value":"expected"} — JSON path value check
+- {"type":"header","target":"Content-Type","value":"application/json"} — header value check
+
+Generate sensible assertions covering: status code, response time, required fields, and data types. Include edge-case assertions (error status codes, missing fields).`
+
+	userMsg := fmt.Sprintf(`**%s %s** → **%d %s** (%dms)
+
+Response body:
+`+"```"+`
+%s
+`+"```"+`
+
+Generate assertions for this endpoint.`, payload.Method, payload.URL, response.StatusCode, response.Status, response.TimingMs, bodyPreview)
+
+	messages := []aipkg.Message{
+		{Role: "system", Content: systemMsg},
+		{Role: "user", Content: userMsg},
+	}
+
+	return aipkg.Chat(cfg, messages)
+}
+
+func formatHeaders(headers []models.Header) string {
+	var sb strings.Builder
+	for _, h := range headers {
+		if !h.Enabled {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("- **%s:** %s\n", h.Key, h.Value))
+	}
+	if sb.Len() == 0 {
+		return "_none_"
+	}
+	return sb.String()
+}
+
+func formatResponseHeaders(headers map[string]string) string {
+	var sb strings.Builder
+	for k, v := range headers {
+		sb.WriteString(fmt.Sprintf("- **%s:** %s\n", k, v))
+	}
+	if sb.Len() == 0 {
+		return "_none_"
+	}
+	return sb.String()
+}
+
+func formatValidation(v *models.ValidationResult) string {
+	if v == nil {
+		return ""
+	}
+	if v.Valid {
+		return "## Contract Validation\n**Status: ✓ Contract OK**"
+	}
+	var sb strings.Builder
+	sb.WriteString("## Contract Validation\n**Status: ✗ Violations**\n\n")
+	for _, e := range v.Errors {
+		sb.WriteString(fmt.Sprintf("- **[%s]** %s: %s\n", e.Layer, e.Field, e.Message))
+	}
+	return sb.String()
+}
 

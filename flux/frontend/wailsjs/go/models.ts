@@ -206,6 +206,26 @@ export namespace main {
 	        this.remoteUrl = source["remoteUrl"];
 	    }
 	}
+	export class AISettingsResult {
+	    enabled: boolean;
+	    provider: string;
+	    apiKey: string;
+	    baseUrl: string;
+	    model: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AISettingsResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	        this.provider = source["provider"];
+	        this.apiKey = source["apiKey"];
+	        this.baseUrl = source["baseUrl"];
+	        this.model = source["model"];
+	    }
+	}
 	export class InterceptorStatus {
 	    running: boolean;
 	    port: number;

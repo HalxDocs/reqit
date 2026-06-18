@@ -757,3 +757,19 @@ export function VaultGetSecret(arg1) {
 export function VaultSetSecret(arg1, arg2) {
   return window['go']['main']['App']['VaultSetSecret'](arg1, arg2);
 }
+
+export function GetAISettings() {
+  return window['go']['main']['App']['GetAISettings']();
+}
+
+export function SaveAISettings(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SaveAISettings'](arg1, arg2, arg3, arg4);
+}
+
+export function DiagnoseWithAI(arg1, arg2) {
+  return window['go']['main']['App']['DiagnoseWithAI'](arg1, arg2);
+}
+
+export function GenerateAssertions(arg1, arg2) {
+  return window['go']['main']['App']['GenerateAssertions'](arg1, arg2);
+}

@@ -5,6 +5,7 @@ import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { getCommands, setUserKeys, resetKeys, getActiveKeys } from "@/shared/lib/commands";
 import { GetVersion } from "../../../wailsjs/go/main/App";
+import { AISettingsPanel } from "@/features/ai/components/AISettingsPanel";
 
 export function SettingsModal() {
   const open = useUIStore((s) => s.settingsModalOpen);
@@ -76,6 +77,10 @@ export function SettingsModal() {
 
         <Section title="Theme">
           <ThemeSelector />
+        </Section>
+
+        <Section title="AI — Response Intelligence">
+          <AISettingsPanel />
         </Section>
 
         <Section title="Shortcuts">

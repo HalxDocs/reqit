@@ -11,6 +11,7 @@ import { CookiesView } from "@/features/response/components/CookiesView";
 import { TimelineView } from "@/features/response/components/TimelineView";
 import { LoadingState } from "@/features/response/components/LoadingState";
 import { ErrorState } from "@/features/response/components/ErrorState";
+import { AIDiagnosisPanel } from "@/features/ai/components/AIDiagnosisPanel";
 import { SaveCapturedResponse } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
 
@@ -141,6 +142,8 @@ export function ResponsePane() {
           <TimelineView />
         )}
       </div>
+
+      <AIDiagnosisPanel />
     </section>
   );
 }

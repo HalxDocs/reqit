@@ -392,3 +392,11 @@ export function UpvoteFeatureRequest(arg1:string):Promise<void>;
 export function VaultGetSecret(arg1:string):Promise<string>;
 
 export function VaultSetSecret(arg1:string,arg2:string):Promise<void>;
+
+export function GetAISettings():Promise<main.AISettingsResult>;
+
+export function SaveAISettings(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+
+export function DiagnoseWithAI(arg1:models.RequestPayload,arg2:models.ResponseResult):Promise<string>;
+
+export function GenerateAssertions(arg1:models.RequestPayload,arg2:models.ResponseResult):Promise<string>;
