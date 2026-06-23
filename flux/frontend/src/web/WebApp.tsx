@@ -21,6 +21,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { DOC_SECTIONS } from "../shared/lib/docs";
 import { BlogPage } from "../features/blog/components/BlogPanel";
+import { PublicProfilePage } from "../features/profile/components/PublicProfilePage";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -601,19 +602,32 @@ const PAGES = [
   { id: "docs" as const, label: "Documentation", icon: "⊡", path: "/documentation" },
 ];
 
-function parsePage(): { page: "home" | "docs" | "blog"; blogSlug?: string } {
+function parsePage(): { page: "home" | "docs" | "blog" | "profile"; blogSlug?: string; profileUser?: string } {
   const p = window.location.pathname;
+  // /profile/:username (legacy)
+  const profileMatch = p.match(/^\/profile\/([a-z0-9][a-z0-9\-]*)$/);
+  if (profileMatch) return { page: "profile", profileUser: profileMatch[1] };
+  // /blog/:slug
   const blogMatch = p.match(/^\/blog\/(.+)$/);
   if (blogMatch) return { page: "blog", blogSlug: blogMatch[1] };
   if (p === "/blog" || p === "/blog/") return { page: "blog" };
   if (p === "/documentation" || p === "/documentation/") return { page: "docs" };
+  // /:username (direct profile URL)
+  const directMatch = p.match(/^\/([a-z0-9][a-z0-9\-]*)$/);
+  if (directMatch) {
+    const slug = directMatch[1];
+    if (slug !== "blog" && slug !== "documentation" && slug !== "api") {
+      return { page: "profile", profileUser: slug };
+    }
+  }
   return { page: "home" };
 }
 
 export function WebApp() {
   const init = parsePage();
-  const [page, setPage] = useState<"home" | "docs" | "blog">(init.page);
+  const [page, setPage] = useState<"home" | "docs" | "blog" | "profile">(init.page);
   const [blogSlug, setBlogSlug] = useState<string | undefined>(init.blogSlug);
+  const [profileUser, setProfileUser] = useState<string | undefined>(init.profileUser);
   const stars = useGitHubStars("HalxDocs/reqit");
 
   // Prevent browser scroll restoration so every navigation starts at top
@@ -622,8 +636,9 @@ export function WebApp() {
     window.scrollTo(0, 0);
   }, []);
 
-  const navigate = useCallback((to: "home" | "docs" | "blog", slug?: string) => {
+  const navigate = useCallback((to: "home" | "docs" | "blog" | "profile", slug?: string, user?: string) => {
     setBlogSlug(slug);
+    setProfileUser(user);
     if (to === "home") {
       setPage("home");
       window.history.pushState({}, "", "/");
@@ -633,6 +648,9 @@ export function WebApp() {
     } else if (to === "blog" && slug) {
       setPage("blog");
       window.history.pushState({}, "", `/blog/${slug}`);
+    } else if (to === "profile" && user) {
+      setPage("profile");
+      window.history.pushState({}, "", `/${user}`);
     } else {
       setPage("blog");
       window.history.pushState({}, "", "/blog");
@@ -644,6 +662,7 @@ export function WebApp() {
       const parsed = parsePage();
       setPage(parsed.page);
       setBlogSlug(parsed.blogSlug);
+      setProfileUser(parsed.profileUser);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -651,7 +670,7 @@ export function WebApp() {
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
-  }, [page, blogSlug]);
+  }, [page, blogSlug, profileUser]);
 
   // Also scroll to top on initial mount (handles direct URL navigation like /blog/slug)
   useLayoutEffect(() => {
@@ -718,6 +737,8 @@ export function WebApp() {
           <DocsPage goHome={() => navigate("home")} />
         ) : page === "blog" ? (
           <BlogPage key={blogSlug || "listing"} initialSlug={blogSlug} onBack={() => navigate("home")} onSelectPost={handleSelectPost} scrollToTop={() => window.scrollTo(0, 0)} />
+        ) : page === "profile" && profileUser ? (
+          <PublicProfilePage key={profileUser} username={profileUser} onBack={() => navigate("home")} />
         ) : null}
 
         <footer className="flex flex-col items-center gap-2 pb-6 pt-6">

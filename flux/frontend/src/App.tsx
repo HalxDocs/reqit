@@ -27,6 +27,7 @@ import { GRPCPanel } from "@/features/grpc/components/GRPCPanel";
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
 import { TeamModal } from "@/features/git/components/TeamModal";
 import { RunnerModal } from "@/features/collections/components/RunnerModal";
+import { DevProfileModal } from "@/features/profile/components/DevProfilePanel";
 import { SocketPanel } from "@/features/websocket/components/SocketPanel";
 import { ToastHost } from "@/shared/components/ToastHost";
 import { UpdateBanner } from "@/shared/components/UpdateBanner";
@@ -123,6 +124,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const openImport = useUIStore((s) => s.openImportModal);
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
+  const devProfileOpen = useUIStore((s) => s.devProfileModalOpen);
+  const closeDevProfile = useUIStore((s) => s.closeDevProfileModal);
   const openCodeGen = useUIStore((s) => s.openCodeGenModal);
   const newTab = useTabsStore((s) => s.newTab);
   const closeTab = useTabsStore((s) => s.closeTab);
@@ -226,6 +229,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <WelcomeModal />
       <PasteCurlModal />
       <TeamModal />
+      <DevProfileModal open={devProfileOpen} onClose={closeDevProfile} />
       {runnerColl && (
         <RunnerModal
           open={true}

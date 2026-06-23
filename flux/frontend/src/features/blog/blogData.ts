@@ -2099,4 +2099,145 @@ No account. No login. No cloud. Just open and go.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
+  {
+    slug: "reqit-ai-features",
+    title: "reqit AI: diagnose broken APIs without leaving your client",
+    description: "reqit has built-in AI that explains why your API call failed, generates test assertions, and detects schema drift — all running locally with your own API key.",
+    date: "2026-06-21",
+    readTime: "6 min read",
+    tags: ["ai", "diagnostics", "testing", "byok"],
+    category: "Developer Experience",
+    content: `You send an API request. The server returns a 422. The body says "validation error" with a cryptic field name. You stare at it, open the docs, grep the codebase, ask a teammate. Ten minutes later you figure out you forgot to send a \`tenant_id\` header.
+
+This happens every day. reqit now has AI that fixes this in 2 seconds.
+
+## What reqit AI does
+
+reqit has three AI-powered features built into the response panel:
+
+### 1. Diagnose broken responses
+
+Click **Diagnose** after any failed or unexpected response. The AI reads the request, the response, the status code, and the headers, then tells you:
+
+- What went wrong
+- Why it went wrong
+- How to fix it
+
+No context-switching. No copy-pasting into ChatGPT. The diagnosis appears right next to the response.
+
+### 2. Generate test assertions
+
+Click **Assertions** and the AI generates JSON test assertions for that request/response pair. These assertions check status codes, response body fields, headers, and data types.
+
+You can save them directly to your collection and run them in the runner. Your API tests write themselves.
+
+### 3. Schema drift detection
+
+When you import or fetch an OpenAPI spec, reqit saves a baseline snapshot. Click **Detect Drift** in the collection menu to compare the current spec against the baseline. You see:
+
+- **Added endpoints** (green) — new routes the API now offers
+- **Removed endpoints** (red strikethrough) — routes that disappeared
+- **Modified endpoints** (amber) — changed parameters, request bodies, or response schemas
+
+Breaking changes are flagged automatically. No more discovering a field type changed in production.
+
+## How it works: BYOK (Bring Your Own Key)
+
+reqit does not run its own AI servers. You bring your own API key from any supported provider:
+
+| Provider | Models |
+|----------|--------|
+| **OpenAI** | GPT-4o, GPT-4o Mini, GPT-4 Turbo, o3-mini, o3 |
+| **Anthropic** | Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3.5 Haiku |
+| **Google Gemini** | Gemini 2.0 Flash, Gemini 2.5 Pro, Gemini 1.5 Pro |
+| **Ollama** (local) | Llama 3.2, Mistral, DeepSeek Coder, Qwen 2.5, and more |
+
+Your API key stays on your machine. reqit sends the request directly to the provider's API. No middleman. No logging on our servers. No telemetry about your API calls.
+
+## The setup
+
+1. Open reqit Settings (gear icon)
+2. Go to **AI — Response Intelligence**
+3. Pick your provider
+4. Paste your API key
+5. Pick a model (or type a custom model name)
+6. Done
+
+The whole thing takes 30 seconds. Toggle it off anytime.
+
+## Why Ollama matters
+
+If you run [Ollama](https://ollama.com) locally, reqit works completely offline. No API key needed. No data leaves your machine. The diagnosis happens on your GPU.
+
+This is useful for:
+- Air-gapped environments
+- Sensitive APIs (healthcare, finance, government)
+- Teams that want zero cost for AI features
+- Development without internet access
+
+## What the AI sees
+
+The AI receives:
+- The HTTP method and URL
+- Request headers and body
+- Response status code
+- Response headers and body
+- The prompt asking it to diagnose or generate assertions
+
+It does **not** receive:
+- Your workspace data
+- Your collection names
+- Your environment variables
+- Any other requests you've made
+- Your API key (that stays in settings)
+
+The AI call is stateless. Each diagnosis is independent.
+
+## Schema drift in detail
+
+When you first link an OpenAPI spec to a collection, reqit captures a snapshot:
+
+- Every endpoint (method + path)
+- Every parameter (name, type, required)
+- Every request body schema
+- Every response schema
+
+On subsequent checks, reqit compares the current spec against this snapshot. If someone updated the spec and added a field, changed a type, or removed an endpoint, you see it immediately.
+
+This is useful for:
+- Monitoring upstream API changes
+- Verifying your OpenAPI spec matches the actual API
+- Catching breaking changes before they hit production
+- Keeping documentation in sync with reality
+
+## Cost
+
+The AI features cost whatever your provider charges. For most developers:
+
+- **GPT-4o Mini**: ~$0.0003 per diagnosis (essentially free)
+- **Claude 3.5 Haiku**: ~$0.0004 per diagnosis
+- **Ollama**: Free forever
+
+You will spend less on AI diagnostics in a year than you spend on coffee in a week.
+
+## What's next
+
+The AI features are the beginning. Future plans:
+
+- **AI-powered request builder** — describe what you want, get a request
+- **AI test generation** — describe your API, get a full test suite
+- **AI documentation** — auto-generate API docs from your collections
+- **MCP server** — let AI agents like Claude Desktop control reqit directly
+
+## Getting started
+
+1. Download reqit from [GitHub Releases](https://github.com/HalxDocs/reqit/releases)
+2. Configure your AI provider in Settings
+3. Send a request, click Diagnose
+4. See what the AI says
+
+No account. No login. No cloud. Just your API key and your machine.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
 ];

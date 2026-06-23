@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Download, Eye, FileCode2, MoreVertical, Unlink } from "lucide-react";
 import { Button } from "@/shared/components/Button";
+import { DriftPanel } from "@/features/spec/components/DriftPanel";
 
 interface CollectionMenuProps {
   hasSpec: boolean;
@@ -44,6 +45,9 @@ export function CollectionMenu({
             {hasSpec ? (
               <>
                 <div className="px-3 py-1 text-10 text-subtext/60 font-mono truncate max-w-[170px]" title={specPath}>{specPath}</div>
+                <div className="px-3 py-2">
+                  <DriftPanel specPath={specPath} />
+                </div>
                 <Button variant="menu-item" onClick={() => { close(); onLinkSpec(); }}><FileCode2 size={12} className="text-cyan" />Change Spec</Button>
                 <Button variant="menu-item" onClick={() => { close(); onUnlinkSpec(); }}><Unlink size={12} />Unlink Spec</Button>
               </>

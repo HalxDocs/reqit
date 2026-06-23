@@ -62,6 +62,10 @@ export function CommitAndPush(arg1) {
   return window['go']['main']['App']['CommitAndPush'](arg1);
 }
 
+export function ComputeDevStats() {
+  return window['go']['main']['App']['ComputeDevStats']();
+}
+
 export function ConfigureVault(arg1) {
   return window['go']['main']['App']['ConfigureVault'](arg1);
 }
@@ -134,6 +138,14 @@ export function DeleteWorkspace(arg1) {
   return window['go']['main']['App']['DeleteWorkspace'](arg1);
 }
 
+export function DetectSchemaDrift(arg1) {
+  return window['go']['main']['App']['DetectSchemaDrift'](arg1);
+}
+
+export function DiagnoseWithAI(arg1, arg2) {
+  return window['go']['main']['App']['DiagnoseWithAI'](arg1, arg2);
+}
+
 export function DisconnectSocket() {
   return window['go']['main']['App']['DisconnectSocket']();
 }
@@ -190,6 +202,10 @@ export function GRPCStreamInvoke(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['GRPCStreamInvoke'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function GenerateAssertions(arg1, arg2) {
+  return window['go']['main']['App']['GenerateAssertions'](arg1, arg2);
+}
+
 export function GenerateCLIRunner(arg1) {
   return window['go']['main']['App']['GenerateCLIRunner'](arg1);
 }
@@ -234,6 +250,10 @@ export function GeneratePlaywrightTest(arg1, arg2) {
   return window['go']['main']['App']['GeneratePlaywrightTest'](arg1, arg2);
 }
 
+export function GetAISettings() {
+  return window['go']['main']['App']['GetAISettings']();
+}
+
 export function GetActiveContributors() {
   return window['go']['main']['App']['GetActiveContributors']();
 }
@@ -268,6 +288,10 @@ export function GetCommunityConfig() {
 
 export function GetCookies() {
   return window['go']['main']['App']['GetCookies']();
+}
+
+export function GetDevProfile() {
+  return window['go']['main']['App']['GetDevProfile']();
 }
 
 export function GetEnvironments() {
@@ -328,6 +352,10 @@ export function GetPlugins() {
 
 export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
+}
+
+export function GetPublicProfile() {
+  return window['go']['main']['App']['GetPublicProfile']();
 }
 
 export function GetRecipe(arg1) {
@@ -466,6 +494,10 @@ export function InvalidateSpec(arg1) {
   return window['go']['main']['App']['InvalidateSpec'](arg1);
 }
 
+export function IsUpstashConfigured() {
+  return window['go']['main']['App']['IsUpstashConfigured']();
+}
+
 export function LinkCollectionSpec(arg1, arg2) {
   return window['go']['main']['App']['LinkCollectionSpec'](arg1, arg2);
 }
@@ -536,6 +568,10 @@ export function PickFolder(arg1) {
 
 export function PreviewOpenAPI(arg1) {
   return window['go']['main']['App']['PreviewOpenAPI'](arg1);
+}
+
+export function PublishDevProfile() {
+  return window['go']['main']['App']['PublishDevProfile']();
 }
 
 export function PullFromStoplight(arg1, arg2) {
@@ -626,8 +662,16 @@ export function RunLoadTest(arg1) {
   return window['go']['main']['App']['RunLoadTest'](arg1);
 }
 
+export function SaveAISettings(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SaveAISettings'](arg1, arg2, arg3, arg4);
+}
+
 export function SaveCapturedResponse(arg1, arg2, arg3) {
   return window['go']['main']['App']['SaveCapturedResponse'](arg1, arg2, arg3);
+}
+
+export function SaveDevProfile(arg1) {
+  return window['go']['main']['App']['SaveDevProfile'](arg1);
 }
 
 export function SaveGeneratedTest(arg1, arg2) {
@@ -636,6 +680,14 @@ export function SaveGeneratedTest(arg1, arg2) {
 
 export function SaveResponseToRequest(arg1, arg2) {
   return window['go']['main']['App']['SaveResponseToRequest'](arg1, arg2);
+}
+
+export function SaveSchemaSnapshot(arg1) {
+  return window['go']['main']['App']['SaveSchemaSnapshot'](arg1);
+}
+
+export function SaveUpstashConfig(arg1, arg2) {
+  return window['go']['main']['App']['SaveUpstashConfig'](arg1, arg2);
 }
 
 export function SendNotification(arg1, arg2) {
@@ -656,6 +708,10 @@ export function SetActiveEnvironment(arg1) {
 
 export function SetAirGapConfig(arg1) {
   return window['go']['main']['App']['SetAirGapConfig'](arg1);
+}
+
+export function SetDevProfilePublic(arg1) {
+  return window['go']['main']['App']['SetDevProfilePublic'](arg1);
 }
 
 export function SetDiscordURL(arg1) {
@@ -756,20 +812,4 @@ export function VaultGetSecret(arg1) {
 
 export function VaultSetSecret(arg1, arg2) {
   return window['go']['main']['App']['VaultSetSecret'](arg1, arg2);
-}
-
-export function GetAISettings() {
-  return window['go']['main']['App']['GetAISettings']();
-}
-
-export function SaveAISettings(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['SaveAISettings'](arg1, arg2, arg3, arg4);
-}
-
-export function DiagnoseWithAI(arg1, arg2) {
-  return window['go']['main']['App']['DiagnoseWithAI'](arg1, arg2);
-}
-
-export function GenerateAssertions(arg1, arg2) {
-  return window['go']['main']['App']['GenerateAssertions'](arg1, arg2);
 }

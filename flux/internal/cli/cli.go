@@ -16,6 +16,19 @@ import (
 	"flux/internal/workspaces"
 )
 
+// RunMCP starts the MCP server over stdio for agent integration.
+func RunMCP(args []string) int {
+	// Find workspace directory
+	ws := workspaces.NewStore()
+	dir, err := ws.ActiveDir()
+	if err != nil || dir == "" {
+		fmt.Fprintln(os.Stderr, "Error: no active workspace. Create one in the reqit GUI first.")
+		return 1
+	}
+
+	return mcpRun(dir)
+}
+
 var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
 
 // Run is the CLI entry point. It returns an exit code (0 = success).

@@ -117,10 +117,12 @@ type SavedRequest struct {
 }
 
 type Collection struct {
-	ID       string         `json:"id"`
-	Name     string         `json:"name"`
-	SpecPath string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
-	Requests []SavedRequest `json:"requests"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	SpecPath    string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
+	Public      bool           `json:"public,omitempty"`
+	Requests    []SavedRequest `json:"requests"`
 }
 
 type EnvVar struct {

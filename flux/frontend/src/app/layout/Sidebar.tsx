@@ -71,6 +71,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
   const openTeam = useUIStore((s) => s.openTeamModal);
+  const openDevProfile = useUIStore((s) => s.openDevProfileModal);
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
   const profile = useProfileStore((s) => s.profile);
@@ -159,81 +160,81 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         <Section icon={<HistoryIcon size={12} />} label="History">
           <HistoryList />
         </Section>
-
-        {/* ===== COMPACT TOOLS SECTION (AT BOTTOM OF SCROLL) ===== */}
-        <div className="mt-auto border-t border-border pt-1 pb-2">
-          <CollapsibleSection label="Tools" defaultOpen={false}>
-            <NavItem
-              icon={<Radio size={13} />}
-              label="WebSocket / SSE"
-              active={view === "socket"}
-              onClick={() => setView(view === "socket" ? "http" : "socket")}
-            />
-            <NavItem
-              icon={<Code2 size={13} />}
-              label="GraphQL"
-              active={view === "graphql"}
-              onClick={() => setView(view === "graphql" ? "http" : "graphql")}
-            />
-            <NavItem
-              icon={<Server size={13} />}
-              label="gRPC"
-              active={view === "grpc"}
-              onClick={() => setView(view === "grpc" ? "http" : "grpc")}
-            />
-            <NavItem
-              icon={<FileEdit size={13} />}
-              label="API Designer"
-              active={view === "spec"}
-              onClick={() => setView(view === "spec" ? "http" : "spec")}
-            />
-            <NavItem
-              icon={<Book size={13} />}
-              label="API Reference"
-              active={view === "docs"}
-              onClick={() => setView(view === "docs" ? "http" : "docs")}
-            />
-            <NavItem
-              icon={<GitPullRequest size={13} />}
-              label="Git & PR Preview"
-              active={view === "pr"}
-              onClick={() => setView(view === "pr" ? "http" : "pr")}
-            />
-            <NavItem
-              icon={<Webhook size={13} />}
-              label="Interceptor"
-              active={view === "interceptor"}
-              onClick={() => setView(view === "interceptor" ? "http" : "interceptor")}
-            />
-            <NavItem
-              icon={<Shield size={13} />}
-              label="Security"
-              active={view === "security"}
-              onClick={() => setView(view === "security" ? "http" : "security")}
-            />
-            <NavItem
-              icon={<Download size={13} />}
-              label="Integrations"
-              active={view === "integrations"}
-              onClick={() => setView(view === "integrations" ? "http" : "integrations")}
-            />
-            <NavItem
-              icon={<ArrowLeftRight size={13} />}
-              label="Migration"
-              active={view === "migration"}
-              onClick={() => setView(view === "migration" ? "http" : "migration")}
-            />
-            <NavItem
-              icon={<Rocket size={13} />}
-              label="Growth"
-              active={view === "growth"}
-              onClick={() => setView(view === "growth" ? "http" : "growth")}
-            />
-          </CollapsibleSection>
-        </div>
       </nav>
 
-      {/* ===== STICKY BOTTOM: TEAM + SETTINGS ===== */}
+      {/* ===== FIXED TOOLS (ALWAYS VISIBLE) ===== */}
+      <div className="border-t border-border shrink-0 max-h-[40vh] overflow-y-auto">
+        <CollapsibleSection label="Tools" defaultOpen={false}>
+          <NavItem
+            icon={<Radio size={13} />}
+            label="WebSocket / SSE"
+            active={view === "socket"}
+            onClick={() => setView(view === "socket" ? "http" : "socket")}
+          />
+          <NavItem
+            icon={<Code2 size={13} />}
+            label="GraphQL"
+            active={view === "graphql"}
+            onClick={() => setView(view === "graphql" ? "http" : "graphql")}
+          />
+          <NavItem
+            icon={<Server size={13} />}
+            label="gRPC"
+            active={view === "grpc"}
+            onClick={() => setView(view === "grpc" ? "http" : "grpc")}
+          />
+          <NavItem
+            icon={<FileEdit size={13} />}
+            label="API Designer"
+            active={view === "spec"}
+            onClick={() => setView(view === "spec" ? "http" : "spec")}
+          />
+          <NavItem
+            icon={<Book size={13} />}
+            label="API Reference"
+            active={view === "docs"}
+            onClick={() => setView(view === "docs" ? "http" : "docs")}
+          />
+          <NavItem
+            icon={<GitPullRequest size={13} />}
+            label="Git & PR Preview"
+            active={view === "pr"}
+            onClick={() => setView(view === "pr" ? "http" : "pr")}
+          />
+          <NavItem
+            icon={<Webhook size={13} />}
+            label="Interceptor"
+            active={view === "interceptor"}
+            onClick={() => setView(view === "interceptor" ? "http" : "interceptor")}
+          />
+          <NavItem
+            icon={<Shield size={13} />}
+            label="Security"
+            active={view === "security"}
+            onClick={() => setView(view === "security" ? "http" : "security")}
+          />
+          <NavItem
+            icon={<Download size={13} />}
+            label="Integrations"
+            active={view === "integrations"}
+            onClick={() => setView(view === "integrations" ? "http" : "integrations")}
+          />
+          <NavItem
+            icon={<ArrowLeftRight size={13} />}
+            label="Migration"
+            active={view === "migration"}
+            onClick={() => setView(view === "migration" ? "http" : "migration")}
+          />
+          <NavItem
+            icon={<Rocket size={13} />}
+            label="Growth"
+            active={view === "growth"}
+            onClick={() => setView(view === "growth" ? "http" : "growth")}
+          />
+        </CollapsibleSection>
+      </div>
+
+      {/* ===== STICKY BOTTOM: TEAM + PROFILE + SETTINGS ===== */}
       <div className="border-t border-border shrink-0">
         <button
           type="button"
@@ -249,6 +250,19 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
           </div>
           <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
           <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openDevProfile}
+          className="w-full h-[36px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
+          title="Dev Profile — your public developer profile"
+        >
+          <div className="w-[22px] h-[22px] rounded-full bg-purple-500/15 flex items-center justify-center text-purple-400 shrink-0">
+            <Code2 size={11} />
+          </div>
+          <span className="text-12 text-subtext group-hover:text-text transition-colors">Dev Profile</span>
+          <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Public URL</span>
         </button>
 
         <button

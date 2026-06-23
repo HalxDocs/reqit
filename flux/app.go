@@ -51,6 +51,7 @@ import (
 	"flux/internal/reporter"
 	"flux/internal/requester"
 	"flux/internal/rbac"
+	schemapkg "flux/internal/schema"
 	"flux/internal/scripting"
 	"flux/internal/soap"
 	"flux/internal/sso"
@@ -94,6 +95,7 @@ type App struct {
 	rbac         *rbac.Store
 	growth       *growth.Store
 	ai           *aipkg.Settings
+	devProfile   *profile.DevProfileStore
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -397,6 +399,9 @@ func (a *App) mountWorkspace(dir string) {
 	// Init AI settings for this workspace.
 	a.ai = aipkg.NewSettings(dir)
 	a.ai.Load()
+
+	// Init dev profile store for this workspace.
+	a.devProfile = profile.NewDevProfileStore(dir)
 
 	// Stop previous watcher if any.
 	if a.fsWatcher != nil {
@@ -1265,6 +1270,13 @@ func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
 			}
 		}
 	}
+
+	// Save baseline snapshot for future drift detection
+	if err := a.SaveSchemaSnapshot(filepath.Base(path)); err != nil {
+		// Non-fatal — log but don't fail the import
+		fmt.Printf("Warning: could not save schema snapshot: %v\n", err)
+	}
+
 	runtime.EventsEmit(a.ctx, "collections:changed")
 	return result, nil
 }
@@ -2041,7 +2053,52 @@ func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
 		return "", fmt.Errorf("failed to save spec file: %w", err)
 	}
 
+	// Auto-save baseline snapshot for future drift detection
+	if err := a.SaveSchemaSnapshot(name); err != nil {
+		fmt.Printf("Warning: could not save schema snapshot: %v\n", err)
+	}
+
 	return name, nil
+}
+
+// SaveSchemaSnapshot captures and saves a baseline snapshot of an OpenAPI spec.
+func (a *App) SaveSchemaSnapshot(specPath string) error {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil {
+		return err
+	}
+
+	fullPath := filepath.Join(dir, specPath)
+	snap, err := schemapkg.CaptureSnapshot(fullPath)
+	if err != nil {
+		return fmt.Errorf("failed to capture snapshot: %w", err)
+	}
+
+	return schemapkg.SaveSnapshot(dir, specPath, snap)
+}
+
+// DetectSchemaDrift compares the current spec against its saved baseline snapshot.
+// Returns the drift result, or nil if no baseline exists.
+func (a *App) DetectSchemaDrift(specPath string) (*schemapkg.Drift, error) {
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil {
+		return nil, err
+	}
+
+	baseline, err := schemapkg.LoadSnapshot(dir, specPath)
+	if err != nil {
+		// No baseline saved yet — this is the first import, no drift to detect
+		return nil, nil
+	}
+
+	fullPath := filepath.Join(dir, specPath)
+	current, err := schemapkg.CaptureSnapshot(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to capture current snapshot: %w", err)
+	}
+
+	drift := schemapkg.DetectDrift(baseline, current)
+	return drift, nil
 }
 
 // --- Mock Server ---
@@ -2781,5 +2838,144 @@ func formatValidation(v *models.ValidationResult) string {
 		sb.WriteString(fmt.Sprintf("- **[%s]** %s: %s\n", e.Layer, e.Field, e.Message))
 	}
 	return sb.String()
+}
+
+// --- Dev Profile ---
+
+func (a *App) GetDevProfile() (*profile.DevProfile, error) {
+	if a.devProfile == nil {
+		return nil, errors.New("no active workspace")
+	}
+	return a.devProfile.Get()
+}
+
+func (a *App) SaveDevProfile(p profile.DevProfile) error {
+	if a.devProfile == nil {
+		return errors.New("no active workspace")
+	}
+	return a.devProfile.Update(p)
+}
+
+func (a *App) SetDevProfilePublic(public bool) error {
+	if a.devProfile == nil {
+		return errors.New("no active workspace")
+	}
+	return a.devProfile.SetPublic(public)
+}
+
+func (a *App) GetPublicProfile() (*profile.PublicProfile, error) {
+	if a.devProfile == nil {
+		return nil, errors.New("no active workspace")
+	}
+	return a.devProfile.GetPublicProfile()
+}
+
+// PublishDevProfile stores the profile in Upstash Redis for instant web access.
+func (a *App) PublishDevProfile() (string, error) {
+	if a.devProfile == nil {
+		return "", errors.New("no active workspace")
+	}
+	pub, err := a.devProfile.GetPublicProfile()
+	if err != nil {
+		return "", err
+	}
+	if err := profile.PublishToUpstash(pub); err != nil {
+		return "", fmt.Errorf("publish profile: %w", err)
+	}
+	return fmt.Sprintf("https://reqit.vercel.app/%s", pub.Username), nil
+}
+
+// SaveUpstashConfig stores the Upstash API credentials locally.
+func (a *App) SaveUpstashConfig(url, token string) error {
+	return profile.SaveUpstashConfig(url, token)
+}
+
+// IsUpstashConfigured returns whether Upstash credentials are set.
+func (a *App) IsUpstashConfigured() bool {
+	return profile.IsUpstashConfigured()
+}
+
+func (a *App) ComputeDevStats() profile.DevStats {
+	if a.collections == nil {
+		return profile.DevStats{}
+	}
+
+	colls, _ := a.collections.GetAll()
+	protos := map[string]bool{}
+	auths := map[string]bool{}
+	totalReqs := 0
+	specsCount := 0
+	passCount := 0
+	totalValidated := 0
+	assertionCount := 0
+
+	for _, c := range colls {
+		if c.SpecPath != "" {
+			specsCount++
+		}
+		for _, r := range c.Requests {
+			totalReqs++
+			if r.Payload.Method != "" {
+				protos[strings.ToUpper(r.Payload.Method)] = true
+			}
+			if r.Payload.AuthType != "" && r.Payload.AuthType != "none" {
+				auths[r.Payload.AuthType] = true
+			}
+			if r.Payload.BodyType != "" {
+				protos[r.Payload.BodyType] = true
+			}
+		}
+	}
+
+	// Count assertions from test suites
+	if a.testSuites != nil {
+		suites := a.testSuites.GetAll()
+		for _, s := range suites {
+			for _, g := range s.Groups {
+				assertionCount += len(g.Assertions)
+				for _, child := range g.Children {
+					assertionCount += len(child.Assertions)
+				}
+			}
+		}
+	}
+
+	// Contract pass rate from history
+	if a.history != nil {
+		entries, _ := a.history.GetAll()
+		for _, e := range entries {
+			if e.Response.Validation != nil {
+				totalValidated++
+				if e.Response.Validation.Valid {
+					passCount++
+				}
+			}
+		}
+	}
+
+	passRate := 0
+	if totalValidated > 0 {
+		passRate = (passCount * 100) / totalValidated
+	}
+
+	protoList := make([]string, 0, len(protos))
+	for p := range protos {
+		protoList = append(protoList, p)
+	}
+	authList := make([]string, 0, len(auths))
+	for a := range auths {
+		authList = append(authList, a)
+	}
+
+	return profile.DevStats{
+		CollectionsCreated: len(colls),
+		RequestsSent:       totalReqs,
+		AssertionsWritten:  assertionCount,
+		SpecsAuthored:      specsCount,
+		MockServersCreated: 0,
+		ContractPassRate:   passRate,
+		ProtocolsUsed:      protoList,
+		AuthTypesUsed:      authList,
+	}
 }
 

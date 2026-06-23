@@ -46,6 +46,10 @@ type UIStore = {
   openTeamModal: () => void;
   closeTeamModal: () => void;
 
+  devProfileModalOpen: boolean;
+  openDevProfileModal: () => void;
+  closeDevProfileModal: () => void;
+
   loadedRequestID: string | null;
   setLoadedRequestID: (id: string | null) => void;
 
@@ -103,6 +107,10 @@ export const useUIStore = create<UIStore>((set) => ({
   teamModalOpen: false,
   openTeamModal: () => set({ teamModalOpen: true }),
   closeTeamModal: () => set({ teamModalOpen: false }),
+
+  devProfileModalOpen: false,
+  openDevProfileModal: () => set({ devProfileModalOpen: true }),
+  closeDevProfileModal: () => set({ devProfileModalOpen: false }),
 
   loadedRequestID: null,
   setLoadedRequestID: (loadedRequestID) => set({ loadedRequestID }),

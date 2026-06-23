@@ -20,6 +20,8 @@ func main() {
 		switch os.Args[1] {
 		case "run", "list", "help", "--help", "-h":
 			os.Exit(cli.Run(os.Args[1:]))
+		case "mcp":
+			os.Exit(cli.RunMCP(os.Args[2:]))
 		}
 	}
 
