@@ -1,3 +1,186 @@
+export namespace agentlens {
+	
+	export class LintResult {
+	    ruleId: string;
+	    ruleName: string;
+	    severity: string;
+	    message: string;
+	    fixSuggestion: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LintResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ruleId = source["ruleId"];
+	        this.ruleName = source["ruleName"];
+	        this.severity = source["severity"];
+	        this.message = source["message"];
+	        this.fixSuggestion = source["fixSuggestion"];
+	    }
+	}
+	export class ToolScore {
+	    toolName: string;
+	    requestId: string;
+	    score: number;
+	    results: LintResult[];
+	    errorCount: number;
+	    warningCount: number;
+	    infoCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolScore(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.toolName = source["toolName"];
+	        this.requestId = source["requestId"];
+	        this.score = source["score"];
+	        this.results = this.convertValues(source["results"], LintResult);
+	        this.errorCount = source["errorCount"];
+	        this.warningCount = source["warningCount"];
+	        this.infoCount = source["infoCount"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CollectionScore {
+	    score: number;
+	    toolCount: number;
+	    exposedCount: number;
+	    tools: ToolScore[];
+	    errors: number;
+	    warnings: number;
+	    infos: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionScore(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.score = source["score"];
+	        this.toolCount = source["toolCount"];
+	        this.exposedCount = source["exposedCount"];
+	        this.tools = this.convertValues(source["tools"], ToolScore);
+	        this.errors = source["errors"];
+	        this.warnings = source["warnings"];
+	        this.infos = source["infos"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ToolParam {
+	    name: string;
+	    in: string;
+	    type: string;
+	    required: boolean;
+	    description: string;
+	    enum?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolParam(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.in = source["in"];
+	        this.type = source["type"];
+	        this.required = source["required"];
+	        this.description = source["description"];
+	        this.enum = source["enum"];
+	    }
+	}
+	export class ToolDefinition {
+	    requestId: string;
+	    requestName: string;
+	    folder: string;
+	    name: string;
+	    description: string;
+	    method: string;
+	    path: string;
+	    inputSchema: Record<string, any>;
+	    parameters: ToolParam[];
+	    deprecated: boolean;
+	    destructive: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolDefinition(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.requestId = source["requestId"];
+	        this.requestName = source["requestName"];
+	        this.folder = source["folder"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.method = source["method"];
+	        this.path = source["path"];
+	        this.inputSchema = source["inputSchema"];
+	        this.parameters = this.convertValues(source["parameters"], ToolParam);
+	        this.deprecated = source["deprecated"];
+	        this.destructive = source["destructive"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+
+}
+
 export namespace cookies {
 	
 	export class CookieInfo {

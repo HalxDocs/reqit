@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
-export type WorkspaceView = "http" | "socket" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc";
+export type WorkspaceView = "http" | "socket" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens";
 
 type UIStore = {
   requestTab: RequestTab;

@@ -23,6 +23,7 @@ import { SecurityPanel } from "@/features/security/components/SecurityPanel";
 import { GrowthPanel } from "@/features/growth/components/GrowthPanel";
 import { GraphQLPanel } from "@/features/graphql/components/GraphQLPanel";
 import { GRPCPanel } from "@/features/grpc/components/GRPCPanel";
+import { AgentLensPanel } from "@/features/agentlens/components/AgentLensPanel";
 
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
 import { TeamModal } from "@/features/git/components/TeamModal";
@@ -202,6 +203,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <SecurityPanel />
       ) : view === "migration" ? (
         <MigrationPanel />
+      ) : view === "agentlens" ? (
+        <AgentLensPanel />
       ) : view === "growth" ? (
         <GrowthPanel />
       ) : view === "graphql" ? (

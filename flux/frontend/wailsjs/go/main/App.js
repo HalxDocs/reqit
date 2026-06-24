@@ -22,6 +22,14 @@ export function AddTestGroup(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddTestGroup'](arg1, arg2, arg3);
 }
 
+export function AnalyzeAllCollectionsAgentLens() {
+  return window['go']['main']['App']['AnalyzeAllCollectionsAgentLens']();
+}
+
+export function AnalyzeCollectionAgentLens(arg1) {
+  return window['go']['main']['App']['AnalyzeCollectionAgentLens'](arg1);
+}
+
 export function AppDataDir() {
   return window['go']['main']['App']['AppDataDir']();
 }
@@ -568,6 +576,10 @@ export function PickFolder(arg1) {
 
 export function PreviewOpenAPI(arg1) {
   return window['go']['main']['App']['PreviewOpenAPI'](arg1);
+}
+
+export function PreviewToolAgentLens(arg1, arg2) {
+  return window['go']['main']['App']['PreviewToolAgentLens'](arg1, arg2);
 }
 
 export function PublishDevProfile() {

@@ -65,6 +65,8 @@ import (
 	"flux/internal/vault"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
+
+	agentlenspkg "flux/internal/agentlens"
 )
 
 type App struct {
@@ -2977,5 +2979,76 @@ func (a *App) ComputeDevStats() profile.DevStats {
 		ProtocolsUsed:      protoList,
 		AuthTypesUsed:      authList,
 	}
+}
+
+// ── Agent Lens ──────────────────────────────────────────────────────────────
+
+// AnalyzeCollectionAgentLens scores every request in a collection for agent-readiness.
+func (a *App) AnalyzeCollectionAgentLens(collID string) (agentlenspkg.CollectionScore, error) {
+	if a.collections == nil {
+		return agentlenspkg.CollectionScore{}, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return agentlenspkg.CollectionScore{}, err
+	}
+	var target *models.Collection
+	for i := range colls {
+		if colls[i].ID == collID {
+			target = &colls[i]
+			break
+		}
+	}
+	if target == nil {
+		return agentlenspkg.CollectionScore{}, errors.New("collection not found")
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.AnalyzeCollection(*target, dir), nil
+}
+
+// AnalyzeAllCollectionsAgentLens scores all collections together (cross-collection duplicate detection).
+func (a *App) AnalyzeAllCollectionsAgentLens() (agentlenspkg.CollectionScore, error) {
+	if a.collections == nil {
+		return agentlenspkg.CollectionScore{}, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return agentlenspkg.CollectionScore{}, err
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.AnalyzeCollections(colls, dir), nil
+}
+
+// PreviewToolAgentLens returns the tool definition and lint score for a single request.
+func (a *App) PreviewToolAgentLens(collID, requestID string) (agentlenspkg.ToolDefinition, agentlenspkg.ToolScore, error) {
+	if a.collections == nil {
+		return agentlenspkg.ToolDefinition{}, agentlenspkg.ToolScore{}, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return agentlenspkg.ToolDefinition{}, agentlenspkg.ToolScore{}, err
+	}
+	var req models.SavedRequest
+	folderName := ""
+	found := false
+	for _, coll := range colls {
+		for _, r := range coll.Requests {
+			if r.ID == requestID {
+				req = r
+				folderName = coll.Name
+				found = true
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
+	if !found {
+		return agentlenspkg.ToolDefinition{}, agentlenspkg.ToolScore{}, errors.New("request not found")
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	tool, score := agentlenspkg.PreviewTool(req, folderName, colls, dir)
+	return tool, score, nil
 }
 

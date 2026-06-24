@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, Webhook, Code2, Server } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, Webhook, Code2, Server, ScanEye } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { cn } from "@/shared/lib/cn";
@@ -224,6 +224,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             label="Migration"
             active={view === "migration"}
             onClick={() => setView(view === "migration" ? "http" : "migration")}
+          />
+          <NavItem
+            icon={<ScanEye size={13} />}
+            label="Agent Lens"
+            active={view === "agentlens"}
+            onClick={() => setView(view === "agentlens" ? "http" : "agentlens")}
           />
           <NavItem
             icon={<Rocket size={13} />}
