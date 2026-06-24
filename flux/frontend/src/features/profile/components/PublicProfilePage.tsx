@@ -91,6 +91,10 @@ export function PublicProfilePage({ username, onBack }: Props) {
   }
 
   const displayName = profile.displayName || profile.username;
+  const links = profile.links || [];
+  const badges = profile.badges || [];
+  const protocolsUsed = profile.stats?.protocolsUsed || [];
+  const authTypesUsed = profile.stats?.authTypesUsed || [];
 
   return (
     <div className="min-h-screen bg-bg">
@@ -130,9 +134,9 @@ export function PublicProfilePage({ username, onBack }: Props) {
         </div>
 
         {/* Links */}
-        {profile.links.length > 0 && (
+        {links.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
-            {profile.links.map((link, i) => (
+            {links.map((link, i) => (
               <a
                 key={i}
                 href={link.url}
@@ -150,12 +154,12 @@ export function PublicProfilePage({ username, onBack }: Props) {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           {[
-            { icon: <Folder size={16} />, label: "Collections", value: profile.stats.collectionsCreated, color: "text-cyan" },
-            { icon: <Send size={16} />, label: "Requests Sent", value: profile.stats.requestsSent, color: "text-blue-400" },
-            { icon: <TestTube size={16} />, label: "Assertions", value: profile.stats.assertionsWritten, color: "text-green-400" },
-            { icon: <FileCode2 size={16} />, label: "Specs Authored", value: profile.stats.specsAuthored, color: "text-purple-400" },
-            { icon: <Shield size={16} />, label: "Contract Pass", value: `${profile.stats.contractPassRate}%`, color: "text-amber-400" },
-            { icon: <FileCheck size={16} />, label: "Protocols", value: profile.stats.protocolsUsed.length, color: "text-pink-400" },
+            { icon: <Folder size={16} />, label: "Collections", value: profile.stats?.collectionsCreated ?? 0, color: "text-cyan" },
+            { icon: <Send size={16} />, label: "Requests Sent", value: profile.stats?.requestsSent ?? 0, color: "text-blue-400" },
+            { icon: <TestTube size={16} />, label: "Assertions", value: profile.stats?.assertionsWritten ?? 0, color: "text-green-400" },
+            { icon: <FileCode2 size={16} />, label: "Specs Authored", value: profile.stats?.specsAuthored ?? 0, color: "text-purple-400" },
+            { icon: <Shield size={16} />, label: "Contract Pass", value: `${profile.stats?.contractPassRate ?? 0}%`, color: "text-amber-400" },
+            { icon: <FileCheck size={16} />, label: "Protocols", value: protocolsUsed.length, color: "text-pink-400" },
           ].map(({ icon, label, value, color }) => (
             <div key={label} className="p-4 rounded-xl border border-border bg-card/50 hover:border-border transition-colors">
               <div className={`text-2xl font-bold ${color}`}>{value}</div>
@@ -169,10 +173,10 @@ export function PublicProfilePage({ username, onBack }: Props) {
           <div className="p-4 rounded-xl border border-border bg-card/50">
             <div className="text-xs font-medium text-subtext mb-2">Protocols Used</div>
             <div className="flex flex-wrap gap-1.5">
-              {profile.stats.protocolsUsed.map((p) => (
+              {protocolsUsed.map((p) => (
                 <span key={p} className="px-2 py-0.5 text-[10px] rounded-full bg-cyan/10 text-cyan font-mono">{p}</span>
               ))}
-              {profile.stats.protocolsUsed.length === 0 && (
+              {protocolsUsed.length === 0 && (
                 <span className="text-xs text-zinc-500">None yet</span>
               )}
             </div>
@@ -180,10 +184,10 @@ export function PublicProfilePage({ username, onBack }: Props) {
           <div className="p-4 rounded-xl border border-border bg-card/50">
             <div className="text-xs font-medium text-subtext mb-2">Auth Types</div>
             <div className="flex flex-wrap gap-1.5">
-              {profile.stats.authTypesUsed.map((a) => (
+              {authTypesUsed.map((a) => (
                 <span key={a} className="px-2 py-0.5 text-[10px] rounded-full bg-purple-500/10 text-purple-400 font-mono">{a}</span>
               ))}
-              {profile.stats.authTypesUsed.length === 0 && (
+              {authTypesUsed.length === 0 && (
                 <span className="text-xs text-zinc-500">None yet</span>
               )}
             </div>
@@ -191,11 +195,11 @@ export function PublicProfilePage({ username, onBack }: Props) {
         </div>
 
         {/* Badges */}
-        {profile.badges.length > 0 && (
+        {badges.length > 0 && (
           <div className="mb-8">
             <div className="text-xs font-medium text-subtext mb-3">Badges</div>
             <div className="flex flex-wrap gap-3">
-              {profile.badges.map((b) => (
+              {badges.map((b) => (
                 <div key={b.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/50">
                   <Award size={16} className="text-amber-400" />
                   <div>
