@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, MapPin, Building, ExternalLink, Award, Folder, Send, FileCheck, FileCode2, Shield, TestTube } from "lucide-react";
 import { GetPublicProfile } from "../../../../wailsjs/go/main/App";
-import reqitLogo from "../../assets/images/reqitlogo.jpeg";
+import reqitLogo from "../../../assets/images/reqitlogo.jpeg";
 
 async function fetchProfileFromRepo(username: string): Promise<PublicProfileData> {
   const res = await fetch(`/api/profile/${username}`);
