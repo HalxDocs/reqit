@@ -3,8 +3,7 @@
   "outputDirectory": "flux/frontend/dist-web",
   "framework": null,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/profiles/(.*)", "destination": "/profiles/$1" },
-    { "source": "/(.*)", "destination": "/web.html" }
+    { "source": "/((?!api/).*)", "destination": "/web.html" }
   ]
 }
