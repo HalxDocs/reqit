@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink } from "lucide-react";
+import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink, Code2, GitBranch, MessageSquare, Link as LinkIcon } from "lucide-react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { toast } from "@/app/stores/useToastStore";
 
@@ -22,6 +22,9 @@ interface DevProfileData {
     protocolsUsed: string[];
     authTypesUsed: string[];
   };
+  skills: string[];
+  socialLinks: { type: string; url: string }[];
+  githubUsername: string;
   public: boolean;
   updatedAt: string;
 }
@@ -33,9 +36,25 @@ function emptyProfile(): DevProfileData {
     stats: { collectionsCreated: 0, requestsSent: 0, assertionsWritten: 0,
              specsAuthored: 0, mockServersCreated: 0, contractPassRate: 0,
              protocolsUsed: [], authTypesUsed: [] },
+    skills: [], socialLinks: [], githubUsername: "",
     public: false, updatedAt: "",
   };
 }
+
+const SOCIAL_TYPES = [
+  { value: "github", label: "GitHub", icon: GitBranch, placeholder: "https://github.com/username" },
+  { value: "twitter", label: "Twitter / X", icon: MessageSquare, placeholder: "https://x.com/username" },
+  { value: "linkedin", label: "LinkedIn", icon: LinkIcon, placeholder: "https://linkedin.com/in/username" },
+  { value: "website", label: "Website", icon: Globe, placeholder: "https://yoursite.com" },
+  { value: "devto", label: "DEV.to", icon: Code2, placeholder: "https://dev.to/username" },
+];
+
+const COMMON_SKILLS = [
+  "Go", "TypeScript", "JavaScript", "Python", "Rust", "Java", "C#", "Ruby",
+  "REST API", "GraphQL", "gRPC", "WebSocket", "MQTT", "SOAP",
+  "Docker", "Kubernetes", "AWS", "PostgreSQL", "Redis", "MongoDB",
+  "CI/CD", "Git", "Linux", "Testing", "Microservices", "OpenAPI",
+];
 
 export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [p, setP] = useState<DevProfileData>(emptyProfile);
@@ -48,6 +67,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
   const [upstashToken, setUpstashToken] = useState("");
   const [upstashConfigured, setUpstashConfigured] = useState(false);
   const [showUpstash, setShowUpstash] = useState(false);
+  const [skillInput, setSkillInput] = useState("");
 
   const loadProfile = useCallback(async () => {
     try {
@@ -73,6 +93,9 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
             protocolsUsed: prof.stats?.protocolsUsed || [],
             authTypesUsed: prof.stats?.authTypesUsed || [],
           },
+          skills: prof.skills || [],
+          socialLinks: prof.socialLinks || [],
+          githubUsername: prof.githubUsername || "",
           public: prof.public || false,
           updatedAt: prof.updatedAt || "",
         });
@@ -136,6 +159,9 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
         company: p.company,
         badges: p.badges,
         stats: p.stats,
+        skills: p.skills,
+        socialLinks: p.socialLinks,
+        githubUsername: p.githubUsername,
         public: p.public,
         updatedAt: p.updatedAt,
       } as any);
@@ -189,6 +215,42 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     setP({ ...p, links: p.links.filter((_l, idx) => idx !== i) });
   };
 
+  const addSkill = (skill: string) => {
+    const s = skill.trim();
+    if (s && !p.skills.includes(s)) {
+      setP({ ...p, skills: [...p.skills, s] });
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setP({ ...p, skills: p.skills.filter((s) => s !== skill) });
+  };
+
+  const handleSkillKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addSkill(skillInput);
+      setSkillInput("");
+    }
+  };
+
+  const addSocialLink = (type: string) => {
+    if (!p.socialLinks.find((s) => s.type === type)) {
+      setP({ ...p, socialLinks: [...p.socialLinks, { type, url: "" }] });
+    }
+  };
+
+  const updateSocialLink = (type: string, url: string) => {
+    setP({
+      ...p,
+      socialLinks: p.socialLinks.map((s) => (s.type === type ? { ...s, url } : s)),
+    });
+  };
+
+  const removeSocialLink = (type: string) => {
+    setP({ ...p, socialLinks: p.socialLinks.filter((s) => s.type !== type) });
+  };
+
   const PROFILE_BASE = "https://reqit.vercel.app";
   const profileUrl = p.username ? `${PROFILE_BASE}/${p.username}` : "";
 
@@ -220,12 +282,15 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     }
   };
 
+  const suggestedSkills = COMMON_SKILLS.filter((s) => !p.skills.includes(s)).slice(0, 12);
+  const unusedSocialTypes = SOCIAL_TYPES.filter((st) => !p.socialLinks.find((s) => s.type === st.value));
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-[520px] max-h-[85vh] overflow-y-auto bg-card border border-border rounded-xl shadow-2xl mx-4">
+      <div className="relative z-10 w-full max-w-[560px] max-h-[85vh] overflow-y-auto bg-card border border-border rounded-xl shadow-2xl mx-4">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-border bg-card/95 backdrop-blur">
           <div className="flex items-center gap-2">
@@ -379,10 +444,102 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
 
+          {/* Skills */}
+          <div>
+            <label className="block text-xs font-medium text-subtext mb-1"><Code2 size={10} className="inline mr-1" />Skills & Technologies</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {p.skills.map((skill) => (
+                <span key={skill} className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-full bg-cyan/10 text-cyan border border-cyan/20">
+                  {skill}
+                  <button onClick={() => removeSkill(skill)} className="hover:text-red-400 transition-colors">
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={handleSkillKeyDown}
+              placeholder="Type a skill and press Enter (e.g. Go, REST API, Docker)"
+              className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+            />
+            {suggestedSkills.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {suggestedSkills.map((skill) => (
+                  <button
+                    key={skill}
+                    onClick={() => addSkill(skill)}
+                    className="px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all"
+                  >
+                    + {skill}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* GitHub Username */}
+          <div>
+            <label className="block text-xs font-medium text-subtext mb-1"><GitBranch size={10} className="inline mr-1" />GitHub Username</label>
+            <input
+              type="text"
+              value={p.githubUsername}
+              onChange={(e) => setP({ ...p, githubUsername: e.target.value.replace(/[^a-zA-Z0-9-]/g, "") })}
+              placeholder="your-github-username"
+              className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
+            />
+            <div className="text-[10px] text-subtext mt-1">Shows your recent commits and contribution activity on your profile</div>
+          </div>
+
+          {/* Social Links */}
+          <div>
+            <label className="block text-xs font-medium text-subtext mb-1"><LinkIcon size={10} className="inline mr-1" />Social Links</label>
+            <div className="space-y-2">
+              {p.socialLinks.map((sl) => {
+                const meta = SOCIAL_TYPES.find((st) => st.value === sl.type);
+                if (!meta) return null;
+                const Icon = meta.icon;
+                return (
+                  <div key={sl.type} className="flex items-center gap-2">
+                    <Icon size={14} className="text-subtext shrink-0" />
+                    <input
+                      type="url"
+                      value={sl.url}
+                      onChange={(e) => updateSocialLink(sl.type, e.target.value)}
+                      placeholder={meta.placeholder}
+                      className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                    />
+                    <button onClick={() => removeSocialLink(sl.type)} className="text-zinc-500 hover:text-red-400 transition-colors">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {unusedSocialTypes.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {unusedSocialTypes.map((st) => {
+                  const Icon = st.icon;
+                  return (
+                    <button
+                      key={st.value}
+                      onClick={() => addSocialLink(st.value)}
+                      className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all"
+                    >
+                      <Icon size={10} />+ {st.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Links */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-subtext">Links</label>
+              <label className="text-xs font-medium text-subtext"><ExternalLink size={10} className="inline mr-1" />Other Links</label>
               <button onClick={addLink} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1">
                 <Plus size={10} />Add
               </button>

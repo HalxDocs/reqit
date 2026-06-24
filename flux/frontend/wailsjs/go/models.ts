@@ -1474,6 +1474,20 @@ export namespace profile {
 	        this.earnedAt = source["earnedAt"];
 	    }
 	}
+	export class SocialLink {
+	    type: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SocialLink(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.url = source["url"];
+	    }
+	}
 	export class DevStats {
 	    collectionsCreated: number;
 	    requestsSent: number;
@@ -1524,6 +1538,9 @@ export namespace profile {
 	    company?: string;
 	    badges?: Badge[];
 	    stats: DevStats;
+	    skills?: string[];
+	    socialLinks?: SocialLink[];
+	    githubUsername?: string;
 	    public: boolean;
 	    updatedAt: string;
 	
@@ -1542,6 +1559,9 @@ export namespace profile {
 	        this.company = source["company"];
 	        this.badges = this.convertValues(source["badges"], Badge);
 	        this.stats = this.convertValues(source["stats"], DevStats);
+	        this.skills = source["skills"];
+	        this.socialLinks = this.convertValues(source["socialLinks"], SocialLink);
+	        this.githubUsername = source["githubUsername"];
 	        this.public = source["public"];
 	        this.updatedAt = source["updatedAt"];
 	    }
@@ -1625,6 +1645,9 @@ export namespace profile {
 	    badges?: Badge[];
 	    stats: DevStats;
 	    projects?: ProjectRef[];
+	    skills?: string[];
+	    socialLinks?: SocialLink[];
+	    githubUsername?: string;
 	    updatedAt: string;
 	
 	    static createFrom(source: any = {}) {
@@ -1643,6 +1666,9 @@ export namespace profile {
 	        this.badges = this.convertValues(source["badges"], Badge);
 	        this.stats = this.convertValues(source["stats"], DevStats);
 	        this.projects = this.convertValues(source["projects"], ProjectRef);
+	        this.skills = source["skills"];
+	        this.socialLinks = this.convertValues(source["socialLinks"], SocialLink);
+	        this.githubUsername = source["githubUsername"];
 	        this.updatedAt = source["updatedAt"];
 	    }
 	
