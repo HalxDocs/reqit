@@ -2,8 +2,13 @@
   "buildCommand": "npm install --include=dev --prefix flux/frontend && npm run build:web --prefix flux/frontend",
   "outputDirectory": "flux/frontend/dist-web",
   "framework": null,
-  "rewrites": [
-    { "source": "/profiles/(.*)", "destination": "/profiles/$1" },
-    { "source": "/((?!api/).*)", "destination": "/web.html" }
-  ]
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [
+      { "source": "/profiles/(.*)", "destination": "/profiles/$1" }
+    ],
+    "fallback": [
+      { "source": "/(.*)", "destination": "/web.html" }
+    ]
+  }
 }
