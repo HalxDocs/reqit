@@ -15,20 +15,22 @@ const devProfileFile = "devprofile.json"
 var usernameRe = regexp.MustCompile(`^[a-z0-9]([a-z0-9\-]{0,30}[a-z0-9])?$`)
 
 type DevProfile struct {
-	Username       string       `json:"username"`
-	DisplayName    string       `json:"displayName"`
-	Bio            string       `json:"bio"`
-	AvatarURL      string       `json:"avatarUrl,omitempty"`
-	Links          []Link       `json:"links,omitempty"`
-	Location       string       `json:"location,omitempty"`
-	Company        string       `json:"company,omitempty"`
-	Badges         []Badge      `json:"badges,omitempty"`
-	Stats          DevStats     `json:"stats"`
-	Skills         []string     `json:"skills,omitempty"`
-	SocialLinks    []SocialLink `json:"socialLinks,omitempty"`
-	GitHubUsername  string       `json:"githubUsername,omitempty"`
-	Public         bool         `json:"public"`
-	UpdatedAt      string       `json:"updatedAt"`
+	Username       string        `json:"username"`
+	DisplayName    string        `json:"displayName"`
+	Bio            string        `json:"bio"`
+	AvatarURL      string        `json:"avatarUrl,omitempty"`
+	Links          []Link        `json:"links,omitempty"`
+	Location       string        `json:"location,omitempty"`
+	Company        string        `json:"company,omitempty"`
+	Badges         []Badge       `json:"badges,omitempty"`
+	Stats          DevStats      `json:"stats"`
+	Skills         []string      `json:"skills,omitempty"`
+	SocialLinks    []SocialLink  `json:"socialLinks,omitempty"`
+	GitHubUsername  string        `json:"githubUsername,omitempty"`
+	Projects       []ProjectRef  `json:"projects,omitempty"`
+	UserProjects   []UserProject `json:"userProjects,omitempty"`
+	Public         bool          `json:"public"`
+	UpdatedAt      string        `json:"updatedAt"`
 }
 
 type Link struct {
@@ -61,20 +63,21 @@ type DevStats struct {
 }
 
 type PublicProfile struct {
-	Username       string       `json:"username"`
-	DisplayName    string       `json:"displayName"`
-	Bio            string       `json:"bio"`
-	AvatarURL      string       `json:"avatarUrl,omitempty"`
-	Links          []Link       `json:"links,omitempty"`
-	Location       string       `json:"location,omitempty"`
-	Company        string       `json:"company,omitempty"`
-	Badges         []Badge      `json:"badges,omitempty"`
-	Stats          DevStats     `json:"stats"`
-	Projects       []ProjectRef `json:"projects,omitempty"`
-	Skills         []string     `json:"skills,omitempty"`
-	SocialLinks    []SocialLink `json:"socialLinks,omitempty"`
-	GitHubUsername  string       `json:"githubUsername,omitempty"`
-	UpdatedAt      string       `json:"updatedAt"`
+	Username       string        `json:"username"`
+	DisplayName    string        `json:"displayName"`
+	Bio            string        `json:"bio"`
+	AvatarURL      string        `json:"avatarUrl,omitempty"`
+	Links          []Link        `json:"links,omitempty"`
+	Location       string        `json:"location,omitempty"`
+	Company        string        `json:"company,omitempty"`
+	Badges         []Badge       `json:"badges,omitempty"`
+	Stats          DevStats      `json:"stats"`
+	Projects       []ProjectRef  `json:"projects,omitempty"`
+	UserProjects   []UserProject `json:"userProjects,omitempty"`
+	Skills         []string      `json:"skills,omitempty"`
+	SocialLinks    []SocialLink  `json:"socialLinks,omitempty"`
+	GitHubUsername  string        `json:"githubUsername,omitempty"`
+	UpdatedAt      string        `json:"updatedAt"`
 }
 
 type ProjectRef struct {
@@ -85,6 +88,15 @@ type ProjectRef struct {
 	Protocols    []string `json:"protocols,omitempty"`
 	HasSpec      bool     `json:"hasSpec"`
 	Public       bool     `json:"public"`
+}
+
+type UserProject struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	URL         string   `json:"url,omitempty"`
+	LiveURL     string   `json:"liveUrl,omitempty"`
+	TechStack   []string `json:"techStack,omitempty"`
+	ImageURL    string   `json:"imageUrl,omitempty"`
 }
 
 type DevProfileStore struct {
@@ -147,6 +159,8 @@ func (s *DevProfileStore) Update(p DevProfile) error {
 	s.profile.Skills = p.Skills
 	s.profile.SocialLinks = p.SocialLinks
 	s.profile.GitHubUsername = p.GitHubUsername
+	s.profile.Projects = p.Projects
+	s.profile.UserProjects = p.UserProjects
 	s.profile.Public = p.Public
 	s.profile.UpdatedAt = time.Now().Format(time.RFC3339)
 
@@ -160,6 +174,17 @@ func (s *DevProfileStore) UpdateStats(stats DevStats) error {
 		return err
 	}
 	s.profile.Stats = stats
+	s.profile.UpdatedAt = time.Now().Format(time.RFC3339)
+	return s.save()
+}
+
+func (s *DevProfileStore) UpdateProjects(projects []ProjectRef) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	s.profile.Projects = projects
 	s.profile.UpdatedAt = time.Now().Format(time.RFC3339)
 	return s.save()
 }
@@ -197,6 +222,8 @@ func (s *DevProfileStore) GetPublicProfile() (*PublicProfile, error) {
 		Skills:        s.profile.Skills,
 		SocialLinks:   s.profile.SocialLinks,
 		GitHubUsername: s.profile.GitHubUsername,
+		Projects:      s.profile.Projects,
+		UserProjects:  s.profile.UserProjects,
 		UpdatedAt:     s.profile.UpdatedAt,
 	}, nil
 }

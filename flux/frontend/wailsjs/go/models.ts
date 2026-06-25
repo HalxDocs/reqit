@@ -104,6 +104,143 @@ export namespace agentlens {
 		    return a;
 		}
 	}
+	export class EvalRunResult {
+	    taskIndex: number;
+	    prompt: string;
+	    expectTool: string;
+	    expectArgs?: Record<string, any>;
+	    actualTool: string;
+	    actualArgs?: Record<string, any>;
+	    toolMatch: boolean;
+	    argsMatch: boolean;
+	    passed: boolean;
+	    latencyMs: number;
+	    error?: string;
+	    timestamp: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EvalRunResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.taskIndex = source["taskIndex"];
+	        this.prompt = source["prompt"];
+	        this.expectTool = source["expectTool"];
+	        this.expectArgs = source["expectArgs"];
+	        this.actualTool = source["actualTool"];
+	        this.actualArgs = source["actualArgs"];
+	        this.toolMatch = source["toolMatch"];
+	        this.argsMatch = source["argsMatch"];
+	        this.passed = source["passed"];
+	        this.latencyMs = source["latencyMs"];
+	        this.error = source["error"];
+	        this.timestamp = source["timestamp"];
+	    }
+	}
+	export class EvalTaskResult {
+	    taskIndex: number;
+	    prompt: string;
+	    runs: EvalRunResult[];
+	    passRate: number;
+	    passed: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EvalTaskResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.taskIndex = source["taskIndex"];
+	        this.prompt = source["prompt"];
+	        this.runs = this.convertValues(source["runs"], EvalRunResult);
+	        this.passRate = source["passRate"];
+	        this.passed = source["passed"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class EvalSuiteResult {
+	    suiteName: string;
+	    provider: string;
+	    model: string;
+	    tasks: EvalTaskResult[];
+	    totalRuns: number;
+	    totalPassed: number;
+	    passRate: number;
+	    score: number;
+	    startedAt: string;
+	    finishedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EvalSuiteResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.suiteName = source["suiteName"];
+	        this.provider = source["provider"];
+	        this.model = source["model"];
+	        this.tasks = this.convertValues(source["tasks"], EvalTaskResult);
+	        this.totalRuns = source["totalRuns"];
+	        this.totalPassed = source["totalPassed"];
+	        this.passRate = source["passRate"];
+	        this.score = source["score"];
+	        this.startedAt = source["startedAt"];
+	        this.finishedAt = source["finishedAt"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ExportResult {
+	    outputDir: string;
+	    files: string[];
+	    tools: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.outputDir = source["outputDir"];
+	        this.files = source["files"];
+	        this.tools = source["tools"];
+	    }
+	}
 	
 	export class ToolParam {
 	    name: string;
@@ -1657,6 +1794,52 @@ export namespace profile {
 	        this.earnedAt = source["earnedAt"];
 	    }
 	}
+	export class UserProject {
+	    name: string;
+	    description?: string;
+	    url?: string;
+	    liveUrl?: string;
+	    techStack?: string[];
+	    imageUrl?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UserProject(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.url = source["url"];
+	        this.liveUrl = source["liveUrl"];
+	        this.techStack = source["techStack"];
+	        this.imageUrl = source["imageUrl"];
+	    }
+	}
+	export class ProjectRef {
+	    name: string;
+	    description?: string;
+	    requestCount: number;
+	    testCount: number;
+	    protocols?: string[];
+	    hasSpec: boolean;
+	    public: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProjectRef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.requestCount = source["requestCount"];
+	        this.testCount = source["testCount"];
+	        this.protocols = source["protocols"];
+	        this.hasSpec = source["hasSpec"];
+	        this.public = source["public"];
+	    }
+	}
 	export class SocialLink {
 	    type: string;
 	    url: string;
@@ -1724,6 +1907,8 @@ export namespace profile {
 	    skills?: string[];
 	    socialLinks?: SocialLink[];
 	    githubUsername?: string;
+	    projects?: ProjectRef[];
+	    userProjects?: UserProject[];
 	    public: boolean;
 	    updatedAt: string;
 	
@@ -1745,6 +1930,8 @@ export namespace profile {
 	        this.skills = source["skills"];
 	        this.socialLinks = this.convertValues(source["socialLinks"], SocialLink);
 	        this.githubUsername = source["githubUsername"];
+	        this.projects = this.convertValues(source["projects"], ProjectRef);
+	        this.userProjects = this.convertValues(source["userProjects"], UserProject);
 	        this.public = source["public"];
 	        this.updatedAt = source["updatedAt"];
 	    }
@@ -1793,30 +1980,7 @@ export namespace profile {
 	        this.requestCount = source["requestCount"];
 	    }
 	}
-	export class ProjectRef {
-	    name: string;
-	    description?: string;
-	    requestCount: number;
-	    testCount: number;
-	    protocols?: string[];
-	    hasSpec: boolean;
-	    public: boolean;
 	
-	    static createFrom(source: any = {}) {
-	        return new ProjectRef(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.description = source["description"];
-	        this.requestCount = source["requestCount"];
-	        this.testCount = source["testCount"];
-	        this.protocols = source["protocols"];
-	        this.hasSpec = source["hasSpec"];
-	        this.public = source["public"];
-	    }
-	}
 	export class PublicProfile {
 	    username: string;
 	    displayName: string;
@@ -1828,6 +1992,7 @@ export namespace profile {
 	    badges?: Badge[];
 	    stats: DevStats;
 	    projects?: ProjectRef[];
+	    userProjects?: UserProject[];
 	    skills?: string[];
 	    socialLinks?: SocialLink[];
 	    githubUsername?: string;
@@ -1849,6 +2014,7 @@ export namespace profile {
 	        this.badges = this.convertValues(source["badges"], Badge);
 	        this.stats = this.convertValues(source["stats"], DevStats);
 	        this.projects = this.convertValues(source["projects"], ProjectRef);
+	        this.userProjects = this.convertValues(source["userProjects"], UserProject);
 	        this.skills = source["skills"];
 	        this.socialLinks = this.convertValues(source["socialLinks"], SocialLink);
 	        this.githubUsername = source["githubUsername"];
@@ -1873,6 +2039,7 @@ export namespace profile {
 		    return a;
 		}
 	}
+	
 
 }
 

@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink, Code2, GitBranch, MessageSquare, Link as LinkIcon } from "lucide-react";
+import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink, Code2, GitBranch, MessageSquare, Link as LinkIcon, Folder, Image, Tag } from "lucide-react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { toast } from "@/app/stores/useToastStore";
+
+interface UserProject {
+  name: string;
+  description: string;
+  url: string;
+  liveUrl: string;
+  techStack: string[];
+  imageUrl: string;
+}
 
 interface DevProfileData {
   username: string;
@@ -25,6 +34,8 @@ interface DevProfileData {
   skills: string[];
   socialLinks: { type: string; url: string }[];
   githubUsername: string;
+  projects: { name: string; description: string; requestCount: number; protocols: string[]; hasSpec: boolean }[];
+  userProjects: UserProject[];
   public: boolean;
   updatedAt: string;
 }
@@ -36,7 +47,7 @@ function emptyProfile(): DevProfileData {
     stats: { collectionsCreated: 0, requestsSent: 0, assertionsWritten: 0,
              specsAuthored: 0, mockServersCreated: 0, contractPassRate: 0,
              protocolsUsed: [], authTypesUsed: [] },
-    skills: [], socialLinks: [], githubUsername: "",
+    skills: [], socialLinks: [], githubUsername: "", projects: [], userProjects: [],
     public: false, updatedAt: "",
   };
 }
@@ -68,6 +79,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
   const [upstashConfigured, setUpstashConfigured] = useState(false);
   const [showUpstash, setShowUpstash] = useState(false);
   const [skillInput, setSkillInput] = useState("");
+  const [techInput, setTechInput] = useState("");
 
   const loadProfile = useCallback(async () => {
     try {
@@ -96,6 +108,21 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           skills: prof.skills || [],
           socialLinks: prof.socialLinks || [],
           githubUsername: prof.githubUsername || "",
+          projects: (prof.projects || []).map((proj: any) => ({
+            name: proj.name || "",
+            description: proj.description || "",
+            requestCount: proj.requestCount || 0,
+            protocols: proj.protocols || [],
+            hasSpec: proj.hasSpec || false,
+          })),
+          userProjects: (prof.userProjects || []).map((up: any) => ({
+            name: up.name || "",
+            description: up.description || "",
+            url: up.url || "",
+            liveUrl: up.liveUrl || "",
+            techStack: up.techStack || [],
+            imageUrl: up.imageUrl || "",
+          })),
           public: prof.public || false,
           updatedAt: prof.updatedAt || "",
         });
@@ -162,6 +189,8 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
         skills: p.skills,
         socialLinks: p.socialLinks,
         githubUsername: p.githubUsername,
+        projects: p.projects,
+        userProjects: p.userProjects,
         public: p.public,
         updatedAt: p.updatedAt,
       } as any);
@@ -251,8 +280,42 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     setP({ ...p, socialLinks: p.socialLinks.filter((s) => s.type !== type) });
   };
 
+  const addUserProject = () => {
+    setP({
+      ...p,
+      userProjects: [...p.userProjects, { name: "", description: "", url: "", liveUrl: "", techStack: [], imageUrl: "" }],
+    });
+  };
+
+  const updateUserProject = (i: number, field: keyof UserProject, val: any) => {
+    const projects = [...p.userProjects];
+    projects[i] = { ...projects[i], [field]: val };
+    setP({ ...p, userProjects: projects });
+  };
+
+  const removeUserProject = (i: number) => {
+    setP({ ...p, userProjects: p.userProjects.filter((_u, idx) => idx !== i) });
+  };
+
+  const addTechToProject = (i: number, tech: string) => {
+    const t = tech.trim();
+    if (!t) return;
+    const projects = [...p.userProjects];
+    if (!projects[i].techStack.includes(t)) {
+      projects[i] = { ...projects[i], techStack: [...projects[i].techStack, t] };
+      setP({ ...p, userProjects: projects });
+    }
+  };
+
+  const removeTechFromProject = (i: number, tech: string) => {
+    const projects = [...p.userProjects];
+    projects[i] = { ...projects[i], techStack: projects[i].techStack.filter((t) => t !== tech) };
+    setP({ ...p, userProjects: projects });
+  };
+
   const PROFILE_BASE = "https://reqit.vercel.app";
   const profileUrl = p.username ? `${PROFILE_BASE}/${p.username}` : "";
+  const apiUrl = p.username ? `${PROFILE_BASE}/api/v1/profile/${p.username}` : "";
 
   const copyUrl = () => {
     if (!profileUrl) return;
@@ -370,17 +433,29 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
             )}
           </div>
 
-          {/* Profile URL */}
+          {/* Profile URL + API */}
           {p.username && (
-            <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-surface">
-              <Globe size={14} className="text-subtext shrink-0" />
-              <span className="text-xs text-subtext truncate flex-1 font-mono">{profileUrl}</span>
-              <button onClick={openInBrowser} className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium" title="Open in browser">
-                <ExternalLink size={12} />Open
-              </button>
-              <button onClick={copyUrl} className="text-xs text-subtext hover:text-text transition-colors shrink-0 flex items-center gap-1" title="Copy URL">
-                {copied ? <><Check size={12} />Copied</> : <><Copy size={12} />Copy</>}
-              </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-surface">
+                <Globe size={14} className="text-subtext shrink-0" />
+                <span className="text-xs text-subtext truncate flex-1 font-mono">{profileUrl}</span>
+                <button onClick={openInBrowser} className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium" title="Open in browser">
+                  <ExternalLink size={12} />Open
+                </button>
+                <button onClick={copyUrl} className="text-xs text-subtext hover:text-text transition-colors shrink-0 flex items-center gap-1" title="Copy URL">
+                  {copied ? <><Check size={12} />Copied</> : <><Copy size={12} />Copy</>}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-surface">
+                <Code2 size={14} className="text-subtext shrink-0" />
+                <span className="text-xs text-subtext truncate flex-1 font-mono">{apiUrl}</span>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(apiUrl); toast.success("API URL copied"); }}
+                  className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium"
+                >
+                  <Copy size={12} />API
+                </button>
+              </div>
             </div>
           )}
 
@@ -493,6 +568,117 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
             <div className="text-[10px] text-subtext mt-1">Shows your recent commits and contribution activity on your profile</div>
           </div>
 
+          {/* User Projects */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-subtext"><Folder size={10} className="inline mr-1" />My Projects</label>
+              <button onClick={addUserProject} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1">
+                <Plus size={10} />Add Project
+              </button>
+            </div>
+            <div className="text-[10px] text-subtext mb-2">Add your own projects to showcase on your profile</div>
+
+            {p.userProjects.length === 0 && p.projects.length === 0 && (
+              <div className="text-[10px] text-zinc-500 p-3 rounded-lg border border-dashed border-border text-center">
+                No projects yet. Add your own or create collections in reqit.
+              </div>
+            )}
+
+            {/* Auto-generated from collections */}
+            {p.projects.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[10px] text-zinc-500 mb-1.5 font-medium">From collections (auto)</div>
+                <div className="space-y-1.5">
+                  {p.projects.map((proj) => (
+                    <div key={proj.name} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-surface/50">
+                      <Folder size={12} className="text-cyan shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-text font-medium truncate">{proj.name}</div>
+                        <div className="text-[10px] text-subtext">{proj.requestCount} requests{proj.hasSpec ? " · OpenAPI" : ""}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* User-created projects */}
+            {p.userProjects.length > 0 && (
+              <div className="space-y-3">
+                {p.userProjects.map((up, i) => (
+                  <div key={i} className="p-3 rounded-lg border border-border bg-surface/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={up.name}
+                        onChange={(e) => updateUserProject(i, "name", e.target.value)}
+                        placeholder="Project name"
+                        className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                      />
+                      <button onClick={() => removeUserProject(i)} className="text-zinc-500 hover:text-red-400 transition-colors">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                    <textarea
+                      value={up.description}
+                      onChange={(e) => updateUserProject(i, "description", e.target.value)}
+                      placeholder="What does this project do?"
+                      rows={2}
+                      className="w-full px-2 py-1.5 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan resize-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="url"
+                        value={up.url}
+                        onChange={(e) => updateUserProject(i, "url", e.target.value)}
+                        placeholder="GitHub repo URL"
+                        className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                      />
+                      <input
+                        type="url"
+                        value={up.liveUrl}
+                        onChange={(e) => updateUserProject(i, "liveUrl", e.target.value)}
+                        placeholder="Live demo URL"
+                        className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                      />
+                    </div>
+                    <input
+                      type="url"
+                      value={up.imageUrl}
+                      onChange={(e) => updateUserProject(i, "imageUrl", e.target.value)}
+                      placeholder="Screenshot URL (optional)"
+                      className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                    />
+                    <div>
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {up.techStack.map((tech) => (
+                          <span key={tech} className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-purple-500/10 text-purple-400 border border-purple-400/20">
+                            {tech}
+                            <button onClick={() => removeTechFromProject(i, tech)} className="hover:text-red-400"><X size={8} /></button>
+                          </span>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        value={techInput}
+                        onChange={(e) => setTechInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addTechToProject(i, techInput);
+                            setTechInput("");
+                          }
+                        }}
+                        placeholder="Add tech stack (Enter to add)"
+                        className="w-full h-[24px] px-2 text-[10px] bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Social Links */}
           <div>
             <label className="block text-xs font-medium text-subtext mb-1"><LinkIcon size={10} className="inline mr-1" />Social Links</label>
@@ -601,7 +787,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
             >
               {saving ? "Saving..." : "Save Profile"}
             </button>
-            {saved && <span className="text-11 text-teal">Saved</span>}
+            {saved && <span className="text-[11px] text-teal">Saved</span>}
             <button
               onClick={publish}
               disabled={publishing || !p.username}
@@ -610,7 +796,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
               <Globe size={12} />
               {publishing ? "Publishing..." : "Publish to Web"}
             </button>
-            {published && <span className="text-11 text-teal">Published</span>}
+            {published && <span className="text-[11px] text-teal">Published</span>}
           </div>
         </div>
       </div>

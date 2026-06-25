@@ -44,6 +44,26 @@ type ChatResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
+// ToolDef describes a tool for function-calling APIs.
+type ToolDef struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Parameters  map[string]any `json:"parameters"`
+}
+
+// ToolCall represents a tool invocation requested by the model.
+type ToolCall struct {
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
+}
+
+// ToolCallResult is the full response from a tool-calling request.
+type ToolCallResult struct {
+	ToolCalls []ToolCall `json:"toolCalls"`
+	Content   string     `json:"content,omitempty"`
+	Raw       string     `json:"raw,omitempty"`
+}
+
 var DefaultModels = map[Provider]string{
 	ProviderOpenAI:    "gpt-4o",
 	ProviderAnthropic: "claude-sonnet-4-20250514",
@@ -91,6 +111,23 @@ func ChatStream(cfg Config, messages []Message, onChunk func(string)) error {
 		return err
 	default:
 		return fmt.Errorf("unknown provider: %s", cfg.Provider)
+	}
+}
+
+// ChatWithTools sends a tool-calling request using native function-calling APIs.
+func ChatWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolCallResult, error) {
+	cfg = applyDefaults(cfg)
+	switch cfg.Provider {
+	case ProviderOpenAI:
+		return chatOpenAIWithTools(cfg, messages, tools)
+	case ProviderAnthropic:
+		return chatAnthropicWithTools(cfg, messages, tools)
+	case ProviderGemini:
+		return chatGeminiWithTools(cfg, messages, tools)
+	case ProviderOllama:
+		return chatOllamaWithTools(cfg, messages, tools)
+	default:
+		return ToolCallResult{}, fmt.Errorf("unknown provider: %s", cfg.Provider)
 	}
 }
 
@@ -381,4 +418,287 @@ func readSSEStream(body io.ReadCloser, onChunk func(string), extract func([]byte
 		}
 	}
 	return full.String(), nil
+}
+
+// --- Tool-calling implementations ---
+
+func toolsToOpenAIFormat(tools []ToolDef) []map[string]any {
+	out := make([]map[string]any, len(tools))
+	for i, t := range tools {
+		out[i] = map[string]any{
+			"type": "function",
+			"function": map[string]any{
+				"name":        t.Name,
+				"description": t.Description,
+				"parameters":  t.Parameters,
+			},
+		}
+	}
+	return out
+}
+
+func chatOpenAIWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolCallResult, error) {
+	body := map[string]any{
+		"model":    cfg.Model,
+		"messages": messages,
+		"tools":    toolsToOpenAIFormat(tools),
+	}
+
+	resp, err := postJSON(cfg.BaseURL+"/chat/completions", cfg.APIKey, body)
+	if err != nil {
+		return ToolCallResult{}, err
+	}
+	defer resp.Body.Close()
+
+	b, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return ToolCallResult{}, fmt.Errorf("openai %d: %s", resp.StatusCode, string(b))
+	}
+
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content   string `json:"content"`
+				ToolCalls []struct {
+					Function struct {
+						Name      string `json:"name"`
+						Arguments string `json:"arguments"`
+					} `json:"function"`
+				} `json:"tool_calls"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(b, &result); err != nil {
+		return ToolCallResult{}, err
+	}
+	if len(result.Choices) == 0 {
+		return ToolCallResult{}, fmt.Errorf("no choices returned")
+	}
+
+	msg := result.Choices[0].Message
+	var calls []ToolCall
+	for _, tc := range msg.ToolCalls {
+		var args map[string]any
+		json.Unmarshal([]byte(tc.Function.Arguments), &args)
+		calls = append(calls, ToolCall{Name: tc.Function.Name, Arguments: args})
+	}
+
+	return ToolCallResult{ToolCalls: calls, Content: msg.Content, Raw: string(b)}, nil
+}
+
+func chatAnthropicWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolCallResult, error) {
+	var systemMsg string
+	var msgs []Message
+	for _, m := range messages {
+		if m.Role == "system" {
+			systemMsg = m.Content
+		} else {
+			msgs = append(msgs, m)
+		}
+	}
+
+	// Convert tools to Anthropic format
+	toolDefs := make([]map[string]any, len(tools))
+	for i, t := range tools {
+		toolDefs[i] = map[string]any{
+			"name":        t.Name,
+			"description": t.Description,
+			"input_schema": t.Parameters,
+		}
+	}
+
+	body := map[string]any{
+		"model":      cfg.Model,
+		"messages":   msgs,
+		"max_tokens": 4096,
+		"tools":      toolDefs,
+	}
+	if systemMsg != "" {
+		body["system"] = systemMsg
+	}
+
+	req, _ := http.NewRequest("POST", cfg.BaseURL+"/v1/messages", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", cfg.APIKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	b, _ := json.Marshal(body)
+	req.Body = io.NopCloser(bytes.NewReader(b))
+
+	client := &http.Client{Timeout: 120 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ToolCallResult{}, err
+	}
+	defer resp.Body.Close()
+
+	rb, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return ToolCallResult{}, fmt.Errorf("anthropic %d: %s", resp.StatusCode, string(rb))
+	}
+
+	var result struct {
+		Content []struct {
+			Type  string `json:"type"`
+			Text  string `json:"text"`
+			Name  string `json:"name"`
+			Input map[string]any `json:"input"`
+		} `json:"content"`
+	}
+	if err := json.Unmarshal(rb, &result); err != nil {
+		return ToolCallResult{}, err
+	}
+
+	var calls []ToolCall
+	var content string
+	for _, block := range result.Content {
+		if block.Type == "tool_use" {
+			calls = append(calls, ToolCall{Name: block.Name, Arguments: block.Input})
+		} else if block.Type == "text" {
+			content = block.Text
+		}
+	}
+
+	return ToolCallResult{ToolCalls: calls, Content: content, Raw: string(rb)}, nil
+}
+
+func chatGeminiWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolCallResult, error) {
+	var contents []map[string]any
+	for _, m := range messages {
+		role := "user"
+		if m.Role == "assistant" {
+			role = "model"
+		}
+		if m.Role == "system" {
+			contents = append(contents, map[string]any{
+				"role":  "user",
+				"parts": []map[string]string{{"text": m.Content}},
+			})
+			contents = append(contents, map[string]any{
+				"role":  "model",
+				"parts": []map[string]string{{"text": "Understood."}},
+			})
+			continue
+		}
+		contents = append(contents, map[string]any{
+			"role":  role,
+			"parts": []map[string]string{{"text": m.Content}},
+		})
+	}
+
+	// Convert tools to Gemini function format
+	funcDecls := make([]map[string]any, len(tools))
+	for i, t := range tools {
+		props := map[string]any{}
+		for k, v := range t.Parameters {
+			if k == "type" || k == "required" {
+				continue
+			}
+			props[k] = v
+		}
+		funcDecls[i] = map[string]any{
+			"name":        t.Name,
+			"description": t.Description,
+			"parameters": map[string]any{
+				"type":       "object",
+				"properties": props,
+			},
+		}
+	}
+
+	url := cfg.BaseURL + "/models/" + cfg.Model + ":generateContent?key=" + cfg.APIKey
+	body := map[string]any{
+		"contents": contents,
+		"tools": []map[string]any{
+			{"function_declarations": funcDecls},
+		},
+	}
+
+	resp, err := postJSON(url, "", body)
+	if err != nil {
+		return ToolCallResult{}, err
+	}
+	defer resp.Body.Close()
+
+	rb, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return ToolCallResult{}, fmt.Errorf("gemini %d: %s", resp.StatusCode, string(rb))
+	}
+
+	var result struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text           string         `json:"text"`
+					FunctionCall   *struct {
+						Name string         `json:"name"`
+						Args map[string]any `json:"args"`
+					} `json:"functionCall"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+	if err := json.Unmarshal(rb, &result); err != nil {
+		return ToolCallResult{}, err
+	}
+	if len(result.Candidates) == 0 {
+		return ToolCallResult{}, fmt.Errorf("no candidates returned")
+	}
+
+	var calls []ToolCall
+	var content string
+	for _, part := range result.Candidates[0].Content.Parts {
+		if part.FunctionCall != nil {
+			calls = append(calls, ToolCall{Name: part.FunctionCall.Name, Arguments: part.FunctionCall.Args})
+		}
+		if part.Text != "" {
+			content = part.Text
+		}
+	}
+
+	return ToolCallResult{ToolCalls: calls, Content: content, Raw: string(rb)}, nil
+}
+
+func chatOllamaWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolCallResult, error) {
+	// Ollama uses OpenAI-compatible format
+	toolDefs := toolsToOpenAIFormat(tools)
+	body := map[string]any{
+		"model":    cfg.Model,
+		"messages": messages,
+		"tools":    toolDefs,
+	}
+
+	resp, err := postJSON(cfg.BaseURL+"/api/chat", "", body)
+	if err != nil {
+		return ToolCallResult{}, err
+	}
+	defer resp.Body.Close()
+
+	rb, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return ToolCallResult{}, fmt.Errorf("ollama %d: %s", resp.StatusCode, string(rb))
+	}
+
+	var result struct {
+		Message struct {
+			Content   string `json:"content"`
+			ToolCalls []struct {
+				Function struct {
+					Name      string `json:"name"`
+					Arguments string `json:"arguments"`
+				} `json:"function"`
+			} `json:"tool_calls"`
+		} `json:"message"`
+	}
+	if err := json.Unmarshal(rb, &result); err != nil {
+		return ToolCallResult{}, err
+	}
+
+	var calls []ToolCall
+	for _, tc := range result.Message.ToolCalls {
+		var args map[string]any
+		json.Unmarshal([]byte(tc.Function.Arguments), &args)
+		calls = append(calls, ToolCall{Name: tc.Function.Name, Arguments: args})
+	}
+
+	return ToolCallResult{ToolCalls: calls, Content: result.Message.Content, Raw: string(rb)}, nil
 }

@@ -105,6 +105,8 @@ export function ExportHoppscotch(arg1:string):Promise<string>;
 
 export function ExportInsomnia(arg1:string):Promise<string>;
 
+export function ExportMCPServerAgentLens():Promise<agentlens.ExportResult>;
+
 export function ExportOpenAPI(arg1:string):Promise<string>;
 
 export function ExportOpenAPIFiles(arg1:string):Promise<Record<string, string>>;
@@ -350,6 +352,8 @@ export function RunCollection(arg1:Array<models.RunnerRequest>,arg2:Record<strin
 export function RunCollectionWithConcurrency(arg1:Array<models.RunnerRequest>,arg2:Record<string, models.Assertion>,arg3:number):Promise<models.CollectionRunResult>;
 
 export function RunCollectionWithConfig(arg1:models.RunnerConfig):Promise<models.CollectionRunResult>;
+
+export function RunEvalAgentLens():Promise<agentlens.EvalSuiteResult>;
 
 export function RunLoadTest(arg1:models.LoadTestConfig):Promise<models.LoadTestResult>;
 

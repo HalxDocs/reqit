@@ -2877,6 +2877,40 @@ func (a *App) PublishDevProfile() (string, error) {
 	if a.devProfile == nil {
 		return "", errors.New("no active workspace")
 	}
+	// Compute fresh stats before publishing so the live profile shows real data
+	stats := a.ComputeDevStats()
+	_ = a.devProfile.UpdateStats(stats)
+
+	// Build projects from collections
+	if a.collections != nil {
+		colls, _ := a.collections.GetAll()
+		var projects []profile.ProjectRef
+		for _, c := range colls {
+			proj := profile.ProjectRef{
+				Name:         c.Name,
+				Description:  c.Description,
+				RequestCount: len(c.Requests),
+				Protocols:    []string{},
+				HasSpec:      c.SpecPath != "",
+				Public:       true,
+			}
+			if c.Description == "" {
+				proj.Description = fmt.Sprintf("%d requests", len(c.Requests))
+			}
+			protocols := map[string]bool{}
+			for _, r := range c.Requests {
+				if r.Payload.Method != "" {
+					protocols[strings.ToUpper(r.Payload.Method)] = true
+				}
+			}
+			for p := range protocols {
+				proj.Protocols = append(proj.Protocols, p)
+			}
+			projects = append(projects, proj)
+		}
+		_ = a.devProfile.UpdateProjects(projects)
+	}
+
 	pub, err := a.devProfile.GetPublicProfile()
 	if err != nil {
 		return "", err
@@ -3050,5 +3084,32 @@ func (a *App) PreviewToolAgentLens(collID, requestID string) (agentlenspkg.ToolD
 	dir, _ := a.workspaces.ActiveDir()
 	tool, score := agentlenspkg.PreviewTool(req, folderName, colls, dir)
 	return tool, score, nil
+}
+
+// RunEvalAgentLens runs all eval tasks against the configured AI provider.
+func (a *App) RunEvalAgentLens() (*agentlenspkg.EvalSuiteResult, error) {
+	if a.collections == nil {
+		return nil, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.RunEvalSuite(dir, colls, 0.8)
+}
+
+// ExportMCPServerAgentLens generates a standalone MCP server module.
+func (a *App) ExportMCPServerAgentLens() (*agentlenspkg.ExportResult, error) {
+	if a.collections == nil {
+		return nil, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	scoreResult := agentlenspkg.AnalyzeCollections(colls, dir)
+	return agentlenspkg.ExportMCPServer(dir, colls, scoreResult.Score, 1.0)
 }
 

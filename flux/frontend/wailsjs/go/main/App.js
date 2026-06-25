@@ -178,6 +178,10 @@ export function ExportInsomnia(arg1) {
   return window['go']['main']['App']['ExportInsomnia'](arg1);
 }
 
+export function ExportMCPServerAgentLens() {
+  return window['go']['main']['App']['ExportMCPServerAgentLens']();
+}
+
 export function ExportOpenAPI(arg1) {
   return window['go']['main']['App']['ExportOpenAPI'](arg1);
 }
@@ -668,6 +672,10 @@ export function RunCollectionWithConcurrency(arg1, arg2, arg3) {
 
 export function RunCollectionWithConfig(arg1) {
   return window['go']['main']['App']['RunCollectionWithConfig'](arg1);
+}
+
+export function RunEvalAgentLens() {
+  return window['go']['main']['App']['RunEvalAgentLens']();
 }
 
 export function RunLoadTest(arg1) {
