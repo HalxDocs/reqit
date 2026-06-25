@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { ArrowLeft, BookOpen, Clock, Tag, Calendar, Search, Bookmark } from "lucide-react";
 import { BLOG_POSTS, CATEGORIES, type BlogPost } from "@/features/blog/blogData";
 
@@ -159,8 +159,61 @@ function renderMarkdown(text: string): string {
 
 export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => void }) {
   const html = renderMarkdown(post.content);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showResume, setShowResume] = useState(false);
+  const savedPositionKey = `blog-read-${post.slug}`;
+
+  useEffect(() => {
+    const saved = localStorage.getItem(savedPositionKey);
+    if (saved) {
+      const pct = parseFloat(saved);
+      if (pct > 5 && pct < 95) {
+        setShowResume(true);
+      }
+    }
+  }, [post.slug, savedPositionKey]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.documentElement;
+      const scrollTop = window.scrollY || el.scrollTop;
+      const scrollHeight = el.scrollHeight - el.clientHeight;
+      if (scrollHeight > 0) {
+        const pct = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
+        setScrollProgress(pct);
+        if (pct > 5) {
+          localStorage.setItem(savedPositionKey, String(pct));
+        }
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [savedPositionKey]);
+
+  const resumeReading = () => {
+    const saved = localStorage.getItem(savedPositionKey);
+    if (saved) {
+      const pct = parseFloat(saved);
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      window.scrollTo({ top: (pct / 100) * scrollHeight, behavior: "smooth" });
+    }
+    setShowResume(false);
+  };
+
+  const dismissResume = () => {
+    setShowResume(false);
+  };
+
   return (
     <div className="w-full flex flex-col">
+      {/* Reading progress bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-[2px] bg-border/30">
+        <div
+          className="h-full bg-cyan transition-[width] duration-150 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
       <div className="shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center gap-3">
         <button
           type="button"
@@ -170,8 +223,19 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
           <ArrowLeft size={14} />
           <span>Back to blog</span>
         </button>
+        <span className="ml-auto text-10 text-subtext/40 font-mono">{scrollProgress}%</span>
       </div>
-      <div className="w-full max-w-[720px] mx-auto px-4 sm:px-6 py-5">
+      {/* Resume reading banner */}
+      {showResume && (
+        <div className="shrink-0 px-4 sm:px-6 py-2.5 bg-cyan/5 border-b border-cyan/20 flex items-center justify-between gap-3">
+          <span className="text-12 text-cyan font-medium">You were reading this — pick up where you left off?</span>
+          <div className="flex items-center gap-2">
+            <button onClick={dismissResume} className="text-11 text-subtext hover:text-text transition-colors px-2 py-1">Start over</button>
+            <button onClick={resumeReading} className="text-11 font-bold text-cyan bg-cyan/10 border border-cyan/20 rounded-md px-3 py-1 hover:bg-cyan/20 transition-colors">Resume</button>
+          </div>
+        </div>
+      )}
+      <div ref={contentRef} className="w-full max-w-[720px] mx-auto px-4 sm:px-6 py-5">
         <h1 className="text-17 sm:text-20 font-bold text-text leading-snug mb-3">{post.title}</h1>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-12 text-subtext mb-6">
           <span className="flex items-center gap-1.5">
@@ -222,6 +286,20 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
   );
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [readPosts, setReadPosts] = useState<Record<string, number>>(() => {
+    try {
+      const entries: Record<string, number> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith("blog-read-")) {
+          const slug = key.replace("blog-read-", "");
+          const pct = parseInt(localStorage.getItem(key) || "0", 10);
+          entries[slug] = pct;
+        }
+      }
+      return entries;
+    } catch { return {}; }
+  });
 
   const sortedPosts = useMemo(() => {
     const pinned = BLOG_POSTS.find(p => p.slug === "explainer-openapi-spec-linking");
@@ -418,6 +496,11 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
                     <span className="hidden sm:inline">{post.category}</span>
                     <span className="sm:hidden">{post.category === "Developer Experience" ? "DX" : post.category.split(" ")[0]}</span>
                   </span>
+                  {readPosts[post.slug] !== undefined && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-teal/10 text-teal border border-teal/20">
+                      {readPosts[post.slug] >= 90 ? "✓ read" : `${readPosts[post.slug]}%`}
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-13 sm:text-14 font-semibold text-text group-hover:text-cyan transition-colors leading-snug">
                   {post.title}

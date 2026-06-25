@@ -1802,14 +1802,14 @@ Without contract testing, you find out about breaking changes when your frontend
   {
     slug: "what-is-reqit",
     title: "What is reqit? Everything you need to know",
-    description: "reqit is a local-first, open-source API client that runs in under 400ms. No account. No cloud. No telemetry. Just a fast tool that does everything Postman does — and a lot more.",
-    date: "2026-06-18",
-    readTime: "12 min read",
-    tags: ["overview", "features", "open-source", "api-client"],
+    description: "reqit is a local-first, open-source API client that runs in under 400ms. No account. No cloud. No telemetry. Every feature explained with diagrams.",
+    date: "2026-06-25",
+    readTime: "18 min read",
+    tags: ["overview", "features", "open-source", "api-client", "mcp", "agent-lens"],
     category: "Core Concepts",
     content: `Every app on your phone talks to an API. When you check the weather, order food, or send a message, your phone sends a request to a server and gets data back. **reqit is a tool that lets you send those requests, test those APIs, and make sure they work — all from your computer.**
 
-Think of it like a Swiss Army knife for APIs. One tool that does everything: send requests, test responses, mock servers, load testing, Git integration, and a lot more. And it all runs on your machine. No account. No cloud. No data leaving your laptop.
+Think of it like a Swiss Army knife for APIs. One tool that does everything: send requests, test responses, mock servers, load testing, Git integration, AI integration, and a lot more. And it all runs on your machine. No account. No cloud. No data leaving your laptop.
 
 ## Why reqit exists
 
@@ -1819,43 +1819,116 @@ Postman requires an account. It phones home on every launch. It stores your coll
 
 reqit was built because a different approach is possible. A tool that starts in under 400ms, weighs under 20MB, stores everything as plain JSON files on your disk, and never requires an account, a cloud connection, or telemetry. You own your data. Always.
 
-## The basics
+## The big picture
 
-reqit is an API client. You type a URL, pick a method (GET, POST, PUT, PATCH, DELETE), add headers or a body, hit Send, and see the response. That is the core.
+Here is everything reqit does, in one view:
 
-But reqit goes far beyond the basics. Here is everything it can do.
+\`\`\`
+  ┌─────────────────────────────────────────────────────────────┐
+  │                         reqit                               │
+  │                                                             │
+  │  ┌─────────────────────────────────────────────────────┐    │
+  │  │                    CORE ENGINE                      │    │
+  │  │  HTTP · WebSocket · SSE · GraphQL · gRPC · SOAP · MQTT│  │
+  │  └───────────────────────┬─────────────────────────────┘    │
+  │                          │                                  │
+  │  ┌───────────┐  ┌───────┴──────┐  ┌──────────────────┐    │
+  │  │ Collections│  │ Environments │  │ Scripting (JS)   │    │
+  │  └───────────┘  └──────────────┘  └──────────────────┘    │
+  │                                                             │
+  │  ┌───────────┐  ┌──────────────┐  ┌──────────────────┐    │
+  │  │ Mock       │  │ Runner       │  │ Load Testing     │    │
+  │  │ Server     │  │ (assertions) │  │ (p50/p95/p99)    │    │
+  │  └───────────┘  └──────────────┘  └──────────────────┘    │
+  │                                                             │
+  │  ┌───────────┐  ┌──────────────┐  ┌──────────────────┐    │
+  │  │ Contract   │  │ Import/      │  │ CI/CD + CLI      │    │
+  │  │ Testing    │  │ Export       │  │ Generation       │    │
+  │  └───────────┘  └──────────────┘  └──────────────────┘    │
+  │                                                             │
+  │  ┌─────────────────────────────────────────────────────┐    │
+  │  │              AI LAYER                               │    │
+  │  │  MCP Server ◄──► AI Agents (Claude, GPT, Gemini)   │    │
+  │  │  Agent Lens ──► Lint · Eval · Export                │    │
+  │  └─────────────────────────────────────────────────────┘    │
+  │                                                             │
+  │  ┌─────────────────────────────────────────────────────┐    │
+  │  │              PLATFORM                               │    │
+  │  │  Git · Workspaces · History · Cookies · Themes      │    │
+  │  │  OAuth2 · SSO · E2EE · Vault · RBAC · Audit Trail  │    │
+  │  └─────────────────────────────────────────────────────┘    │
+  └─────────────────────────────────────────────────────────────┘
+\`\`\`
+
+Now let us walk through every layer.
+
+---
 
 ## Sending requests
 
-**7 protocols.** Not just HTTP. reqit speaks:
+This is what every API client does. You type a URL, pick a method, add headers, and hit Send. But reqit goes far beyond the basics.
 
-- **HTTP/HTTPS** — every method, with full header and body control
-- **WebSocket** — connect, send, receive messages in real time
-- **Server-Sent Events (SSE)** — stream data from the server
-- **GraphQL** — queries, mutations, subscriptions, and schema introspection
-- **gRPC** — unary and streaming calls via gRPC-web
-- **SOAP** — SOAP 1.1/1.2 envelope builder
-- **MQTT** — publish and subscribe with QoS levels 0, 1, and 2
+\`\`\`
+  ┌─────────────────────────────────────────────────────┐
+  │                7 PROTOCOLS                          │
+  │                                                     │
+  │  ┌─────────┐  ┌───────────┐  ┌─────────────────┐  │
+  │  │ HTTP/S  │  │ WebSocket │  │ SSE             │  │
+  │  │ (REST)  │  │ (realtime)│  │ (server push)   │  │
+  │  └─────────┘  └───────────┘  └─────────────────┘  │
+  │                                                     │
+  │  ┌─────────┐  ┌───────────┐  ┌─────────────────┐  │
+  │  │ GraphQL │  │ gRPC      │  │ SOAP   │ MQTT   │  │
+  │  │ (query) │  │ (binary)  │  │(enterprise)(IoT)│  │
+  │  └─────────┘  └───────────┘  └─────────────────┘  │
+  └─────────────────────────────────────────────────────┘
+\`\`\`
+
+- **HTTP/HTTPS** — the standard web protocol. GET data, POST new data, PUT updates, DELETE things. Every method, with full header and body control.
+- **WebSocket** — a live two-way connection. Like a phone call instead of letters. Used for chat apps, live dashboards, multiplayer games.
+- **Server-Sent Events (SSE)** — the server pushes updates to you. Like a news ticker. Used for AI streaming, stock prices, notifications.
+- **GraphQL** — ask for exactly the data you want. One endpoint, flexible queries. Used by GitHub, Shopify, Airbnb.
+- **gRPC** — fast binary protocol. Used for microservice-to-microservice communication. Google, Netflix, Square use this.
+- **SOAP** — the old enterprise standard. Banks, government systems, healthcare APIs still use this.
+- **MQTT** — lightweight protocol for IoT. Smart home devices, sensors, industrial machines use this.
 
 Every request supports query parameters, headers, multiple body types (JSON, form-data, URL-encoded, raw text, GraphQL, gRPC, SOAP), and full authentication.
 
 ## Authentication
 
-**7 auth types**, all built in:
+reqit handles **7 auth types** so you never have to manually add headers:
 
-- **Bearer Token** — paste your token, reqit adds the header
-- **Basic Auth** — username and password, auto-encoded
-- **API Key** — custom header name and value
-- **Digest Auth** — nonce-based challenge response
-- **NTLM** — Windows authentication
-- **OAuth2** — full authorize/exchange/refresh flow with PKCE support
-- **JWT Decoder** — paste a JWT and see the header, claims, and expiry instantly
+- **Bearer Token** — paste a JWT, reqit adds the Authorization header
+- **Basic Auth** — username and password, auto-encoded to Base64
+- **API Key** — custom header name + value
+- **Digest Auth** — challenge-response for older APIs
+- **NTLM** — Windows domain authentication
+- **OAuth2** — full flow with PKCE support (the modern standard)
+- **JWT Decoder** — paste any JWT, see the claims and expiry instantly
 
 You never have to manually add auth headers. reqit handles it for every request.
 
+---
+
 ## Collections
 
-Collections are folders for your API requests. reqit organizes them as **plain JSON files** on your disk. This is a big deal because it means:
+Collections are folders for your API requests. reqit organizes them as **plain JSON files** on your disk.
+
+\`\`\`
+  .reqit/
+  ├── collections/
+  │   ├── auth-api/
+  │   │   ├── login.json
+  │   │   └── refresh.json
+  │   └── users-api/
+  │       ├── list.json
+  │       └── create.json
+  └── environments/
+      ├── dev.json
+      └── prod.json
+\`\`\`
+
+This is a big deal because it means:
 
 - You can put them in **Git** — diff, branch, review, merge, like code
 - You can **drag and drop** to reorder requests
@@ -1868,15 +1941,39 @@ Collections handle 1000+ items with zero lag thanks to virtual scrolling.
 
 ## Environments
 
-Environments are variable sets for different servers. Create a Dev environment with \`BASE_URL = http://localhost:3000\` and a Prod environment with \`BASE_URL = https://api.yourapp.com\`. Switch between them with one click. Every \`{{BASE_URL}}\` in your URLs, headers, and bodies updates instantly.
+Environments are variable sets for different servers. Think of it like switching between your work laptop and home laptop — same apps, different settings.
 
-You can have as many environments as you want. Each workspace gets its own set.
+\`\`\`
+  Dev Environment          Prod Environment
+  ┌──────────────────┐    ┌──────────────────┐
+  │ BASE_URL:        │    │ BASE_URL:        │
+  │  localhost:3000  │    │  api.myapp.com   │
+  │                  │    │                  │
+  │ API_KEY:         │    │ API_KEY:         │
+  │  dev-key-123     │    │  prod-key-456    │
+  └──────────────────┘    └──────────────────┘
+         │                        │
+         ▼                        ▼
+  Every {{BASE_URL}} in      Every {{BASE_URL}} in
+  your requests updates     your requests updates
+\`\`\`
+
+Create a Dev environment with \`BASE_URL = http://localhost:3000\` and a Prod environment with \`BASE_URL = https://api.yourapp.com\`. Switch between them with one click. Every \`{{BASE_URL}}\` in your URLs, headers, and bodies updates instantly.
+
+---
 
 ## Mock server
 
 reqit has a built-in mock server. Save a response from any request, start the mock server, and it replays that response on \`http://localhost:4321\`. Your frontend talks to the mock instead of the real API.
 
-You can:
+\`\`\`
+  ┌──────────┐      ┌──────────────┐      ┌──────────┐
+  │ Frontend │─────►│ Mock Server  │◄─────│ reqit    │
+  │ (React)  │      │ :4321        │      │ (saves   │
+  │          │◄─────│              │      │ responses)│
+  └──────────┘      └──────────────┘      └──────────┘
+\`\`\`
+
 - Add **delays** to simulate slow servers
 - **Override status codes** to test error handling
 - **Override response bodies** to test edge cases
@@ -1886,15 +1983,45 @@ You can:
 
 ## Contract testing
 
-Link an OpenAPI spec to a collection. Every request you send gets validated against the spec. You see a green **Contract OK** badge or a red **N violations** badge in the status bar.
+Link an OpenAPI spec to a collection. Every request you send gets validated against the spec.
 
-Click the badge to see exactly what went wrong: which field is missing, which status code does not match, which header is unexpected. You find breaking changes in 3 seconds instead of 3 hours.
+\`\`\`
+  You send: GET /users/123
+  Spec says: 200, body has { id: string, name: string }
+
+  reqit checks:
+  ✓ Status code matches (200)
+  ✓ Response body has "id" field
+  ✓ Response body has "name" field
+  ✗ Spec says "email" is required — MISSING
+
+  Result: Contract OK with 1 warning
+\`\`\`
+
+You see a green **Contract OK** badge or a red **N violations** badge in the status bar. Click the badge to see exactly what went wrong: which field is missing, which status code does not match, which header is unexpected. You find breaking changes in 3 seconds instead of 3 hours.
+
+---
 
 ## Collection runner
 
-The runner executes every request in a collection and tells you which passed and which failed. It supports:
+The runner executes every request in a collection and tells you which passed and which failed. Think of it like a spell-checker for your entire API.
 
-- **Sequential** and **concurrent** execution (configurable workers)
+\`\`\`
+  ┌─────────────────────────────────────────────┐
+  │           COLLECTION RUNNER                 │
+  │                                             │
+  │  POST /login .............. ✓ 200 (120ms)  │
+  │  GET /users ............... ✓ 200 (85ms)   │
+  │  POST /users ................ ✗ 422 (45ms)  │
+  │    └─ Assertion failed: status == 200       │
+  │  GET /users/123 ........... ✓ 200 (90ms)   │
+  │  DELETE /users/123 ........ ✓ 204 (110ms)  │
+  │                                             │
+  │  Result: 4/5 passed (80%)                  │
+  └─────────────────────────────────────────────┘
+\`\`\`
+
+- **Sequential** and **concurrent** execution with configurable workers
 - **Retries** with backoff on failures
 - **Conditional execution** — run a request only if a condition is met
 - **12 assertion types** — status code, timing, body contains, body match regex, JSON path, header, cookie, variable equal, variable not equal, JSON schema, custom script
@@ -1904,7 +2031,24 @@ After a run, you get a full pass/fail report with per-request timing.
 
 ## Load testing
 
-reqit can simulate traffic. Set the number of virtual users, the duration, and the request. reqit fires it repeatedly and reports:
+reqit can simulate traffic. Set the number of virtual users, the duration, and the request. reqit fires it repeatedly and reports.
+
+\`\`\`
+  ┌─────────────────────────────────────────────┐
+  │           LOAD TEST RESULTS                │
+  │                                             │
+  │  Users: 50    Duration: 60s    RPS: 245    │
+  │                                             │
+  │  Response Time:                             │
+  │    p50: 120ms                              │
+  │    p95: 340ms                              │
+  │    p99: 890ms                              │
+  │    avg: 156ms    min: 45ms   max: 1200ms   │
+  │                                             │
+  │  Throughput: 245 req/sec                    │
+  │  Error rate: 0.3%                           │
+  └─────────────────────────────────────────────┘
+\`\`\`
 
 - **Response time** — average, fastest, slowest
 - **Throughput** — requests per second
@@ -1913,18 +2057,54 @@ reqit can simulate traffic. Set the number of virtual users, the duration, and t
 
 No need to set up k6 or JMeter. It is built in.
 
+---
+
 ## Scripting
 
-Every request has a Scripts tab. You write JavaScript that runs:
+Every request has a Scripts tab. Write JavaScript that runs before or after the request.
+
+\`\`\`
+  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+  │ Pre-request  │────►│ Send Request │────►│ Post-response│
+  │ script runs  │     │              │     │ script runs  │
+  │              │     │  GET /users  │     │              │
+  │ • Generate   │     │              │     │ • Extract    │
+  │   token      │     │              │     │   user ID    │
+  │ • Set vars   │     │              │     │ • Chain to   │
+  │ • Compute    │     │              │     │   next req   │
+  │   signature  │     │              │     │ • Validate   │
+  └──────────────┘     └──────────────┘     └──────────────┘
+\`\`\`
 
 - **Before** the request (pre-request) — generate tokens, set variables, compute signatures
 - **After** the response (post-response) — extract data, validate results, chain requests
 
 reqit uses the goja JavaScript engine. Scripts can read and write environment variables, so data flows automatically between requests.
 
+---
+
 ## Git integration
 
 reqit stores collections as JSON files in a \`.reqit/\` directory. This means you can use Git for everything:
+
+\`\`\`
+  feature/new-payment
+  ┌─────────────────────────────┐
+  │ .reqit/collections/         │
+  │   auth-api/login.json       │
+  │   payment/charge.json  ◄─── NEW
+  │   payment/refund.json  ◄─── NEW
+  └─────────────────────────────┘
+         │ git merge
+         ▼
+  main
+  ┌─────────────────────────────┐
+  │ .reqit/collections/         │
+  │   auth-api/login.json       │
+  │   payment/charge.json       │
+  │   payment/refund.json       │
+  └─────────────────────────────┘
+\`\`\`
 
 - **git diff** — see exactly what changed in a request
 - **git branch** — each feature branch carries its own collections
@@ -1936,27 +2116,43 @@ reqit has a built-in Git client. You can commit, push, pull, branch, stash, and 
 
 ## Import and export
 
-**Import from:**
-- Postman (v2.1 with full pm.* script transpilation)
-- Insomnia
-- Hoppscotch
-- OpenAPI (YAML/JSON)
-- cURL commands
-- Postman environments
-
-**Export to:**
-- Postman, Insomnia, Hoppscotch formats
-- OpenAPI JSON
-- OpenAPI HTML (self-contained Swagger UI)
-- cURL commands
-- Markdown documentation
-- JavaScript fetch, Python requests code snippets
-
 No vendor lock-in. Your data comes in, your data goes out.
+
+\`\`\`
+  IMPORT                          EXPORT
+  ┌──────────────┐               ┌──────────────┐
+  │ Postman v2.1 │───┐           │├──► Postman  │
+  │ Insomnia     │───┤           │├──► Insomnia │
+  │ Hoppscotch   │───┼── reqit ──┤├──► OpenAPI  │
+  │ OpenAPI      │───┤           │├──► cURL     │
+  │ cURL         │───┘           │├──► JS fetch │
+  └──────────────┘               │└──► Python   │
+                                 └──────────────┘
+\`\`\`
+
+**Import from:** Postman (v2.1 with full script transpilation), Insomnia, Hoppscotch, OpenAPI (YAML/JSON), cURL commands, Postman environments.
+
+**Export to:** Postman, Insomnia, Hoppscotch, OpenAPI JSON, OpenAPI HTML (self-contained Swagger UI), cURL, Markdown documentation, JavaScript fetch, Python requests code snippets.
+
+---
 
 ## API designer
 
-Design your API before writing code. reqit has an OpenAPI designer where you can:
+Design your API before writing code. Think of it like an architect drawing a blueprint before the builders start.
+
+\`\`\`
+  ┌─────────────────────────────────────────────┐
+  │  API DESIGNER (OpenAPI)                     │
+  │                                             │
+  │  GET /users        → 200: [User]           │
+  │  POST /users       → 201: User             │
+  │  GET /users/:id    → 200: User             │
+  │  DELETE /users/:id → 204                   │
+  │                                             │
+  │  Push to: SwaggerHub / Stoplight            │
+  │  Generate: Collections from spec            │
+  └─────────────────────────────────────────────┘
+\`\`\`
 
 - Create and edit OpenAPI specs
 - Add endpoints with methods, parameters, and responses
@@ -1964,19 +2160,32 @@ Design your API before writing code. reqit has an OpenAPI designer where you can
 - Pull specs from SwaggerHub or Stoplight
 - Generate collections from specs
 
-The API Designer uses the standard OpenAPI format. Your frontend team can start building screens while the backend team builds the actual API — both working from the same blueprint.
+Your frontend team can start building screens while the backend team builds the actual API — both working from the same blueprint.
+
+---
 
 ## CI/CD generation
 
-reqit can generate CI/CD pipeline files from your collections:
+reqit can generate CI/CD pipeline files from your collections. Add \`reqit run smoke-tests --env staging\` to your pipeline. Every push checks your API automatically.
+
+\`\`\`
+  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+  │  Code Push   │─────►│  CI Pipeline │─────►│  reqit run   │
+  │  (git push)  │      │  (auto)      │      │  --env prod  │
+  └──────────────┘      └──────────────┘      └──────────────┘
+                                                          │
+                                                    ┌─────▼─────┐
+                                                    │ Pass: 50  │
+                                                    │ Fail: 0   │
+                                                    │ Deploy ✓  │
+                                                    └───────────┘
+\`\`\`
 
 - **GitHub Actions** — generates \`.github/workflows/\` YAML
 - **GitLab CI** — generates \`.gitlab-ci.yml\`
 - **Jenkins** — generates a \`Jenkinsfile\`
 - **Playwright tests** — generates browser test files
 - **Jest tests** — generates unit test files
-
-Add \`reqit run smoke-tests --env staging\` to your pipeline. Every push checks your API automatically.
 
 ## CLI mode
 
@@ -1988,9 +2197,25 @@ reqit run my-collection --env production --output json
 
 Fires every request, runs assertions, prints a report. Exit code 0 means all pass. Exit code 1 means something failed. Perfect for CI/CD, nightly monitoring, or scripted workflows.
 
+---
+
 ## Workspace management
 
-Each workspace is a separate world. Create workspaces for different projects. Each one has its own collections, environments, history, and cookies.
+Each workspace is a separate world. Think of it like having separate folders on your desk — one for each project.
+
+\`\`\`
+  Workspace: mobile-app        Workspace: web-dashboard
+  ┌──────────────────┐        ┌──────────────────┐
+  │ Collections:     │        │ Collections:     │
+  │  auth-api        │        │  analytics-api   │
+  │  push-notif      │        │  user-api        │
+  │                  │        │                  │
+  │ Environments:    │        │ Environments:    │
+  │  dev, staging    │        │  dev, prod       │
+  │                  │        │                  │
+  │ History: 47 reqs │        │ History: 123 reqs│
+  └──────────────────┘        └──────────────────┘
+\`\`\`
 
 - **Create, rename, delete** workspaces
 - **Open from folder** — point reqit at any directory
@@ -1998,9 +2223,9 @@ Each workspace is a separate world. Create workspaces for different projects. Ea
 - **File watcher** — changes outside reqit are detected automatically
 - **Cross-device sync** — drop your workspace folder into Dropbox or OneDrive
 
-## Interceptor
+## Interceptor (Chrome extension)
 
-The interceptor is a Chrome extension that captures every HTTP request your browser makes. Install it, connect it to reqit, and every API call your browser makes appears in reqit's history.
+The interceptor captures every HTTP request your browser makes. Install it, connect it to reqit, and every API call your browser makes appears in reqit's history.
 
 - Capture requests from any website
 - See full request details (method, URL, headers, body)
@@ -2019,19 +2244,21 @@ reqit has a built-in cookie jar. When a server sends a \`Set-Cookie\` header, re
 
 Every request you send is automatically logged. Click any history entry to restore the full request — URL, method, headers, body, auth. Search by URL or method. Tag entries. Favorite important ones.
 
+---
+
 ## Code generation
 
-Click a button and reqit generates code for your request:
+Click a button and reqit generates code for your request. The generated code matches exactly what you tested. No typos. No forgotten headers.
 
 - **cURL** — paste into any terminal
 - **JavaScript fetch** — for web apps
 - **Python requests** — for scripts and backends
 
-The generated code matches exactly what you tested. No typos. No forgotten headers.
-
 ## Themes
 
 Dark mode. Light mode. System auto-detect. Pick what looks good to you. The change is instant — no restart needed.
+
+---
 
 ## Security and enterprise
 
@@ -2071,6 +2298,112 @@ After a collection run or load test, generate a report:
 - **HTML report** — styled with summary, request results, failures, load test analytics
 
 Save reports via native file dialog. Share with your team.
+
+---
+
+## AI integration: MCP and Agent Lens
+
+reqit connects to AI agents through two features: **MCP** (Model Context Protocol) and **Agent Lens**.
+
+### MCP — the universal plug for AI
+
+Think of MCP like a USB port for AI. Before USB, every device had a different connector. MCP makes one port that works for everything — any AI agent can talk to any tool through one standard protocol.
+
+\`\`\`
+  ┌──────────┐      ┌──────────┐      ┌──────────┐
+  │  Claude  │      │  ChatGPT │      │  Gemini  │
+  │  Desktop │      │          │      │          │
+  └────┬─────┘      └────┬─────┘      └────┬─────┘
+       │                 │                 │
+       └────────┬────────┴────────┬────────┘
+                │                 │
+                ▼                 ▼
+         ┌──────────────────────────────┐
+         │      MCP Protocol            │
+         │      (JSON-RPC 2.0)          │
+         └──────────────┬───────────────┘
+                        │
+                        ▼
+               ┌────────────────┐
+               │   reqit MCP    │
+               │   Server       │
+               │                │
+               │  • List tools  │
+               │  • Send reqs   │
+               │  • Run tests   │
+               │  • Get history │
+               └────────────────┘
+\`\`\`
+
+**Real-world example:** You say "Claude, run all the tests in my auth-api collection and tell me which ones fail." Claude calls reqit through MCP. reqit runs the collection. Claude gets the results and says "3 of 12 tests failed. The /refresh-token endpoint returns 401 instead of 200."
+
+reqit exposes these tools through MCP:
+
+- **List collections** — see all your API collections
+- **List requests** — see every request in a collection
+- **Send a request** — fire any request and get the full response
+- **Run a collection** — execute all requests with assertions
+- **Get history** — see past requests and responses
+- **Manage environments** — switch between dev/staging/prod
+- **Run load tests** — simulate traffic and get metrics
+
+### Agent Lens — the flashlight for AI tool-readiness
+
+Agent Lens is like a spell-checker, but for API tools. It reads your API collection and tells you what needs fixing before an AI can use it reliably.
+
+\`\`\`
+  ┌──────────────────────────────────────────────────────┐
+  │                    AGENT LENS                        │
+  │                                                      │
+  │  Input: Your API collection                          │
+  │  Output: Score + specific fixes                      │
+  │                                                      │
+  │  ┌──────────────────────────────────────────────┐    │
+  │  │           LINTING RULES (R1-R5)              │    │
+  │  │                                              │    │
+  │  │  R1: Tool Naming     - Is the name clear?   │    │
+  │  │  R2: Descriptions    - Every tool described? │    │
+  │  │  R3: Parameter Types - All types defined?    │    │
+  │  │  R4: Consistency     - Same style everywhere?│    │
+  │  │  R5: Complexity      - Not too many params?  │    │
+  │  └──────────────────────────────────────────────┘    │
+  │                      │                               │
+  │                      ▼                               │
+  │  ┌──────────────────────────────────────────────┐    │
+  │  │              SCORE (0-100)                   │    │
+  │  │                                              │    │
+  │  │  90-100: Excellent - AI-ready                │    │
+  │  │  70-89:  Good - minor improvements           │    │
+  │  │  50-69:  Fair - needs work                   │    │
+  │  │  0-49:   Poor - significant fixes needed     │    │
+  │  └──────────────────────────────────────────────┘    │
+  └──────────────────────────────────────────────────────┘
+\`\`\`
+
+**Real-world example:** You run Agent Lens on a collection with 20 endpoints. It says "Score: 62/100 — 5 endpoints have no description, 3 tool names are too short." You fix those issues, run it again. Score: 94/100. Now when an AI connects through MCP, it gives better results.
+
+Agent Lens also has **Eval** — you define test tasks where an AI should call specific tools, and it checks if the AI calls the right one. Plus **Export** — generate a standalone Go MCP server from your collection.
+
+For a deep dive, see our dedicated post on [MCP and Agent Lens](/blog/mcp-agent-lens-complete-guide).
+
+---
+
+## The full workflow
+
+Here is how all the pieces fit together:
+
+\`\`\`
+  1. DESIGN          2. BUILD           3. TEST            4. SHIP
+  ┌──────────┐      ┌──────────┐      ┌──────────┐      ┌──────────┐
+  │ API      │      │ Send     │      │ Run      │      │ CI/CD    │
+  │ Designer │─────►│ Requests │─────►│ Tests    │─────►│ Pipeline │
+  │ (OpenAPI)│      │ + Script │      │ + Mock   │      │ + CLI    │
+  └──────────┘      └──────────┘      └──────────┘      └──────────┘
+       │                 │                 │                 │
+       ▼                 ▼                 ▼                 ▼
+  Spec lives in     Collections in     Contract tests     Exit code 0
+  Git repo          Git repo           pass/fail          = deploy
+\`\`\`
 
 ## The architecture
 
@@ -2237,6 +2570,263 @@ The AI features are the beginning. Future plans:
 4. See what the AI says
 
 No account. No login. No cloud. Just your API key and your machine.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "mcp-agent-lens-complete-guide",
+    title: "MCP, Agent Lens, and every feature reqit has — the complete guide",
+    description: "How reqit connects to AI agents with MCP, scores tool-readiness with Agent Lens, and does everything Postman does — with diagrams and real-world examples.",
+    date: "2026-06-25",
+    readTime: "15 min read",
+    tags: ["mcp", "agent-lens", "ai", "features", "overview", "guide"],
+    category: "Core Concepts",
+    content: `Imagine you have a smart friend who can do anything — cook, fix your bike, write essays. But there is one problem: your friend does not know where your kitchen is, what tools you have, or how your bike works. You have to explain everything every single time.
+
+That is what it is like when AI agents try to use APIs today. They are smart, but they have no standard way to discover what tools exist, what those tools do, or how to call them.
+
+**reqit solves this with two things: MCP (Model Context Protocol) and Agent Lens.** This post explains what they are, how they work, and then walks through every single feature reqit has.
+
+---
+
+## Part 1: MCP — the universal plug for AI and APIs
+
+### What is MCP?
+
+MCP stands for **Model Context Protocol**. Think of it like a USB port for AI.
+
+Before USB, every device had a different connector. Printers used one cable, keyboards another, mice another. USB made one port that works for everything.
+
+MCP does the same thing for AI agents. It is one standard way for any AI (Claude, ChatGPT, Gemini, any custom bot) to talk to any tool (API client, database, file system, code editor).
+
+### The problem MCP solves
+
+Without MCP, if you want an AI to test your API, you have to:
+
+1. Write custom code to connect the AI to your API tool
+2. Explain every endpoint, every parameter, every auth method
+3. Hope the AI understands your custom integration
+4. Do it all over again for the next AI or the next tool
+
+\`\`\`
+  BEFORE MCP (custom integration for every pair)
+
+  AI Agent A  ──── custom code ────  reqit
+  AI Agent A  ──── custom code ────  Database
+  AI Agent B  ──── DIFFERENT code ──  reqit
+  AI Agent B  ──── DIFFERENT code ──  Database
+  AI Agent C  ──── YET ANOTHER ────  reqit
+
+  (every combination needs its own adapter)
+\`\`\`
+
+With MCP, every tool speaks the same language:
+
+\`\`\`
+  WITH MCP (one protocol rules them all)
+
+  AI Agent A  ──┐
+  AI Agent B  ──┼── MCP ──┬── reqit (send requests, test APIs)
+  AI Agent C  ──┘          ├── Database (query data)
+                           ├── File System (read/write files)
+                           └── Code Editor (edit source code)
+
+  (one adapter per tool, works with any AI)
+\`\`\`
+
+### How MCP works in reqit
+
+reqit includes a built-in MCP server. When you run \`reqit mcp\`, it starts a stdio server that speaks JSON-RPC 2.0 — the MCP standard.
+
+Here is what the AI agent sees:
+
+\`\`\`
+  ┌─────────────────────────────────────────────────────┐
+  │                AI AGENT (e.g. Claude)                │
+  │                                                     │
+  │  "I need to test an API endpoint"                   │
+  │         │                                           │
+  │         ▼                                           │
+  │  ┌─────────────┐    MCP Protocol    ┌────────────┐  │
+  │  │  MCP Client  │ ◄════════════════► │  reqit MCP │  │
+  │  │  (in AI)     │    JSON-RPC 2.0    │  Server    │  │
+  │  └─────────────┘                     └─────┬──────┘  │
+  │                                            │         │
+  │                                    ┌───────▼───────┐ │
+  │                                    │  reqit core   │ │
+  │                                    │  - Collections│ │
+  │                                    │  - Requests   │ │
+  │                                    │  - Assertions │ │
+  │                                    │  - Mock Server│ │
+  │                                    └───────────────┘ │
+  └─────────────────────────────────────────────────────┘
+\`\`\`
+
+### Real-world example: AI-powered API testing
+
+Say you are a backend developer. You have 50 API endpoints in reqit. Your team uses Claude Desktop as an AI assistant.
+
+Without MCP, you would manually test each endpoint, copy-paste results, ask Claude to analyze them.
+
+With MCP, you say: **"Claude, run all the tests in my auth-api collection and tell me which ones fail."**
+
+Claude calls reqit through MCP. reqit runs the collection. Claude gets the results and says: **"3 of 12 tests failed. The /refresh-token endpoint returns 401 instead of 200. The issue is the token expiry logic."**
+
+You did not write any integration code. You did not explain the API. MCP handled it all.
+
+### What reqit exposes through MCP
+
+reqit makes these tools available to any MCP-compatible AI:
+
+- **List collections** — see all your API collections
+- **List requests** — see every request in a collection
+- **Send a request** — fire any request and get the full response
+- **Run a collection** — execute all requests with assertions
+- **Get history** — see past requests and responses
+- **Manage environments** — switch between dev/staging/prod
+- **Run load tests** — simulate traffic and get metrics
+
+### How to use it
+
+1. Open reqit, go to Settings, and enable the MCP server
+2. In your AI client (Claude Desktop, etc.), add reqit as an MCP server
+3. Point it at \`reqit mcp\` (the command that starts the server)
+4. Start talking to your AI — it now has full access to your reqit workspace
+
+---
+
+## Part 2: Agent Lens — the flashlight for AI tool-readiness
+
+### What is Agent Lens?
+
+Agent Lens is like a flashlight that shines on your API collections and tells you: **"Is this ready for an AI agent to use?"**
+
+Think of it like a spell-checker, but for API tools. A spell-checker reads your essay and says "you misspelled 3 words." Agent Lens reads your API collection and says "3 things need fixing before an AI can use this reliably."
+
+### The problem Agent Lens solves
+
+When you expose your APIs to AI agents, there are rules you might not think about:
+
+- Is the tool name clear? An AI sees \`getUser\` vs \`u_g\` — which one makes sense?
+- Does every endpoint have a description? Without descriptions, the AI is guessing.
+- Are parameter types defined? An AI sending \`id\` needs to know it is a string, not a number.
+- Is the naming consistent? Mixing \`getUser\`, \`fetch_user\`, and \`load-user\` confuses AI.
+
+Agent Lens checks all of this automatically and gives you a score.
+
+### How Agent Lens works
+
+\`\`\`
+  ┌──────────────────────────────────────────────────────┐
+  │                    AGENT LENS                        │
+  │                                                      │
+  │  Input: Your API collection                          │
+  │  Output: Score + specific fixes                      │
+  │                                                      │
+  │  ┌──────────────────────────────────────────────┐    │
+  │  │           LINTING RULES (R1-R5)              │    │
+  │  │                                              │    │
+  │  │  R1: Tool Naming     - Is the name clear?   │    │
+  │  │  R2: Descriptions    - Every tool described? │    │
+  │  │  R3: Parameter Types - All types defined?    │    │
+  │  │  R4: Consistency     - Same style everywhere?│    │
+  │  │  R5: Complexity      - Not too many params?  │    │
+  │  └──────────────────────────────────────────────┘    │
+  │                      │                               │
+  │                      ▼                               │
+  │  ┌──────────────────────────────────────────────┐    │
+  │  │              SCORE (0-100)                   │    │
+  │  │                                              │    │
+  │  │  90-100: Excellent - AI-ready                │    │
+  │  │  70-89:  Good - minor improvements           │    │
+  │  │  50-69:  Fair - needs work                   │    │
+  │  │  0-49:   Poor - significant fixes needed     │    │
+  │  └──────────────────────────────────────────────┘    │
+  └──────────────────────────────────────────────────────┘
+\`\`\`
+
+### Real-world example: Making APIs AI-ready
+
+You have a collection with 20 endpoints. You run Agent Lens. It says:
+
+\`\`\`
+  Collection Score: 62/100
+
+  Issues found:
+  ✗  5 endpoints have no description
+  ✗  3 tool names are too short (e.g. "g", "p", "d")
+  ⚠  2 endpoints have more than 8 parameters
+  ✓  All parameter types are defined
+  ✓  Naming is consistent
+\`\`\`
+
+You add descriptions to the 5 endpoints, rename the short tool names, and simplify the 2 complex endpoints. You run Agent Lens again. Score: **94/100**.
+
+Now when an AI agent connects to your APIs through MCP, it has clear names, full descriptions, and well-structured parameters. The AI gives better results because the tools are well-defined.
+
+### The scoring system
+
+Agent Lens uses a penalty-based scoring system:
+
+- **Error** (must fix): -15 points each — things that break AI understanding
+- **Warning** (should fix): -5 points each — things that reduce AI accuracy
+- **Info** (nice to fix): -1 point each — improvements for clarity
+
+Starting at 100, penalties bring the score down. A score above 90 means your collection is AI-ready.
+
+### Eval: testing how well AI uses your tools
+
+Agent Lens goes beyond linting. The **Eval** feature lets you define test tasks — scenarios where an AI should call specific tools with specific arguments.
+
+\`\`\`
+  ┌─────────────────────────────────────────────────────┐
+  │                 EVAL WORKFLOW                        │
+  │                                                     │
+  │  1. You write a task:                               │
+  │     "Get all users from the /users endpoint"        │
+  │                                                     │
+  │  2. You define expected behavior:                   │
+  │     Tool: GET /users                                │
+  │     Args: none                                      │
+  │                                                     │
+  │  3. Agent Lens sends the prompt to an AI            │
+  │                                                     │
+  │  4. AI responds with a tool call                    │
+  │                                                     │
+  │  5. Agent Lens compares actual vs expected          │
+  │                                                     │
+  │  6. Results:                                        │
+  │     ✓ Correct tool called                           │
+  │     ✓ Correct arguments                             │
+  │     ⏱ Latency: 1.2s                                │
+  │     Pass rate: 3/3 runs (100%)                      │
+  └─────────────────────────────────────────────────────┘
+\`\`\`
+
+This tells you: **"When a human asks this question, will the AI call the right tool?"** If not, your tool definitions need work.
+
+### Export: generating a standalone MCP server
+
+Agent Lens can export your collection as a standalone Go MCP server. This means:
+
+1. You have an API collection in reqit
+2. Agent Lens generates a complete Go project
+3. You run \`go build\` and get a binary
+4. That binary is an MCP server any AI can connect to
+
+No reqit dependency. No Go knowledge needed. The generated code is self-contained.
+
+---
+
+## Getting started
+
+1. Download reqit from [GitHub Releases](https://github.com/HalxDocs/reqit/releases)
+2. Install it (under 20MB, takes 5 seconds)
+3. Create a collection, add a request, hit Send
+4. Enable MCP in Settings to connect AI agents
+5. Run Agent Lens to check your tool-readiness score
+
+No account. No login. No cloud. Just open and go.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },

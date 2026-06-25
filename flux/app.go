@@ -558,8 +558,8 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 	if a.inflight != nil {
 		a.inflight = nil
 	}
-	a.mu.Unlock()
 	cancel()
+	a.mu.Unlock()
 
 	// Contract validation — only when a spec path was provided by the frontend.
 	if payload.SpecPath != "" && result.Error == "" {
@@ -1275,8 +1275,7 @@ func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
 
 	// Save baseline snapshot for future drift detection
 	if err := a.SaveSchemaSnapshot(filepath.Base(path)); err != nil {
-		// Non-fatal — log but don't fail the import
-		fmt.Printf("Warning: could not save schema snapshot: %v\n", err)
+		// Non-fatal — skip silently
 	}
 
 	runtime.EventsEmit(a.ctx, "collections:changed")
@@ -2026,7 +2025,8 @@ func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
 		name += ".json"
 	}
 
-	resp, err := http.Get(rawURL) //nolint:gosec
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Get(rawURL) //nolint:gosec
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch spec from URL: %w", err)
 	}
@@ -2057,7 +2057,7 @@ func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
 
 	// Auto-save baseline snapshot for future drift detection
 	if err := a.SaveSchemaSnapshot(name); err != nil {
-		fmt.Printf("Warning: could not save schema snapshot: %v\n", err)
+		// Non-fatal — skip silently
 	}
 
 	return name, nil
@@ -2121,7 +2121,10 @@ func (a *App) StartMockServer(port int) (MockStatus, error) {
 	if a.mockServer != nil {
 		return MockStatus{}, errors.New("mock server already running")
 	}
-	cols, _ := a.GetCollections()
+	var cols []models.Collection
+	if a.collections != nil {
+		cols, _ = a.collections.GetAll()
+	}
 	a.mockReg = mock.NewRegistry()
 	loadCollsIntoRegistry(a.mockReg, cols)
 	a.mockServer = mock.NewMockServer(a.mockReg, port)
@@ -2178,7 +2181,15 @@ func (a *App) ToggleMockRecording(enable bool) error {
 	} else {
 		a.mockServer.Recording().Disable()
 	}
-	runtime.EventsEmit(a.ctx, "mock:updated", a.GetMockStatus())
+	s := MockStatus{
+		Running:    true,
+		Port:       a.mockServer.Port,
+		RouteCount: a.mockReg.Count(),
+		BaseURL:    fmt.Sprintf("http://localhost:%d", a.mockServer.Port),
+		Routes:     a.mockReg.Routes(),
+		Recording:  a.mockServer.Recording().Enabled(),
+	}
+	runtime.EventsEmit(a.ctx, "mock:updated", s)
 	return nil
 }
 

@@ -79,6 +79,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
   const [showUpstash, setShowUpstash] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [techInputs, setTechInputs] = useState<Record<number, string>>({});
+  const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
 
   const loadProfile = useCallback(async () => {
     try {
@@ -255,7 +256,9 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
   const removeSocialLink = (type: string) => setP({ ...p, socialLinks: p.socialLinks.filter((s) => s.type !== type) });
 
   const addUserProject = () => {
+    const idx = p.userProjects.length;
     setP({ ...p, userProjects: [...p.userProjects, { name: "", description: "", url: "", liveUrl: "", techStack: [], imageUrl: "" }] });
+    setExpandedProjects({ ...expandedProjects, [idx]: true });
   };
   const updateUserProject = (i: number, field: keyof UserProject, val: any) => {
     const projects = [...p.userProjects];
@@ -458,47 +461,80 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
 
             {p.userProjects.length > 0 && (
               <div className="space-y-3">
-                {p.userProjects.map((up, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-border bg-surface/50 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="text" value={up.name} onChange={(e) => updateUserProject(i, "name", e.target.value)} placeholder="Project name" className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
-                      <button onClick={() => removeUserProject(i)} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                    </div>
-                    <textarea value={up.description} onChange={(e) => updateUserProject(i, "description", e.target.value)} placeholder="What does this project do?" rows={2} className="w-full px-2 py-1.5 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan resize-none" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="url" value={up.url} onChange={(e) => updateUserProject(i, "url", e.target.value)} placeholder="GitHub repo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
-                      <input type="url" value={up.liveUrl} onChange={(e) => updateUserProject(i, "liveUrl", e.target.value)} placeholder="Live demo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
-                    </div>
-                    <input type="url" value={up.imageUrl} onChange={(e) => updateUserProject(i, "imageUrl", e.target.value)} placeholder="Screenshot URL (optional)" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
-                    {/* Tech Stack — per-project input with Add button */}
-                    <div>
-                      <div className="flex flex-wrap gap-1 mb-1">
+                {p.userProjects.map((up, i) => {
+                  const isExpanded = expandedProjects[i];
+                  if (isExpanded) {
+                    return (
+                      <div key={i} className="p-3 rounded-lg border border-cyan/30 bg-surface/50 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input type="text" value={up.name} onChange={(e) => updateUserProject(i, "name", e.target.value)} placeholder="Project name" className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                          <button onClick={() => removeUserProject(i)} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                        </div>
+                        <textarea value={up.description} onChange={(e) => updateUserProject(i, "description", e.target.value)} placeholder="What does this project do?" rows={2} className="w-full px-2 py-1.5 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan resize-none" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input type="url" value={up.url} onChange={(e) => updateUserProject(i, "url", e.target.value)} placeholder="GitHub repo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                          <input type="url" value={up.liveUrl} onChange={(e) => updateUserProject(i, "liveUrl", e.target.value)} placeholder="Live demo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                        </div>
+                        <input type="url" value={up.imageUrl} onChange={(e) => updateUserProject(i, "imageUrl", e.target.value)} placeholder="Screenshot URL (optional)" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                        <div>
+                          <div className="flex flex-wrap gap-1 mb-1">
+                            {up.techStack.map((tech) => (
+                              <span key={tech} className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-purple-500/10 text-purple-400 border border-purple-400/20">
+                                {tech}
+                                <button onClick={() => removeTechFromProject(i, tech)} className="hover:text-red-400"><X size={8} /></button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex gap-1">
+                            <input
+                              type="text"
+                              value={techInputs[i] || ""}
+                              onChange={(e) => setTechInputs({ ...techInputs, [i]: e.target.value })}
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTechToProject(i); } }}
+                              placeholder="Add tech (e.g. React, Node.js)"
+                              className="flex-1 h-[26px] px-2 text-[10px] bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                            />
+                            <button
+                              onClick={() => addTechToProject(i)}
+                              className="h-[26px] px-2 text-[10px] font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-400/20 hover:bg-purple-500/30 transition-colors flex items-center gap-0.5"
+                            >
+                              <Plus size={10} />Add
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button onClick={() => removeUserProject(i)} className="h-[28px] px-3 text-xs font-bold rounded-md border border-border text-zinc-400 hover:text-red-400 hover:border-red-400/30 transition-all">Cancel</button>
+                          <button
+                            onClick={() => { setExpandedProjects({ ...expandedProjects, [i]: false }); toast.success(up.name ? `"${up.name}" added` : "Project added"); }}
+                            className="h-[28px] px-4 text-xs font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={i} className="p-3 rounded-lg border border-border bg-surface/50 space-y-2 cursor-pointer hover:border-cyan/30 transition-colors" onClick={() => setExpandedProjects({ ...expandedProjects, [i]: true })}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Folder size={12} className="text-cyan" />
+                          <span className="text-xs font-medium text-text">{up.name || "Untitled project"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={(e) => { e.stopPropagation(); removeUserProject(i); }} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                          <span className="text-[10px] text-cyan">Edit</span>
+                        </div>
+                      </div>
+                      {up.description && <div className="text-[10px] text-subtext truncate">{up.description}</div>}
+                      <div className="flex flex-wrap gap-1">
                         {up.techStack.map((tech) => (
-                          <span key={tech} className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-purple-500/10 text-purple-400 border border-purple-400/20">
-                            {tech}
-                            <button onClick={() => removeTechFromProject(i, tech)} className="hover:text-red-400"><X size={8} /></button>
-                          </span>
+                          <span key={tech} className="px-1.5 py-0.5 text-[9px] rounded-full bg-purple-500/10 text-purple-400 border border-purple-400/20">{tech}</span>
                         ))}
                       </div>
-                      <div className="flex gap-1">
-                        <input
-                          type="text"
-                          value={techInputs[i] || ""}
-                          onChange={(e) => setTechInputs({ ...techInputs, [i]: e.target.value })}
-                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTechToProject(i); } }}
-                          placeholder="Add tech (e.g. React, Node.js)"
-                          className="flex-1 h-[26px] px-2 text-[10px] bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                        />
-                        <button
-                          onClick={() => addTechToProject(i)}
-                          className="h-[26px] px-2 text-[10px] font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-400/20 hover:bg-purple-500/30 transition-colors flex items-center gap-0.5"
-                        >
-                          <Plus size={10} />Add
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
