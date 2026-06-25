@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink, Code2, GitBranch, MessageSquare, Link as LinkIcon, Folder, Image, Tag } from "lucide-react";
-import { useUIStore } from "@/app/stores/useUIStore";
 import { toast } from "@/app/stores/useToastStore";
 
 interface UserProject {
@@ -54,7 +53,7 @@ function emptyProfile(): DevProfileData {
 
 const SOCIAL_TYPES = [
   { value: "github", label: "GitHub", icon: GitBranch, placeholder: "https://github.com/username" },
-  { value: "twitter", label: "Twitter / X", icon: MessageSquare, placeholder: "https://x.com/username" },
+  { value: "twitter", label: "X / Twitter", icon: MessageSquare, placeholder: "https://x.com/username" },
   { value: "linkedin", label: "LinkedIn", icon: LinkIcon, placeholder: "https://linkedin.com/in/username" },
   { value: "website", label: "Website", icon: Globe, placeholder: "https://yoursite.com" },
   { value: "devto", label: "DEV.to", icon: Code2, placeholder: "https://dev.to/username" },
@@ -79,7 +78,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
   const [upstashConfigured, setUpstashConfigured] = useState(false);
   const [showUpstash, setShowUpstash] = useState(false);
   const [skillInput, setSkillInput] = useState("");
-  const [techInput, setTechInput] = useState("");
+  const [techInputs, setTechInputs] = useState<Record<number, string>>({});
 
   const loadProfile = useCallback(async () => {
     try {
@@ -230,83 +229,51 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     } catch { /* ignore */ }
   };
 
-  const addLink = () => {
-    setP({ ...p, links: [...p.links, { label: "", url: "" }] });
-  };
-
+  const addLink = () => setP({ ...p, links: [...p.links, { label: "", url: "" }] });
   const updateLink = (i: number, field: "label" | "url", val: string) => {
     const links = [...p.links];
     links[i] = { ...links[i], [field]: val };
     setP({ ...p, links });
   };
-
-  const removeLink = (i: number) => {
-    setP({ ...p, links: p.links.filter((_l, idx) => idx !== i) });
-  };
+  const removeLink = (i: number) => setP({ ...p, links: p.links.filter((_l, idx) => idx !== i) });
 
   const addSkill = (skill: string) => {
     const s = skill.trim();
-    if (s && !p.skills.includes(s)) {
-      setP({ ...p, skills: [...p.skills, s] });
-    }
+    if (s && !p.skills.includes(s)) setP({ ...p, skills: [...p.skills, s] });
   };
-
-  const removeSkill = (skill: string) => {
-    setP({ ...p, skills: p.skills.filter((s) => s !== skill) });
-  };
-
+  const removeSkill = (skill: string) => setP({ ...p, skills: p.skills.filter((s) => s !== skill) });
   const handleSkillKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addSkill(skillInput);
-      setSkillInput("");
-    }
+    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addSkill(skillInput); setSkillInput(""); }
   };
 
   const addSocialLink = (type: string) => {
-    if (!p.socialLinks.find((s) => s.type === type)) {
-      setP({ ...p, socialLinks: [...p.socialLinks, { type, url: "" }] });
-    }
+    if (!p.socialLinks.find((s) => s.type === type)) setP({ ...p, socialLinks: [...p.socialLinks, { type, url: "" }] });
   };
-
   const updateSocialLink = (type: string, url: string) => {
-    setP({
-      ...p,
-      socialLinks: p.socialLinks.map((s) => (s.type === type ? { ...s, url } : s)),
-    });
+    setP({ ...p, socialLinks: p.socialLinks.map((s) => (s.type === type ? { ...s, url } : s)) });
   };
-
-  const removeSocialLink = (type: string) => {
-    setP({ ...p, socialLinks: p.socialLinks.filter((s) => s.type !== type) });
-  };
+  const removeSocialLink = (type: string) => setP({ ...p, socialLinks: p.socialLinks.filter((s) => s.type !== type) });
 
   const addUserProject = () => {
-    setP({
-      ...p,
-      userProjects: [...p.userProjects, { name: "", description: "", url: "", liveUrl: "", techStack: [], imageUrl: "" }],
-    });
+    setP({ ...p, userProjects: [...p.userProjects, { name: "", description: "", url: "", liveUrl: "", techStack: [], imageUrl: "" }] });
   };
-
   const updateUserProject = (i: number, field: keyof UserProject, val: any) => {
     const projects = [...p.userProjects];
     projects[i] = { ...projects[i], [field]: val };
     setP({ ...p, userProjects: projects });
   };
+  const removeUserProject = (i: number) => setP({ ...p, userProjects: p.userProjects.filter((_u, idx) => idx !== i) });
 
-  const removeUserProject = (i: number) => {
-    setP({ ...p, userProjects: p.userProjects.filter((_u, idx) => idx !== i) });
-  };
-
-  const addTechToProject = (i: number, tech: string) => {
-    const t = tech.trim();
-    if (!t) return;
+  const addTechToProject = (i: number) => {
+    const val = (techInputs[i] || "").trim();
+    if (!val) return;
     const projects = [...p.userProjects];
-    if (!projects[i].techStack.includes(t)) {
-      projects[i] = { ...projects[i], techStack: [...projects[i].techStack, t] };
+    if (!projects[i].techStack.includes(val)) {
+      projects[i] = { ...projects[i], techStack: [...projects[i].techStack, val] };
       setP({ ...p, userProjects: projects });
     }
+    setTechInputs({ ...techInputs, [i]: "" });
   };
-
   const removeTechFromProject = (i: number, tech: string) => {
     const projects = [...p.userProjects];
     projects[i] = { ...projects[i], techStack: projects[i].techStack.filter((t) => t !== tech) };
@@ -324,25 +291,17 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const openInBrowser = () => {
-    if (!profileUrl) return;
-    window.open(profileUrl, "_blank");
-  };
+  const openInBrowser = () => { if (profileUrl) window.open(profileUrl, "_blank"); };
 
   const saveUpstash = async () => {
-    if (!upstashUrl || !upstashToken) {
-      toast.error("Enter both URL and token");
-      return;
-    }
+    if (!upstashUrl || !upstashToken) { toast.error("Enter both URL and token"); return; }
     try {
       const { SaveUpstashConfig } = await import("../../../../wailsjs/go/main/App");
       await SaveUpstashConfig(upstashUrl, upstashToken);
       setUpstashConfigured(true);
       setShowUpstash(false);
       toast.success("Upstash configured");
-    } catch (err: any) {
-      toast.error(`Save failed: ${err?.message || err}`);
-    }
+    } catch (err: any) { toast.error(`Save failed: ${err?.message || err}`); }
   };
 
   const suggestedSkills = COMMON_SKILLS.filter((s) => !p.skills.includes(s)).slice(0, 12);
@@ -354,15 +313,12 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-[560px] max-h-[85vh] overflow-y-auto bg-card border border-border rounded-xl shadow-2xl mx-4">
-        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-border bg-card/95 backdrop-blur">
           <div className="flex items-center gap-2">
             <User size={16} className="text-cyan" />
             <h2 className="text-sm font-bold text-text">Dev Profile</h2>
           </div>
-          <button onClick={onClose} className="text-subtext hover:text-text transition-colors p-1 rounded-md hover:bg-cardHover">
-            <X size={16} />
-          </button>
+          <button onClick={onClose} className="text-subtext hover:text-text transition-colors p-1 rounded-md hover:bg-cardHover"><X size={16} /></button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -372,89 +328,43 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
               <div className="text-sm font-medium text-text">Public Profile</div>
               <div className="text-xs text-subtext">Make your dev profile visible at your public URL</div>
             </div>
-            <button
-              onClick={togglePublic}
-              className={`relative w-10 h-5 rounded-full transition-colors ${p.public ? "bg-cyan" : "bg-zinc-600"}`}
-            >
+            <button onClick={togglePublic} className={`relative w-10 h-5 rounded-full transition-colors ${p.public ? "bg-cyan" : "bg-zinc-600"}`}>
               <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${p.public ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>
 
-          {/* Upstash Config */}
+          {/* Upstash */}
           <div className="p-3 rounded-lg border border-border bg-surface">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-text">Web Storage</div>
-                <div className="text-xs text-subtext">
-                  {upstashConfigured ? (
-                    <span className="text-teal">Upstash connected</span>
-                  ) : (
-                    "Required to publish profile online"
-                  )}
-                </div>
+                <div className="text-xs text-subtext">{upstashConfigured ? <span className="text-teal">Upstash connected</span> : "Required to publish profile online"}</div>
               </div>
-              <button
-                onClick={() => setShowUpstash(!showUpstash)}
-                className="text-xs text-cyan hover:text-cyan-hover transition-colors"
-              >
-                {upstashConfigured ? "Change" : "Setup"}
-              </button>
+              <button onClick={() => setShowUpstash(!showUpstash)} className="text-xs text-cyan hover:text-cyan-hover transition-colors">{upstashConfigured ? "Change" : "Setup"}</button>
             </div>
             {showUpstash && (
               <div className="mt-3 space-y-2">
-                <input
-                  type="url"
-                  value={upstashUrl}
-                  onChange={(e) => setUpstashUrl(e.target.value)}
-                  placeholder="UPSTASH_REDIS_REST_URL"
-                  className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                />
-                <input
-                  type="password"
-                  value={upstashToken}
-                  onChange={(e) => setUpstashToken(e.target.value)}
-                  placeholder="UPSTASH_REDIS_REST_TOKEN"
-                  className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                />
-                <div className="text-[10px] text-subtext">
-                  Get these from{" "}
-                  <a href="https://upstash.com" target="_blank" rel="noopener" className="text-cyan hover:text-cyan-hover">
-                    upstash.com
-                  </a>{" "}
-                  → Create Database → copy URL and Token
-                </div>
-                <button
-                  onClick={saveUpstash}
-                  className="h-[28px] px-3 text-xs font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all"
-                >
-                  Save
-                </button>
+                <input type="url" value={upstashUrl} onChange={(e) => setUpstashUrl(e.target.value)} placeholder="UPSTASH_REDIS_REST_URL" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                <input type="password" value={upstashToken} onChange={(e) => setUpstashToken(e.target.value)} placeholder="UPSTASH_REDIS_REST_TOKEN" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                <div className="text-[10px] text-subtext">Get these from <a href="https://upstash.com" target="_blank" rel="noopener" className="text-cyan hover:text-cyan-hover">upstash.com</a> → Create Database → copy URL and Token</div>
+                <button onClick={saveUpstash} className="h-[28px] px-3 text-xs font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all">Save</button>
               </div>
             )}
           </div>
 
-          {/* Profile URL + API */}
+          {/* URLs */}
           {p.username && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-surface">
                 <Globe size={14} className="text-subtext shrink-0" />
                 <span className="text-xs text-subtext truncate flex-1 font-mono">{profileUrl}</span>
-                <button onClick={openInBrowser} className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium" title="Open in browser">
-                  <ExternalLink size={12} />Open
-                </button>
-                <button onClick={copyUrl} className="text-xs text-subtext hover:text-text transition-colors shrink-0 flex items-center gap-1" title="Copy URL">
-                  {copied ? <><Check size={12} />Copied</> : <><Copy size={12} />Copy</>}
-                </button>
+                <button onClick={openInBrowser} className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium"><ExternalLink size={12} />Open</button>
+                <button onClick={copyUrl} className="text-xs text-subtext hover:text-text transition-colors shrink-0 flex items-center gap-1">{copied ? <><Check size={12} />Copied</> : <><Copy size={12} />Copy</>}</button>
               </div>
               <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-surface">
                 <Code2 size={14} className="text-subtext shrink-0" />
                 <span className="text-xs text-subtext truncate flex-1 font-mono">{apiUrl}</span>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(apiUrl); toast.success("API URL copied"); }}
-                  className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium"
-                >
-                  <Copy size={12} />API
-                </button>
+                <button onClick={() => { navigator.clipboard.writeText(apiUrl); toast.success("API URL copied"); }} className="text-xs text-cyan hover:text-cyan-hover transition-colors shrink-0 flex items-center gap-1 font-medium"><Copy size={12} />API</button>
               </div>
             </div>
           )}
@@ -462,60 +372,30 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           {/* Username */}
           <div>
             <label className="block text-xs font-medium text-subtext mb-1">Username</label>
-            <input
-              type="text"
-              value={p.username}
-              onChange={(e) => setP({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
-              placeholder="your-name"
-              className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
-            />
+            <input type="text" value={p.username} onChange={(e) => setP({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} placeholder="your-name" className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan" />
           </div>
 
           {/* Display Name */}
           <div>
             <label className="block text-xs font-medium text-subtext mb-1">Display Name</label>
-            <input
-              type="text"
-              value={p.displayName}
-              onChange={(e) => setP({ ...p, displayName: e.target.value })}
-              placeholder="Jane Doe"
-              className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
-            />
+            <input type="text" value={p.displayName} onChange={(e) => setP({ ...p, displayName: e.target.value })} placeholder="Jane Doe" className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan" />
           </div>
 
           {/* Bio */}
           <div>
             <label className="block text-xs font-medium text-subtext mb-1">Bio</label>
-            <textarea
-              value={p.bio}
-              onChange={(e) => setP({ ...p, bio: e.target.value })}
-              placeholder="Backend engineer who loves APIs, databases, and clean architecture."
-              rows={2}
-              className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan resize-none"
-            />
+            <textarea value={p.bio} onChange={(e) => setP({ ...p, bio: e.target.value })} placeholder="Backend engineer who loves APIs, databases, and clean architecture." rows={2} className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan resize-none" />
           </div>
 
           {/* Location & Company */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-subtext mb-1"><MapPin size={10} className="inline mr-1" />Location</label>
-              <input
-                type="text"
-                value={p.location}
-                onChange={(e) => setP({ ...p, location: e.target.value })}
-                placeholder="Nigeria"
-                className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
-              />
+              <input type="text" value={p.location} onChange={(e) => setP({ ...p, location: e.target.value })} placeholder="Nigeria" className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan" />
             </div>
             <div>
               <label className="block text-xs font-medium text-subtext mb-1"><Building size={10} className="inline mr-1" />Company</label>
-              <input
-                type="text"
-                value={p.company}
-                onChange={(e) => setP({ ...p, company: e.target.value })}
-                placeholder="Acme Corp"
-                className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
-              />
+              <input type="text" value={p.company} onChange={(e) => setP({ ...p, company: e.target.value })} placeholder="Acme Corp" className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan" />
             </div>
           </div>
 
@@ -526,30 +406,15 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
               {p.skills.map((skill) => (
                 <span key={skill} className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-full bg-cyan/10 text-cyan border border-cyan/20">
                   {skill}
-                  <button onClick={() => removeSkill(skill)} className="hover:text-red-400 transition-colors">
-                    <X size={10} />
-                  </button>
+                  <button onClick={() => removeSkill(skill)} className="hover:text-red-400 transition-colors"><X size={10} /></button>
                 </span>
               ))}
             </div>
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={handleSkillKeyDown}
-              placeholder="Type a skill and press Enter (e.g. Go, REST API, Docker)"
-              className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-            />
+            <input type="text" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyDown={handleSkillKeyDown} placeholder="Type a skill and press Enter (e.g. Go, REST API, Docker)" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
             {suggestedSkills.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {suggestedSkills.map((skill) => (
-                  <button
-                    key={skill}
-                    onClick={() => addSkill(skill)}
-                    className="px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all"
-                  >
-                    + {skill}
-                  </button>
+                  <button key={skill} onClick={() => addSkill(skill)} className="px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all">+ {skill}</button>
                 ))}
               </div>
             )}
@@ -558,13 +423,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           {/* GitHub Username */}
           <div>
             <label className="block text-xs font-medium text-subtext mb-1"><GitBranch size={10} className="inline mr-1" />GitHub Username</label>
-            <input
-              type="text"
-              value={p.githubUsername}
-              onChange={(e) => setP({ ...p, githubUsername: e.target.value.replace(/[^a-zA-Z0-9-]/g, "") })}
-              placeholder="your-github-username"
-              className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan"
-            />
+            <input type="text" value={p.githubUsername} onChange={(e) => setP({ ...p, githubUsername: e.target.value.replace(/[^a-zA-Z0-9-]/g, "") })} placeholder="your-github-username" className="w-full h-[32px] px-3 text-sm bg-surface border border-border rounded-md text-text placeholder:text-zinc-500 outline-none focus:border-cyan focus:ring-2 focus:ring-cyan" />
             <div className="text-[10px] text-subtext mt-1">Shows your recent commits and contribution activity on your profile</div>
           </div>
 
@@ -572,19 +431,14 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-medium text-subtext"><Folder size={10} className="inline mr-1" />My Projects</label>
-              <button onClick={addUserProject} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1">
-                <Plus size={10} />Add Project
-              </button>
+              <button onClick={addUserProject} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1"><Plus size={10} />Add Project</button>
             </div>
             <div className="text-[10px] text-subtext mb-2">Add your own projects to showcase on your profile</div>
 
             {p.userProjects.length === 0 && p.projects.length === 0 && (
-              <div className="text-[10px] text-zinc-500 p-3 rounded-lg border border-dashed border-border text-center">
-                No projects yet. Add your own or create collections in reqit.
-              </div>
+              <div className="text-[10px] text-zinc-500 p-3 rounded-lg border border-dashed border-border text-center">No projects yet. Add your own or create collections in reqit.</div>
             )}
 
-            {/* Auto-generated from collections */}
             {p.projects.length > 0 && (
               <div className="mb-3">
                 <div className="text-[10px] text-zinc-500 mb-1.5 font-medium">From collections (auto)</div>
@@ -602,53 +456,21 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
               </div>
             )}
 
-            {/* User-created projects */}
             {p.userProjects.length > 0 && (
               <div className="space-y-3">
                 {p.userProjects.map((up, i) => (
                   <div key={i} className="p-3 rounded-lg border border-border bg-surface/50 space-y-2">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={up.name}
-                        onChange={(e) => updateUserProject(i, "name", e.target.value)}
-                        placeholder="Project name"
-                        className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                      />
-                      <button onClick={() => removeUserProject(i)} className="text-zinc-500 hover:text-red-400 transition-colors">
-                        <Trash2 size={12} />
-                      </button>
+                      <input type="text" value={up.name} onChange={(e) => updateUserProject(i, "name", e.target.value)} placeholder="Project name" className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                      <button onClick={() => removeUserProject(i)} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                     </div>
-                    <textarea
-                      value={up.description}
-                      onChange={(e) => updateUserProject(i, "description", e.target.value)}
-                      placeholder="What does this project do?"
-                      rows={2}
-                      className="w-full px-2 py-1.5 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan resize-none"
-                    />
+                    <textarea value={up.description} onChange={(e) => updateUserProject(i, "description", e.target.value)} placeholder="What does this project do?" rows={2} className="w-full px-2 py-1.5 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan resize-none" />
                     <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="url"
-                        value={up.url}
-                        onChange={(e) => updateUserProject(i, "url", e.target.value)}
-                        placeholder="GitHub repo URL"
-                        className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                      />
-                      <input
-                        type="url"
-                        value={up.liveUrl}
-                        onChange={(e) => updateUserProject(i, "liveUrl", e.target.value)}
-                        placeholder="Live demo URL"
-                        className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                      />
+                      <input type="url" value={up.url} onChange={(e) => updateUserProject(i, "url", e.target.value)} placeholder="GitHub repo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                      <input type="url" value={up.liveUrl} onChange={(e) => updateUserProject(i, "liveUrl", e.target.value)} placeholder="Live demo URL" className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
                     </div>
-                    <input
-                      type="url"
-                      value={up.imageUrl}
-                      onChange={(e) => updateUserProject(i, "imageUrl", e.target.value)}
-                      placeholder="Screenshot URL (optional)"
-                      className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                    />
+                    <input type="url" value={up.imageUrl} onChange={(e) => updateUserProject(i, "imageUrl", e.target.value)} placeholder="Screenshot URL (optional)" className="w-full h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                    {/* Tech Stack — per-project input with Add button */}
                     <div>
                       <div className="flex flex-wrap gap-1 mb-1">
                         {up.techStack.map((tech) => (
@@ -658,20 +480,22 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
                           </span>
                         ))}
                       </div>
-                      <input
-                        type="text"
-                        value={techInput}
-                        onChange={(e) => setTechInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addTechToProject(i, techInput);
-                            setTechInput("");
-                          }
-                        }}
-                        placeholder="Add tech stack (Enter to add)"
-                        className="w-full h-[24px] px-2 text-[10px] bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                      />
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          value={techInputs[i] || ""}
+                          onChange={(e) => setTechInputs({ ...techInputs, [i]: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTechToProject(i); } }}
+                          placeholder="Add tech (e.g. React, Node.js)"
+                          className="flex-1 h-[26px] px-2 text-[10px] bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
+                        />
+                        <button
+                          onClick={() => addTechToProject(i)}
+                          className="h-[26px] px-2 text-[10px] font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-400/20 hover:bg-purple-500/30 transition-colors flex items-center gap-0.5"
+                        >
+                          <Plus size={10} />Add
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -690,16 +514,8 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
                 return (
                   <div key={sl.type} className="flex items-center gap-2">
                     <Icon size={14} className="text-subtext shrink-0" />
-                    <input
-                      type="url"
-                      value={sl.url}
-                      onChange={(e) => updateSocialLink(sl.type, e.target.value)}
-                      placeholder={meta.placeholder}
-                      className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                    />
-                    <button onClick={() => removeSocialLink(sl.type)} className="text-zinc-500 hover:text-red-400 transition-colors">
-                      <Trash2 size={12} />
-                    </button>
+                    <input type="url" value={sl.url} onChange={(e) => updateSocialLink(sl.type, e.target.value)} placeholder={meta.placeholder} className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                    <button onClick={() => removeSocialLink(sl.type)} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                   </div>
                 );
               })}
@@ -709,11 +525,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
                 {unusedSocialTypes.map((st) => {
                   const Icon = st.icon;
                   return (
-                    <button
-                      key={st.value}
-                      onClick={() => addSocialLink(st.value)}
-                      className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all"
-                    >
+                    <button key={st.value} onClick={() => addSocialLink(st.value)} className="flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full border border-border text-subtext hover:border-cyan/40 hover:text-cyan transition-all">
                       <Icon size={10} />+ {st.label}
                     </button>
                   );
@@ -726,29 +538,13 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-medium text-subtext"><ExternalLink size={10} className="inline mr-1" />Other Links</label>
-              <button onClick={addLink} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1">
-                <Plus size={10} />Add
-              </button>
+              <button onClick={addLink} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1"><Plus size={10} />Add</button>
             </div>
             {p.links.map((link, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
-                <input
-                  type="text"
-                  value={link.label}
-                  onChange={(e) => updateLink(i, "label", e.target.value)}
-                  placeholder="Label"
-                  className="w-24 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                />
-                <input
-                  type="url"
-                  value={link.url}
-                  onChange={(e) => updateLink(i, "url", e.target.value)}
-                  placeholder="https://..."
-                  className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan"
-                />
-                <button onClick={() => removeLink(i)} className="text-zinc-500 hover:text-red-400 transition-colors">
-                  <Trash2 size={12} />
-                </button>
+                <input type="text" value={link.label} onChange={(e) => updateLink(i, "label", e.target.value)} placeholder="Label" className="w-24 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                <input type="url" value={link.url} onChange={(e) => updateLink(i, "url", e.target.value)} placeholder="https://..." className="flex-1 h-[28px] px-2 text-xs bg-surface border border-border rounded text-text placeholder:text-zinc-500 outline-none focus:border-cyan" />
+                <button onClick={() => removeLink(i)} className="text-zinc-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
               </div>
             ))}
           </div>
@@ -757,9 +553,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-medium text-subtext">Stats</label>
-              <button onClick={refreshStats} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1">
-                <RefreshCw size={10} />Refresh
-              </button>
+              <button onClick={refreshStats} className="text-xs text-cyan hover:text-cyan-hover flex items-center gap-1"><RefreshCw size={10} />Refresh</button>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -779,22 +573,13 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
           </div>
 
           {/* Save + Publish */}
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              onClick={save}
-              disabled={saving || !p.username}
-              className="h-[32px] px-4 text-sm font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+          <div className="flex items-center gap-3 pt-2 pb-2">
+            <button onClick={save} disabled={saving || !p.username} className="h-[32px] px-4 text-sm font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               {saving ? "Saving..." : "Save Profile"}
             </button>
             {saved && <span className="text-[11px] text-teal">Saved</span>}
-            <button
-              onClick={publish}
-              disabled={publishing || !p.username}
-              className="h-[32px] px-4 text-sm font-bold rounded-md bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-            >
-              <Globe size={12} />
-              {publishing ? "Publishing..." : "Publish to Web"}
+            <button onClick={publish} disabled={publishing || !p.username} className="h-[32px] px-4 text-sm font-bold rounded-md bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+              <Globe size={12} />{publishing ? "Publishing..." : "Publish to Web"}
             </button>
             {published && <span className="text-[11px] text-teal">Published</span>}
           </div>
