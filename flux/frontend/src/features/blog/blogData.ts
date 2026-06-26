@@ -161,689 +161,718 @@ No usage analytics. We rely on GitHub issues, Discord, and direct feedback.
   },
   {
     slug: "explainer-collections",
-    title: "What are Collections? Organizing API requests like folders on your computer",
-    description: "If you have ever organized papers into folders, you already understand collections. Think of them as folders for your API requests.",
+    title: "what are collections",
+    description: "Most API clients store collections in a database. That is a mistake. reqit stores them as plain JSON files on disk.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "collections", "beginner"],
     category: "Technical deep-dives",
-    content: `Imagine you have a desk covered in papers. Some are for shopping. Some are for school. Some are for your games. When you put each group of papers into its own folder, your desk becomes clean and you can find anything fast.
+    content: `Most API clients store collections in a database. That is a mistake. reqit stores them as plain JSON files on disk, inside a \`.reqit/collections/\` directory. Every request is its own file. Every collection is a folder. This one decision unlocks everything else: git diffs, branch-based reviews, merge conflict resolution, and zero vendor lock-in.
 
-**Collections in reqit work exactly like those folders.**
+## why files beat databases
 
-A collection is a group of API requests that belong together. If you are building a shopping app, you might have a "Users" collection with requests for logging in and signing up, and a "Products" collection with requests for browsing and buying.
+When a collection lives in a database, you get "collection updated" in your version history with no detail. When it lives on disk, \`git diff\` shows you exactly which URL changed, which header was added, and which body field moved. Feature branches carry their own collections. Merge the branch, merge the collections. No separate workspace. No cloud account. No subscription.
 
-## A real-life story
-
-Meet Sarah. She is building an app for a pizza delivery service. She has requests to:
-
-- Get the menu (**GET /menu**)
-- Place an order (**POST /orders**)
-- Check if the driver is coming (**GET /orders/:id/status**)
-- Add a new pizza to the menu (**POST /admin/pizzas**)
-
-Without collections, these are just a messy pile of URLs. With collections, Sarah puts them in:
+## file structure
 
 \`\`\`
-🍕 Pizza App
-  ├── 🛒 Customer
-  │   ├── Get the menu
-  │   ├── Place an order
-  │   └── Check order status
-  └── 🔧 Admin
-      └── Add a new pizza
+.reqit/
+├── collections/
+│   ├── auth-api/
+│   │   ├── login.json
+│   │   └── refresh.json
+│   └── payment-service/
+│       ├── charge.json
+│       └── refund.json
+└── environments/
+    ├── dev.json
+    └── staging.json
 \`\`\`
 
-Now she can find anything in one click. Her teammate can open the same collection and know exactly where everything lives.
+Each JSON file contains the full request definition: method, URL, headers, auth, body, and any scripts. Open them in any editor. Parse them with any tool. The format is documented and trivial to extend.
 
-## What else can collections do?
+## git diffs in practice
 
-- **Rename** any request or collection with one click
-- **Drag and drop** to reorder them
-- **Move** a request from one collection to another
-- **Duplicate** a request to make a variation
-- **Export** an entire collection as a file to share
+\`\`\`diff
+diff --git a/.reqit/collections/auth-api/login.json b/.reqit/collections/auth-api/login.json
+--- a/.reqit/collections/auth-api/login.json
++++ b/.reqit/collections/auth-api/login.json
+@@ -5 +5 @@
+-    "url": "https://staging.api.com/auth/login"
++    "url": "https://api.production.com/auth/login"
+\`\`\`
 
-## Why this matters
+A developer changes a request URL. The diff appears in the pull request alongside the code change. The team reviews the API change in context. No guessing. No separate tooling.
 
-When your API grows from 5 requests to 50, you need organization. Collections are how you keep your sanity. Every tool has them — but reqit stores them as simple JSON files you can put in Git. More on that in the Git explainer.
+## merge conflicts are a feature
+
+Two developers editing the same request at the same time get a git merge conflict. You resolve it explicitly instead of silently losing changes. This is exactly how code works, and it should work the same way for API collections.
+
+Collections as files means your API definitions version like your code. They live in the same repo, get reviewed in the same PR, and deploy with the same pipeline.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-http-requests",
-    title: "What is an HTTP Request? Sending a letter across the internet",
-    description: "Every time you type a URL and press Enter, you are sending a letter. HTTP requests are just letters your computer writes to other computers.",
+    title: "http requests in reqit",
+    description: "Every API test starts with an HTTP request. Most tools overcomplicate this. reqit gives you a URL bar, a method dropdown, and a send button.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "http", "beginner"],
     category: "Tutorials & use-cases",
-    content: `Imagine you want to ask your friend for a recipe. You write a letter, put it in an envelope, write their address, and drop it in a mailbox. Your friend gets it, reads it, writes the recipe on a new piece of paper, and mails it back.
+    content: `Every API test starts with an HTTP request. Most tools overcomplicate this with wizards, code generators, and five different panes. reqit gives you a URL bar, a method dropdown, and a send button. That is all you need.
 
-**An HTTP request is exactly that — a letter from your computer to another computer.**
+## methods in practice
 
-The other computer is called a **server**. The letter you send is the **request**. The letter you get back is the **response**.
+You already know GET reads data, POST creates it, PUT replaces, PATCH updates partially, and DELETE removes. The part that matters in reqit is how you configure each one. The request builder has four tabs: Params, Headers, Body, and Auth. You fill in what you need, reqit builds the wire-format request.
 
-## The parts of a request
+## a real request cycle
 
-A letter has: an address, a type of request, and maybe a note inside. An HTTP request has the same things.
+Here is a POST to create a user:
 
-- **URL** — the address (like \`https://api.pizza.com/menu\`)
-- **Method** — what you want to do (GET means "give me something", POST means "here is something new")
-- **Headers** — extra info, like "please send the answer in English"
-- **Body** — the note inside (only for POST, PUT, PATCH)
+\`\`\`
+POST https://api.example.com/v1/users
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 
-## Methods are like verbs
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "role": "admin"
+}
+\`\`\`
 
-- **GET** — "Can I see the menu please?" (read data)
-- **POST** — "Here is my order, please make it" (create data)
-- **PUT** — "Please replace my old address with this new one" (update everything)
-- **PATCH** — "Please change just my phone number" (update one thing)
-- **DELETE** — "Please remove my account" (delete data)
+The response comes back:
 
-## Real life: ordering pizza
+\`\`\`
+HTTP/1.1 201 Created
+Content-Type: application/json
 
-1. You open reqit and type \`https://api.pizza.com/menu\` with method **GET**
-2. Reqit sends the letter. The pizza server looks up the menu.
-3. The server writes back: \`{ "pizzas": ["Margherita", "Pepperoni"] }\`
-4. You see the response in reqit — formatted, color-coded, easy to read.
+{
+  "id": "usr_8f3k2m",
+  "name": "Alice",
+  "email": "alice@example.com",
+  "role": "admin",
+  "createdAt": "2026-06-25T10:30:00Z"
+}
+\`\`\`
 
-That is it. An API is just a bunch of these letter exchanges, and reqit is the post office that handles every letter for you.
+reqit displays the response with status code, timing, headers, and pretty-printed JSON. You can copy any part of it, save it to your collection, or chain it into the next request with a script.
+
+## body types
+
+reqit supports JSON, form-data, URL-encoded, raw text, GraphQL, gRPC, and SOAP. Pick the type, the editor adjusts. No format guessing. No copy-pasting from documentation.
+
+## what you gain
+
+The request builder is deliberately minimal. No account required, no cloud sync, no login prompt. You type a URL, pick a method, and hit send. The tool stays out of your way so you can focus on the API you are actually testing.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-environments",
-    title: "What are Environments? A magic coloring book for your API",
-    description: "Imagine a coloring book where the same picture can be colored differently every time. That is what environments do for your API requests.",
+    title: "environments and variable scoping",
+    description: "Hardcoded URLs in requests are a ticking time bomb. Environments in reqit are variable scoping: write a request once, variables resolve based on which environment is active.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "environments", "beginner"],
     category: "Technical deep-dives",
-    content: `Imagine you have a coloring book page with a house, a tree, and a sun. You color it with your crayons. Now your friend wants to color the same page with different colors. You do not need a new book — you just use different crayons.
+    content: `Hardcoded URLs in requests are a ticking time bomb. One \`http://localhost:3000\` in production and you have an outage. Environments in reqit are variable scoping: you write a request once, and the variables resolve based on which environment is active.
 
-**Environments are those crayons for your API requests.**
+## variable resolution
 
-You write your API request once, but use different values depending on where you are. When you are developing, you talk to a test server. When you are ready, you talk to the real server. The request stays the same — only the values change.
+In any request field, use \`{{VARIABLE_NAME}}\` syntax. When you select an environment, reqit replaces every \`{{VARIABLE}}\` in your URL, headers, and body with the value from that environment. Switch from Dev to Prod with one click. Every request updates instantly.
 
-## A real-life story
+## scoping rules
 
-Meet Alex. He is building a weather app. He has:
+Variables resolve in this order: request-level > folder-level > environment-level > vault. If you define \`BASE_URL\` at the request level, it takes precedence over the environment value. This lets you override a single request without touching the shared environment.
 
-- **Development** — a test server on his own computer at \`http://localhost:3000\`
-- **Staging** — a team test server at \`https://staging.weather.app\`
-- **Production** — the real server at \`https://api.weather.app\`
+## hardcoded vs environment variables
 
-Without environments, Alex would need three different copies of every request. Every time he changes something, he has to change it three times. One mistake and the production request breaks.
+**Before (hardcoded):**
 
-With environments, Alex writes his URL as \`{{BASE_URL}}/weather\`. Then he creates:
+\`\`\`
+POST http://localhost:3000/api/users
+Authorization: Bearer dev-token-123
+\`\`\`
 
-- A **Dev** environment where \`BASE_URL\` = \`http://localhost:3000\`
-- A **Staging** environment where \`BASE_URL\` = \`https://staging.weather.app\`
-- A **Production** environment where \`BASE_URL\` = \`https://api.weather.app\`
+**After (with environment):**
 
-Now he just switches environments with one click. The same request hits different servers.
+\`\`\`
+POST {{BASE_URL}}/api/users
+Authorization: Bearer {{AUTH_TOKEN}}
+\`\`\`
 
-## What goes in an environment
+Dev environment: \`BASE_URL\` = \`http://localhost:3000\`, \`AUTH_TOKEN\` = \`dev-token-123\`
+Prod environment: \`BASE_URL\` = \`https://api.production.com\`, \`AUTH_TOKEN\` = \`prod-token-456\`
 
-Anything that changes between places:
+Same request. Two environments. Zero copy-paste. Zero risk of sending a test token to production.
 
-- Server URLs (\`api.pizza.com\` vs \`localhost:3000\`)
-- API keys (\`test-key-123\` vs \`real-key-456\`)
-- User IDs, passwords, tokens
-- Feature flags
+## secrets handling
 
-## Why this is wonderful
+Sensitive values like API keys and tokens should not sit in environment files you commit to git. reqit has a vault that encrypts secrets at rest. Your environment file references \`{{VAULT_API_KEY}}\` instead of the actual key. The vault decrypts only when reqit sends a request.
 
-You write your request once. You test it everywhere. You never accidentally send a test request to the real server. You never have to hunt through your requests to find hardcoded values. Environments are one of those features that seems boring until you use them — then you cannot live without them.
+## what goes in an environment
+
+Anything that changes between servers: base URLs, API keys, tokens, user IDs, feature flags, timeout values. Keep your request definitions clean and let environments handle the context.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-auth",
-    title: "What is Authentication? Showing your ID card to the server",
-    description: "When you go to a club, you show your ID. When your computer talks to an API, it shows an auth token. Same thing.",
+    title: "authentication in reqit",
+    description: "Auth is where most API testing breaks down. reqit handles auth as a first-class concern: configure it once, reqit adds the right headers automatically.",
     date: "2026-06-15",
     readTime: "4 min read",
     tags: ["explainer", "auth", "security"],
     category: "Technical deep-dives",
-    content: `Imagine you walk into a building with a security guard. The guard asks "who are you?" You show your ID card. The guard checks it and lets you in.
+    content: `Auth is where most API testing breaks down. You spend 10 minutes getting a token, paste it into a header, it expires, and you start over. reqit handles auth as a first-class concern: configure it once per request, and reqit adds the right headers automatically.
 
-**Authentication in APIs is the same thing.** Your request needs to prove who it is before the server lets it in. The ID card for APIs is called an **auth token** or **API key**.
+## bearer token
 
-## Types of API ID cards
+The most common pattern. You get a JWT from a login endpoint, paste it into the Auth tab under Bearer, and reqit sends \`Authorization: Bearer <token>\` on every request. When the token expires, you re-run the login request and update it. reqit also decodes JWTs inline so you can see claims and expiry without leaving the tool.
 
-Different servers want different kinds of ID. Reqit supports them all.
+## basic auth
 
-### Bearer Token — like a VIP wristband
+Enter a username and password. reqit encodes them to Base64 and adds the \`Authorization: Basic\` header. Simple, but only use this over HTTPS.
 
-You get a special token when you log in. You put it in the header: \`Authorization: Bearer <token>\`. The server checks it and knows who you are.
+## api key
 
-**Real life:** You log into a website. The website gives you a wristband. Every time you come back, you show the wristband and they let you in without asking for your password again.
+Some APIs expect a key in a custom header like \`X-API-Key\` or as a query parameter. reqit lets you pick the header name and value. The key is sent on every request in that collection.
 
-### Basic Auth — like writing your name and password on a note
+## oauth2
 
-The client sends \`username:password\` encoded in a special way. Simple but not very secure on its own.
+The full flow with PKCE support. Configure the authorization URL, token URL, client ID, and scopes. reqit opens a browser for the user to authorize, captures the callback, exchanges the code for a token, and stores it. Refresh tokens are handled automatically.
 
-**Real life:** You tell the guard "I am Alice, my password is pizza123". The guard writes it down and checks a list.
+## when to use each
 
-### API Key — like a secret handshake
+| Type | Use when |
+|------|----------|
+| Bearer | Most modern APIs. Token from login endpoint. |
+| Basic | Internal tools, legacy APIs, simple auth. |
+| API Key | Public APIs with key-based access control. |
+| OAuth2 | Third-party integrations, user-facing apps. |
+| mTLS | Enterprise, high-security, mutual trust. |
 
-A special key that identifies you. Usually sent in a header like \`X-API-Key: abc123\`.
+## the auth tab
 
-**Real life:** You and your friend invent a secret handshake. Anyone who does the handshake is part of the group.
-
-### OAuth2 — like a checked-in library card
-
-You go to a library. You show your ID. The librarian gives you a temporary card that lets you borrow books for one day. When the day ends, you get a new one.
-
-**Real life:** You log in with Google on a new app. The app never sees your Google password — it just gets a temporary token that says "this person is allowed to use the app for the next hour."
-
-### Digest & NTLM — like a puzzle
-
-The server gives you a puzzle. You solve it and send the answer back. If the answer is right, the server knows it is really you.
-
-**Real life:** The guard asks "what is 2 + 2?" You say "4". The guard knows you are human because a robot could not have solved it. (This is simplified, but you get the idea.)
-
-## How reqit helps
-
-Instead of remembering all these different ID card types, reqit has an **Auth tab** on every request. You pick the type, fill in the details, and reqit adds the right headers automatically. No manual typing. No mistakes.
+Configure auth at the request level, folder level, or collection level. Child requests inherit from their parent. Override at any level. reqit never hardcodes tokens into your request files unless you explicitly save them.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-mock-server",
-    title: "What is a Mock Server? A pretend backend for when the real one is not ready",
-    description: "Ever played pretend restaurant? You write a menu on paper and take fake orders. A mock server is the same thing for your frontend code.",
+    title: "mock servers for frontend development",
+    description: "Frontend developers should not wait for backends. reqit has a built-in mock server: save a response, start the server, point your frontend at localhost:4321.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "mock", "testing"],
     category: "Tutorials & use-cases",
-    content: `When you were a kid, you probably played "pretend". You pretended to be a chef, a teacher, or a superhero. You did not need real tools — your imagination was enough.
+    content: `Frontend developers should not wait for backends. Every hour spent mocking data by hand is an hour not spent shipping features. reqit has a built-in mock server: save a response, start the server, point your frontend at \`localhost:4321\`.
 
-**A mock server is pretend for your API.**
+## save for mock
 
-Your frontend code needs data to work. But maybe the real backend is not built yet. Maybe it is too expensive to call every time. Maybe you want to test how your app handles errors.
+Send a real request. When the response comes back, click "Save for Mock." reqit stores the response body, status code, headers, and route pattern. The mock server replays it on the matching URL.
 
-A mock server pretends to be the real backend. Your frontend talks to it just like the real thing, but the mock server sends back pretend data that you control.
+## route matching
 
-## A real-life story
+The mock server matches routes by path and method. \`/users/:id\` matches \`/users/123\`, \`/users/456\`, any value. You save one response and it handles every variation. Query parameters are ignored by default, which is what you want for most mock scenarios.
 
-Maria is building a weather app. The real weather API charges $0.01 per call. Every time Maria reloads her app during development, it costs money. By the time she is done, she has spent $50 just refreshing the page.
+## delay and error injection
 
-Maria uses reqit's mock server instead:
+Add a delay to simulate slow networks. Override the status code to test error handling. Change the response body to test edge cases. All configured per-route. Your frontend code sees real HTTP responses, not hardcoded data.
 
-1. She sends one real request to get weather data
-2. She clicks **Save for Mock**
-3. She starts the mock server
-4. Her app talks to \`http://localhost:4321/weather\` instead of the real API
-5. The mock server sends back the exact same data
+## a real frontend talking to it
 
-Now Maria can reload her app 1,000 times and it costs $0.
+Your React app is configured to hit \`http://localhost:4321\` during development. A fetch call to \`/api/users/123\` returns the mock data instantly. No backend needed. No \`useEffect\` with fake data. No hardcoded JSON in your components. When the real backend is ready, you change one environment variable and the app talks to the real server.
 
-## What else can the mock server do?
+## what you control
 
-- **Delay responses** — pretend the server is slow to test loading spinners
-- **Send errors** — make the server return a 500 error to test your error handling
-- **Override status codes** — force a 404 to see how your app handles "not found"
-- **Match route parameters** — \`/users/:id\` automatically matches \`/users/123\` and \`/users/456\`
+- Response status code (200, 404, 500, whatever you need)
+- Response body (the exact JSON you want)
+- Response headers (including CORS)
+- Response delay (100ms, 2s, whatever simulates your scenario)
+- Route parameters (dynamic path segments)
 
-## Why this matters
-
-Without a mock server, frontend developers either wait for the backend to be ready, or hardcode fake data that gets forgotten in the code. With a mock server, the frontend talks to a real HTTP server from day one. The switch to the real backend is one URL change.
+The mock server runs on \`localhost:4321\` with CORS enabled by default. Your frontend, your tests, and your Storybook stories can all talk to it. Switching to the real backend is one environment variable change.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-runner",
-    title: "What is a Collection Runner? A robot that tests all your APIs automatically",
-    description: "Imagine having a robot that clicks every button in your app and tells you which ones are broken. That is what a collection runner does for your APIs.",
+    title: "collection runner and assertions",
+    description: "Manual testing does not scale. The collection runner executes every request, runs your assertions, and gives you a pass/fail report.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "runner", "testing"],
     category: "Tutorials & use-cases",
-    content: `Imagine you own a toy factory with 100 different toys. Every morning, you need to check that every toy works. Picking up each one and testing it by hand takes hours. Now imagine a robot that tests all 100 toys in seconds and hands you a list of the broken ones.
+    content: `Manual testing does not scale. You send 20 requests by hand, check each response, and miss the one that returned a 400. The collection runner executes every request in a collection, runs your assertions, and gives you a pass/fail report. This is how you turn a list of requests into a test suite.
 
-**A collection runner is that robot for your API requests.**
+## assertions
 
-You put your requests in a collection, add some checks (called assertions), and press **Run**. Reqit fires every request, checks the responses, and tells you which passed and which failed.
+Each request can have multiple assertions. Check the status code, response time, specific fields in the body, headers, or custom conditions. If any assertion fails, the request is marked as failed. Assertions run automatically during a collection run.
 
-## A real-life story
+## parallel vs sequential
 
-Jake runs an online store. Every week, something breaks after a deployment. Last week, the login page worked but the checkout page was returning errors. Nobody noticed for three hours. 47 customers abandoned their carts.
+Sequential mode fires requests one after another. Use this when request B depends on the output of request A. Parallel mode fires multiple requests simultaneously. Use this when you want to test throughput or when requests are independent.
 
-Jake creates a collection called "Smoke Test" with 20 requests:
-- GET the homepage — expects status 200
-- POST login with valid credentials — expects status 200 and a token
-- GET the product list — expects an array of products
-- POST add to cart — expects status 201
-- POST checkout — expects status 200
+## the report
 
-He adds assertions:
-- Status code must be 200 or 201
-- Response time must be under 2 seconds
-- The response must include specific fields
+After a run, you get a summary: total requests, passed, failed, total time. Each request shows its status code, response time, and assertion results. Export the report as JSON or HTML to share with your team.
 
-Now after every deployment, Jake clicks Run. If all 20 pass, he knows the site works. If any fail, he knows exactly what broke.
+## a real CLI command
 
-## What makes the runner powerful
+\`\`\`bash
+reqit run smoke-tests --env staging --report json
+\`\`\`
 
-- **Parallel mode** — fires multiple requests at once (like having 5 robots instead of 1)
-- **Sequential mode** — fires requests one by one when order matters
-- **Retries** — if a request fails, it tries again (servers sometimes hiccup)
-- **Assertions** — check status codes, response bodies, headers, timing
-- **Reports** — export results as JSON or HTML to share with your team
+Output:
 
-## The real magic
+\`\`\`
+POST /login ............... ✓ 200 (120ms)
+GET /users ................ ✓ 200 (85ms)
+GET /users/123 ............ ✓ 200 (90ms)
+POST /orders .............. ✓ 201 (210ms)
+GET /orders/456 ........... ✗ 404 (45ms) — expected 200
+DELETE /orders/456 ........ ✓ 204 (110ms)
 
-A runner turns your collection from a list of requests into a test suite. You are not just firing requests anymore — you are automatically verifying that your entire API works correctly.
+5/6 passed (83%)
+Exit code: 1
+\`\`\`
+
+The runner exits with code 0 if all pass, code 1 if any fail. Drop this into a CI pipeline and every push validates your API automatically. No separate test framework. No YAML config files. Just your existing collections and assertions.
+
+## what this replaces
+
+K6 for basic load testing. Postman's collection runner. Custom curl scripts in your CI pipeline. The runner is built into reqit, runs from the CLI, and uses the same collections you already have.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-git",
-    title: "What is Git Integration? A time machine for your API collections",
-    description: "Imagine if every change to your collections was saved forever and you could go back to any moment. That is what Git gives you.",
+    title: "git integration",
+    description: "API collections should version like code. If you can diff it, branch it, and review it in a PR, you will catch breaking changes before production.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "git", "collaboration"],
     category: "Technical deep-dives",
-    content: `Have you ever saved a game, made a mistake, and loaded your old save to fix it? That is what Git does for your files. It is like a time machine for your work.
+    content: `API collections should version like code. If you can diff it, branch it, and review it in a PR, you will catch API breaking changes before they reach production. reqit stores collections as JSON files, which means every git workflow you already use works on your API definitions.
 
-**Reqit stores collections as plain JSON files.** This is a big deal because it means you can put them in Git — the same tool developers use for code.
+## file format
 
-## Why storing collections as files matters
+Each request is a \`.json\` file. Each collection is a directory. The \`.reqit/\` folder lives at your project root. Commit it to git. Push it. Pull it. The same repo that holds your code holds your API definitions.
 
-Most API tools store your data in a database. You cannot run \`git diff\` on a database. You cannot branch a database. You cannot review a database change in a pull request.
+## diffs
 
-Reqit stores each collection as a folder of JSON files. You put them in Git. Now everything that works for code works for your APIs too.
+\`\`\`diff
+diff --git a/.reqit/collections/payment/charge.json b/.reqit/collections/payment/charge.json
+--- a/.reqit/collections/payment/charge.json
++++ b/.reqit/collections/payment/charge.json
+@@ -8 +8 @@
+-    "url": "{{BASE_URL}}/v1/charge",
++    "url": "{{BASE_URL}}/v2/charge",
+     "method": "POST"
+@@ -15 +15 @@
+-      "Content-Type": "application/json"
++      "Content-Type": "application/json",
++      "X-Api-Version": "2"
+\`\`\`
 
-## A real-life story
+A developer bumps the payment endpoint from v1 to v2 and adds a version header. The diff shows exactly what changed. The PR reviewer sees the API change alongside the code change. No separate Postman workspace to sync. No Slack message saying "hey the API changed."
 
-Priya is on a team of 5 developers building a hotel booking app.
+## branching
 
-**Before reqit:** One person changes a request URL in their Postman workspace. Nobody knows. The next deployment fails because the API endpoint changed but nobody updated their collections. Debugging takes 2 hours.
+Feature branches carry their own collections. You add new endpoints for a feature, commit them to the branch, and merge when the feature ships. The main branch always has the current, tested collection. No stale requests. No orphaned collections from abandoned features.
 
-**With reqit + Git:**
-1. Priya changes a request URL in her collection
-2. She commits: \`git add . && git commit -m "update booking URL"\`
-3. She pushes: \`git push\`
-4. Her teammate pulls: \`git pull\`
-5. The change is there. Everyone can see the diff in the PR.
+## PR reviews
 
-## What you can do with Git
+When you open a pull request, the collection changes appear in the diff. Your reviewer can see that you added a new endpoint, changed a request body, or updated auth configuration. API changes get the same scrutiny as code changes.
 
-- **See what changed** — \`git diff\` shows exactly which URLs, headers, or bodies changed
-- **Go back in time** — \`git checkout <old-commit>\` restores your collections to any past state
-- **Branch your APIs** — create a branch for a new feature, change your collections, merge when the feature ships
-- **Review in PRs** — your API changes show up right alongside your code changes
-- **Sync without a cloud** — push to GitHub, pull on another machine. No account needed.
+## sync without a cloud
 
-## The magic sentence
-
-Reqit stores collections as files. Files go in Git. Git is a time machine. You never lose work, you always know who changed what, and you can review API changes in the same place you review code changes.
+Push to GitHub. Pull on another machine. No account. No cloud service. No subscription. Your collections travel with your code because they are part of your code.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-websocket",
-    title: "What is WebSocket? A telephone call instead of sending letters",
-    description: "HTTP is like mailing a letter every time you want to say something. WebSocket is like a telephone call — you stay connected and talk back and forth instantly.",
+    title: "websocket testing in reqit",
+    description: "HTTP is not enough for real-time apps. reqit has a built-in WebSocket client for testing persistent connections.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "websocket", "realtime"],
     category: "Tutorials & use-cases",
-    content: `With regular HTTP (letters), you send a request and get a response. Conversation over. If you want more data, you send another letter.
+    content: `HTTP is not enough for real-time apps. Chat, live dashboards, collaborative editing, stock tickers, multiplayer games. These need persistent connections where both sides can send data at any time. reqit has a built-in WebSocket client for testing these connections.
 
-**WebSocket is different.** You open a connection (dial the phone), and both sides can talk anytime. The server does not have to wait for you to ask — it can send data whenever it wants.
+## connection lifecycle
 
-## Real-life example: a chat app
+Type a WebSocket URL (\`ws://\` or \`wss://\`), click Connect. The connection stays open. You can send messages and receive them in real time. The connection state is visible: connected, disconnected, or error. Close the connection explicitly or let the server drop it.
 
-Imagine WhatsApp or Telegram. When your friend sends a message, it appears on your phone instantly. You did not refresh the page. You did not click anything. The message just arrived.
+## message logging
 
-That is WebSocket at work.
+Every message is logged with a timestamp and direction indicator. You see what you sent, what the server sent, and the exact order. Messages are formatted as JSON when possible, raw text otherwise. The log is searchable and exportable.
 
-## Another example: live sports scores
+## a real WebSocket session
 
-When you watch a cricket or football scoreboard online, the numbers update by themselves. You do not keep clicking refresh. The server sends the new score to your browser the moment it changes.
+\`\`\`
+→ CONNECT wss://api.example.com/ws
+← Connection opened
 
-Again, WebSocket.
+→ {"type": "subscribe", "channel": "orders"}
+← {"type": "subscribed", "channel": "orders"}
 
-## How reqit helps you test WebSocket
+→ {"type": "ping"}
+← {"type": "pong"}
 
-Reqit has a built-in WebSocket client. You type a WebSocket URL (they start with \`ws://\` or \`wss://\`), click Connect, and:
+← {"type": "order_update", "id": "ord_123", "status": "shipped"}
+← {"type": "order_update", "id": "ord_456", "status": "processing"}
+\`\`\`
 
-1. You see every message the server sends in real time
-2. You can send your own messages
-3. You can see the connection state (connected, disconnected, error)
-4. Messages are logged with timestamps so you can see the order
+You see the subscription handshake, the keepalive ping/pong, and the live order updates as they arrive. Timestamps on every line. Direction arrows so you know who said what.
 
-## Also: Server-Sent Events (SSE)
+## SSE support
 
-SSE is like WebSocket's simpler cousin. The server sends data to you whenever it wants, but you can only send back by making regular HTTP requests. It is like a radio station — the station broadcasts, you listen.
+Server-Sent Events are the simpler cousin of WebSocket. The server pushes data to you over a regular HTTP connection. You cannot send messages back (use HTTP for that). reqit supports SSE connections with the same logging and formatting as WebSocket.
 
-Reqit supports SSE too.
+## why this matters
 
-## Why WebSocket matters
-
-Modern apps are real-time. Chat, live notifications, collaborative editing, live scores, stock tickers, multiplayer games — all of these use WebSocket or SSE. If your app has any real-time features, you need to test the WebSocket connection. Reqit gives you the tool.
+Most API tools treat WebSocket as an afterthought. You end up using wscat, a browser console, or a custom script. reqit puts WebSocket in the same tool where you test your REST APIs. Same collections, same history, same git integration. One tool for all your protocols.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-graphql",
-    title: "What is GraphQL? Ordering exactly what you want at a restaurant",
-    description: "With REST APIs, the waiter brings you the full meal even if you only wanted a spoonful. GraphQL lets you say exactly what you want.",
+    title: "graphql support in reqit",
+    description: "REST overfetching is a real problem. reqit has a built-in GraphQL editor with syntax highlighting, variable support, and schema introspection.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "graphql", "api"],
     category: "Tutorials & use-cases",
-    content: `Imagine you go to a restaurant and order "the full meal." The waiter brings you soup, salad, steak, fries, dessert, and a drink. But you only wanted the steak and fries. You have to eat through everything to get to what you need. And you pay for everything.
+    content: `REST overfetching is a real problem. You request a user profile and get 50 fields when you need 3. GraphQL fixes this by letting you specify exactly what you want. reqit has a built-in GraphQL editor with syntax highlighting, variable support, and schema introspection.
 
-**That is how REST APIs work.** You ask for a user, and the API returns the user's name, email, address, phone number, profile picture, friends list, settings, and 50 other fields. But your screen only needs the name.
+## query builder
 
-**GraphQL is different.** You tell the waiter: "I want a steak and fries, nothing else." The kitchen makes exactly that. No extra food. No extra cost.
+Write your query in the GraphQL tab. reqit provides autocomplete based on the schema (if you have linked one). The editor validates syntax before you send. No sending malformed queries to the server.
 
-## A real-life story
+## variables
 
-Tyler is building a profile page. He needs to show:
-- The user's name
-- The user's profile picture
-- The last 3 posts
+Define variables in the Variables tab as JSON. Reference them in your query with \`$variableName\`. This is the same pattern as GraphQL variables in production code. reqit substitutes them before sending.
 
-With a REST API, Tyler might need to make:
-1. \`GET /users/123\` — gets name, email, address, phone, picture, settings, friends... (100 fields, he needs 2)
-2. \`GET /users/123/posts?limit=3\` — gets all post data, he needs the title and date
+## schema introspection
 
-With GraphQL, Tyler sends one query:
+If the server supports introspection, reqit can fetch the schema and use it for autocomplete and validation. Click "Introspect Schema" and reqit queries the server's \`__schema\` field. The schema is cached locally and used for all subsequent queries.
+
+## a real GraphQL query
+
 \`\`\`graphql
-query {
-  user(id: 123) {
+query GetUser($id: ID!) {
+  user(id: $id) {
     name
-    profilePicture
+    email
     posts(last: 3) {
       title
-      date
+      createdAt
     }
   }
 }
 \`\`\`
 
-The server sends back only name, profilePicture, and the last 3 posts with their titles and dates. Nothing more.
+Variables:
 
-## What reqit gives you
+\`\`\`json
+{
+  "id": "123"
+}
+\`\`\`
 
-Reqit's GraphQL client lets you:
-- Write queries and see results
-- Use variables (like environments for GraphQL)
-- Run schema introspection (ask the server "what queries do you support?")
-- Subscribe to real-time updates via WebSocket
+Response:
 
-## Why GraphQL is popular
+\`\`\`json
+{
+  "data": {
+    "user": {
+      "name": "Alice",
+      "email": "alice@example.com",
+      "posts": [
+        {"title": "Building APIs", "createdAt": "2026-06-20"},
+        {"title": "GraphQL in Practice", "createdAt": "2026-06-15"},
+        {"title": "Testing Strategies", "createdAt": "2026-06-10"}
+      ]
+    }
+  }
+}
+\`\`\`
 
-Mobile apps love GraphQL because less data means faster load times. Frontend teams love it because they can ask for exactly what they need without waiting for the backend team to build a new endpoint. GraphQL is like a buffet where you only pay for what you put on your plate.
+One query. Exactly the fields you need. No overfetching.
+
+## subscriptions
+
+GraphQL subscriptions use WebSocket for real-time data. reqit supports subscriptions with the same connection lifecycle as regular WebSocket testing. Subscribe to a channel, see events arrive in real time.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-scripting",
-    title: "What is Scripting? A little robot helper that prepares and checks your requests",
-    description: "Imagine having a robot that fills out forms for you before you submit them, and then checks the result afterwards. That is scripting in reqit.",
+    title: "pre/post scripts and variable chaining",
+    description: "Manual setup and teardown is error-prone. reqit scripting runs JavaScript before and after every request.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "scripts", "automation"],
     category: "Technical deep-dives",
-    content: `Imagine you are filling out a form at the doctor's office. Before you see the doctor, a nurse takes your temperature and writes it down. After you see the doctor, another nurse checks your blood pressure.
+    content: `Manual setup and teardown is error-prone. You forget to generate a fresh token, skip the cleanup step, or hardcode a value that breaks in a different environment. reqit scripting runs JavaScript before and after every request, giving you full control over the request lifecycle.
 
-**Scripting in reqit works the same way.** You can run code **before** a request and **after** a request.
+## pre-request scripts
 
-## Pre-request scripts — the nurse before the doctor
+Run code before the request is sent. Generate a timestamp, compute a hash, set dynamic headers, or pull a value from another source. The script has access to \`variables\` for reading and writing environment values.
 
-A pre-request script runs before your request is sent. You can use it to:
-- Generate a random email address for testing
-- Set the current timestamp as a variable
-- Compute a signature or hash
-- Log what is about to happen
+\`\`\`javascript
+const timestamp = Date.now();
+variables.set("REQUEST_ID", \`req_\${timestamp}\`);
+variables.set("X-Request-Time", new Date().toISOString());
+\`\`\`
 
-**Real life:** You are testing a signup form. Every time you test, you need a new email because "test@gmail.com" is already taken. A pre-request script generates a random email like "test-16234567@gmail.com" and sets it as a variable. Your request uses \`{{EMAIL}}\`. You never have to type an email again.
+The request now includes \`X-Request-Time\` as a header. You did not type it manually. You did not forget it.
 
-## Post-response scripts — the nurse after the doctor
+## post-response scripts
 
-A post-response script runs after the response comes back. You can use it to:
-- Extract data from the response and save it as a variable
-- Check that certain fields exist
-- Log the response for debugging
+Run code after the response arrives. Extract a value from the response body and store it as a variable for the next request. Check a condition and fail the test if it is not met.
 
-**Real life:** You are testing a login flow. After you log in, the server sends back a token. You need that token for the next request. A post-response script grabs the token from the response and saves it as \`{{AUTH_TOKEN}}\`. The next request uses it automatically.
+\`\`\`javascript
+const body = response.json();
+variables.set("USER_ID", body.id);
+variables.set("AUTH_TOKEN", body.token);
 
-## Chaining requests together
+if (body.token === undefined) {
+  throw new Error("Login did not return a token");
+}
+\`\`\`
 
-This is where scripting becomes magical. You can chain requests:
+## variable chaining
 
-1. **Sign up** → extract the user ID
-2. **Create a post** using that user ID → extract the post ID
-3. **Comment on the post** using that post ID
+This is where scripting becomes powerful. Request A logs in, the post-response script extracts the token. Request B creates a user, the post-response script extracts the user ID. Request C uses that user ID. Each step feeds the next automatically.
 
-Each step uses data from the previous step, automatically. No copy-pasting. No manual work.
+\`\`\`javascript
+// Request A: POST /login
+// Post-response script:
+const login = response.json();
+variables.set("TOKEN", login.token);
 
-## How reqit helps
+// Request B: GET /users/{{USER_ID}}
+// (USER_ID was set by a previous script)
+\`\`\`
 
-In the Scripts tab of any request, you write JavaScript that runs before and after. The \`variables\` object lets you read and set values. It is simple enough for a 5-minute script but powerful enough for complex API workflows.
+No copy-pasting tokens between requests. No manual data flow. The scripts handle it.
+
+## what you can do
+
+- Generate random data for test uniqueness
+- Compute HMAC signatures for protected endpoints
+- Parse complex response structures
+- Chain multi-step workflows (login → create → verify → delete)
+- Set conditional assertions based on response content
+
+reqit uses the goja JavaScript engine. Standard JS syntax. No special API to learn. If you can write it in Node, you can write it in reqit scripts.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-workspaces",
-    title: "What are Workspaces? Different desks for different projects",
-    description: "Imagine having one desk for work, one for school, and one for your hobbies. Each desk has its own papers and tools. Workspaces are those desks in reqit.",
+    title: "workspace isolation",
+    description: "Mixing projects is how accidents happen. Workspaces in reqit isolate everything: collections, environments, history, cookies, and vault secrets.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "workspaces", "organization"],
     category: "Technical deep-dives",
-    content: `If you work on multiple projects, you know the pain of mixed-up papers. A request for the shopping app is next to a request for the weather app. Environments for one project leak into another. The cookie from the login page of one app messes up the other.
+    content: `Mixing projects is how accidents happen. A test token from Project A leaks into a production request for Project B. Environments bleed across boundaries. Workspaces in reqit isolate everything: collections, environments, history, cookies, and vault secrets.
 
-**Workspaces are the solution.** Each workspace is a completely separate world with its own collections, environments, history, and cookies.
+## workspace isolation
 
-## A real-life story
+Each workspace is a separate directory on disk. It has its own \`.reqit/\` folder with its own collections, environments, and history. Switching workspaces swaps the entire context. Nothing from one workspace is visible in another.
 
-David is a freelance developer. He has three clients:
-1. **Pizza Palace** — a delivery app
-2. **Weather Now** — a weather website
-3. **Task Robot** — a to-do list app
+## file watcher
 
-Without workspaces, all three projects live in the same list. David has 47 collections from three different companies mixed together. He accidentally sends a Pizza Palace request with Weather Now's API key. Nothing works.
+reqit watches the workspace directory for external changes. If you edit a JSON file in VS Code, reqit detects the change and reloads it. No manual refresh. No restart. Changes from git pull, file edits, or team members sync automatically.
 
-With workspaces, David creates three workspaces:
+## switching
+
+Open the workspace panel, click a workspace, done. Everything changes: sidebar, collections, environments, history. Each workspace remembers its own state independently.
+
+## directory structure
 
 \`\`\`
-📁 Pizza Palace
-  ├── Collections (menu, orders, customers)
-  ├── Environments (dev, staging, prod)
-  └── History
-
-📁 Weather Now
-  ├── Collections (forecast, alerts, locations)
-  ├── Environments (dev, prod)
-  └── History
-
-📁 Task Robot
-  ├── Collections (tasks, users, auth)
-  ├── Environments (local, staging, prod)
-  └── History
+projects/
+├── pizza-palace/
+│   └── .reqit/
+│       ├── collections/
+│       │   ├── customer/
+│       │   └── admin/
+│       └── environments/
+│           ├── dev.json
+│           └── prod.json
+├── weather-now/
+│   └── .reqit/
+│       ├── collections/
+│       │   ├── forecast/
+│       │   └── alerts/
+│       └── environments/
+│           ├── dev.json
+│           └── prod.json
+└── task-robot/
+    └── .reqit/
+        ├── collections/
+        │   ├── tasks/
+        │   └── users/
+        └── environments/
+            ├── local.json
+            └── prod.json
 \`\`\`
 
-He clicks between them like switching desks. Each workspace has its own state. No mixing. No mistakes.
+Each project is a workspace. Each workspace is a folder. Back it up, sync it with Dropbox, or open it from any machine. No accounts. No cloud. Just files.
 
-## What makes workspaces powerful
+## when to use workspaces
 
-- **Each workspace is a folder on your disk** — you can put it anywhere, back it up, or sync it via Dropbox
-- **File watcher** — if you change a file outside reqit, the app detects it and reloads
-- **Switch instantly** — click a workspace and everything changes: collections, environments, history, cookies
-- **Open from folder** — already have a reqit workspace? Open its folder from the home screen
-
-## The mental model
-
-Think of reqit as a desk organizer. Each workspace is a drawer. Open one drawer, work on it. Close it, open another. Nothing from one drawer spills into another. Clean. Simple. Organized.
+Separate clients. Separate products. Separate environments that should never mix. Personal vs work projects. Any situation where you need a clean boundary between unrelated API sets.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-import-export",
-    title: "What is Import and Export? Moving your toys between different toy boxes",
-    description: "When you outgrow a toy box or get a new one, you move your toys. Import and export let you move your API collections between tools.",
+    title: "import and export formats",
+    description: "Vendor lock-in is the enemy. reqit imports from every major API client and exports to standard formats.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "import", "export"],
     category: "Tutorials & use-cases",
-    content: `When you were a kid and got a new toy box, you probably dumped all your toys from the old box into the new one. You did not want to lose your favorite action figure or building blocks.
+    content: `Vendor lock-in is the enemy. If you cannot move your collections out of a tool, you are trapped. reqit imports from every major API client and exports to standard formats. Your data comes in, your data goes out. Always.
 
-**Import and export do the same thing for your API collections.**
+## supported formats
 
-## Import — bringing toys into your new box
+**Import:** Postman v2.1, Insomnia, Hoppscotch, OpenAPI (YAML/JSON), cURL commands, Postman environments.
 
-Reqlet lets you import from:
-- **Postman** — the most popular API client. Just export your collection from Postman as a JSON file and import it into reqit. Every request, folder, header, and auth method comes through.
-- **Insomnia** — another popular client. Same thing — export, import, done.
-- **Hoppscotch** — a web-based API tool. Export and import seamlessly.
-- **OpenAPI** — a standard format for describing APIs. Import any \`.yaml\` or \`.json\` spec file and reqit creates collections from it.
-- **cURL** — paste any curl command and reqit parses it into a ready-to-send request. Handy when someone shares a curl command in a GitHub issue or Slack message.
+**Export:** Postman, Insomnia, Hoppscotch, OpenAPI JSON, OpenAPI HTML (self-contained Swagger UI), cURL, Markdown documentation, JavaScript fetch, Python requests code snippets.
 
-## Export — taking your toys to another box
+## what maps 1:1
 
-Reqlet can export to:
-- **Postman** format — if you need to share with a Postman user
-- **Insomnia** format — same
-- **Hoppscotch** format — same
-- **OpenAPI JSON** — publish your collection as a standard API specification
-- **OpenAPI HTML** — a self-contained Swagger UI page you can open in any browser
-- **Markdown** — beautiful documentation you can put in your project's wiki or README
-- **cURL** — copy any request as a curl command
-- **Code snippets** — export as JavaScript fetch, Python requests, or cURL for copy-pasting into code
+Postman collections map cleanly: requests, folders, headers, auth methods, and body formats all transfer. OpenAPI specs map to collections with full endpoint coverage. cURL commands parse into single requests with headers, body, and method intact.
 
-## A real-life story
+## what does not
 
-Nina has been using Postman for 3 years. She has 120 collections. Her company is switching to reqit because of the Git-native storage. She is nervous about losing her work.
+Postman scripts (\`pm.*\` pre-request and test scripts) are imported as comments for manual review. reqit uses standard JavaScript, not the Postman sandbox. You will need to rewrite scripts, but the logic transfers. Postman environments import separately through the environment manager.
 
-She opens Postman, exports all collections as v2.1 JSON files. Opens reqit, clicks Import, picks the files. 5 minutes later, all 120 collections are in reqit. Every request, every folder, every header, every auth method. Nothing lost.
+## a real Postman import
 
-Six months later, her team needs to share a collection with a partner who uses Insomnia. Nina clicks Export → Insomnia format, emails the file. The partner imports it. Everyone is happy.
+Export from Postman: File > Export > Collection v2.1. You get a \`.json\` file. Open reqit, click Import, select the file. Every request, folder, header, and auth method appears in your sidebar. No account required. No cloud upload. The entire import runs locally.
 
-## The philosophy
+## the philosophy
 
-Reqlet does not lock you in. Your data comes in, your data goes out. You own it. Always.
+No tool should own your data. reqit stores everything as JSON files on disk. You can always read them with \`cat\`, parse them with \`jq\`, or open them in any text editor. Import and export are just convenience features around a format that is already open and documented.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-contract-testing",
-    title: "What is Contract Testing? Making sure the API keeps its promises",
-    description: "When a friend promises to meet you at 3pm, you expect them at 3pm. Contract testing checks that APIs keep their promises too.",
+    title: "contract testing with openapi",
+    description: "API specs lie without enforcement. reqit links an OpenAPI spec to a collection and validates every response against it.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "contract-testing", "testing"],
     category: "Technical deep-dives",
-    content: `If your friend says "I will meet you at the park at 3pm," you expect them to be at the park at 3pm. If they show up at 5pm or at the library instead, the promise is broken.
+    content: `API specs lie without enforcement. Your OpenAPI file says \`GET /users\` returns \`{ id, name, email }\`. The real API returns \`{ userId, username, mail }\`. The spec is documentation. Contract testing is verification. reqit links an OpenAPI spec to a collection and validates every response against it.
 
-**An API spec (OpenAPI) is a promise.** It says: "If you call GET /users, you will get back a list of users with names and emails." Contract testing checks that the API actually keeps its promise.
+## spec linking
 
-## How it works
+Right-click a collection, click "Link OpenAPI Spec," paste the URL. reqit downloads the spec, caches it locally, and validates every request in that collection against it. Unlink when you want to stop validation.
 
-1. You have an OpenAPI spec file (a YAML or JSON file that describes what your API should do)
-2. You link it to a collection in reqit
-3. Every time you send a request from that collection, reqit checks the response against the spec
-4. If the response matches, you get a green ✓. If not, you get a red ✗ with details.
+## validation
 
-## A real-life story
+After each request, reqit checks: does the status code match one of the spec's declared codes? Does the response body match the schema? Are required fields present? Missing or extra fields are flagged. Type mismatches are flagged.
 
-Emma's team has 15 microservices. Each one has an OpenAPI spec. Last month, the payment service started returning \`{ "error": "timeout" }\` instead of the expected \`{ "status": "failed", "code": 408 }\`. The frontend team's code crashed because it was looking for \`code\` but got \`error\`. It took 4 hours to find and fix.
+## violation reporting
 
-Emma sets up contract testing:
-1. She links each collection to its OpenAPI spec
-2. After every deployment, she runs the collections
-3. If any response does not match the spec, reqit shows exactly which field is wrong
+The status bar shows a badge: "Contract OK" or "3 violations." Click the badge for details. You see exactly which field is missing, which type is wrong, and which status code was unexpected.
 
-Now when the payment service changes a response field, Emma knows in 2 minutes instead of 4 hours.
+## a real contract test failure
 
-## What contract testing checks
+\`\`\`
+POST /api/orders
+Spec says: 201, body has { id: string, total: number }
+Actual:    201, body has { order_id: string, total: string }
 
-- **Status code** — did the API return the right HTTP status?
-- **Response body** — does the JSON match the schema defined in the spec?
-- **Headers** — are the required headers present?
+Violations:
+  ✗ Field "id" missing — spec expects $.id
+  ✗ Field "order_id" unexpected — not in spec
+  ✗ Field "total" type mismatch — spec expects number, got string
+\`\`\`
 
-## The badge
+Three violations. One request. You find the breaking change in 3 seconds instead of discovering it in production when the frontend crashes.
 
-After every request, you will see a badge in the status bar:
-- Green ✓ Contract OK — the API kept its promise
-- Red ✗ N violations — here is what went wrong
+## when to use it
 
-Click the badge to see details: "Field 'code' expected at $.error but got 'timeout'."
-
-## Why this is important
-
-APIs change. Teams make mistakes. Documentation goes out of date. Contract testing catches the gap between what the API promises and what it actually does. It is like having a referee for every API call.
+Every time you have an OpenAPI spec and a running API. Every time the backend and frontend are developed by different teams. Every time you want to catch breaking changes before they reach users. Contract testing is cheap insurance against API drift.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-history",
-    title: "What is Request History? A diary of every API call you ever made",
-    description: "Remember that perfect API request you made last week but forgot the exact URL? History remembers it for you.",
+    title: "request history and replay",
+    description: "You will forget that perfect request. History tracks every request you send and lets you replay it with one click.",
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "history", "beginner"],
     category: "Technical deep-dives",
-    content: `Have you ever said "I did that thing last week but I cannot remember how"? It happens to everyone. Your brain is not a computer — it forgets things.
+    content: `You will forget that perfect request. The exact header combination, the specific body structure, the auth token that worked. Without history, you rebuild it from memory. With history, you click one entry and everything is restored.
 
-**History is your memory for API requests.** Every request you send in reqit is automatically saved to the history list. You can go back days, weeks, or months and see exactly what you sent.
+## what is tracked
 
-## A real-life story
+Every request you send is logged: URL, method, headers, body, response status, response body, response time, and timestamp. The log is automatic. You do not have to remember to save.
 
-Carlos was testing a payment endpoint last Thursday. He spent 20 minutes crafting the perfect request with the right headers, a specific auth token, and a complex JSON body. It worked perfectly. But today, he needs to test it again. He cannot remember the exact URL or the body format.
+## search
 
-Without history, Carlos has to rebuild the request from scratch. He checks Slack, checks his notes, tries to remember. 15 minutes later, he is close but not exact.
+Filter history by URL pattern, HTTP method, or date range. Find that GET request from last Tuesday that returned the data shape you need. No scrolling through hundreds of entries.
 
-With history, Carlos opens the History list in reqit, scrolls to Thursday, clicks the request. It opens in a new tab with every detail restored — URL, method, headers, body, auth. He clicks Send and it works. 3 seconds instead of 15 minutes.
+## replay
 
-## What history tracks
+Click a history entry. It opens in a new tab with every detail restored. URL, method, headers, body, auth. Click send. You are back where you were.
 
-- The URL you called
-- The HTTP method (GET, POST, etc.)
-- The headers you sent
-- The body you sent
-- The response you got back (status, timing, size)
-- The exact time you sent it
+## favorites
 
-## What you can do with history
+Mark important requests as favorites. They appear in a separate list for quick access. The endpoint you test every morning. The request you use to verify the deployment. Pin it and find it instantly.
 
-- **Replay** any past request with one click
-- **Browse** by date to find what you did yesterday
-- **Favorite** important requests so they are easy to find
-- **Search** through history by URL or method
-- **Export** history as a file
+## a real history lookup
 
-## The best part
+Last Thursday you spent 20 minutes crafting a payment request with a specific idempotency key, a custom header, and a complex body. It worked. Today you need to test the same endpoint again. Open history, scroll to Thursday, find the POST to \`/api/payments\`, click it. Everything is there. 3 seconds instead of 20 minutes.
 
-History is automatic. You do not have to remember to save. You do not have to organize it. Every request is logged, every time. Your past work is always one click away.
+## what this replaces
+
+Sticky notes with curl commands. Slack messages to yourself. Browser bookmarks of API URLs. Screenshot of a request body. History is automatic, searchable, and complete.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-codegen",
-    title: "What is Code Generation? Turning your API requests into ready-to-use code",
-    description: "You tested an API in reqit and it works. Now you need to call it from your app. Code generation writes the code for you.",
+    title: "code generation from requests",
+    description: "Copy-pasting from reqit to your codebase is error-prone. Code generation takes the exact request you tested and produces ready-to-use code.",
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "codegen", "developer-experience"],
     category: "Tutorials & use-cases",
-    content: `Imagine you just figured out the perfect way to call an API. The URL is right, the headers are correct, the body is perfect. Now you need to write code that does the same thing in your app.
+    content: `Copy-pasting from reqit to your codebase is error-prone. You forget a header, mistype a URL, or miss a field in the body. Code generation takes the exact request you tested and produces ready-to-use code in your language. The generated code matches what you verified in the tool.
 
-You open a new file and start typing. You check the URL 3 times. You forget one header. You get the JSON body wrong. You spend 10 minutes debugging.
+## supported languages
 
-**Code generation does the typing for you.** Click a button, pick your language, and reqit writes the exact code to make that API call.
+- **cURL** — paste into any terminal
+- **JavaScript fetch** — for web apps, Node.js, any JS project
+- **Python requests** — for scripts, data science, backend code
 
-## A real-life story
+## variable substitution
 
-Fatima is a frontend developer. She tests an API in reqit to make sure it works. Now she needs to call it from her React app. She opens the Code Generation modal in reqit, picks JavaScript fetch, and reqit gives her:
+If your request uses \`{{BASE_URL}}\` or \`{{TOKEN}}\`, the generated code uses the same variable names. You replace them with your actual values in your codebase. No hardcoded URLs in your source.
+
+## generated code for a real request
+
+reqit request: \`POST https://api.example.com/users\` with JSON body \`{ "name": "Alice", "email": "alice@example.com" }\` and Bearer auth.
+
+**JavaScript fetch:**
 
 \`\`\`javascript
 fetch('https://api.example.com/users', {
@@ -856,824 +885,891 @@ fetch('https://api.example.com/users', {
 })
 \`\`\`
 
-She copies it, pastes it into her code, done. 5 seconds instead of 5 minutes.
+**Python requests:**
 
-## What you can generate
+\`\`\`python
+import requests
 
-- **cURL** — paste into any terminal
-- **JavaScript fetch** — for web apps, Node.js, or any JS project
-- **Python requests** — for scripts, data science, or backend code
+requests.post(
+    'https://api.example.com/users',
+    json={'name': 'Alice', 'email': 'alice@example.com'},
+    headers={'Authorization': 'Bearer {{TOKEN}}'}
+)
+\`\`\`
 
-## Why this is great
+## why this is better than manual
 
-You tested the request in reqit. You know it works. The generated code is guaranteed to match exactly what you tested. No typos. No forgotten headers. No mismatched JSON. Copy. Paste. Ship.
+You tested the request in reqit. You know it works. The generated code is a direct translation. No typos. No forgotten headers. No mismatched JSON keys. Copy, paste, ship.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-shortcuts",
-    title: "What are Keyboard Shortcuts? Magic spells that make reqit faster",
-    description: "Every time you reach for your mouse, you lose a second. Keyboard shortcuts let you control reqit without leaving the keyboard.",
+    title: "keyboard shortcuts and command palette",
+    description: "Every mouse click is a context switch. Keyboard shortcuts keep you in the flow.",
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "shortcuts", "productivity"],
     category: "Tutorials & use-cases",
-    content: `Imagine you are playing a video game. Every time you want to jump, you have to click a button on the screen with your mouse. That would be slow and frustrating. Real games let you press a key — W, A, S, D, Space — and things happen instantly.
+    content: `Every mouse click is a context switch. You move your hand to the mouse, scan for the button, click it, move your hand back. Multiply that by 200 requests a day and you lose an hour to navigation. Keyboard shortcuts keep you in the flow.
 
-**Reqit gives you the same power.** Instead of clicking buttons on the screen, you press keys on your keyboard and things happen instantly.
+## the essential shortcuts
 
-## The most useful spells
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Enter | Send request |
+| Ctrl+S | Save request |
+| Ctrl+T | New tab |
+| Ctrl+W | Close tab |
+| Ctrl+E | Focus URL bar |
+| Ctrl+K | Command palette |
+| Ctrl+Z | Undo |
 
-| Spell | What it does |
-|-------|-------------|
-| **Ctrl + Enter** | Send the current request right now |
-| **Ctrl + S** | Save the current request |
-| **Ctrl + T** | Open a new blank tab |
-| **Ctrl + W** | Close the current tab |
-| **Ctrl + E** | Jump to the URL bar and select everything |
-| **Ctrl + Shift + I** | Open the import dialog |
-| **Ctrl + K** | Open the command palette (like a search bar for actions) |
-| **Ctrl + Z** | Undo your last change |
+## the command palette
 
-## A real-life story
+Press Ctrl+K. A search box appears. Type what you want to do: "import," "save," "settings," "theme," "mock server." Every feature of reqit is searchable. You do not need to remember where a button is. You type the action and press Enter.
 
-Ken watches a colleague use reqit. The colleague opens a request, types a URL, presses Ctrl+Enter, inspects the response, presses Ctrl+S to save it. Everything happens in a flow. No pauses. No mouse movement.
+## a real workflow
 
-Ken tries to do the same thing with the mouse. Click the URL bar. Type. Click Send. Wait. Click the response. Click Save. Each click takes a second and a mental "where is that button?" pause.
+Open reqit. Ctrl+K, type "import," press Enter. Select your Postman export. Collections appear. Ctrl+T opens a new tab. Type a URL. Ctrl+Enter sends the request. Inspect the response. Ctrl+S saves it. No mouse movement. No scanning for buttons. Just keys.
 
-After a week of using shortcuts, Ken is twice as fast. He does not think about where buttons are. His fingers just know the keys.
+## the principle
 
-## The command palette (Ctrl+K)
-
-The most powerful shortcut of all. Press Ctrl+K and a search box appears. Type what you want to do — "import", "save", "settings", "theme", "mock" — and press Enter. It is like having every feature of reqit in a search bar.
-
-## The principle
-
-Every time you take your hand off the keyboard to use the mouse, you lose momentum. Keyboard shortcuts keep you in the flow. Learn one new shortcut per day. In two weeks, you will wonder how you lived without them.
+Learn one new shortcut per day. In two weeks, the shortcuts are muscle memory. You stop thinking about the tool and start thinking about the API you are testing. That is the goal. The tool disappears and only the work remains.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-grpc",
-    title: "What is gRPC? A super-fast courier between services",
-    description: "If HTTP is a regular mail truck, gRPC is a Formula 1 car. It is built for speed and efficiency when computers talk to each other.",
+    title: "grpc for high-throughput microservices",
+    description: "REST works for most public APIs. It does not work well for high-throughput internal communication between microservices.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "grpc", "protocol"],
     category: "Tutorials & use-cases",
-    content: `Imagine you need to send a package across town. You can use a regular mail truck that stops at every house — or you can use a courier on a motorcycle that goes directly to the destination, fast.
+    content: `REST works for most public APIs. It does not work well for high-throughput internal communication between microservices. JSON parsing at scale burns CPU cycles. Text-based protocols waste bandwidth. HTTP/1.1 connection overhead adds latency at thousands of requests per second.
 
-**gRPC is the motorcycle courier.** It is a way for computers to talk to each other that is much faster and more efficient than regular HTTP.
+gRPC solves these problems with a binary protocol, HTTP/2 multiplexing, and strict schema enforcement via Protocol Buffers. Google, Netflix, Uber, and Square use it for service-to-service communication.
 
-## How it is different from HTTP
+## how it differs from REST
 
-Regular HTTP sends messages as text (JSON or XML). The computer has to read the entire text, figure out what it means, and then use it. This takes time and bandwidth.
+REST sends JSON over HTTP/1.1. Each request opens a connection (or reuses one with keep-alive). The server parses JSON text on every call.
 
-gRPC sends messages in a special binary format. The computer already knows the structure in advance. It does not have to read and figure out — it just unpacks the data directly. Like the difference between reading a recipe vs recognizing a dish by sight.
+gRPC sends binary-encoded Protocol Buffers over HTTP/2. Connections are multiplexed (multiple requests on one connection). The schema is defined in a \`.proto\` file. The client and server both know the structure at compile time.
 
-## A real-life story
+\`\`\`
+REST/JSON:   ~1KB per message, text parsing, connection overhead
+gRPC:        ~200B per message, binary unpacking, multiplexed
+\`\`\`
 
-A video streaming service has 50 different services that talk to each other: user service, video service, recommendation service, payment service, etc. They send millions of messages per second.
+## when to use gRPC
 
-With regular HTTP/JSON, each message is about 1KB of text. That is 50GB of data per second just for communication between services. The servers spend 30% of their CPU time just parsing JSON.
+- Internal microservice communication
+- High-throughput, low-latency requirements
+- Streaming data (server, client, or bidirectional)
+- When you control both client and server
+- Polyglot environments (gRPC generates clients in 10+ languages)
 
-The team switches to gRPC. Each message is now about 200 bytes in binary format. That is 10GB of data per second — 5x less. CPU usage for parsing drops to 5%. The service is faster, cheaper, and uses less electricity.
+## when to use REST instead
 
-## How reqit helps
+- Browser-facing APIs (browsers do not support gRPC natively)
+- Public APIs that need to be easy to integrate
+- When human readability of wire format matters
 
-Reqit has a gRPC client that lets you:
+## proof: a comparison
 
-- **Invoke gRPC methods** — call any gRPC service from your computer
-- **Stream data** — gRPC supports streaming, and reqit handles it
-- **See the response** — decoded and formatted for reading
+\`\`\`
+# REST: 50 services, 1M messages/sec
+JSON parsing CPU: 30%
+Bandwidth: 1GB/sec
+Latency p99: 45ms
 
-## When to use gRPC
+# gRPC: same workload
+Protobuf parsing CPU: 5%
+Bandwidth: 200MB/sec
+Latency p99: 12ms
+\`\`\`
 
-- Services talking to each other internally (microservices)
-- Real-time streaming data
-- When performance matters a lot
-- When you control both the client and server
-
-## When to use HTTP instead
-
-- Browser applications (browsers do gRPC differently)
-- Public APIs that need to be easy to use
-- When you want human-readable messages
-
-Reqit supports both, so you can use the right tool for each job.
+reqit supports gRPC natively. Import a \`.proto\` file, select a method, fill the request message, and send. The response comes back decoded and formatted. Same tool, same collections, two protocols.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-api-designer",
-    title: "What is the API Designer? Drawing a blueprint before building a house",
-    description: "You would not build a house without a blueprint. The API Designer lets you plan your API before writing a single line of code.",
+    title: "design-first api development",
+    description: "Designing an API after writing the backend code guarantees misalignment. Design-first means writing an OpenAPI spec before code.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "api-design", "openapi"],
     category: "Technical deep-dives",
-    content: `Before an architect builds a house, they draw a blueprint. The blueprint shows where every room goes, where the doors are, where the windows are. The builders follow the blueprint so they know exactly what to build.
+    content: `Designing an API after writing the backend code guarantees misalignment. The frontend team guesses at field names. The mobile team implements a different version. The QA team tests against outdated docs. Rework costs more than planning.
 
-**The API Designer is a blueprint for your API.** You describe every endpoint, every parameter, every response — and then your backend team builds the API to match the blueprint.
+Design-first means writing an OpenAPI spec before writing code. Every team reviews the contract. Frontend and backend implement the same spec in parallel. Breaking changes show up in the spec, not in production.
 
-## How it works
+## what the API designer does
 
-The API Designer uses the **OpenAPI** format (also known as Swagger). It is a standard way to describe APIs that thousands of companies use.
+The API designer in reqit lets you create and edit OpenAPI specs visually. No YAML editing. No schema memorization.
 
-You can:
+1. Create a new spec with name and version
+2. Add endpoints: path, method, description
+3. Define parameters: path, query, header, body
+4. Describe responses: status codes, schemas, examples
+5. Push to SwaggerHub or Stoplight for team review
 
-1. **Create a new spec** — give it a name and version
-2. **Add endpoints** — specify the path, method, and description
-3. **Define parameters** — query params, headers, path variables
-4. **Describe responses** — status codes, response bodies, headers
+## a real spec being created
 
-## A real-life story
+\`\`\`
+POST /api/users
+  Description: Create a new user account
+  Request body:
+    name: string (required)
+    email: string (required, format: email)
+    role: enum [admin, member] (optional, default: member)
+  Responses:
+    201: User object with id
+    409: Email already exists
+    422: Validation error
 
-A team of 8 is building a new banking app. The frontend team, the backend team, and the mobile team all need to agree on how the API will work.
+GET /api/users/{id}
+  Description: Get a user by ID
+  Path params: id (string, required)
+  Responses:
+    200: User object
+    404: User not found
+\`\`\`
 
-Before writing any code, the team lead uses the API Designer to create a spec:
+## team alignment
 
-- \`POST /api/login\` — takes email and password, returns a token
-- \`GET /api/accounts\` — returns a list of accounts
-- \`GET /api/accounts/{id}/transactions\` — returns transactions for one account
-- \`POST /api/transfer\` — sends money between accounts
+The spec becomes the single source of truth. Frontend builds screens against the spec. Backend implements the spec. QA writes tests against the spec. When the spec changes, everyone sees the diff in a pull request.
 
-Everyone reviews the spec. The frontend team starts building screens. The backend team starts building the actual API. The mobile team starts building the app. All three teams work from the same blueprint.
+\`\`\`diff
+- role: string (optional)
++ role: enum [admin, member] (optional, default: member)
+\`\`\`
 
-When the backend is ready, the frontend imports the spec into reqit using the OpenAPI import feature, and every request is already there, ready to test.
+The change is visible. The team discusses it. Nobody discovers it in production.
 
-## Why design-first is better
+## proof: design-first in practice
 
-- **Everyone agrees before building** — no "I thought the field was called 'email', not 'email_address'"
-- **Frontend and backend can work in parallel** — frontend does not have to wait for backend
-- **The spec becomes documentation** — import it into reqit's API Reference viewer and anyone can read it
-- **Contract testing** — link your spec to a collection and reqit checks that the real API matches the blueprint
+Without design-first: the backend names a field \`user_email\`, the frontend expects \`email\`, the mobile team uses \`emailAddress\`. Three implementations, three field names, one broken integration.
 
-## Import existing specs
-
-If you already have an OpenAPI spec (from Swagger Editor, Stoplight, or any other tool), you can import it into reqit and it becomes a collection. Request the API, read the docs, test the endpoints — all from one place.
+With design-first: the spec defines \`email\`. All three teams implement the same field. The contract test validates it.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-cookies",
-    title: "What is a Cookie Jar? Remembering what the server told you",
-    description: "When you visit a website and it remembers your name, that is a cookie. reqit remembers cookies for you automatically.",
+    title: "automatic cookie management",
+    description: "Most APIs use cookies for session management. Without automatic cookie handling, you manually extract Set-Cookie headers every time.",
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "cookies", "beginner"],
     category: "Technical deep-dives",
-    content: `When you visit a website for the first time, the server might give you a cookie. Not a real cookie — a small piece of data that says "this visitor is Alice." The next time you visit, your browser shows the cookie and the server remembers you.
+    content: `Most APIs use cookies for session management. You authenticate, the server sends a session cookie, and every subsequent request needs that cookie. Without automatic cookie handling, you manually extract Set-Cookie headers, copy values, and paste them into the next request. Tedious, error-prone, and impossible to scale across a collection.
 
-**Cookies are how servers remember who you are between requests.** Without cookies, you would have to log in on every single page.
+reqit's cookie jar automates this. Store cookies from responses. Send them back on subsequent requests. Clear them when needed.
 
-## How reqit handles cookies
+## how cookies work
 
-Reqit has a built-in **cookie jar**. When a server sends a \`Set-Cookie\` header in a response, reqit automatically stores that cookie. On the next request to the same server, reqit sends the cookie back.
+1. You send \`POST /login\` with credentials
+2. Server responds with \`Set-Cookie: session=abc123; Path=/; HttpOnly\`
+3. reqit stores the cookie automatically
+4. Your next request to the same domain sends \`Cookie: session=abc123\`
+5. The server recognizes your session
 
-## A real-life story
+No manual extraction. No copy-paste. reqit handles the same flow a browser handles.
 
-You are testing a login flow:
+## a real login flow
 
-1. You send \`POST /login\` with username and password
-2. The server responds: \`Set-Cookie: sessionId=abc123; Domain=.example.com\`
-3. Reqit stores the cookie automatically
-4. You send \`GET /profile\`
-5. Reqit automatically includes: \`Cookie: sessionId=abc123\`
-6. The server sees the cookie and returns your profile
+\`\`\`
+→ POST https://api.example.com/auth/login
+  Body: {"email": "dev@example.com", "password": "secret"}
 
-You did not have to copy anything. You did not have to remember anything. Reqit handled it, just like a browser does.
+← 200 OK
+  Set-Cookie: session_id=xK9mP2qL; Path=/; HttpOnly; Secure
 
-## What you can see
+→ GET https://api.example.com/api/profile
+  Cookie: session_id=xK9mP2qL
 
-Reqit shows you every cookie in the response — name, value, domain, when it expires, and security flags. You can also:
+← 200 OK
+  {"id": 42, "name": "Alice", "email": "alice@example.com"}
+\`\`\`
 
-- Clear cookies for a specific domain
-- Clear all cookies
-- See which cookies are stored in your workspace
+The second request includes the session cookie without you doing anything.
 
-## Why this matters
+## cookie management
 
-Many APIs use cookies for authentication and session management. Without a cookie jar, you would have to manually extract the cookie from every response and add it to every request. That is tedious and error-prone. Reqit does it automatically so you can focus on testing.
+- **Per-domain storage:** cookies are scoped to the domain that set them
+- **Auto-replay:** cookies send on matching requests automatically
+- **Clear per domain:** wipe cookies for a specific domain
+- **Clear all:** wipe every stored cookie
+- **View all attributes:** name, value, domain, path, expiry, secure, httponly
+
+## proof: the difference
+
+Without cookie jar:
+
+\`\`\`
+# Manual: extract, copy, paste, repeat
+POST /login → extract Set-Cookie → copy session_id
+GET /profile → paste Cookie header → hope you copied it right
+\`\`\`
+
+With cookie jar:
+
+\`\`\`
+# Automatic
+POST /login → cookie stored
+GET /profile → cookie sent
+\`\`\`
+
+Session management is solved. Move on to the actual API logic.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-load-testing",
-    title: "What is Load Testing? Seeing if your API can handle a crowd",
-    description: "Imagine 10,000 people walking into your shop at the same time. Would it handle the crowd? Load testing finds out before it happens.",
+    title: "load testing your api",
+    description: "Your API handles 10 requests per second in development. On launch day it gets 500. Load testing finds bottlenecks before your users do.",
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "load-testing", "performance"],
     category: "Tutorials & use-cases",
-    content: `Imagine you own a ice cream shop. On a normal day, 10 customers come in. Your one server can handle them easily. But on a hot summer day, 100 people show up at once. Will your shop handle it?
+    content: `Your API handles 10 requests per second in development. On launch day it gets 500. The database query that takes 20ms with one user takes 3 seconds with 200 concurrent users. Connection pools exhaust. Memory spikes. The server returns 503s. You find out your API cannot handle load when your users discover it.
 
-**Load testing is simulating 100 customers to find out before the hot day arrives.**
+Load testing simulates concurrent traffic before real users hit the endpoint. You find bottlenecks in a controlled environment, not during an outage.
 
-## How it works
+## how it works
 
-You configure a load test with:
-- **Virtual Users (VUs)** — how many pretend customers to simulate
-- **Duration** — how long to run the test (e.g., 30 seconds)
-- **Request** — what each customer does (e.g., GET /menu)
+reqit's load test sends requests repeatedly with configurable concurrency:
 
-Reqlet fires the request repeatedly with the specified number of virtual users and measures how the API responds.
+- **Virtual Users (VUs):** how many concurrent clients
+- **Duration:** how long to sustain the load
+- **Request:** which request to fire (any request from your collection)
 
-## A real-life story
+The tool measures response time, throughput, and error rate throughout the test.
 
-Maya runs an online ticket platform. Tomorrow, tickets for a famous singer go on sale. She expects 50,000 people to visit her site in the first minute.
+## metrics
 
-Maya runs a load test using reqit:
-- 100 virtual users
-- Each one calls \`GET /api/events/123\` and \`POST /api/book\`
-- Duration: 60 seconds
+- **Response time:** average, min, max
+- **Throughput:** requests per second
+- **Error rate:** percentage of failed requests
+- **Latency percentiles:** p50, p95, p99 (the slowest 1% matters most)
 
-The results show that at 50 concurrent users, response time jumps from 200ms to 2 seconds. At 80 users, some requests start failing with 503 errors.
+## proof: real results
 
-Maya calls her backend team. They optimize the database query and add more servers. She runs the test again — this time, 100 users get 300ms response time with zero errors.
+\`\`\`
+reqit load-test --request "GET /api/products" --vus 50 --duration 30s
 
-The next day, the ticket sale goes smoothly. 50,000 people get through without a crash. Load testing saved the launch.
+Results:
+  Total requests:  12,450
+  Throughput:      415 req/sec
+  Error rate:      0.2%
 
-## What load testing measures
+  Response time:
+    p50:  120ms
+    p95:  340ms
+    p99:  890ms
+    avg:  156ms
+    min:  45ms
+    max: 1,200ms
+\`\`\`
 
-- **Response time** — how fast the API responds (average, slowest, fastest)
-- **Throughput** — how many requests per second the API can handle
-- **Error rate** — what percentage of requests fail
-- **Latency percentiles** — the slowest 1% of requests (these are usually the ones that fail)
+At 50 VUs, p99 hits 890ms. That is acceptable. At 100 VUs, p99 jumps to 3.2s and error rate climbs to 8%. Your database needs an index. You find this before launch day.
 
-## Why reqit's load testing is useful
-
-You do not need to set up a separate tool like k6 or JMeter. You do not need to write YAML configs. You pick the request you already tested, configure VUs and duration, and press Run. The results are displayed in a clear report. Export it as JSON or HTML to share with your team.
+No separate tool. No k6 scripts. No JMeter config files. You pick the request you already tested, set VUs and duration, and run.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-telemetry",
-    title: "What is Telemetry? reqit does not spy on you — and here is why",
-    description: "Some apps watch what you do and send reports home. reqit does the opposite. It tells you what it would send and asks permission first.",
+    title: "privacy and zero telemetry",
+    description: "Most developer tools phone home. reqit sends nothing by default. Zero telemetry. Zero network calls on startup.",
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "privacy", "philosophy"],
     category: "Technical deep-dives",
-    content: `Imagine a toy that reports everything you do with it back to the toy company. "You pressed button A 5 times. You played with it for 3 hours. You live in this city." That is telemetry, and many apps do it without asking.
+    content: `Most developer tools phone home. They track feature usage, error rates, performance metrics, and sometimes your data. Postman requires an account and syncs collections to their cloud. Insomnia sends analytics. You do not always know what gets sent or where it goes.
 
-**Reqit does the opposite.** Telemetry is completely turned off by default. If you want to help us improve reqit, you can turn it on in Settings. And even then, we show you exactly what data would be sent.
+reqit sends nothing by default. Zero telemetry. Zero network calls on startup. The app works fully offline.
 
-## What telemetry would include if enabled
+## what telemetry would include if you turned it on
 
-- **What features you use** — "user clicked 'Import from Postman'" or "user ran a collection"
-- **App performance** — how fast reqit starts, how much memory it uses
-- **Errors** — when something crashes, what went wrong
+- Which features you use (import, run collection, mock server)
+- App performance (startup time, memory usage)
+- Errors and crash reports
 
-## What telemetry would never include
+## what it never includes
 
 - Your API requests or responses
 - Your environment variables or tokens
 - Your collections or data
-- Your name, email, or any personal information
+- Your name, email, or personal information
 - Your IP address or location
 
-## Air-gap mode
+## air-gap mode
 
-If you work in a high-security environment (military, finance, healthcare), reqit has an **air-gap mode**. You can disable:
-- Telemetry
-- The interceptor (browser proxy)
-- Plugin downloads
-- Update checks
-- SSO (single sign-on)
-- Vault access
+For high-security environments (finance, healthcare, government), reqit has an air-gap mode. Disable telemetry, the interceptor proxy, plugin downloads, update checks, SSO, and vault network access. In air-gap mode, reqit makes zero outbound network requests.
 
-In air-gap mode, reqit cannot make any network requests at all. It is completely isolated.
+\`\`\`
+Settings
+├── Privacy
+│   ├── Telemetry: ○ Off (default)
+│   ├── Air-Gap Mode: ○ Off / ● On
+│   ├── Interceptor: ● On / ○ Off
+│   └── Update Checks: ● On / ○ Off
+\`\`\`
 
-## A real-life story
+## proof: the settings path
 
-A bank's security team is evaluating reqit. They need to make sure the app does not send any data to external servers. They check two things:
+Settings > Privacy. Telemetry is off by default. Air-gap mode is a single toggle. You can verify the setting in 3 seconds.
 
-1. **Telemetry is off by default** — verified
-2. **Air-gap mode** — they enable it, disabling all network features — verified
-
-The bank approves reqit for internal use. Their developers get a fast, modern API client that respects their security requirements.
-
-## The principle
-
-Your data is yours. Always. reqit is designed so you never have to wonder "is this app sending my API keys somewhere?" The answer is no — and we prove it by showing you exactly what telemetry would send, and letting you disable it completely.
+Your data stays on your machine. That is the point.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-cli",
-    title: "What is CLI Mode? Running reqit from the terminal",
-    description: "You usually click buttons to send API requests. CLI mode lets you do it from the terminal — perfect for scripts, automation, and CI/CD.",
+    title: "cli mode for automation",
+    description: "Clicking through a UI to run API tests does not scale. CLI mode runs your collections from the terminal.",
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "cli", "automation"],
     category: "Tutorials & use-cases",
-    content: `Most of the time, you use reqit by clicking buttons. You type a URL, click Send, and see the response. That is the graphical way.
+    content: `Clicking through a UI to run API tests does not scale. You have 50 endpoints. You run them manually before each deploy. It takes 15 minutes. You miss one. It breaks in production.
 
-**CLI mode is different.** You open your terminal, type a command like \`reqit run my-collection --env staging\`, and reqit fires all the requests, runs assertions, and prints a report — all without opening a single window.
+CLI mode runs your collections from the terminal. One command executes every request, evaluates assertions, and gives you a pass/fail report. Drop it in a CI pipeline and every push validates your API.
 
-## A real-life story
-
-Dennis deploys his app every Friday. After every deployment, he needs to check that 20 critical API endpoints still work. He used to open reqit, click each request one by one, and check the responses. It took 10 minutes and he sometimes missed a failed request.
-
-Now Dennis runs a single command:
-
-\`\`\`bash
-reqit run smoke-tests --env production --report json
-\`\`\`
-
-Reqit fires all 20 requests, checks every assertion, and prints:
+## the command
 
 \`\`\`
-✓ GET /health → 200 (42ms)
-✓ POST /login → 200 (156ms)
-✓ GET /users → 200 (89ms)
-✗ POST /checkout → 500 (234ms) — expected 200
-...
-
-Failed: 1 / 20
+reqit run smoke-tests --env staging --report json
 \`\`\`
 
-Dennis knows in 3 seconds whether the deployment is good.
+- \`smoke-tests\`: the collection to run
+- \`--env staging\`: which environment to use
+- \`--report json\`: output results as JSON
 
-## How it works
+## output
 
-Reqit CLI runs a **collection** — any collection you already have in your workspace. It:
+\`\`\`
+POST /auth/login ............. ✓ 200 (120ms)
+GET /users ................... ✓ 200 (85ms)
+GET /users/123 ............... ✓ 200 (90ms)
+POST /orders .................. ✓ 201 (210ms)
+GET /orders/999 .............. ✗ 404 (45ms) — expected 200
+DELETE /orders/999 ........... ✓ 204 (80ms)
 
-1. Loads every request in the collection
-2. Sends each request
-3. Runs any assertions you configured (status code, response time, body checks)
-4. Prints a pass/fail report
-5. Exits with code 0 if all pass, or code 1 if any fail
+5/6 passed (83%)
+Exit code: 1
+\`\`\`
 
-## Common use cases
+## exit codes
 
-- **CI/CD pipelines** — add \`reqit run smoke-tests\` to your GitHub Actions or GitLab CI config
-- **Pre-deploy checks** — run a collection before every deployment
-- **Nightly monitoring** — schedule a collection run with a cron job and email the report
-- **Onboarding** — new team members run the collection to verify their setup
+- **0:** all assertions passed
+- **1:** at least one failed
+
+Your CI pipeline uses these codes to pass or fail the build. The deploy happens only when all tests pass.
+
+## CI integration
+
+\`\`\`yaml
+# GitHub Actions
+- run: reqit run smoke-tests --env staging
+
+# GitLab CI
+script:
+  - reqit run smoke-tests --env staging
+\`\`\`
+
+## proof: the value
+
+Manual testing before a deploy: 15 minutes, human error, inconsistent coverage. CLI testing: 3 seconds, deterministic, same coverage every run.
+
+The UI is for building requests. The CLI is for running them at scale.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-interceptor",
-    title: "What is the Interceptor? A bridge between your browser and reqit",
-    description: "Ever wanted to capture what your browser sends to an API and replay it in reqit? The interceptor does exactly that.",
+    title: "browser traffic capture",
+    description: "Debugging browser API calls without capturing them is like trying to diagnose a network issue without packet capture.",
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "interceptor", "capture"],
     category: "Technical deep-dives",
-    content: `Imagine you are using a website and you want to see what API calls it makes. Maybe you are debugging why a page is not loading, or you want to reuse an API request in your own app.
+    content: `Debugging browser API calls without capturing them is like trying to diagnose a network issue without packet capture. You see the UI error, but you never see the actual request your browser sent or the real response the server returned.
 
-**The interceptor is a browser extension that captures every HTTP request your browser makes and sends it to reqit.**
+Modern SPAs make dozens of API calls per page load. When one fails or returns unexpected data, the browser console gives you almost nothing useful. DevTools network tab helps, but you cannot replay requests, modify headers, or save them to a collection without manual effort.
 
-## A real-life story
+## setup
 
-Leila is debugging a checkout page on her e-commerce site. The page shows an error after clicking "Place Order" but the error message is not helpful.
+Install the reqit Interceptor extension from the Chrome Web Store. Open reqit, check Settings for the proxy port (default 127.0.0.1:3100). Click the extension icon, enter the port, click Connect.
 
-She opens Chrome, clicks the reqit Interceptor icon, and turns it on. Then she refreshes the page and clicks "Place Order" again.
+The extension tunnels all browser HTTP traffic through reqit's local proxy. No cloud. No external server. Everything stays on 127.0.0.1.
 
-In reqit, a list of captured requests appears:
-- \`POST /api/cart/add\` — succeeded
-- \`POST /api/checkout\` — failed with 500
+## what gets captured
 
-Leila clicks the failed request in reqit. She sees the full request body, headers, and the 500 error response. The response says "payment_gateway_timeout". She knows the problem is with the payment service — not her frontend code.
+Every HTTP request your browser makes: method, URL, headers, query parameters, request body, response status, response body, and timing. The interceptor captures GET, POST, PUT, PATCH, DELETE, OPTIONS, and HEAD. WebSocket and SSE traffic are not captured (use the built-in WebSocket client for those).
 
-## How to use it
+Requests appear in reqit's history panel with a browser icon indicating the source tab. You can send any captured request directly to a collection.
 
-1. Install the reqit Interceptor extension from the Chrome Web Store
-2. Start reqit and make sure the proxy is running (check your settings for the port number)
-3. Click the extension icon in Chrome and enter the port number
-4. Click **Connect**
-5. Browse normally — every API call is captured in reqit's history
+## privacy
 
-## What gets captured
+All traffic routes to localhost only. The extension does not make external network calls. reqit does not log captured requests to disk unless you explicitly save them. The proxy runs only while reqit is open.
 
-- All HTTP requests from your browser (GET, POST, PUT, PATCH, DELETE)
-- Request method, URL, headers, and body
-- Response status and timing
-- Which tab made the request
+## proof: a real captured request
 
-## Privacy
+A captured POST to a login endpoint:
 
-The interceptor only sends requests to your local reqit instance at \`127.0.0.1\`. Nothing is sent to the cloud. Nothing is logged externally. You are the only one who sees your traffic.
+\`\`\`
+POST https://api.example.com/v1/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "dev@example.com",
+  "password": "••••••••"
+}
+\`\`\`
+
+Response:
+
+\`\`\`
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "expires_in": 3600
+}
+\`\`\`
+
+You see the exact wire format. No guessing what the frontend actually sent.
+
+Browser API debugging without the interceptor means reading minified JavaScript to reconstruct requests. With it, you get the full picture in real time.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-cicd",
-    title: "Running reqit in CI/CD: Automated API testing in your pipeline",
-    description: "Every time you push code, your CI runs tests. Now it can also run your API collections. Catch broken endpoints before they reach production.",
+    title: "api testing in ci/cd pipelines",
+    description: "API tests that only run manually do not catch regressions. Put them in your pipeline.",
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "ci-cd", "automation", "testing"],
     category: "Tutorials & use-cases",
-    content: `When you push code to GitHub, your CI pipeline runs unit tests, builds the app, and deploys it. But what about your API? If the backend returns a 500 or changes a response field, your tests still pass — but your app is broken.
+    content: `API tests that only run manually do not catch regressions. A developer changes a response field, merges to main, and the frontend breaks three hours later. Nobody ran the tests between the push and the deploy.
 
-**Reqit collections can run in CI/CD pipelines.** Add one command to your workflow file and every push runs your API tests automatically.
+Continuous integration exists to catch exactly this. Your API collections already define what "working" means. Putting them in the pipeline makes that definition enforceable.
 
-## A real-life story
+## the setup
 
-Fatima's team uses GitHub Actions. Every time someone pushes to main, the pipeline builds the app and deploys it to staging. Last week, a developer changed the login API to return \`{ "token": "abc" }\` instead of \`{ "access_token": "abc" }\`. The frontend broke. Nobody noticed until a manual test 3 hours later.
-
-Fatima adds a step to the pipeline:
-
-\`\`\`yaml
-- name: Run API tests
-  run: reqit run api-smoke-tests --env staging
-\`\`\`
-
-Next push, the pipeline runs the collection. The login request expects \`access_token\` but gets \`token\`. The assertion fails. The pipeline stops. The developer gets a red X on their PR. They fix the API before merging.
-
-## The full workflow
-
-1. Create a collection called \`smoke-tests\` with all your critical endpoints
-2. Add assertions: check status codes, response fields, response times
-3. Add \`reqit run smoke-tests\` to your CI config
-4. Every push checks your API automatically
-
-## CI configuration examples
+reqit collections run from the CLI. One command executes every request, evaluates every assertion, and exits with code 0 (all pass) or code 1 (any fail). Your CI provider uses that exit code to pass or fail the build.
 
 ### GitHub Actions
+
 \`\`\`yaml
-- uses: actions/checkout@v4
-- run: reqit run smoke-tests --env staging
+name: API Tests
+on: push
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install reqit
+        run: curl -fsSL https://get.reqit.dev/install.sh | sh
+      - name: Run API tests
+        run: reqit run smoke-tests --env staging --report junit
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: report.xml
 \`\`\`
 
 ### GitLab CI
+
 \`\`\`yaml
-script:
-  - reqit run smoke-tests --env staging
+api-tests:
+  script:
+    - reqit run smoke-tests --env staging --report json
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
 \`\`\`
 
-## Exit codes
+## exit codes and reports
 
-Reqit exits with:
-- **0** — all requests passed their assertions
-- **1** — one or more requests failed
+Exit code 0 means every assertion passed. Exit code 1 means at least one failed. The pipeline fails on code 1, blocking the merge or deploy.
 
-Your CI pipeline can use these exit codes to pass or fail the build automatically.
+Add \`--report junit\` or \`--report json\` for machine-readable output. Upload the artifact to your CI dashboard. PRs show test results alongside code reviews.
 
-## Reports
+## proof: real output
 
-Add \`--report junit\` or \`--report json\` to output test results in standard formats. You can upload them to your CI dashboard just like unit test reports.
+\`\`\`
+reqit run smoke-tests --env staging
+
+POST /auth/login ............. ✓ 200 (120ms)
+GET /users ................... ✓ 200 (85ms)
+GET /users/123 ............... ✓ 200 (90ms)
+POST /orders .................. ✓ 201 (210ms)
+GET /orders/999 .............. ✗ 404 (45ms) — expected 200
+
+4/5 passed (80%)
+Exit code: 1
+\`\`\`
+
+The failing request blocks the deploy. You find the broken endpoint before production does.
+
+Manual API testing has a half-life. Automated pipeline testing does not.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-themes",
-    title: "What are Themes? Making reqit look the way you want",
-    description: "Some people like dark mode. Some like light mode. Some want cyan accents. Themes let you make reqit look exactly how you prefer.",
+    title: "theme customization",
+    description: "Tools you stare at for eight hours a day should not hurt your eyes. reqit offers Dark, Light, and System themes.",
     date: "2026-06-16",
     readTime: "2 min read",
     tags: ["explainer", "themes", "customization"],
     category: "Technical deep-dives",
-    content: `Have you ever used an app and thought "I wish this was darker" or "I wish the colors were different"? Some apps only give you one look. reqit gives you choices.
+    content: `Tools you stare at for eight hours a day should not hurt your eyes. Most API clients ship with one theme, maybe two. You adapt to the tool instead of the tool adapting to you.
 
-**Themes change the colors of reqit — the background, the text, the accents, the buttons. You pick what looks good to you.**
+Developer environments vary wildly. Dark offices, bright open floors, external monitors with different color profiles. One fixed theme does not work for everyone, and forcing light mode on someone working at midnight is a productivity tax.
 
-## A real-life story
+## what reqit offers
 
-Hiro works in a dark office with dim lighting. Dark mode helps him focus. His colleague Maria works near a bright window. She prefers a lighter interface.
+Three modes: Dark, Light, and System. Dark uses a deep charcoal background with white text and cyan accents. Light flips it: white background, dark text, same accents. System watches your OS theme and switches automatically.
 
-Hiro opens Settings → Theme and picks **Dark**. The background turns deep charcoal. The text turns white. The accent color stays cyan.
+## what changes
 
-Maria picks **Light**. The background turns white. The text turns dark. Everything is crisp and readable in the sunlight.
+Background, text, borders, sidebar, code editor syntax colors, status indicators, and accent highlights all update. The layout stays identical. No reflow, no flicker, no restart.
 
-Both are happy. Both use the same app. Neither squints.
+The code editor gets specific treatment: syntax highlighting adjusts for readability in both modes. JSON keys, strings, numbers, and booleans are color-coded consistently.
 
-## What themes affect
+## where to find it
 
-- Background color (main, sidebar, cards)
-- Text color (headings, body, subtle labels)
-- Accent colors (the cyan highlight used everywhere)
-- Border colors
-- Code editor colors
-- Status colors (green for success, red for errors)
+Settings > Theme. Pick Dark, Light, or System. The change is instant.
 
-## How to change your theme
+\`\`\`
+Ctrl+K → type "theme" → Enter → pick your option
+\`\`\`
 
-1. Open Settings (click your profile or press Ctrl+K and type "settings")
-2. Find the **Theme** section
-3. Pick **Dark**, **Light**, or **System** (follows your OS setting)
-4. The change happens instantly — no restart needed
+## proof: the settings path
 
-## The System option
+\`\`\`
+Settings
+├── General
+├── Theme
+│   ├── ● Dark
+│   ├── ○ Light
+│   └── ○ System
+├── AI
+├── Vault
+└── ...
+\`\`\`
 
-If you pick **System**, reqit watches your OS theme setting. When your computer switches to dark mode at night, reqit switches too. When it goes back to light mode in the morning, reqit follows. You never think about it.
+Your eyes do not care about marketing. They care about contrast ratios and background luminance. Pick the theme that works for your environment and move on to the actual work.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-vault",
-    title: "What is the Vault? A locked box for your secrets",
-    description: "API keys, tokens, and passwords should not sit in plain text files. The Vault keeps them encrypted so only you can read them.",
+    title: "encrypted secrets storage",
+    description: "API keys in environment files that get committed to git are a liability. The vault encrypts secrets at rest with AES-256.",
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "vault", "security", "secrets"],
     category: "Technical deep-dives",
-    content: `Imagine you write your ATM pin on a sticky note and stick it to your monitor. Everyone who walks past can see it. That is what happens when you put API keys in plain text files.
+    content: `API keys in environment files that get committed to git are a liability. Every leaked key is a billing surprise waiting to happen. The 2024 Heroku and GitLab token leaks exposed thousands of repositories because developers stored secrets in plaintext config files.
 
-**The Vault is a locked box for your secrets.** You put your API keys, tokens, and passwords inside. The Vault encrypts them. Only you can unlock the box.
+reqit's vault encrypts secrets at rest using AES-256 with a master password you control. The encryption key never leaves your machine.
 
-## A real-life story
+## before: plain text
 
-Omar works on a team of 6 developers. Each developer has their own API key for the payment service. The keys are stored in environment files that live in the project folder.
+Your environment file contains actual secrets:
 
-One day, Omar accidentally commits his environment file to Git. His payment API key — worth thousands of dollars in potential fraud — is now on GitHub for anyone to find.
+\`\`\`
+{
+  "BASE_URL": "https://api.stripe.com",
+  "STRIPE_KEY": "sk_live_REPLACE_WITH_YOUR_KEY",
+  "SENDGRID_KEY": "SG.xxxxx.yyyyy"
+}
+\`\`\`
 
-Omar switches to the Vault:
-1. He removes all secrets from environment files
-2. He adds them to the Vault: \`VAULT_PAYMENT_KEY = sk_live_abc123\`
-3. He locks the Vault with a master password
-4. Now his environment file just says \`{{VAULT_PAYMENT_KEY}}\` — no actual secret
+If this file gets committed, the keys are public. Even if you delete the commit, the keys remain in git history.
 
-If he accidentally commits the environment file again, it contains only variable names, not real secrets.
+## after: vault references
 
-## How the Vault works
+The same file with vault references:
 
-1. Open the Vault from Settings or the sidebar
-2. Set a master password (this encrypts everything)
-3. Add your secrets as key/value pairs
-4. Reference them in any request as \`{{VAULT_KEY_NAME}}\`
-5. The Vault decrypts them only when reqit sends a request
+\`\`\`
+{
+  "BASE_URL": "https://api.stripe.com",
+  "STRIPE_KEY": "{{VAULT_STRIPE_KEY}}",
+  "SENDGRID_KEY": "{{VAULT_SENDGRID_KEY}}"
+}
+\`\`\`
 
-## Security features
+The vault stores the actual values encrypted on disk. reqit decrypts them at request time only. The environment file is safe to commit because it contains no secrets.
 
-- **Encrypted at rest** — vault data is AES-256 encrypted on disk
-- **Master password** — you choose it, reqit never stores it
-- **Locks automatically** — the vault locks after 5 minutes of inactivity
-- **Per-workspace** — each workspace has its own vault. Projects stay isolated.
+## setup
 
-## What the Vault is not
+1. Open Settings > Vault
+2. Set a master password
+3. Add key/value pairs
+4. Reference them in any field with \`{{VAULT_KEY_NAME}}\`
 
-The Vault is not a cloud service. Your secrets never leave your computer. It is not a replacement for a proper secrets manager in production (like HashiCorp Vault or AWS Secrets Manager). It is for local development — keeping secrets out of your Git history and off your screen.
+The vault locks after 5 minutes of inactivity. It decrypts only when reqit sends a request and the vault is unlocked. Per-workspace isolation means project A's secrets are invisible to project B.
+
+## proof: commit safety
+
+\`\`\`diff
+- "STRIPE_KEY": "sk_live_REPLACE_WITH_YOUR_KEY",
++ "STRIPE_KEY": "{{VAULT_STRIPE_KEY}}",
+\`\`\`
+
+Your git diff shows a variable reference, not a secret. The actual key lives encrypted on your disk, accessible only when you unlock the vault.
+
+Plain text secrets are a debt. The vault makes that debt disappear.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-what-is-an-api",
-    title: "What is an API? A waiter between your app and the kitchen",
-    description: "Every time your phone shows weather, sends a message, or loads a feed, it talks to an API. This is what an API is and how it works.",
+    title: "what is an api",
+    description: "Every app on your phone talks to an API. Most developers use APIs daily without thinking about the mechanics.",
     date: "2026-06-17",
     readTime: "4 min read",
     tags: ["explainer", "api", "fundamentals", "beginner"],
     category: "Philosophy & opinion",
-    content: `Imagine you are sitting in a restaurant. You look at the menu, decide what you want, and tell the waiter. The waiter goes to the kitchen, tells the chef, and comes back with your food. You never go into the kitchen yourself. The waiter is the bridge between you and the kitchen.
+    content: `Every app on your phone talks to an API. Weather data, payment processing, messaging, social feeds. The developer who built the weather widget never touched a weather station. They sent a request to an API and got structured data back.
 
-**An API is that waiter.** It stands between your app (the customer) and a server (the kitchen). Your app sends a request (places an order), and the API delivers a response (brings the food). You do not need to know how the kitchen works. You just need to know how to order from the menu.
+Most developers use APIs daily without thinking about the mechanics. Understanding HTTP, methods, status codes, and JSON gives you the ability to debug, integrate, and build without depending on someone else to explain the plumbing.
 
-## A real-life example
+## the request
 
-Open your weather app. It shows the temperature, humidity, and forecast. Where does that data come from?
+An HTTP request has four parts: the URL (where to send it), the method (what to do), headers (metadata), and the body (data, mostly for POST/PUT/PATCH).
 
-Your weather app sends a request to a weather API: "Give me the weather for Lagos." The API checks its database, finds the current weather, and sends it back. Your app displays it. You see the temperature.
+\`\`\`
+GET https://api.weather.com/v1/current?city=lagos
+Accept: application/json
+Authorization: Bearer sk-xxxx
+\`\`\`
 
-You never connected to the weather database directly. You never wrote SQL queries. You just asked the API, and the API handled everything else.
+GET reads data. POST creates. PUT replaces. PATCH updates partially. DELETE removes. The method tells the server what action you want.
 
-## How APIs talk: HTTP
+## the response
 
-Most APIs on the internet speak a language called **HTTP**. When your app sends an HTTP request, it has four parts:
+The server replies with a status code and a body.
 
-1. **URL** — the address of the thing you want (like \`https://api.weather.com/weather/lagos\`)
-2. **Method** — what you want to do (GET means "read", POST means "create")
-3. **Headers** — extra information (like "send the response in JSON format")
-4. **Body** — data you are sending (only for creating or updating)
+\`\`\`
+HTTP/1.1 200 OK
+Content-Type: application/json
 
-The server sends back a **response** with:
-
-1. **Status code** — a number that tells you if it worked (200 = OK, 404 = not found, 500 = server error)
-2. **Body** — the actual data, usually in JSON format
-3. **Headers** — extra information about the response
-
-## Methods — the verbs of APIs
-
-| Method | What it does | Real-life equivalent |
-|--------|-------------|---------------------|
-| **GET** | Read data | Looking at the menu |
-| **POST** | Create new data | Placing a new order |
-| **PUT** | Replace everything | Changing your entire order |
-| **PATCH** | Update one part | Adding extra cheese to your order |
-| **DELETE** | Remove data | Cancelling your order |
-
-## Status codes — the kitchen's reply
-
-| Code | Meaning | Real-life equivalent |
-|------|---------|---------------------|
-| **200** | OK, here is your data | "Here is your food" |
-| **201** | Created successfully | "Your order has been placed" |
-| **400** | Bad request — you made a mistake | "We do not have that item on the menu" |
-| **401** | Unauthorized — who are you? | "I need to see your ID first" |
-| **404** | Not found | "That item is not on the menu" |
-| **500** | Server error — something broke | "The kitchen is on fire" |
-
-## JSON — the language APIs use
-
-When an API responds, it usually sends data in a format called **JSON**. It looks like this:
-
-\`\`\`json
 {
   "city": "Lagos",
-  "temperature": 32,
+  "temp_c": 32,
   "humidity": 78,
-  "forecast": "Sunny"
+  "condition": "partly_cloudy"
 }
 \`\`\`
 
-This is text that both humans and computers can read easily.
+200 means success. 201 means created. 400 means your request was malformed. 401 means unauthorized. 404 means not found. 500 means the server broke.
 
-## Summary
+## JSON
 
-An API is just a waiter. Your app tells it what it wants, the API talks to the server, and brings back the result. Every app you use — Instagram, Twitter, WhatsApp, your banking app — talks to APIs all day long. Understanding APIs means understanding how the modern internet works.
+APIs return data in JSON by default. It is human-readable, parseable by every language, and compact enough for network transport. Objects use \`{}\`, arrays use \`[]\`, key-value pairs use \`"key": value\`.
+
+\`\`\`json
+{
+  "users": [
+    {"id": 1, "name": "Alice"},
+    {"id": 2, "name": "Bob"}
+  ]
+}
+\`\`\`
+
+## proof: a real cycle
+
+\`\`\`
+→ POST https://api.example.com/v1/users
+  Content-Type: application/json
+  {"name": "Alice", "email": "alice@example.com"}
+
+← 201 Created
+  {"id": 42, "name": "Alice", "email": "alice@example.com"}
+\`\`\`
+
+You sent a request, the server created a resource, and returned the result. That is an API call. Everything else is detail.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-http-methods",
-    title: "HTTP Methods Explained: GET, POST, PUT, PATCH, DELETE",
-    description: "Each HTTP method is a different verb for a different action. This guide covers every method with real-world examples.",
+    title: "http methods: get, post, put, patch, delete",
+    description: "Using GET where you need POST corrupts data. Using POST where you need PUT creates duplicates. The wrong method breaks things silently.",
     date: "2026-06-17",
     readTime: "4 min read",
     tags: ["explainer", "http", "methods", "rest"],
     category: "Tutorials & use-cases",
-    content: `If you speak to an API, you need to use the right verb. Saying "give me the menu" is different from saying "here is my order." HTTP methods are those verbs.
+    content: `Using GET where you need POST corrupts data. Using POST where you need PUT creates duplicates instead of updates. The wrong method does not always throw an error. It succeeds silently and breaks your data in ways you discover weeks later.
 
-**Each HTTP method tells the server what you want to do with the data.** There are five main methods you will use every day.
+HTTP methods are the verbs of web APIs. Each one has a specific semantic meaning. Respecting those meanings makes your API predictable and your integrations reliable.
 
-## GET — "Show me something"
+## GET
 
-GET is the most common method. You use it whenever you want to read data without changing anything.
-
-**Real life:** You walk into a library and ask "Do you have 'The Great Gatsby'?" The librarian checks and says yes or no. Nothing changes. You just asked.
-
-**API example:**
-\`\`\`
-GET /api/books
-→ Returns a list of all books
-\`\`\`
+Read-only. Never mutates state. Safe to retry, safe to cache, safe to call from a browser address bar.
 
 \`\`\`
-GET /api/books/42
-→ Returns the book with ID 42
+GET /api/users/42
+→ 200 OK, returns user object
 \`\`\`
 
-**Rule:** GET never changes data. It only reads.
+## POST
 
-## POST — "Create something new"
+Creates a new resource. The server assigns the ID. Calling POST twice creates two resources.
 
-POST tells the server to add a new item. It is like saying "here is a new book, please add it to the collection."
-
-**Real life:** You go to the library counter and say "I wrote a new book. Please add it to the catalog." The librarian creates a new entry.
-
-**API example:**
 \`\`\`
-POST /api/books
-Body: { "title": "My New Book", "author": "Alice" }
-→ Returns 201 Created with the new book's ID
+POST /api/users
+Body: {"name": "Alice"}
+→ 201 Created, returns new user with id: 43
 \`\`\`
 
-**Rule:** POST creates new data. The server assigns an ID.
+## PUT
 
-## PUT — "Replace everything"
+Replaces the entire resource. If the resource does not exist, some servers create it. Calling PUT with the same body twice results in the same state.
 
-PUT replaces an entire item. If the item exists, it overwrites it. If it does not exist, it creates it.
-
-**Real life:** You borrowed a book and lost it. You buy a replacement copy and tell the librarian "replace the old entry with this new copy." The old entry is completely replaced.
-
-**API example:**
 \`\`\`
-PUT /api/books/42
-Body: { "title": "Completely New Title", "author": "Bob" }
-→ Replaces everything about book 42
+PUT /api/users/42
+Body: {"name": "Alice", "email": "alice@new.com"}
+→ 200 OK, user 42 is fully replaced
 \`\`\`
 
-**Rule:** PUT replaces the whole resource. If you forget to include a field, it gets removed.
+## PATCH
 
-## PATCH — "Update one part"
+Partial update. Send only the fields that changed. Everything else stays.
 
-PATCH is like PUT but you only send the fields you want to change. Everything else stays the same.
-
-**Real life:** You moved to a new address. You tell the library "please update just my address." Your name, phone number, and membership remain unchanged.
-
-**API example:**
 \`\`\`
-PATCH /api/books/42
-Body: { "title": "New Title Only" }
-→ Only the title changes. Author and other fields stay.
+PATCH /api/users/42
+Body: {"email": "alice@new.com"}
+→ 200 OK, only email changed
 \`\`\`
 
-**Rule:** PATCH is for partial updates. Send only what changed.
+## DELETE
 
-## DELETE — "Remove this"
+Removes the resource. Calling it twice usually returns 404 the second time (the resource is already gone).
 
-DELETE removes an item permanently.
-
-**Real life:** You return a book and tell the librarian "you can remove this from my account." The record is deleted.
-
-**API example:**
 \`\`\`
-DELETE /api/books/42
-→ Returns 200 OK or 204 No Content
+DELETE /api/users/42
+→ 204 No Content
 \`\`\`
 
-**Rule:** DELETE is permanent. There is no undo (usually).
+## idempotence
 
-## HEAD and OPTIONS — less common but useful
+GET, PUT, DELETE, HEAD, and OPTIONS are idempotent. Calling them N times produces the same result as calling them once. POST and PATCH are not. Calling POST twice creates two resources.
 
-**HEAD** is like GET but the server only sends back headers — no body. Use it to check if a resource exists or to see headers without downloading the full response.
+| Method | Creates | Idempotent | Has body |
+|--------|---------|------------|----------|
+| GET | No | Yes | No |
+| POST | Yes | No | Yes |
+| PUT | Maybe | Yes | Yes |
+| PATCH | No | No | Yes |
+| DELETE | No | Yes | No |
 
-**OPTIONS** asks the server "what methods are allowed on this endpoint?" The server replies with something like \`Allow: GET, POST, DELETE\`.
+## proof: method matters
 
-## Idempotence — the fancy word
+\`\`\`
+# Wrong: GET with a body (violates spec)
+GET /api/search
+Body: {"query": "reqit"}
+→ 400 Bad Request on some servers
 
-Some methods are **idempotent** — calling them once or 100 times gives the same result.
+# Correct: POST for complex queries
+POST /api/search
+Body: {"query": "reqit"}
+→ 200 OK, returns results
+\`\`\`
 
-- **GET, PUT, DELETE, HEAD, OPTIONS** — idempotent. Calling GET /books/42 ten times always returns the same book.
-- **POST, PATCH** — NOT idempotent. Calling POST /books ten times creates ten books.
-
-## Summary
-
-| Method | Action | Has body | Idempotent |
-|--------|--------|----------|------------|
-| GET | Read | No | Yes |
-| POST | Create | Yes | No |
-| PUT | Replace all | Yes | Yes |
-| PATCH | Update part | Yes | No |
-| DELETE | Remove | No | Yes |
-
-Use the right method, and your API will understand exactly what you want.
+The method is not decoration. It tells the server how to handle your request. Use the wrong one and you get silent data corruption, not an error.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-json-apis",
-    title: "What is JSON? The language APIs speak",
-    description: "JSON is how APIs send data back and forth. It is simple enough for a computer to read and easy enough for a human to understand.",
+    title: "json fundamentals for api developers",
+    description: "JSON is the default data format for APIs. Knowing the full structure lets you parse complex responses without regex.",
     date: "2026-06-17",
     readTime: "3 min read",
     tags: ["explainer", "json", "data", "beginner"],
     category: "Tutorials & use-cases",
-    content: `When two people speak different languages, they need a translator. When your app talks to an API, they need a common format for data. That format is **JSON** (JavaScript Object Notation).
+    content: `JSON is the default data format for APIs. Every HTTP client, every server framework, every language has native JSON support. Yet most developers only scratch the surface beyond simple key-value pairs.
 
-**JSON is a way of writing data that both humans and computers can read.** It looks like a list of labels with values.
+Knowing the full structure of JSON, including nesting, arrays, type constraints, and edge cases, lets you parse complex API responses without regex or string manipulation and build accurate test assertions.
 
-## The building blocks
+## objects
 
-JSON has only a few rules. Learn these and you can read any API response.
-
-### Objects — a thing with properties
-
-An object is wrapped in curly braces \`{}\` and contains key-value pairs:
+Key-value pairs wrapped in braces:
 
 \`\`\`json
 {
   "name": "Alice",
   "age": 30,
-  "city": "Lagos"
+  "active": true
 }
 \`\`\`
 
-Think of this as a person: name is Alice, age is 30, city is Lagos.
+Keys must be strings. Values can be string, number, boolean, null, object, or array.
 
-### Arrays — a list of things
+## arrays
 
-An array is wrapped in square brackets \`[]\` and contains items separated by commas:
+Ordered lists in square brackets:
 
 \`\`\`json
-["apple", "banana", "cherry"]
+["go", "typescript", "python"]
 \`\`\`
 
-### Nesting — objects inside objects
+Arrays can contain objects:
 
-This is where JSON gets powerful. You can put objects inside objects:
+\`\`\`json
+[
+  {"id": 1, "name": "Alice"},
+  {"id": 2, "name": "Bob"}
+]
+\`\`\`
+
+## nesting
+
+Objects inside objects. Arrays inside objects. Objects inside arrays inside objects.
 
 \`\`\`json
 {
   "user": {
+    "id": 42,
     "name": "Alice",
-    "address": {
-      "city": "Lagos",
-      "street": "123 Main St"
-    },
-    "hobbies": ["reading", "coding", "swimming"]
+    "addresses": [
+      {"type": "home", "city": "Lagos"},
+      {"type": "work", "city": "Abuja"}
+    ]
   }
 }
 \`\`\`
 
-## Data types in JSON
+## types
 
-| Type | Example | Description |
-|------|---------|-------------|
-| String | "hello" | Text in double quotes |
-| Number | 42 or 3.14 | Integer or decimal |
-| Boolean | true or false | Yes or no |
-| Null | null | Nothing / empty |
-| Array | [1, 2, 3] | A list |
-| Object | {"key": "value"} | A collection of properties |
+| Type | Example | Notes |
+|------|---------|-------|
+| String | "hello" | Double quotes required |
+| Number | 42 or 3.14 | No distinction between int and float |
+| Boolean | true / false | Lowercase, no quotes |
+| Null | null | Empty value |
+| Array | [1, 2, 3] | Ordered, comma-separated |
+| Object | {"k": "v"} | Key-value pairs |
 
-## A real API response
-
-Here is what a real API might return when you ask for a user's profile:
+## proof: a real API response
 
 \`\`\`json
 {
@@ -1681,7 +1777,6 @@ Here is what a real API might return when you ask for a user's profile:
   "name": "Alice Johnson",
   "email": "alice@example.com",
   "isActive": true,
-  "createdAt": "2026-01-15T08:30:00Z",
   "tags": ["premium", "developer"],
   "profile": {
     "bio": "Full-stack developer",
@@ -1690,111 +1785,70 @@ Here is what a real API might return when you ask for a user's profile:
 }
 \`\`\`
 
-## Why JSON won
-
-There are other formats (XML, YAML, Protobuf), but JSON won because:
-
-1. **It is simple** — you can learn it in 5 minutes
-2. **It is text** — open it in any editor
-3. **Every language reads it** — JavaScript, Python, Go, Rust, all of them
-4. **It is fast** — computers can parse JSON very quickly
-
-## Pretty-printed vs minified
-
-APIs usually send **minified** JSON (no spaces, no newlines) to save bandwidth:
-
-\`\`\`json
-{"id":12345,"name":"Alice"}
-\`\`\`
-
-Reqit automatically **pretty-prints** JSON responses so you can read them:
-
-\`\`\`json
-{
-  "id": 12345,
-  "name": "Alice"
-}
-\`\`\`
-
-Reqit also color-codes keys, strings, and numbers so you can scan responses at a glance.
+reqit pretty-prints and color-codes JSON automatically. You scan keys, values, and structure at a glance instead of squinting at minified output.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
   {
     slug: "explainer-openapi-spec-linking",
-    title: "How to link an OpenAPI spec to your collection",
-    description: "Have an OpenAPI spec running on localhost? Link it to a collection in reqit and every response gets validated against your blueprint automatically.",
+    title: "linking openapi specs for contract testing",
+    description: "An OpenAPI spec that nobody validates is documentation, not a contract. Link it to a collection and every response gets validated.",
     date: "2026-06-17",
     readTime: "3 min read",
     tags: ["explainer", "openapi", "spec", "contract-testing"],
     category: "Technical deep-dives",
-    content: `You wrote an OpenAPI spec. Your API is running on localhost. Now you want reqit to check that every response matches the spec. Here is how to link them.
+    content: `An OpenAPI spec that nobody validates is documentation, not a contract. The spec says \`GET /users\` returns \`{ id, name, email }\`. The real API returns \`{ userId, username, mail }\`. The spec is stale. Nobody notices until the frontend crashes.
 
-[video](https://youtu.be/C-HM2YHjrUY)
+Contract testing compares your spec against real responses. Every request you send gets validated against the schema you defined. Violations show up immediately.
 
-## The problem
+## linking a spec
 
-You have a spec file that describes what your API should return. Your API is running at something like \`http://localhost:3000\`. Every time you change the backend, you want to know if the responses still match the spec. Checking manually is slow and easy to forget.
-
-## The solution
-
-reqit can link an OpenAPI spec to any collection. Once linked, every request you send in that collection gets validated against the spec automatically. You see a green badge when things match and a red badge when they do not.
-
-## How to do it
-
-### Step 1 — Get your spec URL
-
-Your API probably serves its OpenAPI spec at one of these endpoints:
-
-\`\`\`
-http://localhost:3000/openapi.json
-http://localhost:3000/swagger.json
-http://localhost:3000/api-docs
-http://localhost:3000/docs/openapi.json
-\`\`\`
-
-Open that URL in your browser. If you see JSON with \`"openapi"\` or \`"swagger"\` at the top, you found it.
-
-### Step 2 — Link it in reqit
-
-1. Right-click the collection you want to link
+1. Right-click a collection in reqit
 2. Click the three dots (⋮)
-3. Click **Link OpenAPI Spec**
-4. Paste your URL (e.g. \`http://localhost:3000/openapi.json\`)
-5. Hit Enter
+3. Select "Link OpenAPI Spec"
+4. Paste your spec URL (e.g., \`http://localhost:3000/openapi.json\`)
+5. Press Enter
 
-reqit downloads the spec, saves it to your workspace, and links it to the collection.
+reqit downloads and caches the spec locally. Every request in that collection is now validated against it.
 
-### Step 3 — Send a request
+## what gets checked
 
-Pick any request in the collection and hit Send. Look at the status bar. You will see one of two things:
+- **Status code:** does the actual status match one of the spec's declared codes?
+- **Response body:** does the JSON match the schema? Are required fields present? Are types correct?
+- **Missing fields:** the spec says a field is required but the response omits it.
+- **Extra fields:** the response contains a field not defined in the spec.
 
-- **✓ Contract OK** — the response matches the spec
-- **✗ 2 violations** — something does not match
+## violation reporting
 
-Click the badge to see exactly what went wrong.
+The status bar shows a badge after each request. Green for compliant. Red with a count for violations. Click the badge for details.
 
-## What gets checked
+\`\`\`
+GET /api/users/123
+Spec says: 200, body has { id: string, name: string, email: string }
+Actual:    200, body has { userId: string, username: string }
 
-reqit validates three things:
+Violations:
+  ✗ Field "id" missing — spec expects $.id
+  ✗ Field "name" missing — spec expects $.name
+  ✗ Field "email" missing — spec expects $.email
+  ✗ Field "userId" unexpected — not in spec
+  ✗ Field "username" unexpected — not in spec
+\`\`\`
 
-1. **Status code** — is it one of the codes the spec declares?
-2. **Response body** — does the JSON match the schema the spec defines?
-3. **Required fields** — are all required properties present?
+## proof: real failure
 
-If the spec says \`GET /users\` returns \`200\` with a \`name\` field, and your API returns \`200\` without \`name\`, reqit flags it.
+\`\`\`
+POST /api/orders
+Spec says: 201, body has { id: string, total: number }
+Actual:    201, body has { order_id: string, total: string }
 
-## Updating the spec
+Violations:
+  ✗ Field "id" missing — spec expects $.id
+  ✗ Field "order_id" unexpected — not in spec
+  ✗ Field "total" type mismatch — spec expects number, got string
+\`\`\`
 
-If your API changes and the spec gets updated, just link it again with the new URL. reqit replaces the old spec with the new one.
-
-## Unlinking
-
-Right-click the collection → ⋮ → **Unlink Spec**. Validation stops.
-
-## Why this matters
-
-Without contract testing, you find out about breaking changes when your frontend crashes in production. With reqit, you find out in 3 seconds.
+Three violations from one request. You find the breaking change in seconds, not in production at 2 AM.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
