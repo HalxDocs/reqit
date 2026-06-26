@@ -272,12 +272,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "API Fundamentals": "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-  "Core Concepts": "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  "Testing & Automation": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  "Protocols & APIs": "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  "Collaboration & Workflow": "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  "Developer Experience": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  "Comparisons": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  "Technical deep-dives": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "Tutorials & use-cases": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "Release narratives": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "Philosophy & opinion": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
 };
 
 export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { onBack?: () => void; initialSlug?: string; onSelectPost?: (slug: string) => void; scrollToTop?: () => void }) {
@@ -494,7 +493,7 @@ export function BlogPage({ onBack, initialSlug, onSelectPost, scrollToTop }: { o
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CATEGORY_COLORS[post.category] || "bg-card text-subtext border-border"}`}>
                     <Bookmark size={8} />
                     <span className="hidden sm:inline">{post.category}</span>
-                    <span className="sm:hidden">{post.category === "Developer Experience" ? "DX" : post.category.split(" ")[0]}</span>
+                    <span className="sm:hidden">{post.category === "Technical deep-dives" ? "Tech" : post.category === "Tutorials & use-cases" ? "Tutorial" : post.category === "Comparisons" ? "Vs" : post.category === "Release narratives" ? "Release" : post.category === "Philosophy & opinion" ? "Opinion" : post.category.split(" ")[0]}</span>
                   </span>
                   {readPosts[post.slug] !== undefined && (
                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-teal/10 text-teal border border-teal/20">

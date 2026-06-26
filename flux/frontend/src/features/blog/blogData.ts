@@ -11,12 +11,11 @@ export interface BlogPost {
 
 export const CATEGORIES = [
   "All",
-  "API Fundamentals",
-  "Core Concepts",
-  "Testing & Automation",
-  "Protocols & APIs",
-  "Collaboration & Workflow",
-  "Developer Experience",
+  "Comparisons",
+  "Technical deep-dives",
+  "Tutorials & use-cases",
+  "Release narratives",
+  "Philosophy & opinion",
 ] as const;
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -27,7 +26,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: "2026-06-10",
     readTime: "4 min read",
     tags: ["tutorial", "import", "postman"],
-    category: "Developer Experience",
+    category: "Comparisons",
     content: `Every time I open Postman on my work laptop it takes 8 seconds to load, asks me to log in, and reminds me I've used 3 of 5 free team collections. My team had 47 collections spread across 6 workspace accounts. We were paying $12/month per person for something that should be a file on disk.
 
 I spent an afternoon migrating everything to reqit. The import took 30 seconds. The whole team switched in a day.
@@ -75,7 +74,7 @@ Our team went from 6 Postman workspace accounts to a single Git repository. Coll
     date: "2026-06-08",
     readTime: "5 min read",
     tags: ["engineering", "gitops", "architecture"],
-    category: "Collaboration & Workflow",
+    category: "Philosophy & opinion",
     content: `Every API client I have used stores collections in a database. Postman stores them in a cloud DB. Insomnia stores them in a local DB. Bruno stores them as files.
 
 Reqit stores them as plain JSON files in a .reqit/ directory inside your project. This decision drives everything else in the product.
@@ -123,7 +122,7 @@ Two developers editing the same request at the same time get a merge conflict, j
     date: "2026-06-05",
     readTime: "4 min read",
     tags: ["philosophy", "privacy", "engineering"],
-    category: "Developer Experience",
+    category: "Philosophy & opinion",
     content: `Postman's installer is 340MB. It takes 5-10 seconds to cold start on a 2022 laptop. It requires an account and phones home on every launch.
 
 Reqit's installer is under 20MB. It starts in under 400ms. It requires nothing but a download.
@@ -167,7 +166,7 @@ No usage analytics. We rely on GitHub issues, Discord, and direct feedback.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "collections", "beginner"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you have a desk covered in papers. Some are for shopping. Some are for school. Some are for your games. When you put each group of papers into its own folder, your desk becomes clean and you can find anything fast.
 
 **Collections in reqit work exactly like those folders.**
@@ -218,7 +217,7 @@ When your API grows from 5 requests to 50, you need organization. Collections ar
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "http", "beginner"],
-    category: "Core Concepts",
+    category: "Tutorials & use-cases",
     content: `Imagine you want to ask your friend for a recipe. You write a letter, put it in an envelope, write their address, and drop it in a mailbox. Your friend gets it, reads it, writes the recipe on a new piece of paper, and mails it back.
 
 **An HTTP request is exactly that — a letter from your computer to another computer.**
@@ -260,7 +259,7 @@ That is it. An API is just a bunch of these letter exchanges, and reqit is the p
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "environments", "beginner"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you have a coloring book page with a house, a tree, and a sun. You color it with your crayons. Now your friend wants to color the same page with different colors. You do not need a new book — you just use different crayons.
 
 **Environments are those crayons for your API requests.**
@@ -307,7 +306,7 @@ You write your request once. You test it everywhere. You never accidentally send
     date: "2026-06-15",
     readTime: "4 min read",
     tags: ["explainer", "auth", "security"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you walk into a building with a security guard. The guard asks "who are you?" You show your ID card. The guard checks it and lets you in.
 
 **Authentication in APIs is the same thing.** Your request needs to prove who it is before the server lets it in. The ID card for APIs is called an **auth token** or **API key**.
@@ -359,7 +358,7 @@ Instead of remembering all these different ID card types, reqit has an **Auth ta
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "mock", "testing"],
-    category: "Testing & Automation",
+    category: "Tutorials & use-cases",
     content: `When you were a kid, you probably played "pretend". You pretended to be a chef, a teacher, or a superhero. You did not need real tools — your imagination was enough.
 
 **A mock server is pretend for your API.**
@@ -402,7 +401,7 @@ Without a mock server, frontend developers either wait for the backend to be rea
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "runner", "testing"],
-    category: "Testing & Automation",
+    category: "Tutorials & use-cases",
     content: `Imagine you own a toy factory with 100 different toys. Every morning, you need to check that every toy works. Picking up each one and testing it by hand takes hours. Now imagine a robot that tests all 100 toys in seconds and hands you a list of the broken ones.
 
 **A collection runner is that robot for your API requests.**
@@ -448,7 +447,7 @@ A runner turns your collection from a list of requests into a test suite. You ar
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "git", "collaboration"],
-    category: "Collaboration & Workflow",
+    category: "Technical deep-dives",
     content: `Have you ever saved a game, made a mistake, and loaded your old save to fix it? That is what Git does for your files. It is like a time machine for your work.
 
 **Reqit stores collections as plain JSON files.** This is a big deal because it means you can put them in Git — the same tool developers use for code.
@@ -493,7 +492,7 @@ Reqit stores collections as files. Files go in Git. Git is a time machine. You n
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "websocket", "realtime"],
-    category: "Protocols & APIs",
+    category: "Tutorials & use-cases",
     content: `With regular HTTP (letters), you send a request and get a response. Conversation over. If you want more data, you send another letter.
 
 **WebSocket is different.** You open a connection (dial the phone), and both sides can talk anytime. The server does not have to wait for you to ask — it can send data whenever it wants.
@@ -538,7 +537,7 @@ Modern apps are real-time. Chat, live notifications, collaborative editing, live
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "graphql", "api"],
-    category: "Protocols & APIs",
+    category: "Tutorials & use-cases",
     content: `Imagine you go to a restaurant and order "the full meal." The waiter brings you soup, salad, steak, fries, dessert, and a drink. But you only wanted the steak and fries. You have to eat through everything to get to what you need. And you pay for everything.
 
 **That is how REST APIs work.** You ask for a user, and the API returns the user's name, email, address, phone number, profile picture, friends list, settings, and 50 other fields. But your screen only needs the name.
@@ -593,7 +592,7 @@ Mobile apps love GraphQL because less data means faster load times. Frontend tea
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "scripts", "automation"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you are filling out a form at the doctor's office. Before you see the doctor, a nurse takes your temperature and writes it down. After you see the doctor, another nurse checks your blood pressure.
 
 **Scripting in reqit works the same way.** You can run code **before** a request and **after** a request.
@@ -640,7 +639,7 @@ In the Scripts tab of any request, you write JavaScript that runs before and aft
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "workspaces", "organization"],
-    category: "Collaboration & Workflow",
+    category: "Technical deep-dives",
     content: `If you work on multiple projects, you know the pain of mixed-up papers. A request for the shopping app is next to a request for the weather app. Environments for one project leak into another. The cookie from the login page of one app messes up the other.
 
 **Workspaces are the solution.** Each workspace is a completely separate world with its own collections, environments, history, and cookies.
@@ -695,7 +694,7 @@ Think of reqit as a desk organizer. Each workspace is a drawer. Open one drawer,
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "import", "export"],
-    category: "Collaboration & Workflow",
+    category: "Tutorials & use-cases",
     content: `When you were a kid and got a new toy box, you probably dumped all your toys from the old box into the new one. You did not want to lose your favorite action figure or building blocks.
 
 **Import and export do the same thing for your API collections.**
@@ -742,7 +741,7 @@ Reqlet does not lock you in. Your data comes in, your data goes out. You own it.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "contract-testing", "testing"],
-    category: "Testing & Automation",
+    category: "Technical deep-dives",
     content: `If your friend says "I will meet you at the park at 3pm," you expect them to be at the park at 3pm. If they show up at 5pm or at the library instead, the promise is broken.
 
 **An API spec (OpenAPI) is a promise.** It says: "If you call GET /users, you will get back a list of users with names and emails." Contract testing checks that the API actually keeps its promise.
@@ -792,7 +791,7 @@ APIs change. Teams make mistakes. Documentation goes out of date. Contract testi
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "history", "beginner"],
-    category: "Developer Experience",
+    category: "Technical deep-dives",
     content: `Have you ever said "I did that thing last week but I cannot remember how"? It happens to everyone. Your brain is not a computer — it forgets things.
 
 **History is your memory for API requests.** Every request you send in reqit is automatically saved to the history list. You can go back days, weeks, or months and see exactly what you sent.
@@ -835,7 +834,7 @@ History is automatic. You do not have to remember to save. You do not have to or
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "codegen", "developer-experience"],
-    category: "Developer Experience",
+    category: "Tutorials & use-cases",
     content: `Imagine you just figured out the perfect way to call an API. The URL is right, the headers are correct, the body is perfect. Now you need to write code that does the same thing in your app.
 
 You open a new file and start typing. You check the URL 3 times. You forget one header. You get the JSON body wrong. You spend 10 minutes debugging.
@@ -878,7 +877,7 @@ You tested the request in reqit. You know it works. The generated code is guaran
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "shortcuts", "productivity"],
-    category: "Developer Experience",
+    category: "Tutorials & use-cases",
     content: `Imagine you are playing a video game. Every time you want to jump, you have to click a button on the screen with your mouse. That would be slow and frustrating. Real games let you press a key — W, A, S, D, Space — and things happen instantly.
 
 **Reqit gives you the same power.** Instead of clicking buttons on the screen, you press keys on your keyboard and things happen instantly.
@@ -921,7 +920,7 @@ Every time you take your hand off the keyboard to use the mouse, you lose moment
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "grpc", "protocol"],
-    category: "Protocols & APIs",
+    category: "Tutorials & use-cases",
     content: `Imagine you need to send a package across town. You can use a regular mail truck that stops at every house — or you can use a courier on a motorcycle that goes directly to the destination, fast.
 
 **gRPC is the motorcycle courier.** It is a way for computers to talk to each other that is much faster and more efficient than regular HTTP.
@@ -972,7 +971,7 @@ Reqit supports both, so you can use the right tool for each job.
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "api-design", "openapi"],
-    category: "Developer Experience",
+    category: "Technical deep-dives",
     content: `Before an architect builds a house, they draw a blueprint. The blueprint shows where every room goes, where the doors are, where the windows are. The builders follow the blueprint so they know exactly what to build.
 
 **The API Designer is a blueprint for your API.** You describe every endpoint, every parameter, every response — and then your backend team builds the API to match the blueprint.
@@ -1023,7 +1022,7 @@ If you already have an OpenAPI spec (from Swagger Editor, Stoplight, or any othe
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "cookies", "beginner"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `When you visit a website for the first time, the server might give you a cookie. Not a real cookie — a small piece of data that says "this visitor is Alice." The next time you visit, your browser shows the cookie and the server remembers you.
 
 **Cookies are how servers remember who you are between requests.** Without cookies, you would have to log in on every single page.
@@ -1066,7 +1065,7 @@ Many APIs use cookies for authentication and session management. Without a cooki
     date: "2026-06-15",
     readTime: "3 min read",
     tags: ["explainer", "load-testing", "performance"],
-    category: "Testing & Automation",
+    category: "Tutorials & use-cases",
     content: `Imagine you own a ice cream shop. On a normal day, 10 customers come in. Your one server can handle them easily. But on a hot summer day, 100 people show up at once. Will your shop handle it?
 
 **Load testing is simulating 100 customers to find out before the hot day arrives.**
@@ -1115,7 +1114,7 @@ You do not need to set up a separate tool like k6 or JMeter. You do not need to 
     date: "2026-06-15",
     readTime: "2 min read",
     tags: ["explainer", "privacy", "philosophy"],
-    category: "Developer Experience",
+    category: "Technical deep-dives",
     content: `Imagine a toy that reports everything you do with it back to the toy company. "You pressed button A 5 times. You played with it for 3 hours. You live in this city." That is telemetry, and many apps do it without asking.
 
 **Reqit does the opposite.** Telemetry is completely turned off by default. If you want to help us improve reqit, you can turn it on in Settings. And even then, we show you exactly what data would be sent.
@@ -1168,7 +1167,7 @@ Your data is yours. Always. reqit is designed so you never have to wonder "is th
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "cli", "automation"],
-    category: "Testing & Automation",
+    category: "Tutorials & use-cases",
     content: `Most of the time, you use reqit by clicking buttons. You type a URL, click Send, and see the response. That is the graphical way.
 
 **CLI mode is different.** You open your terminal, type a command like \`reqit run my-collection --env staging\`, and reqit fires all the requests, runs assertions, and prints a report — all without opening a single window.
@@ -1223,7 +1222,7 @@ Reqit CLI runs a **collection** — any collection you already have in your work
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "interceptor", "capture"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you are using a website and you want to see what API calls it makes. Maybe you are debugging why a page is not loading, or you want to reuse an API request in your own app.
 
 **The interceptor is a browser extension that captures every HTTP request your browser makes and sends it to reqit.**
@@ -1268,7 +1267,7 @@ The interceptor only sends requests to your local reqit instance at \`127.0.0.1\
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "ci-cd", "automation", "testing"],
-    category: "Testing & Automation",
+    category: "Tutorials & use-cases",
     content: `When you push code to GitHub, your CI pipeline runs unit tests, builds the app, and deploys it. But what about your API? If the backend returns a 500 or changes a response field, your tests still pass — but your app is broken.
 
 **Reqit collections can run in CI/CD pipelines.** Add one command to your workflow file and every push runs your API tests automatically.
@@ -1328,7 +1327,7 @@ Add \`--report junit\` or \`--report json\` to output test results in standard f
     date: "2026-06-16",
     readTime: "2 min read",
     tags: ["explainer", "themes", "customization"],
-    category: "Developer Experience",
+    category: "Technical deep-dives",
     content: `Have you ever used an app and thought "I wish this was darker" or "I wish the colors were different"? Some apps only give you one look. reqit gives you choices.
 
 **Themes change the colors of reqit — the background, the text, the accents, the buttons. You pick what looks good to you.**
@@ -1372,7 +1371,7 @@ If you pick **System**, reqit watches your OS theme setting. When your computer 
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "vault", "security", "secrets"],
-    category: "Developer Experience",
+    category: "Technical deep-dives",
     content: `Imagine you write your ATM pin on a sticky note and stick it to your monitor. Everyone who walks past can see it. That is what happens when you put API keys in plain text files.
 
 **The Vault is a locked box for your secrets.** You put your API keys, tokens, and passwords inside. The Vault encrypts them. Only you can unlock the box.
@@ -1419,7 +1418,7 @@ The Vault is not a cloud service. Your secrets never leave your computer. It is 
     date: "2026-06-17",
     readTime: "4 min read",
     tags: ["explainer", "api", "fundamentals", "beginner"],
-    category: "API Fundamentals",
+    category: "Philosophy & opinion",
     content: `Imagine you are sitting in a restaurant. You look at the menu, decide what you want, and tell the waiter. The waiter goes to the kitchen, tells the chef, and comes back with your food. You never go into the kitchen yourself. The waiter is the bridge between you and the kitchen.
 
 **An API is that waiter.** It stands between your app (the customer) and a server (the kitchen). Your app sends a request (places an order), and the API delivers a response (brings the food). You do not need to know how the kitchen works. You just need to know how to order from the menu.
@@ -1496,7 +1495,7 @@ An API is just a waiter. Your app tells it what it wants, the API talks to the s
     date: "2026-06-17",
     readTime: "4 min read",
     tags: ["explainer", "http", "methods", "rest"],
-    category: "API Fundamentals",
+    category: "Tutorials & use-cases",
     content: `If you speak to an API, you need to use the right verb. Saying "give me the menu" is different from saying "here is my order." HTTP methods are those verbs.
 
 **Each HTTP method tells the server what you want to do with the data.** There are five main methods you will use every day.
@@ -1613,7 +1612,7 @@ Use the right method, and your API will understand exactly what you want.
     date: "2026-06-17",
     readTime: "3 min read",
     tags: ["explainer", "json", "data", "beginner"],
-    category: "API Fundamentals",
+    category: "Tutorials & use-cases",
     content: `When two people speak different languages, they need a translator. When your app talks to an API, they need a common format for data. That format is **JSON** (JavaScript Object Notation).
 
 **JSON is a way of writing data that both humans and computers can read.** It looks like a list of labels with values.
@@ -1728,7 +1727,7 @@ Reqit also color-codes keys, strings, and numbers so you can scan responses at a
     date: "2026-06-17",
     readTime: "3 min read",
     tags: ["explainer", "openapi", "spec", "contract-testing"],
-    category: "API Fundamentals",
+    category: "Technical deep-dives",
     content: `You wrote an OpenAPI spec. Your API is running on localhost. Now you want reqit to check that every response matches the spec. Here is how to link them.
 
 [video](https://youtu.be/C-HM2YHjrUY)
@@ -1806,7 +1805,7 @@ Without contract testing, you find out about breaking changes when your frontend
     date: "2026-06-25",
     readTime: "18 min read",
     tags: ["overview", "features", "open-source", "api-client", "mcp", "agent-lens"],
-    category: "Core Concepts",
+    category: "Comparisons",
     content: `Every app on your phone talks to an API. When you check the weather, order food, or send a message, your phone sends a request to a server and gets data back. **reqit is a tool that lets you send those requests, test those APIs, and make sure they work — all from your computer.**
 
 Think of it like a Swiss Army knife for APIs. One tool that does everything: send requests, test responses, mock servers, load testing, Git integration, AI integration, and a lot more. And it all runs on your machine. No account. No cloud. No data leaving your laptop.
@@ -2439,7 +2438,7 @@ No account. No login. No cloud. Just open and go.
     date: "2026-06-21",
     readTime: "6 min read",
     tags: ["ai", "diagnostics", "testing", "byok"],
-    category: "Developer Experience",
+    category: "Release narratives",
     content: `You send an API request. The server returns a 422. The body says "validation error" with a cryptic field name. You stare at it, open the docs, grep the codebase, ask a teammate. Ten minutes later you figure out you forgot to send a \`tenant_id\` header.
 
 This happens every day. reqit now has AI that fixes this in 2 seconds.
@@ -2580,7 +2579,7 @@ No account. No login. No cloud. Just your API key and your machine.
     date: "2026-06-25",
     readTime: "15 min read",
     tags: ["mcp", "agent-lens", "ai", "features", "overview", "guide"],
-    category: "Core Concepts",
+    category: "Technical deep-dives",
     content: `Imagine you have a smart friend who can do anything — cook, fix your bike, write essays. But there is one problem: your friend does not know where your kitchen is, what tools you have, or how your bike works. You have to explain everything every single time.
 
 That is what it is like when AI agents try to use APIs today. They are smart, but they have no standard way to discover what tools exist, what those tools do, or how to call them.
@@ -2827,6 +2826,194 @@ No reqit dependency. No Go knowledge needed. The generated code is self-containe
 5. Run Agent Lens to check your tool-readiness score
 
 No account. No login. No cloud. Just open and go.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
+  {
+    slug: "dev-profile",
+    title: "Your backend dev profile, hosted for free",
+    description: "Share your API work as a public portfolio. No server to manage, no hosting cost, no account to create.",
+    date: "2026-06-25",
+    readTime: "6 min read",
+    tags: ["tutorial", "profile", "portfolio"],
+    category: "Tutorials & use-cases",
+    content: `You push code every day. You build APIs, write collections, mock servers, run contract tests. But none of that shows up anywhere. Your GitHub profile shows contribution dots. Your LinkedIn says "Backend Developer at Company." Nobody sees the actual work.
+
+reqit gives you a dev profile. A public page that shows your skills, projects, GitHub activity, and API stats. It lives at \`reqit.vercel.app/yourname\`. No server to rent. No DNS to configure. No monthly fee.
+
+## What the profile shows
+
+Your public profile is a single page with everything a recruiter or co-worker needs to see:
+
+**Hero card** — Your name, avatar, bio, location, company, and social links (GitHub, X, LinkedIn, website, DEV.to).
+
+**Stats strip** — Six numbers at a glance: collections created, requests sent, assertions written, specs authored, mock servers created, and contract pass rate. These come from your actual work in reqit. You do not type them. They update when you publish.
+
+**Projects** — Two types:
+- **Collection projects** — Automatically generated from your reqit collections. Each shows the request count, protocols used, and whether it has an OpenAPI spec. Tap to expand and see endpoints grouped by folder.
+- **User projects** — Your own side projects, open source work, or anything you want to showcase. Each has a name, description, URL, live URL, tech stack tags, and optional screenshot.
+
+**Skills** — Tags you pick from a curated list or type yourself. "Go", "PostgreSQL", "REST API", "Docker", whatever you actually use.
+
+**GitHub activity** — Your recent commits and pinned repos, pulled live from the GitHub API. No manual updates needed.
+
+**Badges** — Earned from reqit milestones. First collection created, 100 requests sent, first mock server, and so on.
+
+## How it works
+
+The profile system has three parts:
+
+\`\`\`
+Desktop App (Go)         Upstash (Redis)        Web Page (Vercel)
+┌─────────────┐         ┌─────────────┐        ┌─────────────┐
+│ DevProfile  │ ──────> │  profile:   │ <───── │ /api/profile│
+│   Panel     │  REST   │  username   │  REST  │ /[username] │
+│             │  API    │  -> JSON    │        │  -> HTML    │
+└─────────────┘         └─────────────┘        └─────────────┘
+\`\`\`
+
+1. **You fill out your profile** in the desktop app (Settings > Dev Profile).
+2. **You click Publish.** The app computes your stats from your collections, builds the project list, and sends the JSON to Upstash via REST API.
+3. **Someone visits your URL.** The web page calls \`/api/profile/yourname\`, which reads from Upstash and returns the JSON. The page renders it as a clean portfolio.
+
+No database on your machine. No server you maintain. Upstash is a hosted Redis with a free tier of 10,000 commands per day. That is plenty for a profile page.
+
+## Step 1: Open the Dev Profile panel
+
+1. Open reqit desktop app.
+2. Click **Settings** in the top bar.
+3. Click **Dev Profile** tab.
+
+You will see a form with your profile fields.
+
+## Step 2: Fill in your basics
+
+- **Username** — This becomes your URL. Pick something short and memorable. \`hal\`, \`jane-dev\`, \`backendguy\`.
+- **Display Name** — Your real name or alias. Shows on the hero card.
+- **Bio** — One or two sentences. "Backend developer. I build APIs and break things."
+- **Avatar URL** — Paste a link to your profile picture. Any image URL works.
+- **Location** — City or "Remote". Shows next to a map pin icon.
+- **Company** — Where you work. Optional.
+
+## Step 3: Add your skills
+
+Type a skill and press Enter (or click +). The dropdown suggests common ones:
+
+\`\`\`
+Go  TypeScript  Python  Rust  Java  C#  Ruby
+REST API  GraphQL  gRPC  WebSocket  MQTT
+Docker  Kubernetes  AWS  PostgreSQL  Redis
+\`\`\`
+
+You can also type custom ones. "gRPC-Gateway", "CockroachDB", "Temporal" — whatever you actually use.
+
+## Step 4: Add social links
+
+Click **+ Add** and pick a platform:
+- GitHub → \`https://github.com/yourname\`
+- X / Twitter → \`https://x.com/yourname\`
+- LinkedIn → \`https://linkedin.com/in/yourname\`
+- Website → \`https://yoursite.com\`
+- DEV.to → \`https://dev.to/yourname\`
+
+## Step 5: Add your projects
+
+Click **+ Add Project** to showcase your work:
+
+- **Project Name** — "Auth Service", "Payment Gateway", "My Side Project"
+- **Description** — What it does
+- **URL** — GitHub repo link
+- **Live URL** — Deployed version (if any)
+- **Tech Stack** — Type and press Enter. "Go", "PostgreSQL", "Redis", "Docker"
+- **Screenshot URL** — Optional image link
+
+Each project card collapses to a summary. Click it to expand and edit. Click **Done** when you are happy, or **Cancel** to discard changes.
+
+## Step 6: Link Upstash (required for publishing)
+
+reqit needs somewhere to store your profile. Upstash Redis is free:
+
+1. Go to [upstash.com](https://upstash.com) and sign up (free tier, no credit card).
+2. Click **Create Database** → pick a name → select **Global** region → click **Create**.
+3. Copy the **UPSTASH_REDIS_REST_URL** and **UPSTASH_REDIS_REST_TOKEN**.
+4. In reqit, click **Configure Upstash** in the Dev Profile panel.
+5. Paste both values and click **Save**.
+
+Your credentials are stored locally at \`%APPDATA%/reqit/upstash.json\` (Windows) or \`~/.config/reqit/upstash.json\` (Linux/Mac). Never sent to any server except Upstash.
+
+## Step 7: Publish
+
+Click **Publish Profile**. The app:
+
+1. Scans your collections and computes stats.
+2. Builds your project list (collection projects + user projects).
+3. Sends everything to Upstash as a single JSON blob.
+4. Your profile goes live instantly.
+
+Visit \`reqit.vercel.app/yourname\` to see it.
+
+## The public page
+
+Your profile page is designed for mobile-first viewing:
+
+- **No navbar** — Clean, focused view. Just your profile.
+- **Horizontal scroll tabs** — Skills, Projects, GitHub, Badges. Swipe to navigate.
+- **Expandable projects** — Tap a collection project to see its endpoints. Tap again to collapse.
+- **GitHub activity** — Pinned repos and recent commits, pulled live.
+- **Stats strip** — Six numbers, always visible, no scrolling needed.
+
+## The public REST API
+
+Your profile is also available as a JSON API:
+
+\`\`\`
+GET https://reqit.vercel.app/api/v1/profile/yourname
+
+{
+  "ok": true,
+  "data": {
+    "username": "yourname",
+    "displayName": "Jane Dev",
+    "stats": { "collectionsCreated": 12, "requestsSent": 347 },
+    "projects": [...],
+    "skills": ["Go", "PostgreSQL", "Docker"]
+  },
+  "meta": { "source": "reqit", "version": "1.0" }
+}
+\`\`\`
+
+Use this to build custom pages, widgets, or integrations.
+
+## Keeping it updated
+
+Your stats update every time you publish. The profile does not auto-update — you click **Publish** when you want fresh data. This is intentional:
+
+- You control what is public.
+- You do not accidentally leak a work-in-progress collection.
+- You can tweak your bio, add a project, then publish.
+
+Your GitHub activity updates live on page load (no publish needed). Commits and pinned repos come directly from the GitHub API.
+
+## Common questions
+
+**Do I need to keep reqit open?**
+No. Once published, your profile lives in Upstash. The web page reads from Upstash directly. reqit does not need to be running.
+
+**What if I stop using Upstash?**
+Your profile stays in Redis until you delete it. If you exceed the free tier (10K commands/day), Upstash pauses writes but your profile is still readable.
+
+**Can I have multiple profiles?**
+One per Upstash database. If you want separate profiles (personal, work), create two Upstash databases.
+
+**Is my data private?**
+Your profile is public only if you toggle "Public" in the panel. Your Upstash credentials never leave your machine.
+
+**What about the URL?**
+reqit.vercel.app is the web frontend. Your profile is at \`reqit.vercel.app/yourname\`. If you own a custom domain, you can point it to Vercel.
+
+---
+
+Your API work deserves to be seen. Fill out your profile, publish it, and share the link. It takes five minutes.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
