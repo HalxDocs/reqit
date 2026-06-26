@@ -395,13 +395,13 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             <span className="text-11 font-normal opacity-70 bg-white/15 rounded px-1.5 py-0.5">International</span>
           </a>
           <a
-            href="https://myhappr.xyz/halxdocs"
+            href="https://myhappr.com/halxdocs"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 h-[36px] px-4 text-12 font-bold text-text bg-card border border-border hover:bg-surface rounded-lg transition-all hover:scale-[1.02] justify-center"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
-            myhappr.xyz
+            myhappr.com
             <span className="text-11 font-normal opacity-70 bg-border/50 rounded px-1.5 py-0.5">Africa</span>
           </a>
         </div>
