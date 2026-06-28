@@ -339,7 +339,7 @@ export function PublicProfilePage({ username, onBack }: Props) {
         {/* Footer */}
         <div className="mt-8 pt-5 border-t border-border text-center">
           <div className="text-[11px] text-zinc-600">
-            Built with <span className="font-bold text-cyan">reqit</span> · <a href="https://reqit.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-cyan transition-colors">reqit.vercel.app</a>
+            Built with <span className="font-bold text-cyan">reqit</span> · <a href="https://reqit.pxxl.dev" target="_blank" rel="noopener noreferrer" className="hover:text-cyan transition-colors">reqit.pxxl.dev</a>
           </div>
         </div>
       </div>

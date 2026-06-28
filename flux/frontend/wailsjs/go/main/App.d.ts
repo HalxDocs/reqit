@@ -57,6 +57,8 @@ export function ConfigureVault(arg1:string):Promise<void>;
 
 export function ConnectSocket(arg1:string,arg2:string):Promise<void>;
 
+export function ConnectSocketIO(arg1:models.SocketIOConnectRequest):Promise<void>;
+
 export function CreateBranch(arg1:string):Promise<void>;
 
 export function CreateCollection(arg1:string):Promise<models.Collection>;
@@ -95,7 +97,11 @@ export function DiagnoseWithAI(arg1:models.RequestPayload,arg2:models.ResponseRe
 
 export function DisconnectSocket():Promise<void>;
 
+export function DisconnectSocketIO():Promise<void>;
+
 export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<void>;
+
+export function EmitSocketIOEvent(arg1:string,arg2:any):Promise<void>;
 
 export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;
 
@@ -208,6 +214,8 @@ export function GetRecipeCategories():Promise<Array<string>>;
 export function GetRecipes():Promise<string>;
 
 export function GetSSOProviders():Promise<string>;
+
+export function GetSocketIOState():Promise<models.SocketState>;
 
 export function GetSocketState():Promise<models.SocketState>;
 
@@ -374,6 +382,8 @@ export function SaveUpstashConfig(arg1:string,arg2:string):Promise<void>;
 export function SendNotification(arg1:string,arg2:string):Promise<void>;
 
 export function SendRequest(arg1:models.RequestPayload):Promise<models.ResponseResult>;
+
+export function SendSocketIOMessage(arg1:string):Promise<void>;
 
 export function SendSocketMessage(arg1:string):Promise<void>;
 

@@ -40,6 +40,20 @@ curl -LO https://github.com/HalxDocs/reqit/releases/latest/download/reqit-window
 | macOS    | [reqit-macos-universal.zip](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-macos-universal.zip) |
 | Linux    | [reqit-linux-amd64](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64) |
 
+### Linux dependencies
+
+reqit requires WebKit2GTK to render its UI.
+
+**Ubuntu 24.04+** (default):
+```bash
+sudo apt install libwebkit2gtk-4.1-0
+```
+
+**Ubuntu 22.04 and earlier** (legacy):
+```bash
+sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
+```
+
 ---
 
 ## Quick start

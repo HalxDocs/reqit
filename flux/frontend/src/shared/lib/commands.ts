@@ -1,7 +1,10 @@
+export type CommandScope = "global" | "responseTree" | "sidebar" | "envEditor";
+
 export interface Command {
   id: string;
   label: string;
   category: string;
+  scope: CommandScope;
   defaultKeys: string[];
   userKeys?: string[];
   action: () => void;
@@ -9,6 +12,7 @@ export interface Command {
 
 let commands: Command[] = [];
 let keyBindings: Map<string, string> = new Map();
+let activeScope: CommandScope = "global";
 
 const STORAGE_KEY = "flux:keybindings";
 
@@ -65,8 +69,20 @@ export function getCommands(): Command[] {
   return commands;
 }
 
+export function getCommandsByScope(scope: CommandScope): Command[] {
+  return commands.filter((c) => c.scope === scope);
+}
+
 export function getCommand(id: string): Command | undefined {
   return commands.find((c) => c.id === id);
+}
+
+export function setActiveScope(scope: CommandScope): void {
+  activeScope = scope;
+}
+
+export function getActiveScope(): CommandScope {
+  return activeScope;
 }
 
 export function setUserKeys(id: string, keys: string[]) {
@@ -104,15 +120,16 @@ export function handleKeyEvent(e: KeyboardEvent): boolean {
   if (cmdId) {
     const cmd = commands.find((c) => c.id === cmdId);
     if (cmd) {
-      e.preventDefault();
-      e.stopPropagation();
-      cmd.action();
-      return true;
+      if (cmd.scope === "global" || cmd.scope === activeScope) {
+        e.preventDefault();
+        e.stopPropagation();
+        cmd.action();
+        return true;
+      }
     }
   }
   return false;
 }
 
-// Initialize with stored overrides
 loadOverrides();
 rebuildBindings();

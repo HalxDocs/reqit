@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getCommands, type Command } from "@/shared/lib/commands";
+import { getCommands, getActiveScope, type Command } from "@/shared/lib/commands";
 import { cn } from "@/shared/lib/cn";
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -11,8 +11,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return commands;
-    return commands.filter(
+    const scope = getActiveScope();
+    const scoped = commands.filter(
+      (c) => c.scope === "global" || c.scope === scope,
+    );
+    if (!q) return scoped;
+    return scoped.filter(
       (c) =>
         c.label.toLowerCase().includes(q) ||
         c.category.toLowerCase().includes(q) ||
@@ -89,6 +93,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 {cmd.category}
               </span>
               <span className="flex-1 text-12 text-text truncate">{cmd.label}</span>
+              {cmd.scope !== "global" && (
+                <span className="text-9 text-tertiary uppercase tracking-wider w-[60px] shrink-0 text-right">
+                  {cmd.scope}
+                </span>
+              )}
               <span className="text-10 text-tertiary font-mono shrink-0">
                 {formatKeys(getKeyLabels(cmd))}
               </span>

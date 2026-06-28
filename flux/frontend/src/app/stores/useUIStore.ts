@@ -63,8 +63,8 @@ type UIStore = {
   responseSearch: string;
   setResponseSearch: (q: string) => void;
 
-  responseBodyView: "pretty" | "raw" | "hex";
-  setResponseBodyView: (v: "pretty" | "raw" | "hex") => void;
+  responseBodyView: "pretty" | "raw" | "hex" | "tree";
+  setResponseBodyView: (v: "pretty" | "raw" | "hex" | "tree") => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({

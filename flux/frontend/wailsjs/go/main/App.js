@@ -82,6 +82,10 @@ export function ConnectSocket(arg1, arg2) {
   return window['go']['main']['App']['ConnectSocket'](arg1, arg2);
 }
 
+export function ConnectSocketIO(arg1) {
+  return window['go']['main']['App']['ConnectSocketIO'](arg1);
+}
+
 export function CreateBranch(arg1) {
   return window['go']['main']['App']['CreateBranch'](arg1);
 }
@@ -158,8 +162,16 @@ export function DisconnectSocket() {
   return window['go']['main']['App']['DisconnectSocket']();
 }
 
+export function DisconnectSocketIO() {
+  return window['go']['main']['App']['DisconnectSocketIO']();
+}
+
 export function DownloadBinaryResponse(arg1, arg2) {
   return window['go']['main']['App']['DownloadBinaryResponse'](arg1, arg2);
+}
+
+export function EmitSocketIOEvent(arg1, arg2) {
+  return window['go']['main']['App']['EmitSocketIOEvent'](arg1, arg2);
 }
 
 export function ExportCollectionMarkdown(arg1, arg2) {
@@ -384,6 +396,10 @@ export function GetRecipes() {
 
 export function GetSSOProviders() {
   return window['go']['main']['App']['GetSSOProviders']();
+}
+
+export function GetSocketIOState() {
+  return window['go']['main']['App']['GetSocketIOState']();
 }
 
 export function GetSocketState() {
@@ -716,6 +732,10 @@ export function SendNotification(arg1, arg2) {
 
 export function SendRequest(arg1) {
   return window['go']['main']['App']['SendRequest'](arg1);
+}
+
+export function SendSocketIOMessage(arg1) {
+  return window['go']['main']['App']['SendSocketIOMessage'](arg1);
 }
 
 export function SendSocketMessage(arg1) {

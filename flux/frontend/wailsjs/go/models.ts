@@ -1460,6 +1460,22 @@ export namespace models {
 	
 	
 	
+	export class SocketIOConnectRequest {
+	    url: string;
+	    cookies: string;
+	    headers: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new SocketIOConnectRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.cookies = source["cookies"];
+	        this.headers = source["headers"];
+	    }
+	}
 	export class SocketMessage {
 	    timestamp: number;
 	    direction: string;

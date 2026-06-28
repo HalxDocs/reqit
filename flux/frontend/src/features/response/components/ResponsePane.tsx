@@ -114,7 +114,7 @@ export function ResponsePane() {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div data-scope="responseTree" className="flex-1 min-h-0 flex flex-col">
         {isLoading && <LoadingState />}
 
         {!isLoading && !response && (

@@ -350,7 +350,7 @@ type GRPCResponse struct {
 	Headers    map[string]string `json:"headers"`
 }
 
-// --- WebSocket / SSE ---
+// --- WebSocket / SSE / Socket.IO ---
 
 type SocketMessage struct {
 	Timestamp int64  `json:"timestamp"`
@@ -360,7 +360,13 @@ type SocketMessage struct {
 
 type SocketState struct {
 	Status   string          `json:"status"`   // "disconnected" | "connecting" | "connected" | "error"
-	Protocol string          `json:"protocol"` // "ws" | "sse"
+	Protocol string          `json:"protocol"` // "ws" | "sse" | "socketio"
 	URL      string          `json:"url"`
 	Messages []SocketMessage `json:"messages"`
+}
+
+type SocketIOConnectRequest struct {
+	URL     string            `json:"url"`
+	Cookies string            `json:"cookies"`
+	Headers map[string]string `json:"headers"`
 }

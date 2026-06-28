@@ -1,10 +1,11 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import { Download } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
 import { EditorView } from "@codemirror/view";
 import { CopyButton } from "@/features/response/components/CopyButton";
+import { JsonTreeView } from "@/features/response/components/JsonTreeView";
 import { tryPretty, detectBodyKind } from "@/shared/lib/format";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -37,6 +38,15 @@ export function BodyView({
   const isImage = kind2 === "image";
   const isBinary = kind2 === "binary" && kind !== "json" && kind !== "xml" && kind !== "html";
 
+  const parsedJson = useMemo(() => {
+    if (bodyView !== "tree" || kind !== "json") return null;
+    try {
+      return JSON.parse(body);
+    } catch {
+      return null;
+    }
+  }, [body, bodyView, kind]);
+
   let value: string;
   if (isImage || isBinary) {
     value = bodyView === "hex" ? toHex(body) : bodyView === "raw" ? body : body;
@@ -47,7 +57,7 @@ export function BodyView({
 
   const cmExtensions = useMemo(() => {
     const base = [fluxCmTheme, EditorView.lineWrapping];
-    if (bodyView === "hex" || isImage) return base;
+    if (bodyView === "hex" || isImage || bodyView === "tree") return base;
     if (kind === "json") return [json(), ...base];
     if (kind === "xml" || kind === "html") return [xml(), ...base];
     return base;
@@ -61,12 +71,56 @@ export function BodyView({
 
   const showViewToggle = !isImage;
 
+  const canTree = kind === "json";
+
+  const cycleView = useCallback(() => {
+    if (canTree) {
+      const order: Array<"pretty" | "raw" | "tree"> = ["tree", "pretty", "raw"];
+      const idx = order.indexOf(bodyView as "pretty" | "raw" | "tree");
+      setBodyView(order[(idx + 1) % order.length]);
+    } else {
+      setBodyView(bodyView === "pretty" ? "raw" : "pretty");
+    }
+  }, [bodyView, setBodyView, canTree]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const parts: string[] = [];
+      if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
+      if (e.shiftKey) parts.push("shift");
+      const key = e.key.toLowerCase();
+      if (key === "control" || key === "alt" || key === "shift" || key === "meta") return;
+      parts.push(key);
+      const combo = parts.join("+");
+      if (combo === "meta+shift+r" || combo === "ctrl+shift+r") {
+        e.preventDefault();
+        cycleView();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [cycleView]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="h-[32px] px-3 flex items-center justify-between border-b border-border shrink-0">
         <div className="flex items-center gap-1">
           {showViewToggle && (
             <>
+              {canTree && (
+                <button
+                  type="button"
+                  onClick={() => setBodyView("tree")}
+                  className={cn(
+                    "h-[20px] px-2 text-11 rounded-sm transition-colors",
+                    bodyView === "tree"
+                      ? "bg-card text-text"
+                      : "text-subtext hover:text-text",
+                  )}
+                >
+                  Tree
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setBodyView("pretty")}
@@ -148,6 +202,10 @@ export function BodyView({
               alt="Response image"
               className="max-w-full max-h-full object-contain rounded-md"
             />
+          </div>
+        ) : bodyView === "tree" && parsedJson !== null ? (
+          <div className="p-2">
+            <JsonTreeView data={parsedJson} />
           </div>
         ) : body ? (
           <CodeMirror

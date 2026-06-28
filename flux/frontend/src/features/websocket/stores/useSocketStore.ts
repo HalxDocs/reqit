@@ -4,19 +4,27 @@ import {
   DisconnectSocket,
   GetSocketState,
   SendSocketMessage,
+  ConnectSocketIO,
+  DisconnectSocketIO,
+  GetSocketIOState,
+  SendSocketIOMessage,
+  EmitSocketIOEvent,
 } from "../../../../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../../../../wailsjs/runtime";
 import type { models } from "../../../../wailsjs/go/models";
 
+type SocketProtocol = "ws" | "sse" | "socketio";
+
 type SocketStore = {
   status: string;
-  protocol: string;
+  protocol: SocketProtocol;
   url: string;
   messages: models.SocketMessage[];
 
-  connect: (url: string, protocol: string) => Promise<void>;
+  connect: (url: string, protocol: SocketProtocol, opts?: { cookies?: string; headers?: Record<string, string> }) => Promise<void>;
   disconnect: () => Promise<void>;
   send: (msg: string) => Promise<void>;
+  emitEvent: (event: string, data: any) => Promise<void>;
   refresh: () => Promise<void>;
   cleanup: () => void;
 };
@@ -43,10 +51,18 @@ export const useSocketStore = create<SocketStore>((set, get) => {
     url: "",
     messages: [],
 
-    connect: async (url, protocol) => {
+    connect: async (url, protocol, opts) => {
       set({ status: "connecting", url, protocol, messages: [] });
       try {
-        await ConnectSocket(url, protocol);
+        if (protocol === "socketio") {
+          await ConnectSocketIO({
+            url,
+            cookies: opts?.cookies ?? "",
+            headers: opts?.headers ?? {},
+          } as models.SocketIOConnectRequest);
+        } else {
+          await ConnectSocket(url, protocol);
+        }
         set({ status: "connected" });
       } catch (e) {
         set({ status: "error" });
@@ -56,7 +72,12 @@ export const useSocketStore = create<SocketStore>((set, get) => {
 
     disconnect: async () => {
       try {
-        await DisconnectSocket();
+        const proto = get().protocol;
+        if (proto === "socketio") {
+          await DisconnectSocketIO();
+        } else {
+          await DisconnectSocket();
+        }
       } catch {
         // ignore if already disconnected
       }
@@ -65,18 +86,39 @@ export const useSocketStore = create<SocketStore>((set, get) => {
 
     send: async (msg) => {
       try {
-        await SendSocketMessage(msg);
+        const proto = get().protocol;
+        if (proto === "socketio") {
+          await SendSocketIOMessage(msg);
+        } else {
+          await SendSocketMessage(msg);
+        }
       } catch {
         // ignore send failures
       }
     },
 
+    emitEvent: async (event, data) => {
+      try {
+        if (get().protocol === "socketio") {
+          await EmitSocketIOEvent(event, data);
+        }
+      } catch {
+        // ignore
+      }
+    },
+
     refresh: async () => {
       try {
-        const state = await GetSocketState();
+        const proto = get().protocol;
+        let state: models.SocketState;
+        if (proto === "socketio") {
+          state = await GetSocketIOState();
+        } else {
+          state = await GetSocketState();
+        }
         set({
           status: state.status,
-          protocol: state.protocol,
+          protocol: (state.protocol as SocketProtocol) || proto,
           url: state.url,
           messages: state.messages ?? [],
         });

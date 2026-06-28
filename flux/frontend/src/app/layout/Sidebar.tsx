@@ -87,7 +87,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   }, []);
 
   return (
-    <aside className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
+    <aside data-scope="sidebar" className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
       <button
         type="button"
         onClick={onGoHome}

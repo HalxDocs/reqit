@@ -58,6 +58,7 @@ import (
 	"flux/internal/storage"
 	"flux/internal/runner"
 	"flux/internal/sock"
+	"flux/internal/socketio"
 	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
 	traypkg "flux/internal/tray"
@@ -103,6 +104,7 @@ type App struct {
 	inflight context.CancelFunc
 
 	sock       *sock.Socket
+	sockio     *socketio.Client
 	mqttClient *mqtt.Client
 }
 
@@ -111,6 +113,7 @@ func NewApp() *App {
 		workspaces: workspaces.NewStore(),
 		profile:    profile.NewStore(),
 		sock:       sock.New(),
+		sockio:     socketio.NewClient(),
 		tray:       traypkg.New(),
 	}
 }
@@ -197,6 +200,14 @@ func (a *App) startup(ctx context.Context) {
 		runtime.EventsEmit(a.ctx, "socket:message", msg)
 	})
 	a.sock.OnStatus(func(status string) {
+		runtime.EventsEmit(a.ctx, "socket:status", status)
+	})
+
+	// Wire Socket.IO event callbacks.
+	a.sockio.OnEvent(func(msg models.SocketMessage) {
+		runtime.EventsEmit(a.ctx, "socket:message", msg)
+	})
+	a.sockio.OnStatus(func(status string) {
 		runtime.EventsEmit(a.ctx, "socket:status", status)
 	})
 }
@@ -383,6 +394,29 @@ func (a *App) DisconnectSocket() error {
 
 func (a *App) GetSocketState() models.SocketState {
 	return a.sock.State()
+}
+
+// --- Socket.IO ---
+
+func (a *App) ConnectSocketIO(req models.SocketIOConnectRequest) error {
+	return a.sockio.Connect(req.URL, req.Cookies, req.Headers)
+}
+
+func (a *App) EmitSocketIOEvent(event string, data interface{}) error {
+	return a.sockio.Emit(event, data)
+}
+
+func (a *App) SendSocketIOMessage(msg string) error {
+	return a.sockio.SendRaw(msg)
+}
+
+func (a *App) DisconnectSocketIO() error {
+	a.sockio.Disconnect()
+	return nil
+}
+
+func (a *App) GetSocketIOState() models.SocketState {
+	return a.sockio.State()
 }
 
 // mountWorkspace reinitializes the scoped stores with a new data directory.
@@ -2929,7 +2963,7 @@ func (a *App) PublishDevProfile() (string, error) {
 	if err := profile.PublishToUpstash(pub); err != nil {
 		return "", fmt.Errorf("publish profile: %w", err)
 	}
-	return fmt.Sprintf("https://reqit.vercel.app/%s", pub.Username), nil
+	return fmt.Sprintf("https://reqit.pxxl.dev/%s", pub.Username), nil
 }
 
 // SaveUpstashConfig stores the Upstash API credentials locally.

@@ -83,8 +83,8 @@ wails build -platform windows/amd64 -o reqit
 # macOS (universal — Intel + Apple Silicon)
 wails build -platform darwin/universal -o reqit
 
-# Linux
-wails build -platform linux/amd64 -o reqit
+# Linux (requires libwebkit2gtk-4.1-dev on Ubuntu 24.04+)
+wails build -platform linux/amd64 -o reqit -tags webkit2_41
 ```
 
 ---
