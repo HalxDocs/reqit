@@ -1,11 +1,18 @@
 # Build artifacts
 flux/flux.exe
 flux/flux
+flux/reqit.exe
+flux/reqit
 flux/build/bin/
 flux/frontend/dist/
 flux/frontend/dist-web/
 flux/frontend/package.json.md5
 index.html
+*.exe
+*.zip
+*.dll
+*.so
+*.dylib
 
 # Dependencies
 node_modules/
