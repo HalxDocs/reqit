@@ -74,6 +74,7 @@ sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
 |---------|-------------|
 | HTTP client | GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS with full response inspection |
 | WebSocket / SSE | Real-time bidirectional messaging with message log |
+| Socket.IO | Engine.IO v4 client with event emission, cookie/header passthrough |
 | GraphQL | Queries, mutations, subscriptions with introspection |
 | gRPC | gRPC-web-text unary and streaming via HTTP POST |
 | SOAP | SOAP 1.1/1.2 envelope builder with WSDL parsing |
@@ -160,8 +161,14 @@ sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
 |---------|-------------|
 | Multi-workspace | Create, switch, rename, relocate workspaces with file watcher |
 | Theme system | Dark/light with system preference auto-detect |
-| Command palette | Cmd+K searchable actions |
-| Keyboard shortcuts | Cmd+Enter (send), Cmd+S (save), Cmd+Z (undo), + more |
+| Command palette | Cmd+K searchable actions with scoped context filtering |
+| Keyboard shortcuts | Every action reachable by keyboard — 45+ registered commands across global, response, sidebar, and env scopes |
+| Response formatting | Collapsible JSON tree view, Pretty/Raw/Tree toggle (Ctrl+Shift+R), lazy expansion for large payloads |
+| Dev profiles | Publish your developer profile to `reqit.pxxl.dev/:username` with skills, projects, badges, and GitHub activity |
+| reqit AI | BYOK error intelligence — paste an error, get diagnosis and generated assertions (requires your own API key) |
+| MCP Server | Model Context Protocol server for AI agent integration — collections, environments, history, mock server |
+| Agent Lens | Agent-readiness mapper, linter, and export — score your API collections for AI consumption |
+| Schema drift detection | Snapshot OpenAPI specs and detect breaking changes between versions |
 | Auto-updater | GitHub release checking with one-click install |
 | Plugin system | Directory-based plugin discovery and install |
 | System tray | Background execution with notifications |
@@ -203,6 +210,7 @@ Collections commit to Git like any other file. No cloud sync. No proprietary for
 | Mock server | Yes | Yes | No |
 | OpenAPI import/export | Yes | Yes | Partial |
 | WebSocket client | Yes | Yes | Yes |
+| Socket.IO client | Yes | No | No |
 | GraphQL client | Yes | Yes | No |
 | gRPC client | Yes | No | No |
 | SOAP client | Yes | Yes | No |
@@ -215,6 +223,11 @@ Collections commit to Git like any other file. No cloud sync. No proprietary for
 | Self-hosted sync | Yes | No | No |
 | Visual git merge | Yes | No | No |
 | CLI / CI mode | Yes | No | Yes |
+| Keyboard-first UX | Yes (scoped) | Partial | No |
+| JSON tree view | Yes | Yes | No |
+| Dev profiles | Yes (public) | No | No |
+| MCP server | Yes | No | No |
+| Agent readiness | Yes | No | No |
 | Price | Free / OSS | Free+$12/m | Free / OSS |
 
 ---

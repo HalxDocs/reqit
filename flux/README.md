@@ -20,22 +20,26 @@ flux/
 │       └── icon.ico          # Windows taskbar / exe icon (multi-size)
 ├── frontend/
 │   ├── src/
-│   │   ├── screens/          # Full-page views (HomeScreen, etc.)
-│   │   ├── components/       # UI components (RequestPanel, ResponsePane, Sidebar…)
-│   │   ├── stores/           # Zustand state stores
-│   │   ├── hooks/            # React hooks
-│   │   ├── lib/              # Utilities (codegen, curl parser, download…)
-│   │   └── types/            # TypeScript types
+│   │   ├── app/              # Layout, stores, routing
+│   │   ├── features/         # Feature modules (request, response, mock, env, profile, blog, websocket…)
+│   │   ├── shared/           # Shared hooks, components, lib (commands, keyboard shortcuts)
+│   │   └── web/              # Web-only entry point (WebApp, main-web.tsx)
 │   └── wailsjs/              # Auto-generated Wails JS bindings (do not edit)
 └── internal/
+    ├── agentlens/            # Agent-readiness mapper, linter, and export
+    ├── ai/                   # reqit AI — BYOK error intelligence and assertion generation
     ├── collections/          # CRUD for collections and saved requests
     ├── contract/             # OpenAPI spec loading and response validation
     ├── cookies/              # Persistent per-workspace cookie jar
     ├── environments/         # Environment variable sets
     ├── history/              # Request history log
+    ├── mcp/                  # Model Context Protocol server for AI agents
     ├── mock/                 # Local mock HTTP server
     ├── models/               # Shared Go structs (request, response, collection…)
+    ├── profile/              # Dev profile store + Upstash publish/fetch
     ├── requester/            # HTTP request execution engine
+    ├── schema/               # OpenAPI snapshot and drift detection
+    ├── socketio/             # Socket.IO / Engine.IO v4 client
     ├── updater/              # GitHub release version checker
     └── workspaces/           # Workspace metadata management
 ```
@@ -86,6 +90,8 @@ wails build -platform darwin/universal -o reqit
 # Linux (requires libwebkit2gtk-4.1-dev on Ubuntu 24.04+)
 wails build -platform linux/amd64 -o reqit -tags webkit2_41
 ```
+
+> **Note:** The `-tags webkit2_41` flag is required for WebKit2GTK 4.1 on Ubuntu 24.04+. On older Ubuntu (22.04), install the compatibility libs and omit the tag.
 
 ---
 
