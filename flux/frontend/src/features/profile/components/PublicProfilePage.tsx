@@ -6,15 +6,23 @@ async function fetchProfileFromRepo(username: string): Promise<PublicProfileData
   const upstashToken = import.meta.env.VITE_UPSTASH_TOKEN as string | undefined;
 
   if (!upstashUrl || !upstashToken) {
-    throw new Error("Profile service not configured. Set VITE_UPSTASH_URL and VITE_UPSTASH_TOKEN.");
+    throw new Error("Profile service not configured — VITE_UPSTASH_URL and VITE_UPSTASH_TOKEN are not set in this build. Check your pxxl dashboard env vars.");
   }
 
-  const r = await fetch(`${upstashUrl}/get/profile:${username}`, {
-    headers: { Authorization: `Bearer ${upstashToken}` },
-  });
-  if (!r.ok) throw new Error("Profile not found");
+  let r: Response;
+  try {
+    r = await fetch(`${upstashUrl}/get/profile:${username}`, {
+      headers: { Authorization: `Bearer ${upstashToken}` },
+    });
+  } catch (e: any) {
+    throw new Error(`Network error fetching profile: ${e?.message || e}`);
+  }
+  if (!r.ok) {
+    const body = await r.text().catch(() => "");
+    throw new Error(`Profile not found (Upstash ${r.status}): ${body.slice(0, 200)}`);
+  }
   const data = await r.json();
-  if (!data.result) throw new Error("Profile not found");
+  if (!data.result) throw new Error("Profile not found — no data for this username in Upstash. Publish your profile from Settings > Profile in the reqit app.");
   const parsed = JSON.parse(data.result);
 
   let githubActivity: any[] = [];

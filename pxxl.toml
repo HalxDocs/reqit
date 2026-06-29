@@ -1,4 +1,4 @@
 name = "reqit"
 framework = "vite"
-buildCommand = "npm install --include=dev --prefix flux/frontend && npm run build:web --prefix flux/frontend"
+buildCommand = "npm install --include=dev --prefix flux/frontend && npm run build:web --prefix flux/frontend && cp flux/frontend/dist-web/web.html flux/frontend/dist-web/index.html"
 outputDirectory = "flux/frontend/dist-web"
