@@ -84,6 +84,7 @@ export function PublicProfilePage({ username, onBack }: Props) {
   const [commitsError, setCommitsError] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "projects" | "activity">("overview");
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
   useEffect(() => { loadProfile(); }, [username]);
   useEffect(() => { if (profile?.githubUsername) fetchGitHubCommits(profile.githubUsername); }, [profile?.githubUsername]);
@@ -146,33 +147,40 @@ export function PublicProfilePage({ username, onBack }: Props) {
     <div className="min-h-screen bg-bg">
       <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-cyan/5 via-card to-purple-500/5 mb-5">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-cyan/5 via-card to-purple-500/5 mb-4">
           <div className="absolute top-0 right-0 w-32 h-32 bg-cyan/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-          <div className="relative px-5 sm:px-8 py-6 sm:py-8">
-            <button onClick={onBack} className="flex items-center gap-1.5 text-subtext hover:text-text transition-colors mb-4 text-xs"><ArrowLeft size={14} /><span>Back</span></button>
-            <div className="flex items-start gap-4 sm:gap-6">
+          <div className="relative px-4 sm:px-8 py-5 sm:py-8">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-subtext hover:text-text transition-colors mb-3 text-xs"><ArrowLeft size={14} /><span>Back</span></button>
+            <div className="flex items-start gap-3 sm:gap-6">
               {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={displayName} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-border shadow-lg shrink-0" />
+                <img src={profile.avatarUrl} alt={displayName} className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover border-2 border-border shadow-lg shrink-0" />
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-cyan/20 to-purple-500/20 border-2 border-cyan/30 flex items-center justify-center text-cyan text-2xl sm:text-3xl font-bold shadow-lg shrink-0">{displayName[0]?.toUpperCase() || "?"}</div>
+                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-gradient-to-br from-cyan/20 to-purple-500/20 border-2 border-cyan/30 flex items-center justify-center text-cyan text-xl sm:text-3xl font-bold shadow-lg shrink-0">{displayName[0]?.toUpperCase() || "?"}</div>
               )}
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-text leading-tight">{displayName}</h1>
-                <div className="text-xs sm:text-sm text-subtext font-mono mt-0.5">@{profile.username}</div>
-                {profile.bio && <p className="text-xs sm:text-sm text-text/70 mt-2 leading-relaxed max-w-lg">{profile.bio}</p>}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-subtext">
+                <h1 className="text-lg sm:text-2xl font-bold text-text leading-tight">{displayName}</h1>
+                <div className="text-[11px] sm:text-sm text-subtext font-mono mt-0.5">@{profile.username}</div>
+                {profile.bio && (
+                  <div className="mt-2">
+                    <p className={`text-xs sm:text-sm text-text/70 leading-relaxed ${!bioExpanded ? "line-clamp-3" : ""}`}>{profile.bio}</p>
+                    {profile.bio.length > 120 && (
+                      <button onClick={() => setBioExpanded(!bioExpanded)} className="text-[11px] text-cyan hover:text-cyan-hover mt-1 transition-colors">{bioExpanded ? "Show less" : "Show more"}</button>
+                    )}
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[11px] sm:text-xs text-subtext">
                   {profile.location && <span className="flex items-center gap-1"><MapPin size={11} />{profile.location}</span>}
                   {profile.company && <span className="flex items-center gap-1"><Building size={11} />{profile.company}</span>}
                 </div>
               </div>
             </div>
             {socialLinks.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-4 pt-4 border-t border-border/50">
+              <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/50">
                 {socialLinks.map((sl) => { const meta = SOCIAL_META[sl.type]; if (!meta) return null; const Icon = meta.icon; return (
-                  <a key={sl.type} href={sl.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] sm:text-xs rounded-full border ${meta.bg} hover:opacity-80 transition-all`}><Icon size={12} className={meta.color} /><span className="text-text">{meta.label}</span></a>
+                  <a key={sl.type} href={sl.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1.5 px-2 py-1.5 text-[10px] sm:text-xs rounded-full border ${meta.bg} hover:opacity-80 transition-all`}><Icon size={11} className={meta.color} /><span className="text-text">{meta.label}</span></a>
                 ); })}
                 {links.map((link, i) => (
-                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] sm:text-xs rounded-full border border-border bg-card/50 hover:border-cyan/30 transition-all"><ExternalLink size={10} className="text-subtext" /><span className="text-text">{link.label || link.url}</span></a>
+                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] sm:text-xs rounded-full border border-border bg-card/50 hover:border-cyan/30 transition-all"><ExternalLink size={9} className="text-subtext" /><span className="text-text">{link.label || link.url}</span></a>
                 ))}
               </div>
             )}
@@ -180,7 +188,7 @@ export function PublicProfilePage({ username, onBack }: Props) {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
           {[
             { icon: <Folder size={16} />, label: "Collections", value: profile.stats?.collectionsCreated ?? 0, color: "text-cyan", bg: "bg-cyan/5 border-cyan/15" },
             { icon: <Send size={16} />, label: "Requests", value: profile.stats?.requestsSent ?? 0, color: "text-blue-400", bg: "bg-blue-400/5 border-blue-400/15" },
@@ -195,7 +203,7 @@ export function PublicProfilePage({ username, onBack }: Props) {
         </div>
 
         {/* Mobile-first Tabs — horizontal scroll pills */}
-        <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
           {([
             { id: "overview" as const, label: "Overview", icon: Sparkles },
             { id: "projects" as const, label: `Projects`, icon: Folder },
