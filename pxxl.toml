@@ -2,6 +2,10 @@ buildCommand = "npm install --include=dev --prefix flux/frontend && npm run buil
 outputDirectory = "flux/frontend/dist-web"
 framework = "null"
 
+[env]
+VITE_UPSTASH_URL = "$UPSTASH_REDIS_REST_URL"
+VITE_UPSTASH_TOKEN = "$UPSTASH_REDIS_REST_TOKEN"
+
 [[rewrites]]
 source = "/profiles/(.*)"
 destination = "/profiles/$1"

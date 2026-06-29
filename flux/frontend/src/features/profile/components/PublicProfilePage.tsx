@@ -2,6 +2,38 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, MapPin, Building, ExternalLink, Award, Folder, Send, FileCheck, FileCode2, Shield, TestTube, Code2, GitBranch, MessageSquare, Link as LinkIcon, GitCommit, Globe, Zap, Terminal, Sparkles, ChevronRight, Lock, Wifi, ChevronDown, ChevronUp } from "lucide-react";
 
 async function fetchProfileFromRepo(username: string): Promise<PublicProfileData> {
+  const upstashUrl = import.meta.env.VITE_UPSTASH_URL as string | undefined;
+  const upstashToken = import.meta.env.VITE_UPSTASH_TOKEN as string | undefined;
+
+  if (upstashUrl && upstashToken) {
+    const r = await fetch(`${upstashUrl}/get/profile:${username}`, {
+      headers: { Authorization: `Bearer ${upstashToken}` },
+    });
+    if (!r.ok) throw new Error("Profile not found");
+    const data = await r.json();
+    if (!data.result) throw new Error("Profile not found");
+    const parsed = JSON.parse(data.result);
+
+    let githubActivity: any[] = [];
+    if (parsed.githubUsername) {
+      try {
+        const ghRes = await fetch(`https://api.github.com/users/${encodeURIComponent(parsed.githubUsername)}/events/public?per_page=15`);
+        if (ghRes.ok) {
+          const events = await ghRes.json();
+          for (const event of (events || []).filter((e: any) => e.type === "PushEvent").slice(0, 5)) {
+            const repo = event.repo?.name || "";
+            for (const c of (event.payload?.commits || []).slice(0, 2)) {
+              githubActivity.push({ sha: c.sha?.substring(0, 7) || "", message: c.message || "", date: event.created_at || "", repo });
+            }
+            if (githubActivity.length >= 5) break;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    if (parsed.githubUsername) parsed.githubActivity = githubActivity;
+    return parsed;
+  }
+
   const res = await fetch(`/api/profile/${username}?t=${Date.now()}`);
   if (!res.ok) throw new Error("Profile not found");
   return await res.json();
@@ -59,10 +91,18 @@ export function PublicProfilePage({ username, onBack }: Props) {
 
   const fetchGitHubCommits = async (ghUsername: string) => {
     try {
-      const res = await fetch(`/api/github/${encodeURIComponent(ghUsername)}`);
+      const res = await fetch(`https://api.github.com/users/${encodeURIComponent(ghUsername)}/events/public?per_page=30`);
       if (!res.ok) { setCommitsError(true); return; }
-      const data: GitHubCommit[] = await res.json();
-      setCommits(data || []);
+      const events = await res.json();
+      const commits: GitHubCommit[] = [];
+      for (const event of (events || []).filter((e: any) => e.type === "PushEvent").slice(0, 5)) {
+        const repo = event.repo?.name || "";
+        for (const c of (event.payload?.commits || []).slice(0, 2)) {
+          commits.push({ sha: c.sha?.substring(0, 7) || "", message: c.message || "", date: event.created_at || "", repo });
+        }
+        if (commits.length >= 5) break;
+      }
+      setCommits(commits);
     } catch { setCommitsError(true); }
   };
 
