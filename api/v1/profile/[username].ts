@@ -13,12 +13,12 @@ export default async function handler(req: any, res: any) {
       error: "username required",
       usage: {
         profile: "GET /api/v1/profile/{username}",
-        example: "https://reqit.pxxl.dev/api/v1/profile/johndoe",
+        example: "https://reqit.dev/api/v1/profile/johndoe",
       },
       fields: ["username", "displayName", "bio", "avatarUrl", "skills", "projects", "userProjects", "stats", "githubUsername", "socialLinks", "badges"],
       integrations: {
         react: "const { data } = await fetch('/api/v1/profile/yourname').then(r => r.json())",
-        nextjs: "export async function getServerSideProps() { const res = await fetch('https://reqit.pxxl.dev/api/v1/profile/yourname'); return { props: { profile: await res.json() } } }",
+        nextjs: "export async function getServerSideProps() { const res = await fetch('https://reqit.dev/api/v1/profile/yourname'); return { props: { profile: await res.json() } } }",
       },
     });
   }

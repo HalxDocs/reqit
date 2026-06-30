@@ -3,16 +3,150 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Reqit — Local-first API Client</title>
-    <meta name="description" content="Reqit is a fast, local-first API client. No account, no cloud, no telemetry. Your collections live as plain JSON — commit them, sync them, own them."/>
-    <meta property="og:title" content="Reqit — Local-first API Client"/>
-    <meta property="og:description" content="Fast, open, and beautifully minimal. Your collections live as plain JSON."/>
+
+    <!-- Primary Meta -->
+    <title>reqit — Local-First API Client | No Account, No Cloud, No Electron</title>
+    <meta name="title" content="reqit — Local-First API Client | No Account, No Cloud, No Electron"/>
+    <meta name="description" content="Free, open-source API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP — all in one <20MB binary. Collections as plain JSON files you commit to Git. No account required. No telemetry. Starts in under 400ms."/>
+    <meta name="keywords" content="API client, REST client, Postman alternative, GraphQL client, gRPC client, WebSocket client, Socket.IO, MQTT, SOAP, open source, local-first, Git-native, API testing, mock server, collection runner, OpenAPI, no account, free API tool"/>
+    <meta name="author" content="HalxDocs"/>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+    <meta name="googlebot" content="index, follow"/>
+    <meta name="theme-color" content="#0a0a0f"/>
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://reqit.dev/"/>
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://reqit.dev/"/>
+    <meta property="og:title" content="reqit — Local-First API Client"/>
+    <meta property="og:description" content="Free, open-source API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP. Collections as Git-native JSON. No account. No cloud. Under 20MB. Starts in under 400ms."/>
+    <meta property="og:image" content="https://reqit.dev/reqiticon.jpeg"/>
+    <meta property="og:image:alt" content="reqit — Local-first API client"/>
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    <meta property="og:site_name" content="reqit"/>
+    <meta property="og:locale" content="en_US"/>
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:url" content="https://reqit.dev/"/>
+    <meta name="twitter:title" content="reqit — Local-First API Client"/>
+    <meta name="twitter:description" content="Free, open-source API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP. Git-native collections. No account. No cloud. Under 20MB."/>
+    <meta name="twitter:image" content="https://reqit.dev/reqiticon.jpeg"/>
+    <meta name="twitter:site" content="@HalxDocs"/>
+    <meta name="twitter:creator" content="@HalxDocs"/>
+
+    <!-- WhatsApp / Instagram / Social -->
+    <meta property="og:image:secure_url" content="https://reqit.dev/reqiticon.jpeg"/>
+    <meta name="medium" content="blog"/>
+
+    <!-- Chrome / Microsoft Edge -->
+    <meta name="application-name" content="reqit"/>
+    <meta name="msapplication-TileColor" content="#0a0a0f"/>
+    <meta name="msapplication-TileImage" content="/reqiticon.jpeg"/>
+
+    <!-- LLM / AI Crawlers -->
+    <meta name="llms-txt" content="https://reqit.dev/llms.txt"/>
+    <meta name="ai-content-declaration" content="human-authored"/>
+
+    <!-- Favicons -->
     <link rel="icon" type="image/jpeg" href="/reqiticon.jpeg?v=2"/>
     <link rel="apple-touch-icon" href="/reqiticon.jpeg?v=2"/>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Geist:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/reqiticon.jpeg?v=2"/>
+    <link rel="icon" type="image/jpeg" sizes="32x32" href="/reqiticon.jpeg?v=2"/>
+    <link rel="icon" type="image/jpeg" sizes="16x16" href="/reqiticon.jpeg?v=2"/>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Geist:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "reqit",
+        "description": "Free, open-source, local-first API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP. Git-native collections as plain JSON. No account required.",
+        "url": "https://reqit.dev",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "downloadUrl": "https://github.com/HalxDocs/reqit/releases/latest",
+        "softwareVersion": "0.9.0",
+        "fileSize": "<20MB",
+        "screenshot": "https://reqit.dev/reqiticon.jpeg",
+        "author": {
+            "@type": "Person",
+            "name": "HalxDocs",
+            "url": "https://halxdocs.com"
+        },
+        "creator": {
+            "@type": "Person",
+            "name": "HalxDocs"
+        },
+        "keywords": "API client, REST client, Postman alternative, GraphQL, gRPC, WebSocket, Socket.IO, MQTT, SOAP, open source, local-first",
+        "featureList": [
+            "HTTP client with full response inspection",
+            "WebSocket and SSE real-time messaging",
+            "Socket.IO Engine.IO v4 client",
+            "GraphQL queries, mutations, subscriptions",
+            "gRPC-web-text unary and streaming",
+            "SOAP 1.1/1.2 envelope builder",
+            "MQTT publish/subscribe",
+            "Mock server with saved responses",
+            "Collection runner with assertions",
+            "Contract testing against OpenAPI specs",
+            "Git-native collection storage",
+            "Full built-in git client",
+            "Keyboard-first UX with 45+ shortcuts",
+            "JSON tree view with lazy expansion",
+            "Load testing with latency percentiles",
+            "CI/CD pipeline generation",
+            "Dev profiles at reqit.dev/:username",
+            "MCP server for AI agents",
+            "Zero telemetry"
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "reqit",
+        "url": "https://reqit.dev",
+        "description": "Local-first, Git-native API client. No account. No cloud. No Electron.",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://reqit.dev/blog?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "reqit",
+        "url": "https://reqit.dev",
+        "logo": "https://reqit.dev/reqiticon.jpeg",
+        "sameAs": [
+            "https://github.com/HalxDocs/reqit",
+            "https://halxdocs.com"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "url": "https://github.com/HalxDocs/reqit/issues"
+        }
+    }
+    </script>
 </head>
 <body>
 <div id="root"></div>

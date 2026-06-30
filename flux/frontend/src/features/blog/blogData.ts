@@ -2893,7 +2893,7 @@ No account. No login. No cloud. Just open and go.
     category: "Tutorials & use-cases",
     content: `You push code every day. You build APIs, write collections, mock servers, run contract tests. But none of that shows up anywhere. Your GitHub profile shows contribution dots. Your LinkedIn says "Backend Developer at Company." Nobody sees the actual work.
 
-reqit gives you a dev profile. A public page that shows your skills, projects, GitHub activity, and API stats. It lives at \`reqit.pxxl.dev/yourname\`. No server to rent. No DNS to configure. No monthly fee.
+reqit gives you a dev profile. A public page that shows your skills, projects, GitHub activity, and API stats. It lives at \`reqit.dev/yourname\`. No server to rent. No DNS to configure. No monthly fee.
 
 ## What the profile shows
 
@@ -3004,7 +3004,7 @@ Click **Publish Profile**. The app:
 3. Sends everything to Upstash as a single JSON blob.
 4. Your profile goes live instantly.
 
-Visit \`reqit.pxxl.dev/yourname\` to see it.
+Visit \`reqit.dev/yourname\` to see it.
 
 ## The public page
 
@@ -3021,7 +3021,7 @@ Your profile page is designed for mobile-first viewing:
 Your profile is also available as a JSON API:
 
 \`\`\`
-GET https://reqit.pxxl.dev/api/v1/profile/yourname
+GET https://reqit.dev/api/v1/profile/yourname
 
 {
   "ok": true,
@@ -3063,7 +3063,7 @@ One per Upstash database. If you want separate profiles (personal, work), create
 Your profile is public only if you toggle "Public" in the panel. Your Upstash credentials never leave your machine.
 
 **What about the URL?**
-reqit.pxxl.dev is the web frontend. Your profile is at \`reqit.pxxl.dev/yourname\`. If you own a custom domain, you can point it to pxxl.app.
+reqit.dev is the web frontend. Your profile is at \`reqit.dev/yourname\`.
 
 ---
 

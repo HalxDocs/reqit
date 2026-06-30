@@ -1,0 +1,50 @@
+# reqit
+
+> Local-first, Git-native API client. No account. No cloud. No Electron.
+
+reqit is a free, open-source API client for backend and frontend developers. It supports HTTP, WebSocket, SSE, Socket.IO, GraphQL, gRPC, SOAP, and MQTT in a single <20MB binary that starts in under 400ms.
+
+## What reqit does
+
+- **HTTP client** — GET, POST, PUT, PATCH, DELETE with full response inspection, cookie jar, auth (Bearer, Basic, API Key, Digest, NTLM, OAuth2 PKCE, JWT)
+- **WebSocket / SSE** — Real-time bidirectional messaging with message log
+- **Socket.IO** — Engine.IO v4 client with event emission, cookie/header passthrough
+- **GraphQL** — Queries, mutations, subscriptions with schema introspection
+- **gRPC** — gRPC-web-text unary and streaming via HTTP POST
+- **SOAP** — SOAP 1.1/1.2 envelope builder with WSDL parsing
+- **MQTT** — Publish/subscribe with QoS levels and message history
+- **Mock server** — One-click local HTTP server with saved responses, delays, overrides
+- **Collection runner** — Sequential and concurrent execution with assertions
+- **Contract testing** — Auto-validate responses against OpenAPI specs
+- **Git-native storage** — Collections as plain JSON files in `.reqit/`. Commit, branch, diff, review.
+- **Full git client** — Status, branch, commit, push, pull, stash, merge built in
+- **Import/Export** — Postman, Insomnia, Hoppscotch, OpenAPI, cURL
+- **Load testing** — Configurable virtual users with latency percentiles
+- **CI/CD generation** — GitHub Actions, GitLab CI, Jenkins pipeline YAML
+- **Keyboard-first UX** — 45+ registered shortcuts across global, response, sidebar, env scopes
+- **JSON tree view** — Collapsible tree with lazy expansion for large payloads
+- **Dev profiles** — Publish your profile to reqit.dev/:username
+- **reqit AI** — BYOK error intelligence and assertion generation
+- **MCP server** — Model Context Protocol server for AI agent integration
+- **Agent Lens** — Score your API collections for AI readability (0-100)
+- **Schema drift detection** — Snapshot OpenAPI specs and detect breaking changes
+- **Zero telemetry** — Nothing leaves your machine unless you push to Git
+
+## Architecture
+
+- **Backend:** Go (Wails v2)
+- **Frontend:** React 18, TypeScript, Tailwind CSS, Zustand
+- **Build:** Single binary per platform (<20MB)
+- **Storage:** Plain JSON files in `.reqit/` directory
+
+## Links
+
+- Website: https://reqit.dev
+- GitHub: https://github.com/HalxDocs/reqit
+- Blog: https://reqit.dev/blog
+- Docs: https://reqit.dev/documentation
+- Dev profiles: https://reqit.dev/:username
+
+## Pricing
+
+Free and open-source (MIT License). No account required. No cloud dependency.

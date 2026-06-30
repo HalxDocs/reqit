@@ -2963,7 +2963,7 @@ func (a *App) PublishDevProfile() (string, error) {
 	if err := profile.PublishToUpstash(pub); err != nil {
 		return "", fmt.Errorf("publish profile: %w", err)
 	}
-	return fmt.Sprintf("https://reqit.pxxl.dev/%s", pub.Username), nil
+	return fmt.Sprintf("https://reqit.dev/%s", pub.Username), nil
 }
 
 // SaveUpstashConfig stores the Upstash API credentials locally.

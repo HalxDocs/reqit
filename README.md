@@ -164,7 +164,7 @@ sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
 | Command palette | Cmd+K searchable actions with scoped context filtering |
 | Keyboard shortcuts | Every action reachable by keyboard — 45+ registered commands across global, response, sidebar, and env scopes |
 | Response formatting | Collapsible JSON tree view, Pretty/Raw/Tree toggle (Ctrl+Shift+R), lazy expansion for large payloads |
-| Dev profiles | Publish your developer profile to `reqit.pxxl.dev/:username` with skills, projects, badges, and GitHub activity |
+| Dev profiles | Publish your developer profile to `reqit.dev/:username` with skills, projects, badges, and GitHub activity |
 | reqit AI | BYOK error intelligence — paste an error, get diagnosis and generated assertions (requires your own API key) |
 | MCP Server | Model Context Protocol server for AI agent integration — collections, environments, history, mock server |
 | Agent Lens | Agent-readiness mapper, linter, and export — score your API collections for AI consumption |

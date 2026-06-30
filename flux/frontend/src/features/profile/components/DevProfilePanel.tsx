@@ -283,7 +283,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
     setP({ ...p, userProjects: projects });
   };
 
-  const PROFILE_BASE = "https://reqit.pxxl.dev";
+  const PROFILE_BASE = "https://reqit.dev";
   const profileUrl = p.username ? `${PROFILE_BASE}/${p.username}` : "";
   const apiUrl = p.username ? `${PROFILE_BASE}/api/v1/profile/${p.username}` : "";
 

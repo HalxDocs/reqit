@@ -22,6 +22,7 @@ import {
 import { DOC_SECTIONS } from "../shared/lib/docs";
 import { BlogPage } from "../features/blog/components/BlogPanel";
 import { PublicProfilePage } from "../features/profile/components/PublicProfilePage";
+import { getSEO, applySEO } from "../shared/lib/seo";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -676,6 +677,12 @@ export function WebApp() {
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Update SEO meta tags on every navigation
+  useEffect(() => {
+    const slug = page === "blog" ? blogSlug : page === "profile" ? profileUser : undefined;
+    applySEO(getSEO(page, slug));
+  }, [page, blogSlug, profileUser]);
 
   const handleSelectPost = useCallback((slug: string) => {
     navigate("blog", slug);
