@@ -2,6 +2,9 @@
   "name": "reqit",
   "private": true,
   "scripts": {
-    "build": "npm install --prefix flux/frontend && npm run build:web --prefix flux/frontend && cp flux/frontend/dist-web/web.html flux/frontend/dist-web/index.html"
+    "start": "npx serve flux/frontend/dist-web -l $PORT -s"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
   }
 }
