@@ -1,0 +1,7 @@
+{
+  "name": "reqit",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix flux/frontend && npm run build:web --prefix flux/frontend && cp flux/frontend/dist-web/web.html flux/frontend/dist-web/index.html"
+  }
+}
