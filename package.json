@@ -2,9 +2,6 @@
   "name": "reqit",
   "private": true,
   "scripts": {
-    "start": "npx serve flux/frontend/dist-web -l $PORT -s"
-  },
-  "dependencies": {
-    "serve": "^14.2.0"
+    "start": "node serve.js"
   }
 }
