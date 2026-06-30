@@ -1,6 +1,6 @@
 const SITE = "https://reqit.dev";
 const NAME = "reqit";
-const DEFAULT_IMAGE = `${SITE}/reqiticon.jpeg`;
+const DEFAULT_IMAGE = `${SITE}/reqit-link.jpeg`;
 
 interface SEOData {
   title: string;
