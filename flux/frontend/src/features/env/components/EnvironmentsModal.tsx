@@ -95,6 +95,7 @@ export function EnvironmentsModal() {
     try {
       await update(draft.id, draft.name.trim() || "Untitled", toVars(draft.rows));
       toast.success(`Saved "${draft.name.trim() || "Untitled"}"`);
+      close();
     } finally {
       setBusy(false);
     }
