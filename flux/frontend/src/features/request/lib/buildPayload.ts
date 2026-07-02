@@ -40,6 +40,7 @@ export function buildPayload(s: RequestState): WirePayload {
 
   let authValue = "";
   if (s.authType === "bearer") authValue = resolve(s.authToken);
+  if (s.authType === "token") authValue = resolve(s.authToken);
   if (s.authType === "basic") authValue = `${resolve(s.authUser)}:${resolve(s.authPass)}`;
   if (s.authType === "digest" || s.authType === "ntlm") authValue = `${resolve(s.authUsername ?? "")}:${resolve(s.authPassword ?? "")}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${resolve(s.authKeyName)}:${resolve(s.authKeyValue)}`;
@@ -77,6 +78,7 @@ export function buildPayload(s: RequestState): WirePayload {
 export function buildPayloadLiteral(s: RequestState): WirePayload {
   let authValue = "";
   if (s.authType === "bearer") authValue = s.authToken;
+  if (s.authType === "token") authValue = s.authToken;
   if (s.authType === "basic") authValue = `${s.authUser}:${s.authPass}`;
   if (s.authType === "digest" || s.authType === "ntlm") authValue = `${s.authUsername}:${s.authPassword}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;

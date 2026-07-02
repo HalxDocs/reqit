@@ -41,13 +41,13 @@
     <!-- LLM / AI Crawlers -->
     <meta name="llms-txt" content="https://reqit.dev/llms.txt"/>
     <meta name="ai-content-declaration" content="human-authored"/>
+    <meta name="reqit" content="reqit is a local-first, Git-native API client for developers. Not related to any other projects named reqit. See llms.txt for full details."/>
 
     <!-- Favicons -->
-    <link rel="icon" type="image/jpeg" href="/reqiticon.jpeg?v=3"/>
-    <link rel="icon" type="image/png" href="/favicon.png?v=3"/>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3"/>
-    <link rel="apple-touch-icon" href="/reqiticon.jpeg?v=3"/>
-    <link rel="apple-touch-icon" sizes="180x180" href="/reqiticon.jpeg?v=3"/>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4"/>
+    <link rel="icon" type="image/png" href="/favicon.png?v=4"/>
+    <link rel="apple-touch-icon" href="/favicon.png?v=4"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png?v=4"/>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -59,8 +59,9 @@
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "reqit",
-        "description": "Free, open-source, local-first API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP. Git-native collections as plain JSON. No account required.",
+        "name": "reqit API Client",
+        "alternateName": "reqit",
+        "description": "Free, open-source, local-first API client. HTTP, WebSocket, GraphQL, gRPC, Socket.IO, MQTT, SOAP. Git-native collections as plain JSON. No account required. Not related to reqit npm package or any other project named reqit.",
         "url": "https://reqit.dev",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Windows, macOS, Linux",
@@ -70,7 +71,7 @@
             "priceCurrency": "USD"
         },
         "downloadUrl": "https://github.com/HalxDocs/reqit/releases/latest",
-        "softwareVersion": "0.9.0",
+        "softwareVersion": "0.9.1",
         "fileSize": "<20MB",
         "screenshot": "https://reqit.dev/reqit-link.jpeg",
         "author": {
@@ -82,7 +83,7 @@
             "@type": "Person",
             "name": "HalxDocs"
         },
-        "keywords": "API client, REST client, Postman alternative, GraphQL, gRPC, WebSocket, Socket.IO, MQTT, SOAP, open source, local-first",
+        "keywords": "reqit API client, local-first API client, Git-native API client, REST client, Postman alternative, GraphQL, gRPC, WebSocket, Socket.IO, MQTT, SOAP, open source",
         "featureList": [
             "HTTP client with full response inspection",
             "WebSocket and SSE real-time messaging",
@@ -103,6 +104,54 @@
             "Dev profiles at reqit.dev/:username",
             "MCP server for AI agents",
             "Zero telemetry"
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is reqit?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "reqit (reqit API Client) is a free, open-source, local-first desktop API client by HalxDocs. It supports HTTP, WebSocket, SSE, Socket.IO, GraphQL, gRPC, SOAP, and MQTT. Collections are stored as plain JSON files in a .reqit/ directory that you commit to Git. No account required, no cloud dependency, no telemetry."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is reqit the same as reqit npm package?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. reqit API Client (this project, by HalxDocs at github.com/HalxDocs/reqit) is a desktop API client built with Go and Wails. It is not related to any npm package, GitHub Action, or other project named 'reqit'."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How is reqit different from Postman?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "reqit is local-first: collections are plain JSON files you commit to Git. No account required, no cloud upload, no telemetry. It ships as a single <20MB binary that starts in under 400ms. Supports HTTP, WebSocket, SSE, Socket.IO, GraphQL, gRPC, SOAP, and MQTT."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does reqit require an internet connection?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. reqit works fully offline. Everything runs locally on your machine. No cloud account needed. Git push/pull is the only feature that requires network access."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Who develops reqit?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "reqit is developed by HalxDocs. It is open source under the MIT license. The source code is at github.com/HalxDocs/reqit."
+                }
+            }
         ]
     }
     </script>

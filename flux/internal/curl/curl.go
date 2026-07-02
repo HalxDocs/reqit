@@ -359,6 +359,9 @@ func ToRequestPayload(pr *ParseResult) models.RequestPayload {
 			if strings.HasPrefix(lowerVal, "bearer ") {
 				payload.AuthType = "bearer"
 				payload.AuthValue = strings.TrimSpace(h.Value[7:])
+			} else if strings.HasPrefix(lowerVal, "token ") {
+				payload.AuthType = "token"
+				payload.AuthValue = strings.TrimSpace(h.Value[6:])
 			} else if strings.HasPrefix(lowerVal, "basic ") {
 				payload.AuthType = "basic"
 				payload.AuthValue = strings.TrimSpace(h.Value[6:])

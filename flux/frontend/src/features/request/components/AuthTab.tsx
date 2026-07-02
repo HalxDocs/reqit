@@ -6,6 +6,7 @@ import type { ApiKeyIn, AuthType } from "@/features/request/types/request";
 const TYPES: { id: AuthType; label: string }[] = [
   { id: "none", label: "None" },
   { id: "bearer", label: "Bearer Token" },
+  { id: "token", label: "Token Auth" },
   { id: "basic", label: "Basic Auth" },
   { id: "digest", label: "Digest Auth" },
   { id: "ntlm", label: "NTLM Auth" },
@@ -77,6 +78,21 @@ export function AuthTab() {
           />
           <p className="text-11 text-subtext mt-1">
             Sent as: <span className="font-mono">Authorization: Bearer ...</span>
+          </p>
+        </div>
+      )}
+
+      {authType === "token" && (
+        <div className="p-4 flex flex-col gap-2">
+          <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Token</label>
+          <input
+            type="text" value={authToken} onChange={(e) => setAuthToken(e.target.value)}
+            placeholder="your-api-token"
+            spellCheck={false} autoComplete="off"
+            className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
+          />
+          <p className="text-11 text-subtext mt-1">
+            Sent as: <span className="font-mono">Authorization: Token ...</span>
           </p>
         </div>
       )}

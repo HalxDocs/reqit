@@ -55,6 +55,7 @@ export function BodyTab() {
   const authType = useRequestStore((s) => s.authType);
   const authValue = useRequestStore((s) => {
     if (s.authType === "bearer") return s.authToken;
+    if (s.authType === "token") return s.authToken;
     if (s.authType === "basic") return `${s.authUser}:${s.authPass}`;
     if (s.authType === "apikey") return `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;
     return "";

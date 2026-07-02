@@ -28,7 +28,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "Flux",
+		Title:  "reqit",
 		Width:  1280,
 		Height: 800,
 		MinWidth:  1024,

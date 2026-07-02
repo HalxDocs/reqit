@@ -15,7 +15,7 @@ type RequestPayload struct {
 	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"|"graphql"|"grpc"|"soap"
 	Body      string   `json:"body"`
 	BodyForm  []Header `json:"bodyForm"`  // for form / urlencoded modes
-	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"|"digest"|"ntlm"|"oauth2"
+	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"|"digest"|"ntlm"|"oauth2"|"token"
 	AuthValue string   `json:"authValue"` // token, "user:pass", or oauth2 config JSON
 	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
 	GraphQLQuery     string   `json:"graphqlQuery"`

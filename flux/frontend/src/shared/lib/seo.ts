@@ -1,5 +1,5 @@
 const SITE = "https://reqit.dev";
-const NAME = "reqit";
+const NAME = "reqit API Client";
 const DEFAULT_IMAGE = `${SITE}/reqit-link.jpeg`;
 
 interface SEOData {
@@ -39,8 +39,8 @@ const PAGES: Record<string, SEOData> = {
 export function getSEO(page: string, slug?: string): SEOData {
   if (page === "blog" && slug) {
     return {
-      title: `${slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} — reqit Blog`,
-      description: `Read about ${slug.replace(/-/g, " ")} on the reqit blog. Practical guides for API testing, collection management, and developer workflows.`,
+      title: `${slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} — reqit API Client Blog`,
+      description: `Read about ${slug.replace(/-/g, " ")} on the reqit API Client blog. Practical guides for API testing, collection management, and developer workflows.`,
       path: `/blog/${slug}`,
       type: "article",
     };
@@ -48,7 +48,7 @@ export function getSEO(page: string, slug?: string): SEOData {
   if (page === "profile" && slug) {
     return {
       title: `${slug} — reqit Dev Profile`,
-      description: `${slug}'s developer profile on reqit. Skills, projects, API stats, and GitHub activity.`,
+      description: `${slug}'s developer profile on reqit API Client. Skills, projects, API stats, and GitHub activity.`,
       path: `/${slug}`,
       type: "profile",
     };

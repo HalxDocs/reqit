@@ -297,6 +297,10 @@ func applyAuth(req *http.Request, authType, authValue string) {
 		if authValue != "" {
 			req.Header.Set("Authorization", "Bearer "+authValue)
 		}
+	case "token":
+		if authValue != "" {
+			req.Header.Set("Authorization", "Token "+authValue)
+		}
 	case "basic":
 		if authValue != "" {
 			encoded := base64.StdEncoding.EncodeToString([]byte(authValue))

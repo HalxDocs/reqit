@@ -19,7 +19,7 @@ export interface KeyValue {
 }
 
 export type BodyType = "none" | "json" | "form" | "urlencoded" | "graphql" | "grpc" | "soap";
-export type AuthType = "none" | "bearer" | "basic" | "apikey" | "digest" | "ntlm" | "oauth2";
+export type AuthType = "none" | "bearer" | "basic" | "apikey" | "digest" | "ntlm" | "oauth2" | "token";
 export type ApiKeyIn = "header" | "query";
 
 export interface RequestState {

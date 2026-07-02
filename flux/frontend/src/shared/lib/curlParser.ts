@@ -172,6 +172,11 @@ export function parseCurl(input: string): RequestState {
               out.authValue = value.slice(7).trim();
               continue;
             }
+            if (lower.startsWith("token ")) {
+              out.authType = "token";
+              out.authValue = value.slice(6).trim();
+              continue;
+            }
             if (lower.startsWith("basic ")) {
               try {
                 const decoded = atob(value.slice(6).trim());

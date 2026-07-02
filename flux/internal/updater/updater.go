@@ -24,9 +24,14 @@ var CurrentVersion = "v0.0.0-dev"
 var (
 	manifestURL = "https://github.com/HalxDocs/reqit/releases/latest/download/latest.json"
 
-	// Reusable HTTP client: keep-alive, connection pooling, timeout.
+	// Short timeout client for fetching the small manifest JSON.
 	httpClient = &http.Client{
 		Timeout: 8 * time.Second,
+	}
+
+	// Longer timeout client for downloading release binaries (can be 50-200 MB).
+	downloadClient = &http.Client{
+		Timeout: 5 * time.Minute,
 	}
 )
 
@@ -63,7 +68,7 @@ func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
-	resp, err := httpClient.Do(req)
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
