@@ -2,6 +2,7 @@ import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radi
 import { useEffect, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
 import { MethodSelect } from "@/shared/components/MethodSelect";
@@ -254,9 +255,13 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 }
 
 function highlightVars(text: string) {
+  const { environments, activeID } = useEnvStore.getState();
+  const env = environments.find((e) => e.id === activeID);
+  const activeKeys = new Set((env?.vars ?? []).filter((v) => v.enabled !== false && v.key).map((v) => v.key));
   const parts = text.split(/(\{\{[\w.-]+\}\})/g);
   return parts.map((part, i) => {
-    if (/^\{\{[\w.-]+\}\}$/.test(part)) {
+    const m = part.match(/^\{\{\s*([\w.-]+)\s*\}\}$/);
+    if (m && activeKeys.has(m[1])) {
       return <span key={i} className="text-cyan font-semibold">{part}</span>;
     }
     return <span key={i} className="text-text">{part}</span>;
