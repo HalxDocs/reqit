@@ -121,12 +121,19 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       <MethodSelect value={method} onChange={setMethod} />
 
       <div className="flex-1 min-w-0 relative">
+        <div className="absolute inset-0 px-3 py-[9px] font-mono text-13 leading-[20px] whitespace-nowrap overflow-hidden pointer-events-none">
+          {highlightVars(displayed)}
+        </div>
         <input
           id="flux-url-bar"
           type="text"
           value={displayed}
           placeholder="https://api.example.com/endpoint"
           onChange={(e) => handleChange(e.target.value)}
+          onScroll={(e) => {
+            const el = e.currentTarget.previousElementSibling;
+            if (el) el.scrollLeft = e.currentTarget.scrollLeft;
+          }}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               e.preventDefault();
@@ -136,7 +143,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           }}
           spellCheck={false}
           autoComplete="off"
-          className="w-full h-[38px] px-3 bg-bg border border-border rounded-lg font-mono text-13 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
+          className="relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border border-border rounded-lg focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
         />
       </div>
 
@@ -244,6 +251,16 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       </div>
     </div>
   );
+}
+
+function highlightVars(text: string) {
+  const parts = text.split(/(\{\{[\w.-]+\}\})/g);
+  return parts.map((part, i) => {
+    if (/^\{\{[\w.-]+\}\}$/.test(part)) {
+      return <span key={i} className="text-cyan font-semibold">{part}</span>;
+    }
+    return <span key={i} className="text-text">{part}</span>;
+  });
 }
 
 const emptyRow = (): KeyValue => ({
