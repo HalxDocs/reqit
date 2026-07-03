@@ -6,6 +6,7 @@ export const HTTP_METHODS = [
   "DELETE",
   "HEAD",
   "OPTIONS",
+  "QUERY",
 ] as const;
 
 export type HttpMethod = (typeof HTTP_METHODS)[number];

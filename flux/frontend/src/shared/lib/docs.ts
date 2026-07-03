@@ -38,7 +38,7 @@ export const DOC_SECTIONS: DocSection[] = [
     title: "Request Builder",
     subtitle: "Compose any HTTP request",
     features: [
-      { name: "HTTP methods", desc: "Full support for GET, POST, PUT, PATCH, DELETE, HEAD, and OPTIONS. Select the method from the dropdown left of the URL bar." },
+      { name: "HTTP methods", desc: "Full support for GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, and QUERY (RFC 10008). Select the method from the dropdown left of the URL bar." },
       { name: "URL bar", desc: "Type or paste any URL. {{VARIABLES}} resolve live and are highlighted in cyan when valid, white when unknown. Press Ctrl+Enter to send immediately." },
       { name: "Query params", desc: "Add, remove, and toggle query parameters in a table. Disabled rows are excluded from the request without deleting them." },
       { name: "Headers", desc: "Set any request header with name/value pairs. Toggle headers on/off individually." },
