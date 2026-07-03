@@ -61,6 +61,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		return errResult(err, time.Since(start))
 	}
 
+	req.Header.Set("User-Agent", "reqit/0.9.2")
 	applyHeaders(req, payload.Headers)
 	if contentType != "" && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", contentType)

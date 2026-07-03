@@ -6,11 +6,13 @@ import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { buildPayload } from "@/features/request/lib/buildPayload";
+import { runSecurityChecks } from "@/features/request/lib/securityCheck";
 import type { ResponseResult } from "@/features/request/types/request";
 
 export function useSendRequest() {
   const setResponse = useResponseStore((s) => s.setResponse);
   const setLoading = useResponseStore((s) => s.setLoading);
+  const setSecurityWarnings = useResponseStore((s) => s.setSecurityWarnings);
   const refreshHistory = useHistoryStore((s) => s.load);
 
   return useCallback(async () => {
@@ -28,6 +30,10 @@ export function useSendRequest() {
       });
       return;
     }
+
+    // Run security checks before sending
+    const warnings = runSecurityChecks(requestState);
+    setSecurityWarnings(warnings);
 
     // Resolve spec path from the loaded request's collection (for contract testing).
     const loadedID = useUIStore.getState().loadedRequestID;
@@ -62,5 +68,5 @@ export function useSendRequest() {
     } finally {
       refreshHistory().catch(() => undefined);
     }
-  }, [setLoading, setResponse, refreshHistory]);
+  }, [setLoading, setResponse, setSecurityWarnings, refreshHistory]);
 }

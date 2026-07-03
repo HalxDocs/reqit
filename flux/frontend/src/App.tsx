@@ -13,7 +13,7 @@ import { ImportPostmanModal } from "@/shared/components/ImportPostmanModal";
 import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
 import { WelcomeModal } from "@/app/components/WelcomeModal";
-import { DocsPanel } from "@/features/docs/components/DocsPanel";
+import { DocsContentViewer } from "@/features/docs/components/DocsContentViewer";
 import { SpecEditor } from "@/features/spec/components/SpecEditor";
 import { IntegrationsPanel } from "@/features/integrations/components/IntegrationsPanel";
 import { InterceptorPanel } from "@/features/interceptor/components/InterceptorPanel";
@@ -223,7 +223,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       {view === "socket" ? (
         <SocketPanel />
       ) : view === "docs" ? (
-        <DocsPanel />
+        <DocsContentViewer />
       ) : view === "spec" ? (
         <SpecEditor />
       ) : view === "integrations" ? (
