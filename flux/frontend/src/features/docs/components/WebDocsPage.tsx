@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { ChevronRight, ChevronDown, Search, FileText, ExternalLink, X, ArrowLeft, BookOpen } from "lucide-react";
+import { ChevronRight, ChevronDown, Search, FileText, ExternalLink, X, ArrowLeft, BookOpen, Menu } from "lucide-react";
 import { DOC_CATEGORIES, type DocCategory, type DocPage, type DocContent } from "@/shared/lib/docs";
 import { cn } from "@/shared/lib/cn";
 
@@ -203,6 +203,8 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(DOC_CATEGORIES[0]?.id ?? null);
   const [activePage, setActivePage] = useState<string | null>(DOC_CATEGORIES[0]?.pages[0]?.id ?? null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState<Set<string>>(() => new Set([DOC_CATEGORIES[0]?.id].filter(Boolean)));
 
   const activeDocPage = useMemo(() => {
     if (!activeCategory || !activePage) return null;
@@ -219,6 +221,7 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
   const handleSelectPage = useCallback((catId: string, pageId: string) => {
     setActiveCategory(catId);
     setActivePage(pageId);
+    setSidebarOpen(false);
   }, []);
 
   useEffect(() => {
@@ -238,6 +241,10 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
       <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border shrink-0">
         <div className="max-w-[1400px] mx-auto px-5 h-[56px] flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <button type="button" onClick={() => setSidebarOpen(true)}
+              className="md:hidden flex items-center justify-center w-[32px] h-[32px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              <Menu size={15} />
+            </button>
             <img src="/reqitlogo.jpeg" alt="reqit" className="h-[28px] w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
@@ -265,7 +272,7 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
       <div className="flex flex-1 min-h-0 max-w-[1400px] mx-auto w-full">
         <Sidebar categories={DOC_CATEGORIES} activeCategory={activeCategory} activePage={activePage} onSelectPage={handleSelectPage} />
         <main className="flex-1 min-w-0 overflow-y-auto">
-          <div className="max-w-[720px] mx-auto px-8 py-10">
+          <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
             {activeDocPage ? (
               <>
                 <div className="flex items-center gap-1.5 text-[13px] text-subtext/50 mb-6">
@@ -306,6 +313,59 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
         <OnThisPage page={activeDocPage} />
       </div>
 
+      {/* Mobile sidebar drawer */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed top-0 left-0 bottom-0 w-[280px] bg-bg border-r border-border shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between px-4 h-[56px] border-b border-border">
+              <div className="flex items-center gap-2">
+                <BookOpen size={14} className="text-cyan" />
+                <span className="text-[13px] font-semibold text-text">Documentation</span>
+              </div>
+              <button type="button" onClick={() => setSidebarOpen(false)}
+                className="flex items-center justify-center w-[28px] h-[28px] text-subtext hover:text-text rounded-md hover:bg-cardHover transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="flex flex-col gap-0.5">
+                {DOC_CATEGORIES.map((cat) => {
+                  const isExpanded = sidebarExpanded.has(cat.id);
+                  return (
+                    <div key={cat.id}>
+                      <button type="button" onClick={() => {
+                        const next = new Set(sidebarExpanded);
+                        if (next.has(cat.id)) next.delete(cat.id); else next.add(cat.id);
+                        setSidebarExpanded(next);
+                      }}
+                        className={cn("w-full flex items-center gap-2 px-2 py-1.5 text-[13px] rounded-md transition-colors text-left",
+                          activeCategory === cat.id ? "text-text font-semibold" : "text-subtext hover:text-text hover:bg-cardHover")}>
+                        {isExpanded ? <ChevronDown size={12} className="shrink-0 text-subtext/50" /> : <ChevronRight size={12} className="shrink-0 text-subtext/50" />}
+                        <span className="truncate">{cat.title}</span>
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-3 pl-2 border-l border-border/60 flex flex-col gap-0.5 mt-0.5">
+                          {cat.pages.map((page) => (
+                            <button key={page.id} type="button" onClick={() => handleSelectPage(cat.id, page.id)}
+                              className={cn("w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md transition-colors text-left border-l-2",
+                                activePage === page.id
+                                  ? "border-cyan text-cyan font-medium bg-cyan/5"
+                                  : "border-transparent text-subtext hover:text-text hover:border-subtext/30")}>
+                              <FileText size={12} className={cn("shrink-0", activePage === page.id ? "text-cyan" : "text-subtext/50")} />
+                              <span className="truncate">{page.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSelectPage} />
     </div>
   );
