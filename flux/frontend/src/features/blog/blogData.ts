@@ -3071,4 +3071,95 @@ Your API work deserves to be seen. Fill out your profile, publish it, and share 
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
+  {
+    slug: "explainer-http-query",
+    title: "HTTP QUERY: the new method that fixes GET vs POST",
+    description: "RFC 10008 just landed. QUERY is a safe, cacheable HTTP method with a body — the gap between GET and POST has been filled.",
+    date: "2026-07-03",
+    readTime: "4 min read",
+    tags: ["explainer", "http", "methods", "rest", "query"],
+    category: "Technical deep-dives",
+    content: `There is a hole in HTTP right between GET and POST. Every API developer has fallen into it at some point.
+
+You need to search for something. The search query is complex — multiple filters, nested conditions, sorting, pagination. It does not fit in a URL. Your options:
+
+- **GET** — cannot have a body. The query has 47 parameters. Your URL looks like a cat walked on the keyboard.
+- **POST** — can have a body, but POST means "create something." Using POST for a read-only search is a lie. Proxies, caches, and CDNs treat it as a mutation. They will not cache it.
+
+RFC 10008, published June 2026, fills this hole. It defines a new method called **QUERY**.
+
+## QUERY is GET with a body
+
+QUERY is safe like GET (it does not change anything) and cacheable like GET (you can send the same query twice and get the same answer). But unlike GET, it accepts a request body.
+
+\`\`\`
+GET /search?q=hello&limit=10&sort=date
+→ works but ugly when queries get complex
+\`\`\`
+
+\`\`\`
+POST /search
+{"q": "hello", "limit": 10, "sort": "date"}
+→ works but POST implies mutation
+\`\`\`
+
+\`\`\`
+QUERY /search
+{"q": "hello", "limit": 10, "sort": "date"}
+→ correct: safe read with a body
+\`\`\`
+
+## The real-world mess this fixes
+
+Before QUERY, every API ecosystem worked around this gap in its own way:
+
+**GraphQL** — every query is a POST. You send a JSON body describing exactly what data you want. It is a read operation, but POST is the only method that accepts a body. No caching, no idempotent retries.
+
+**Elasticsearch** — search queries use POST. Same story.
+
+**JSON-RPC** — every remote call is a POST. Even \`getBalance\` — a trivial read — uses POST because the method name and params need a body.
+
+**OData** — complex queries encoded into URLs with \$filter, \$orderby, \$expand. URLs become 800 characters long.
+
+All of these would be more correct with QUERY.
+
+## How caching works with QUERY
+
+This is the big one. A CDN or reverse proxy can cache responses to QUERY the same way it caches GET. The cache key includes both the URL AND the request body. If you send:
+
+\`\`\`
+QUERY /search
+{"q": "cats", "limit": 10}
+\`\`\`
+
+The CDN caches the result. The next person asking the same question gets the cached response. No backend hit. With POST, this is impossible — POST is never cached by default.
+
+## The Accept-Query header
+
+The specification also defines a new response header: \`Accept-Query\`. Servers can advertise which content types they accept for QUERY requests:
+
+\`\`\`
+Accept-Query: application/json, application/graphql-response+json
+\`\`\`
+
+This tells clients "send me a QUERY with a JSON body, and here are the formats I understand." No guessing. No opaque 400 errors.
+
+## How to use QUERY in reqit
+
+1. Open the method dropdown left of the URL bar
+2. Select **QUERY**
+3. Enter your URL
+4. Go to the **Body** tab and write your query (JSON, text, whatever the server expects)
+5. Hit send
+
+Reqit sends \`QUERY /your-endpoint\` with your body. The response is cached according to standard HTTP caching rules.
+
+## The one-liner
+
+QUERY = GET with a body, safe to repeat, safe to cache.
+
+It is a small addition to HTTP — one new method, one new header — but it fixes a semantic hole that API developers have been working around for twenty years.
+
+[reqit on GitHub](https://github.com/HalxDocs/reqit)`,
+  },
 ];
