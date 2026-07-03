@@ -19,7 +19,7 @@ import {
   PowerSocketIcon,
   TerminalIcon,
 } from "@hugeicons/core-free-icons";
-import { DOC_CATEGORIES, type DocCategory, type DocPage } from "../shared/lib/docs";
+import { WebDocsPage } from "../features/docs/components/WebDocsPage";
 import { BlogPage } from "../features/blog/components/BlogPanel";
 import { PublicProfilePage } from "../features/profile/components/PublicProfilePage";
 import { getSEO, applySEO } from "../shared/lib/seo";
@@ -510,119 +510,8 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
   );
 }
 
-function CategorySection({ category }: { category: DocCategory }) {
-  return (
-    <section id={`docs-${category.id}`} className="flex flex-col gap-6 scroll-mt-20">
-      <div className="flex items-center gap-3 pb-3 border-b border-border">
-        <div>
-          <div
-            className="text-15 font-bold text-text leading-tight"
-            style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
-          >
-            {category.title}
-          </div>
-        </div>
-      </div>
-      {category.pages.map((page) => (
-        <div key={page.id} id={`docs-${category.id}-${page.id}`} className="flex flex-col gap-3 scroll-mt-20">
-          <div>
-            <div className="text-14 font-semibold text-text">{page.title}</div>
-            {page.subtitle && <div className="text-11 text-subtext mt-0.5">{page.subtitle}</div>}
-          </div>
-          <div className="flex flex-col gap-4">
-            {page.content.map((c, i) => (
-              <div key={i} className="flex flex-col gap-1.5">
-                {c.heading && <div className="text-12 font-semibold text-text">{c.heading}</div>}
-                <p className="text-12 text-subtext leading-relaxed">{c.body}</p>
-                {c.code && (
-                  <pre className="bg-card border border-border rounded-lg p-3 text-12 font-mono text-text overflow-x-auto whitespace-pre-wrap">
-                    {c.code}
-                  </pre>
-                )}
-                {c.resources && c.resources.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {c.resources.map((r) => (
-                      <a
-                        key={r.url}
-                        href={r.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-11 text-cyan bg-cyan/5 border border-cyan/20 rounded-lg hover:bg-cyan/10 transition-colors"
-                      >
-                        {r.title}
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </section>
-  );
-}
-
 function DocsPage({ goHome }: { goHome: () => void }) {
-  return (
-    <>
-      <button
-        type="button"
-        onClick={goHome}
-        className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text bg-card border border-border rounded-lg hover:border-cyan/40 transition-all self-start"
-      >
-        <HugeiconsIcon icon={ArrowLeft01Icon} size={13} color="currentColor" />
-        <span>Back to home</span>
-      </button>
-
-      <section id="docs" className="flex flex-col gap-8 sm:gap-10 scroll-mt-20">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Book01Icon} size={18} color="#0891B2" strokeWidth={1.5} />
-            <h2
-              className="text-22 sm:text-26 font-bold text-text tracking-tight"
-              style={{ fontFamily: 'Syne, system-ui, sans-serif' }}
-            >
-              Documentation
-            </h2>
-          </div>
-          <p className="text-13 text-subtext max-w-[480px] leading-relaxed">
-            Every feature in reqit — what it does, how it works, and why it's there.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {DOC_CATEGORIES.map((c) => (
-            <a
-              key={c.id}
-              href={`#docs-${c.id}`}
-              className="inline-flex items-center gap-1.5 h-[26px] px-2.5 text-11 font-semibold rounded-full border border-border bg-card hover:border-cyan/40 hover:text-text text-subtext transition-all"
-            >
-              {c.title}
-            </a>
-          ))}
-        </div>
-
-        {DOC_CATEGORIES.map((category) => (
-          <CategorySection key={category.id} category={category} />
-        ))}
-
-        <footer className="flex flex-col items-center gap-2 pt-4 pb-4 border-t border-border">
-          <p className="text-11 text-subtext text-center">
-            Missing something?{" "}
-            <button
-              type="button"
-              onClick={() => open("https://github.com/HalxDocs/reqit/issues")}
-              className="text-cyan hover:underline"
-            >
-              Open an issue on GitHub
-            </button>
-          </p>
-        </footer>
-      </section>
-    </>
-  );
+  return <WebDocsPage goHome={goHome} />;
 }
 
 const PAGES = [
