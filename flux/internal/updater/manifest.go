@@ -15,7 +15,17 @@ type UpdateManifest struct {
 }
 
 func (m *UpdateManifest) AssetForCurrentPlatform() (PlatformAsset, bool) {
+	// Try exact match first (e.g. "windows-amd64")
 	key := runtime.GOOS + "-" + runtime.GOARCH
-	asset, ok := m.Platforms[key]
-	return asset, ok
+	if asset, ok := m.Platforms[key]; ok {
+		return asset, true
+	}
+	// macOS universal binary — release workflow publishes "darwin-universal"
+	// for both amd64 and arm64 architectures.
+	if runtime.GOOS == "darwin" {
+		if asset, ok := m.Platforms["darwin-universal"]; ok {
+			return asset, true
+		}
+	}
+	return PlatformAsset{}, false
 }
