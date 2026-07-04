@@ -199,9 +199,23 @@ function SearchModal({ open, onClose, onSelect }: { open: boolean; onClose: () =
   );
 }
 
-export function WebDocsPage({ goHome }: { goHome: () => void }) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(DOC_CATEGORIES[0]?.id ?? null);
-  const [activePage, setActivePage] = useState<string | null>(DOC_CATEGORIES[0]?.pages[0]?.id ?? null);
+export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }: {
+  goHome: () => void;
+  initialCategory?: string;
+  initialPage?: string;
+  onNavigate?: (cat: string, pg: string) => void;
+}) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => {
+    if (initialCategory && DOC_CATEGORIES.some((c) => c.id === initialCategory)) return initialCategory;
+    return DOC_CATEGORIES[0]?.id ?? null;
+  });
+  const [activePage, setActivePage] = useState<string | null>(() => {
+    if (initialCategory && initialPage) {
+      const cat = DOC_CATEGORIES.find((c) => c.id === initialCategory);
+      if (cat && cat.pages.some((p) => p.id === initialPage)) return initialPage;
+    }
+    return DOC_CATEGORIES[0]?.pages[0]?.id ?? null;
+  });
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState<Set<string>>(() => new Set([DOC_CATEGORIES[0]?.id].filter(Boolean)));
@@ -222,7 +236,8 @@ export function WebDocsPage({ goHome }: { goHome: () => void }) {
     setActiveCategory(catId);
     setActivePage(pageId);
     setSidebarOpen(false);
-  }, []);
+    onNavigate?.(catId, pageId);
+  }, [onNavigate]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

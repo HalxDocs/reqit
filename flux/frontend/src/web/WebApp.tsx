@@ -510,8 +510,13 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
   );
 }
 
-function DocsPage({ goHome }: { goHome: () => void }) {
-  return <WebDocsPage goHome={goHome} />;
+function DocsPage({ goHome, initialCategory, initialPage, onNavigate }: {
+  goHome: () => void;
+  initialCategory?: string;
+  initialPage?: string;
+  onNavigate?: (cat: string, pg: string) => void;
+}) {
+  return <WebDocsPage goHome={goHome} initialCategory={initialCategory} initialPage={initialPage} onNavigate={onNavigate} />;
 }
 
 const PAGES = [
@@ -520,7 +525,7 @@ const PAGES = [
   { id: "docs" as const, label: "Documentation", icon: "⊡", path: "/documentation" },
 ];
 
-function parsePage(): { page: "home" | "docs" | "blog" | "profile"; blogSlug?: string; profileUser?: string } {
+function parsePage(): { page: "home" | "docs" | "blog" | "profile"; blogSlug?: string; profileUser?: string; docsCat?: string; docsPage?: string } {
   const p = window.location.pathname;
   // /profile/:username (legacy)
   const profileMatch = p.match(/^\/profile\/([a-z0-9][a-z0-9\-]*)$/);
@@ -529,6 +534,9 @@ function parsePage(): { page: "home" | "docs" | "blog" | "profile"; blogSlug?: s
   const blogMatch = p.match(/^\/blog\/(.+)$/);
   if (blogMatch) return { page: "blog", blogSlug: blogMatch[1] };
   if (p === "/blog" || p === "/blog/") return { page: "blog" };
+  // /documentation/:category/:page
+  const docsMatch = p.match(/^\/documentation\/([a-z0-9\-]+)\/([a-z0-9\-]+)$/);
+  if (docsMatch) return { page: "docs", docsCat: docsMatch[1], docsPage: docsMatch[2] };
   if (p === "/documentation" || p === "/documentation/") return { page: "docs" };
   // /:username (direct profile URL)
   const directMatch = p.match(/^\/([a-z0-9][a-z0-9\-]*)$/);
@@ -546,6 +554,8 @@ export function WebApp() {
   const [page, setPage] = useState<"home" | "docs" | "blog" | "profile">(init.page);
   const [blogSlug, setBlogSlug] = useState<string | undefined>(init.blogSlug);
   const [profileUser, setProfileUser] = useState<string | undefined>(init.profileUser);
+  const [docsCat, setDocsCat] = useState<string | undefined>(init.docsCat);
+  const [docsPage, setDocsPage] = useState<string | undefined>(init.docsPage);
   const stars = useGitHubStars("HalxDocs/reqit");
 
   // Prevent browser scroll restoration so every navigation starts at top
@@ -554,15 +564,21 @@ export function WebApp() {
     window.scrollTo(0, 0);
   }, []);
 
-  const navigate = useCallback((to: "home" | "docs" | "blog" | "profile", slug?: string, user?: string) => {
+  const navigate = useCallback((to: "home" | "docs" | "blog" | "profile", slug?: string, user?: string, docsCatArg?: string, docsPageArg?: string) => {
     setBlogSlug(slug);
     setProfileUser(user);
+    setDocsCat(docsCatArg);
+    setDocsPage(docsPageArg);
     if (to === "home") {
       setPage("home");
       window.history.pushState({}, "", "/");
     } else if (to === "docs") {
       setPage("docs");
-      window.history.pushState({}, "", "/documentation");
+      if (docsCatArg && docsPageArg) {
+        window.history.pushState({}, "", `/documentation/${docsCatArg}/${docsPageArg}`);
+      } else {
+        window.history.pushState({}, "", "/documentation");
+      }
     } else if (to === "blog" && slug) {
       setPage("blog");
       window.history.pushState({}, "", `/blog/${slug}`);
@@ -581,6 +597,8 @@ export function WebApp() {
       setPage(parsed.page);
       setBlogSlug(parsed.blogSlug);
       setProfileUser(parsed.profileUser);
+      setDocsCat(parsed.docsCat);
+      setDocsPage(parsed.docsPage);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -603,6 +621,10 @@ export function WebApp() {
 
   const handleSelectPost = useCallback((slug: string) => {
     navigate("blog", slug);
+  }, [navigate]);
+
+  const handleDocsNavigate = useCallback((cat: string, pg: string) => {
+    navigate("docs", undefined, undefined, cat, pg);
   }, [navigate]);
 
   return (
@@ -658,7 +680,7 @@ export function WebApp() {
         {page === "home" ? (
           <HomePage goToDocs={() => navigate("docs")} stars={stars} />
         ) : page === "docs" ? (
-          <DocsPage goHome={() => navigate("home")} />
+          <DocsPage goHome={() => navigate("home")} initialCategory={docsCat} initialPage={docsPage} onNavigate={handleDocsNavigate} />
         ) : page === "blog" ? (
           <BlogPage key={blogSlug || "listing"} initialSlug={blogSlug} onBack={() => navigate("home")} onSelectPost={handleSelectPost} scrollToTop={() => window.scrollTo(0, 0)} />
         ) : page === "profile" && profileUser ? (
