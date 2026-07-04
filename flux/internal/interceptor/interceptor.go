@@ -238,6 +238,11 @@ func ChromeExtensionManifest(name string) []byte {
 		"action": map[string]interface{}{
 			"default_popup": "popup.html",
 			"default_title": "reqit Interceptor",
+			"default_icon": map[string]string{
+				"16":  "icons/icon16.png",
+				"48":  "icons/icon48.png",
+				"128": "icons/icon128.png",
+			},
 		},
 		"icons": map[string]string{
 			"16":  "icons/icon16.png",

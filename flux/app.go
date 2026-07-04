@@ -1592,9 +1592,21 @@ func (a *App) ExportExtension(dir string) error {
 	if err := os.WriteFile(filepath.Join(dir, "popup.js"), []byte(interceptor.PopupJS), 0644); err != nil {
 		return err
 	}
-	// Create icon placeholders
+	// Write icons
 	iconsDir := filepath.Join(dir, "icons")
-	_ = os.MkdirAll(iconsDir, 0755)
+	if err := os.MkdirAll(iconsDir, 0755); err != nil {
+		return err
+	}
+	iconFiles := []struct{ name string; data []byte }{
+		{"icon16.png", interceptor.Icon16},
+		{"icon48.png", interceptor.Icon48},
+		{"icon128.png", interceptor.Icon128},
+	}
+	for _, ic := range iconFiles {
+		if err := os.WriteFile(filepath.Join(iconsDir, ic.name), ic.data, 0644); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

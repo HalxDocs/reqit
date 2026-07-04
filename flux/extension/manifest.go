@@ -6,7 +6,7 @@ var ManifestJSON = []byte(`{
   "manifest_version": 3,
   "name": "reqit Interceptor",
   "version": "1.0.0",
-  "description": "Capture HTTP/S requests and forward them to reqit for testing and mocking.",
+  "description": "Capture HTTP/S requests and send them to reqit for testing.",
   "permissions": [
     "webRequest",
     "storage",
@@ -20,7 +20,12 @@ var ManifestJSON = []byte(`{
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "reqit Interceptor"
+    "default_title": "reqit Interceptor",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
