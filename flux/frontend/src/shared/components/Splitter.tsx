@@ -3,21 +3,23 @@ import { cn } from "@/shared/lib/cn";
 
 type Props = {
   onResize: (delta: number) => void;
+  direction?: "col" | "row";
   className?: string;
 };
 
-// Vertical splitter bar — drag horizontally to resize the panel on its left.
-// Stays narrow when idle, lights up on hover/drag.
-export function Splitter({ onResize, className }: Props) {
+// Drag bar to resize the panel before it — "col" drags horizontally (resizes width),
+// "row" drags vertically (resizes height, used in stacked/vertical layout).
+export function Splitter({ onResize, direction = "col", className }: Props) {
   const draggingRef = useRef(false);
-  const startXRef = useRef(0);
+  const startRef = useRef(0);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!draggingRef.current) return;
-      const dx = e.clientX - startXRef.current;
-      startXRef.current = e.clientX;
-      onResize(dx);
+      const pos = direction === "col" ? e.clientX : e.clientY;
+      const delta = pos - startRef.current;
+      startRef.current = pos;
+      onResize(delta);
     };
     const onUp = () => {
       if (!draggingRef.current) return;
@@ -31,25 +33,33 @@ export function Splitter({ onResize, className }: Props) {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, [onResize]);
+  }, [onResize, direction]);
 
   return (
     <div
       role="separator"
-      aria-orientation="vertical"
+      aria-orientation={direction === "col" ? "vertical" : "horizontal"}
       onMouseDown={(e) => {
         draggingRef.current = true;
-        startXRef.current = e.clientX;
-        document.body.style.cursor = "col-resize";
+        startRef.current = direction === "col" ? e.clientX : e.clientY;
+        document.body.style.cursor = direction === "col" ? "col-resize" : "row-resize";
         document.body.style.userSelect = "none";
       }}
       className={cn(
-        "group relative w-[6px] shrink-0 cursor-col-resize select-none",
+        "group relative shrink-0 select-none",
+        direction === "col" ? "w-[6px] h-full cursor-col-resize" : "h-[6px] w-full cursor-row-resize",
         "bg-transparent hover:bg-cyan/20 transition-colors",
         className,
       )}
     >
-      <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-cyan transition-colors" />
+      <span
+        className={cn(
+          "absolute bg-border group-hover:bg-cyan transition-colors",
+          direction === "col"
+            ? "inset-y-0 left-1/2 -translate-x-1/2 w-px"
+            : "inset-x-0 top-1/2 -translate-y-1/2 h-px",
+        )}
+      />
     </div>
   );
 }

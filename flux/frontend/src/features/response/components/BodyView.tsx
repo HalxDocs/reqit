@@ -204,7 +204,7 @@ export function BodyView({
             />
           </div>
         ) : bodyView === "tree" && parsedJson !== null ? (
-          <div className="p-2">
+          <div className="h-full overflow-auto p-2">
             <JsonTreeView data={parsedJson} />
           </div>
         ) : body ? (

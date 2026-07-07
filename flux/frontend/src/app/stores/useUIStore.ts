@@ -5,11 +5,26 @@ export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
 export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins";
 
+export type PanelLayout = "horizontal" | "vertical";
+
+const LAYOUT_KEY = "flux:panelLayout";
+function readStoredLayout(): PanelLayout {
+  try {
+    const v = localStorage.getItem(LAYOUT_KEY);
+    return v === "vertical" ? "vertical" : "horizontal";
+  } catch {
+    return "horizontal";
+  }
+}
+
 type UIStore = {
   requestTab: RequestTab;
   responseTab: ResponseTab;
   setRequestTab: (t: RequestTab) => void;
   setResponseTab: (t: ResponseTab) => void;
+
+  panelLayout: PanelLayout;
+  togglePanelLayout: () => void;
 
   view: WorkspaceView;
   setView: (v: WorkspaceView) => void;
@@ -79,6 +94,13 @@ export const useUIStore = create<UIStore>((set) => ({
   responseTab: "body",
   setRequestTab: (requestTab) => set({ requestTab }),
   setResponseTab: (responseTab) => set({ responseTab }),
+
+  panelLayout: readStoredLayout(),
+  togglePanelLayout: () => set((s) => {
+    const panelLayout: PanelLayout = s.panelLayout === "horizontal" ? "vertical" : "horizontal";
+    try { localStorage.setItem(LAYOUT_KEY, panelLayout); } catch {}
+    return { panelLayout };
+  }),
 
   view: "http",
   setView: (view) => set({ view }),

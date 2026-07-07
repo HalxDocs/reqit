@@ -1,41 +1,51 @@
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "flux:requestPanelWidth";
-const DEFAULT_WIDTH = 680;
-const MIN_WIDTH = 360;
-const MAX_WIDTH_RATIO = 0.7; // up to 70% of viewport
+type Axis = "width" | "height";
 
-function readStored(): number {
+const CONFIG: Record<Axis, { key: string; default: number; min: number }> = {
+  width: { key: "flux:requestPanelWidth", default: 680, min: 360 },
+  height: { key: "flux:requestPanelHeight", default: 360, min: 160 },
+};
+const MAX_RATIO = 0.7; // up to 70% of viewport
+
+function readStored(axis: Axis): number {
+  const { key, default: def, min } = CONFIG[axis];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_WIDTH;
+    const raw = localStorage.getItem(key);
+    if (!raw) return def;
     const n = parseInt(raw, 10);
-    return Number.isFinite(n) && n >= MIN_WIDTH ? n : DEFAULT_WIDTH;
+    return Number.isFinite(n) && n >= min ? n : def;
   } catch {
-    return DEFAULT_WIDTH;
+    return def;
   }
 }
 
-export function useResizablePanel() {
-  const [width, setWidth] = useState<number>(readStored);
+export function useResizablePanel(axis: Axis = "width") {
+  const [size, setSize] = useState<number>(() => readStored(axis));
+
+  useEffect(() => {
+    setSize(readStored(axis));
+  }, [axis]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, String(width));
+      localStorage.setItem(CONFIG[axis].key, String(size));
     } catch {
       // ignore quota errors
     }
-  }, [width]);
+  }, [axis, size]);
 
   const onResize = useCallback((delta: number) => {
-    setWidth((current) => {
-      const max = Math.max(MIN_WIDTH, window.innerWidth * MAX_WIDTH_RATIO);
+    const { min } = CONFIG[axis];
+    setSize((current) => {
+      const viewport = axis === "width" ? window.innerWidth : window.innerHeight;
+      const max = Math.max(min, viewport * MAX_RATIO);
       const next = current + delta;
-      if (next < MIN_WIDTH) return MIN_WIDTH;
+      if (next < min) return min;
       if (next > max) return max;
       return next;
     });
-  }, []);
+  }, [axis]);
 
-  return { width, onResize };
+  return { size, onResize };
 }

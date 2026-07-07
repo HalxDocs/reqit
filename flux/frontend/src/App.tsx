@@ -128,7 +128,8 @@ function dispatchShortcut(id: string) {
 
 function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const send = useSendRequest();
-  const { width, onResize } = useResizablePanel();
+  const panelLayout = useUIStore((s) => s.panelLayout);
+  const { size, onResize } = useResizablePanel(panelLayout === "horizontal" ? "width" : "height");
   const runnerCollID = useUIStore((s) => s.runnerCollID);
   const closeRunner = useUIStore((s) => s.closeRunner);
   const view = useUIStore((s) => s.view);
@@ -322,9 +323,18 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <UrlBar onSend={send} />
         <UpdateBanner />
         <UrlPreview />
-        <div className="flex-1 flex min-h-0">
-          <RequestPanel width={width} />
-          <Splitter onResize={onResize} />
+        <div className={panelLayout === "horizontal" ? "flex-1 flex min-h-0" : "flex-1 flex flex-col min-h-0"}>
+          {panelLayout === "horizontal" ? (
+            <>
+              <RequestPanel width={size} />
+              <Splitter direction="col" onResize={onResize} />
+            </>
+          ) : (
+            <>
+              <RequestPanel height={size} />
+              <Splitter direction="row" onResize={onResize} />
+            </>
+          )}
           <ResponsePane />
         </div>
         <div className="h-[26px] shrink-0 flex items-center justify-between px-3 bg-surface border-t border-border">
