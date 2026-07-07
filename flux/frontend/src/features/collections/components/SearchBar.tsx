@@ -34,6 +34,7 @@ export function SearchBar() {
         onChange={(e) => update(e.target.value)}
         placeholder="Search collections, history…"
         spellCheck={false}
+        data-shortcut="sidebar.search"
         className="w-full h-[28px] pl-7 pr-7 bg-bg border border-border rounded-md text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
       />
       {local && (

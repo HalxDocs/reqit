@@ -43,7 +43,7 @@ export function AssertionEditor({
         <div key={i} className="flex items-start gap-2 bg-card border border-border rounded-lg p-2">
           <select
             value={a.type}
-            onChange={(e) => update(i, { type: e.target.value as any })}
+            onChange={(e) => update(i, { type: e.target.value as models.Assertion["type"] })}
             className="h-[28px] px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan shrink-0"
           >
             {ASSERTION_TYPES.map((t) => (

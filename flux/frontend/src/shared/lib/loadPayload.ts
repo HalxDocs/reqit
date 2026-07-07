@@ -5,6 +5,7 @@ import type {
   ExtractRule,
   HttpMethod,
   KeyValue,
+  OAuth2Config,
   PreSetVar,
   RequestState,
 } from "@/features/request/types/request";
@@ -30,6 +31,8 @@ interface WirePayload {
   graphqlVariables?: string;
   preScript?: string;
   postScript?: string;
+  clientCert?: string;
+  clientKey?: string;
 }
 
 const VALID_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
@@ -91,6 +94,27 @@ export function decodePayload(
     }
   }
 
+  let oauth2Config: OAuth2Config | undefined;
+  if (authType === "oauth2" && p.authValue) {
+    try {
+      const parsed = JSON.parse(p.authValue);
+      if (parsed.accessToken) {
+        oauth2Config = {
+          authUrl: "",
+          tokenUrl: "",
+          clientId: "",
+          clientSecret: "",
+          scopes: "",
+          redirectUri: "",
+          usePkce: false,
+          accessToken: parsed.accessToken,
+          refreshToken: parsed.refreshToken || undefined,
+          expiresAt: parsed.expiresAt || undefined,
+        };
+      }
+    } catch {}
+  }
+
   return {
     method,
     url: p.url ?? "",
@@ -106,6 +130,9 @@ export function decodePayload(
     authKeyName,
     authKeyValue,
     authKeyIn,
+    oauth2Config,
+    clientCert: p.clientCert ?? "",
+    clientKey: p.clientKey ?? "",
     graphqlQuery: bodyType === "graphql" ? p.graphqlQuery ?? "" : "",
     graphqlVariables: bodyType === "graphql" ? p.graphqlVariables ?? "" : "",
     preScript: p.preScript ?? "",

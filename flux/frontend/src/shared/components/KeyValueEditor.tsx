@@ -172,6 +172,7 @@ export function KeyValueEditor({
               <button
                 type="button"
                 onClick={() => onRemove(row.id)}
+                data-shortcut="env.deleteVar"
                 className="text-subtext hover:text-danger transition-colors p-1 rounded-sm"
                 aria-label="Remove row"
               >
@@ -191,6 +192,7 @@ export function KeyValueEditor({
           <button
             type="button"
             onClick={onAdd}
+            data-shortcut="env.addVar"
             className="flex items-center gap-2 px-3 py-2 text-12 text-subtext hover:text-cyan transition-colors w-fit"
           >
             <Plus size={12} />
@@ -198,6 +200,30 @@ export function KeyValueEditor({
           </button>
         </>
       )}
+      <button type="button" data-shortcut="env.nextField"
+        onClick={() => {
+          const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-scope="envEditor"] input:not([type="checkbox"]), [data-scope="envEditor"] textarea');
+          const active = document.activeElement;
+          if (active && inputs.length > 0) {
+            const idx = Array.from(inputs).indexOf(active as HTMLInputElement | HTMLTextAreaElement);
+            const next = inputs[(idx + 1) % inputs.length];
+            next?.focus();
+            next?.select();
+          }
+        }}
+        style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
+      <button type="button" data-shortcut="env.prevField"
+        onClick={() => {
+          const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-scope="envEditor"] input:not([type="checkbox"]), [data-scope="envEditor"] textarea');
+          const active = document.activeElement;
+          if (active && inputs.length > 0) {
+            const idx = Array.from(inputs).indexOf(active as HTMLInputElement | HTMLTextAreaElement);
+            const prev = inputs[(idx - 1 + inputs.length) % inputs.length];
+            prev?.focus();
+            prev?.select();
+          }
+        }}
+        style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
     </div>
   );
 }

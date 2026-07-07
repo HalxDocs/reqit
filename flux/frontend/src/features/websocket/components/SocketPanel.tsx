@@ -22,7 +22,7 @@ export function SocketPanel() {
   const setView = useUIStore((s) => s.setView);
 
   const [url, setUrl] = useState("");
-  const [proto, setProto] = useState<string>("ws");
+  const [proto, setProto] = useState<"ws" | "sse" | "socketio">("ws");
   const [inputMsg, setInputMsg] = useState("");
   const [eventName, setEventName] = useState("message");
   const [cookies, setCookies] = useState("");
@@ -55,7 +55,7 @@ export function SocketPanel() {
       for (const h of headers) {
         if (h.key.trim()) headerObj[h.key.trim()] = h.value;
       }
-      await connect(url, proto as any, { cookies, headers: headerObj });
+      await connect(url, proto, { cookies, headers: headerObj });
     }
   };
 

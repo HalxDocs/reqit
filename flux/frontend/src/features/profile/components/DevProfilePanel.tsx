@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, MapPin, Building, Globe, Plus, Trash2, RefreshCw, Copy, Check, User, ExternalLink, Code2, GitBranch, MessageSquare, Link as LinkIcon, Folder, Image, Tag } from "lucide-react";
 import { toast } from "@/app/stores/useToastStore";
+import type { profile } from "../../../../wailsjs/go/models";
 
 interface UserProject {
   name: string;
@@ -193,7 +194,7 @@ export function DevProfileModal({ open, onClose }: { open: boolean; onClose: () 
         userProjects: p.userProjects,
         public: p.public,
         updatedAt: p.updatedAt,
-      } as any);
+      } as profile.DevProfile);
       setSaved(true);
       toast.success("Profile saved");
       setTimeout(() => setSaved(false), 2000);

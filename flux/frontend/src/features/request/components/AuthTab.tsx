@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Shield, Upload, X } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
 import { OAuth2Flow } from "./OAuth2Flow";
@@ -184,6 +186,71 @@ export function AuthTab() {
       )}
 
       {authType === "oauth2" && <OAuth2Flow />}
+
+      {/* mTLS Client Certificate */}
+      <MTLSection />
+    </div>
+  );
+}
+
+function MTLSection() {
+  const clientCert = useRequestStore((s) => s.clientCert);
+  const clientKey = useRequestStore((s) => s.clientKey);
+  const setClientCert = useRequestStore((s) => s.setClientCert);
+  const setClientKey = useRequestStore((s) => s.setClientKey);
+  const [open, setOpen] = useState(!!clientCert);
+
+  return (
+    <div className="border-t border-border">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-11 text-subtext hover:text-text transition-colors"
+      >
+        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        <Shield size={12} />
+        <span className="font-semibold">Client Certificate (mTLS)</span>
+        {clientCert && <span className="ml-auto text-10 text-green-500">Configured</span>}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 flex flex-col gap-2">
+          <label className="text-10 text-subtext uppercase tracking-wider font-semibold">Certificate (PEM)</label>
+          <div className="relative">
+            <textarea
+              value={clientCert ?? ""}
+              onChange={(e) => setClientCert(e.target.value)}
+              placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+              spellCheck={false}
+              rows={4}
+              className="w-full px-2 py-1.5 bg-surface border border-border rounded-md text-11 font-mono text-text outline-none focus:border-cyan transition-colors placeholder:text-tertiary resize-none"
+            />
+            {clientCert && (
+              <button type="button" onClick={() => setClientCert("")}
+                className="absolute top-1 right-1 text-subtext hover:text-danger transition-colors p-0.5">
+                <X size={10} />
+              </button>
+            )}
+          </div>
+          <label className="text-10 text-subtext uppercase tracking-wider font-semibold">Private Key (PEM)</label>
+          <div className="relative">
+            <textarea
+              value={clientKey ?? ""}
+              onChange={(e) => setClientKey(e.target.value)}
+              placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+              spellCheck={false}
+              rows={4}
+              className="w-full px-2 py-1.5 bg-surface border border-border rounded-md text-11 font-mono text-text outline-none focus:border-cyan transition-colors placeholder:text-tertiary resize-none"
+            />
+            {clientKey && (
+              <button type="button" onClick={() => setClientKey("")}
+                className="absolute top-1 right-1 text-subtext hover:text-danger transition-colors p-0.5">
+                <X size={10} />
+              </button>
+            )}
+          </div>
+          <p className="text-10 text-subtext">Sent during TLS handshake when the server requests a client certificate.</p>
+        </div>
+      )}
     </div>
   );
 }

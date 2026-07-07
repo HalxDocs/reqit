@@ -93,7 +93,7 @@ function ImportTab({ onMsg }: { onMsg: (m: string) => void }) {
           <p className="text-12 text-subtext mb-2">Import collections with full support for folders, auth types, body modes, variables, and pm.* script transpilation.</p>
           <div className="flex gap-2">
             <Button onClick={() => pickAndImport(ImportPostman, "Postman collection")}>Import Collection</Button>
-            <Button onClick={() => pickAndImport(ImportPostmanFull as any, "Postman collection")}>Import Full</Button>
+            <Button onClick={() => pickAndImport(ImportPostmanFull, "Postman collection")}>Import Full</Button>
           </div>
         </div>
         <div className="bg-surface border border-border rounded-lg p-4">
@@ -116,7 +116,7 @@ function ImportTab({ onMsg }: { onMsg: (m: string) => void }) {
         <div className="bg-surface border border-border rounded-lg p-4">
           <h3 className="text-13 font-semibold text-text mb-2">Hoppscotch</h3>
           <p className="text-12 text-subtext mb-2">Import Hoppscotch export JSON (v4 format with collections, folders, params, auth).</p>
-          <Button onClick={() => pickAndImport(ImportHoppscotch as any, "Hoppscotch")}>Import Hoppscotch</Button>
+          <Button onClick={() => pickAndImport(ImportHoppscotch, "Hoppscotch")}>Import Hoppscotch</Button>
         </div>
       </div>
     </div>
@@ -159,7 +159,7 @@ function ExportTab({ onMsg }: { onMsg: (m: string) => void }) {
         </div>
         <div className="bg-surface border border-border rounded-lg p-4 flex items-center justify-between">
           <div><span className="text-13 font-semibold text-text">Hoppscotch</span><p className="text-12 text-subtext">Hoppscotch v4 JSON format</p></div>
-          <Button onClick={() => exportAndSave(ExportHoppscotch as any, "hoppscotch.json", "Hoppscotch")}>Export</Button>
+          <Button onClick={() => exportAndSave(ExportHoppscotch, "hoppscotch.json", "Hoppscotch")}>Export</Button>
         </div>
       </div>
     </div>

@@ -257,6 +257,35 @@ func (s *Socket) readLoopSSE(ctx context.Context, body io.ReadCloser) {
 
 	scanner := bufio.NewScanner(body)
 	var buf strings.Builder
+	currentEvent := ""
+	currentID := ""
+	currentRetry := 0
+
+	flush := func() {
+		if buf.Len() == 0 {
+			return
+		}
+		bodyText := strings.TrimSpace(buf.String())
+		var data json.RawMessage
+		if json.Unmarshal([]byte(bodyText), &data) == nil {
+			bodyText = string(data)
+		}
+		buf.Reset()
+
+		entry := models.SocketMessage{
+			Timestamp: time.Now().UnixMilli(),
+			Direction: "received",
+			Body:      bodyText,
+			EventType: currentEvent,
+			EventID:   currentID,
+			Retry:     currentRetry,
+		}
+		currentEvent = ""
+		currentRetry = 0
+
+		s.appendMessage(entry)
+		s.emitEvent(entry)
+	}
 
 	for scanner.Scan() {
 		select {
@@ -267,28 +296,23 @@ func (s *Socket) readLoopSSE(ctx context.Context, body io.ReadCloser) {
 
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, "data: ") {
+		switch {
+		case strings.HasPrefix(line, "data: "):
 			buf.WriteString(strings.TrimPrefix(line, "data: "))
 			buf.WriteString("\n")
-		} else if line == "" && buf.Len() > 0 {
-			body := strings.TrimSpace(buf.String())
-			// Try to unmarshal JSON data fields for cleaner display
-			var data json.RawMessage
-			if json.Unmarshal([]byte(body), &data) == nil {
-				body = string(data)
-			}
-			buf.Reset()
-
-			entry := models.SocketMessage{
-				Timestamp: time.Now().UnixMilli(),
-				Direction: "received",
-				Body:      body,
-			}
-
-			s.appendMessage(entry)
-			s.emitEvent(entry)
+		case strings.HasPrefix(line, "event: "):
+			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event: "))
+		case strings.HasPrefix(line, "id: "):
+			currentID = strings.TrimSpace(strings.TrimPrefix(line, "id: "))
+		case strings.HasPrefix(line, "retry: "):
+			fmt.Sscanf(strings.TrimPrefix(line, "retry: "), "%d", &currentRetry)
+		case line == "":
+			flush()
 		}
 	}
+
+	// Flush any remaining data on stream close
+	flush()
 
 	s.mu.Lock()
 	s.status = "disconnected"

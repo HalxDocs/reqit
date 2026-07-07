@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { BookmarkPlus, Search, X } from "lucide-react";
+import { BookmarkPlus, Search, X, Camera, GitCompare } from "lucide-react";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
+import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useUIStore, type ResponseTab } from "@/app/stores/useUIStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { Tabs, type TabItem } from "@/shared/components/Tabs";
@@ -13,8 +14,114 @@ import { LoadingState } from "@/features/response/components/LoadingState";
 import { ErrorState } from "@/features/response/components/ErrorState";
 import { AIDiagnosisPanel } from "@/features/ai/components/AIDiagnosisPanel";
 import { SecurityWarnings } from "@/features/response/components/SecurityWarnings";
+import { PartyModeToggle, PartyModeEffects } from "@/features/response/components/PartyMode";
+import { useDiffStore, type ResponseSnapshot } from "@/features/response/stores/useDiffStore";
 import { SaveCapturedResponse } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { cn } from "@/shared/lib/cn";
+import { Trash2 } from "lucide-react";
+
+function DiffSnapshots({ method, url, response, snapshotKey }: {
+  method: string;
+  url: string;
+  response: import("@/features/request/types/request").ResponseResult | null;
+  snapshotKey: string;
+}) {
+  const snapshots = useDiffStore((s) => s.snapshots);
+  const saveSnapshot = useDiffStore((s) => s.saveSnapshot);
+  const removeSnapshot = useDiffStore((s) => s.removeSnapshot);
+  const existing = snapshots[snapshotKey];
+  const [open, setOpen] = useState(false);
+
+  if (!response || !existing) return null;
+
+  const currentSnap: import("@/features/response/stores/useDiffStore").ResponseSnapshot = {
+    url, method,
+    statusCode: response.statusCode,
+    body: response.body,
+    headers: response.headers,
+    capturedAt: new Date().toISOString(),
+  };
+
+  const oldLines = (existing.body ?? "").split("\n");
+  const newLines = (response.body ?? "").split("\n");
+  const diffs = lineDiff(oldLines, newLines);
+  const adds = diffs.filter((d) => d.type === "added").length;
+  const rems = diffs.filter((d) => d.type === "removed").length;
+
+  return (
+    <div className="border-t border-border">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 w-full px-3 py-2 text-12 text-subtext hover:text-text bg-surface hover:bg-cardHover transition-colors"
+      >
+        <GitCompare size={12} />
+        <span>Diff with snapshot</span>
+        <span className="text-10 text-subtext/50 ml-1">+{adds}/-{rems}</span>
+        <span className="ml-auto text-10 text-subtext/30">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div className="p-3 bg-bg">
+          <div className="flex items-center gap-3 text-11 text-subtext mb-2 px-1">
+            <span className="text-teal">+{adds}</span>
+            <span className="text-danger">-{rems}</span>
+            <span className="text-subtext/50">{existing.statusCode} → {response.statusCode}</span>
+          </div>
+          <div className="bg-card border border-border rounded-md overflow-hidden font-mono text-12 leading-relaxed max-h-[400px] overflow-y-auto">
+            {diffs.map((d, i) => (
+              <div key={i} className={cn(
+                "flex items-stretch border-b border-border/30 last:border-b-0",
+                d.type === "added" && "bg-teal/5",
+                d.type === "removed" && "bg-danger/5",
+              )}>
+                <span className={cn(
+                  "w-[28px] shrink-0 text-right pr-2 py-[1px] text-10 select-none border-r border-border/30",
+                  d.type === "added" ? "text-teal border-teal/20" : d.type === "removed" ? "text-danger border-danger/20" : "text-subtext/30",
+                )}>{d.type === "added" ? "+" : d.type === "removed" ? "-" : " "}</span>
+                <span className={cn(
+                  "px-2 py-[1px] whitespace-pre-wrap break-all flex-1",
+                  d.type === "added" ? "text-teal" : d.type === "removed" ? "text-danger" : "text-text",
+                )}>{d.line || " "}</span>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={() => { removeSnapshot(snapshotKey); setOpen(false); }}
+            className="mt-2 flex items-center gap-1 text-11 text-subtext/30 hover:text-danger transition-colors">
+            <Trash2 size={10} /> Clear snapshot
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function lineDiff(oldLines: string[], newLines: string[]) {
+  const m = oldLines.length;
+  const n = newLines.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = oldLines[i - 1] === newLines[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  const result: { type: "same" | "removed" | "added"; line: string }[] = [];
+  let i = m, j = n;
+  const rev: typeof result = [];
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      rev.push({ type: "same", line: oldLines[i - 1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      rev.push({ type: "added", line: newLines[j - 1] });
+      j--;
+    } else {
+      rev.push({ type: "removed", line: oldLines[i - 1] });
+      i--;
+    }
+  }
+  return rev.reverse();
+}
 
 export function ResponsePane() {
   const response = useResponseStore((s) => s.response);
@@ -25,6 +132,13 @@ export function ResponsePane() {
   const collections = useCollectionStore((s) => s.collections);
   const toast = useToastStore((s) => s.push);
   const [saving, setSaving] = useState(false);
+  const method = useRequestStore((s) => s.method);
+  const url = useRequestStore((s) => s.url);
+  const snapshots = useDiffStore((s) => s.snapshots);
+  const saveSnapshot = useDiffStore((s) => s.saveSnapshot);
+  const removeSnapshot = useDiffStore((s) => s.removeSnapshot);
+  const snapshotKey = `${method} ${url}`;
+  const existingSnapshot = snapshots[snapshotKey];
 
   const cookieCount = (response?.cookies ?? []).length;
   const responseSearch = useUIStore((s) => s.responseSearch);
@@ -82,7 +196,56 @@ export function ResponsePane() {
       {!isLoading && response && !response.error && (
         <div className="flex items-center justify-between border-b border-border">
           <Tabs tabs={TABS} active={responseTab} onChange={setResponseTab} />
-          <div className="flex items-center gap-2 mr-3">
+          <div className="flex items-center gap-1 mr-3">
+            <PartyModeToggle />
+            {existingSnapshot && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (response) {
+                    saveSnapshot(snapshotKey, {
+                      url, method,
+                      statusCode: response.statusCode,
+                      body: response.body,
+                      headers: response.headers,
+                      capturedAt: new Date().toISOString(),
+                    });
+                  }
+                }}
+                className="flex items-center gap-1 text-11 text-subtext hover:text-text transition-colors"
+                title="Save snapshot for diff"
+              >
+                <Camera size={10} />
+              </button>
+            )}
+            {response && (
+              <button
+                type="button"
+                onClick={() => {
+                  saveSnapshot(snapshotKey, {
+                    url, method,
+                    statusCode: response.statusCode,
+                    body: response.body,
+                    headers: response.headers,
+                    capturedAt: new Date().toISOString(),
+                  });
+                }}
+                className="flex items-center gap-1 text-11 text-subtext/40 hover:text-text transition-colors"
+                title="Save snapshot for diff"
+              >
+                <Camera size={10} />
+              </button>
+            )}
+            {existingSnapshot && (
+              <button
+                type="button"
+                onClick={() => removeSnapshot(snapshotKey)}
+                className="flex items-center gap-1 text-11 text-subtext/30 hover:text-danger transition-colors"
+                title="Remove snapshot"
+              >
+                <Trash2 size={9} />
+              </button>
+            )}
             {responseTab === "body" && (
               <div className="flex items-center gap-1 bg-surface border border-border rounded-sm px-2 h-[22px]">
                 <Search size={10} className="text-subtext" />
@@ -146,6 +309,8 @@ export function ResponsePane() {
         )}
       </div>
 
+      <DiffSnapshots method={method} url={url} response={response} snapshotKey={snapshotKey} />
+      <PartyModeEffects />
       <AIDiagnosisPanel />
     </section>
   );

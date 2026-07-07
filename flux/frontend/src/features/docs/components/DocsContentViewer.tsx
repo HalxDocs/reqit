@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { ChevronRight, ChevronDown, Search, FileText, ExternalLink, X, BookOpen } from "lucide-react";
+import { ChevronRight, ChevronDown, Search, FileText, ExternalLink, X, ArrowLeft, BookOpen, Menu } from "lucide-react";
 import { DOC_CATEGORIES, type DocCategory, type DocPage, type DocContent } from "@/shared/lib/docs";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
 
 function DocCode({ code }: { code: string }) {
   return (
-    <pre className="my-4 bg-bg border border-border rounded-lg p-4 text-[13px] font-mono text-text overflow-x-auto whitespace-pre-wrap leading-relaxed">
+    <pre className="my-4 bg-card border border-border rounded-lg p-4 text-[13px] font-mono text-text overflow-x-auto whitespace-pre-wrap leading-relaxed">
       {code.split("\n").map((line, i) => (
         <div key={i} className={line.startsWith("#") || line.startsWith("//") ? "text-subtext/50" : ""}>
           {line || "\u00A0"}
@@ -19,8 +19,8 @@ function DocCode({ code }: { code: string }) {
 function ContentBlock({ content }: { content: DocContent }) {
   return (
     <div className="mb-8">
-      <h3 className="text-[17px] font-semibold text-text mb-3 leading-snug tracking-tight">{content.heading}</h3>
-      <p className="text-[14px] text-subtext leading-[1.7]">{content.body}</p>
+      <h3 className="text-[18px] font-semibold text-text mb-3 leading-snug tracking-tight">{content.heading}</h3>
+      <p className="text-[15px] text-subtext leading-[1.7] mb-0">{content.body}</p>
       {content.code && <DocCode code={content.code} />}
       {content.resources && content.resources.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
@@ -45,19 +45,27 @@ function OnThisPage({ page }: { page: DocPage | null }) {
   if (!page || headings.length === 0) return null;
 
   return (
-    <div className="w-[200px] shrink-0 hidden xl:block border-l border-border">
-      <div className="sticky top-0 p-4 flex flex-col gap-3">
-        <div className="text-[11px] font-semibold text-subtext/60 uppercase tracking-[0.08em]">On this page</div>
+    <nav className="w-[200px] shrink-0 hidden xl:block">
+      <div className="sticky top-[56px] flex flex-col gap-3 pt-8">
+        <div className="text-[11px] font-semibold text-subtext/50 uppercase tracking-[0.08em]">On this page</div>
         <div className="flex flex-col gap-1">
           {headings.map((h) => (
-            <button key={h.id} type="button" onClick={() => document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth" })}
-              className="text-[12px] text-subtext/50 hover:text-text transition-colors leading-relaxed py-0.5 text-left">
+            <a key={h.id} href={`#${h.id}`}
+              className="text-[13px] text-subtext/50 hover:text-text transition-colors leading-relaxed py-0.5">
               {h.label}
-            </button>
+            </a>
           ))}
         </div>
+        <div className="pt-4 mt-4 border-t border-border">
+          <a href="https://github.com/HalxDocs/reqit/edit/main/flux/frontend/src/shared/lib/docs.ts"
+            target="_blank" rel="noopener noreferrer"
+            className="text-[12px] text-subtext/50 hover:text-cyan transition-colors flex items-center gap-1">
+            <ExternalLink size={11} />
+            Edit on GitHub
+          </a>
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }
 
@@ -68,6 +76,7 @@ function Sidebar({ categories, activeCategory, activePage, onSelectPage }: {
   onSelectPage: (catId: string, pageId: string) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([categories[0]?.id].filter(Boolean)));
+
   const toggle = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -77,9 +86,9 @@ function Sidebar({ categories, activeCategory, activePage, onSelectPage }: {
   };
 
   return (
-    <nav className="w-[240px] shrink-0 border-r border-border bg-surface">
-      <div className="overflow-y-auto max-h-full p-3">
-        <div className="flex items-center gap-2 px-1 mb-3">
+    <nav className="w-[260px] shrink-0 hidden md:block border-r border-border overflow-y-auto" style={{ height: "calc(100vh - 56px)" }}>
+      <div className="p-4">
+        <div className="flex items-center gap-2 px-1 mb-4">
           <BookOpen size={14} className="text-cyan" />
           <span className="text-[13px] font-semibold text-text">Documentation</span>
         </div>
@@ -118,11 +127,7 @@ function Sidebar({ categories, activeCategory, activePage, onSelectPage }: {
   );
 }
 
-function SearchModal({ open, onClose, onSelect }: {
-  open: boolean;
-  onClose: () => void;
-  onSelect: (catId: string, pageId: string) => void;
-}) {
+function SearchModal({ open, onClose, onSelect }: { open: boolean; onClose: () => void; onSelect: (catId: string, pageId: string) => void }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -200,6 +205,8 @@ export function DocsContentViewer() {
   const [activeCategory, setActiveCategory] = useState<string | null>(DOC_CATEGORIES[0]?.id ?? null);
   const [activePage, setActivePage] = useState<string | null>(DOC_CATEGORIES[0]?.pages[0]?.id ?? null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState<Set<string>>(() => new Set([DOC_CATEGORIES[0]?.id].filter(Boolean)));
 
   const activeDocPage = useMemo(() => {
     if (!activeCategory || !activePage) return null;
@@ -208,9 +215,15 @@ export function DocsContentViewer() {
     return cat.pages.find((p) => p.id === activePage) ?? null;
   }, [activeCategory, activePage]);
 
+  const activeCatTitle = useMemo(() => {
+    const cat = DOC_CATEGORIES.find((c) => c.id === activeCategory);
+    return cat?.title ?? "";
+  }, [activeCategory]);
+
   const handleSelectPage = useCallback((catId: string, pageId: string) => {
     setActiveCategory(catId);
     setActivePage(pageId);
+    setSidebarOpen(false);
   }, []);
 
   useEffect(() => {
@@ -225,31 +238,75 @@ export function DocsContentViewer() {
   }, []);
 
   return (
-    <div className="flex-1 flex min-w-0 bg-bg">
-      <Sidebar categories={DOC_CATEGORIES} activeCategory={activeCategory} activePage={activePage} onSelectPage={handleSelectPage} />
-      <div className="flex-1 flex min-w-0">
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          <div className="max-w-[720px] mx-auto px-8 py-8">
-            <div className="flex items-center gap-2 mb-6">
-              <button onClick={() => setView && setView("http")} className="text-[13px] text-subtext/50 hover:text-text transition-colors">Back</button>
-              <ChevronRight size={11} className="text-subtext/30" />
-              <button onClick={() => setSearchOpen(true)} className="ml-auto flex items-center gap-1.5 h-[26px] px-2 text-[11px] text-subtext/50 bg-surface border border-border rounded-md hover:border-cyan/30 transition-colors">
-                <Search size={11} />
-                <span>Search</span>
-                <kbd className="text-[10px] font-mono text-subtext/30">Ctrl+K</kbd>
-              </button>
-            </div>
+    <div className="flex-1 flex flex-col bg-bg min-w-0">
+      {/* Top nav */}
+      <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border shrink-0">
+        <div className="max-w-[1400px] mx-auto px-5 h-[56px] flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button type="button" onClick={() => setSidebarOpen(true)}
+              className="md:hidden flex items-center justify-center w-[32px] h-[32px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              <Menu size={15} />
+            </button>
+            <img src="/reqitlogo.jpeg" alt="reqit" className="h-[28px] w-auto object-contain" />
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 h-[32px] px-3 text-[13px] text-subtext/50 bg-surface border border-border rounded-lg hover:border-cyan/40 transition-colors min-w-[200px]">
+              <Search size={13} />
+              <span>Search docs...</span>
+              <kbd className="ml-auto text-[10px] text-subtext/50 font-mono bg-bg border border-border rounded px-1.5 py-0.5">Ctrl+K</kbd>
+            </button>
+            <a href="https://github.com/HalxDocs/reqit" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 h-[32px] px-3 text-[13px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span>GitHub</span>
+            </a>
+            <button type="button" onClick={() => setView && setView("http")}
+              className="flex items-center gap-1.5 h-[32px] px-3 text-[13px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              <ArrowLeft size={13} />
+              <span>Back</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
+      {/* Three-column layout */}
+      <div className="flex flex-1 min-h-0 max-w-[1400px] mx-auto w-full">
+        <Sidebar categories={DOC_CATEGORIES} activeCategory={activeCategory} activePage={activePage} onSelectPage={handleSelectPage} />
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
             {activeDocPage ? (
               <>
-                <h1 className="text-[28px] font-bold text-text tracking-tight leading-tight mb-2">{activeDocPage.title}</h1>
-                {activeDocPage.subtitle && <p className="text-[14px] text-subtext mb-8 leading-relaxed">{activeDocPage.subtitle}</p>}
+                <div className="flex items-center gap-1.5 text-[13px] text-subtext/50 mb-6">
+                  <button onClick={() => setView && setView("http")} className="hover:text-cyan transition-colors">Docs</button>
+                  <ChevronRight size={11} />
+                  <span className="text-subtext">{activeCatTitle}</span>
+                  <ChevronRight size={11} />
+                  <span className="text-text font-medium">{activeDocPage.title}</span>
+                </div>
+
+                <h1 className="text-[32px] font-bold text-text tracking-tight leading-tight mb-2">{activeDocPage.title}</h1>
+                {activeDocPage.subtitle && (
+                  <p className="text-[15px] text-subtext mb-8 leading-relaxed">{activeDocPage.subtitle}</p>
+                )}
+
                 {activeDocPage.content.map((c, i) => (
-                  <section key={i} id={`heading-${i}`}><ContentBlock content={c} /></section>
+                  <section key={i} id={`heading-${i}`}>
+                    <ContentBlock content={c} />
+                  </section>
                 ))}
+
+                <div className="mt-12 pt-6 border-t border-border">
+                  <a href="https://github.com/HalxDocs/reqit/edit/main/flux/frontend/src/shared/lib/docs.ts"
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-[13px] text-subtext/50 hover:text-cyan transition-colors flex items-center gap-1.5">
+                    <ExternalLink size={12} />
+                    Edit this page on GitHub
+                  </a>
+                </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-[60vh] text-[14px] text-subtext/50">
+              <div className="flex items-center justify-center h-[60vh] text-[15px] text-subtext/50">
                 Select a page from the sidebar
               </div>
             )}
@@ -257,6 +314,60 @@ export function DocsContentViewer() {
         </main>
         <OnThisPage page={activeDocPage} />
       </div>
+
+      {/* Mobile sidebar drawer */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed top-0 left-0 bottom-0 w-[280px] bg-bg border-r border-border shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between px-4 h-[56px] border-b border-border">
+              <div className="flex items-center gap-2">
+                <BookOpen size={14} className="text-cyan" />
+                <span className="text-[13px] font-semibold text-text">Documentation</span>
+              </div>
+              <button type="button" onClick={() => setSidebarOpen(false)}
+                className="flex items-center justify-center w-[28px] h-[28px] text-subtext hover:text-text rounded-md hover:bg-cardHover transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="flex flex-col gap-0.5">
+                {DOC_CATEGORIES.map((cat) => {
+                  const isExpanded = sidebarExpanded.has(cat.id);
+                  return (
+                    <div key={cat.id}>
+                      <button type="button" onClick={() => {
+                        const next = new Set(sidebarExpanded);
+                        if (next.has(cat.id)) next.delete(cat.id); else next.add(cat.id);
+                        setSidebarExpanded(next);
+                      }}
+                        className={cn("w-full flex items-center gap-2 px-2 py-1.5 text-[13px] rounded-md transition-colors text-left",
+                          activeCategory === cat.id ? "text-text font-semibold" : "text-subtext hover:text-text hover:bg-cardHover")}>
+                        {isExpanded ? <ChevronDown size={12} className="shrink-0 text-subtext/50" /> : <ChevronRight size={12} className="shrink-0 text-subtext/50" />}
+                        <span className="truncate">{cat.title}</span>
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-3 pl-2 border-l border-border/60 flex flex-col gap-0.5 mt-0.5">
+                          {cat.pages.map((page) => (
+                            <button key={page.id} type="button" onClick={() => handleSelectPage(cat.id, page.id)}
+                              className={cn("w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md transition-colors text-left border-l-2",
+                                activePage === page.id
+                                  ? "border-cyan text-cyan font-medium bg-cyan/5"
+                                  : "border-transparent text-subtext hover:text-text hover:border-subtext/30")}>
+                              <FileText size={12} className={cn("shrink-0", activePage === page.id ? "text-cyan" : "text-subtext/50")} />
+                              <span className="truncate">{page.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSelectPage} />
     </div>
   );

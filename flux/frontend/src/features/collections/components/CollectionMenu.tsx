@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Download, Eye, FileCode2, MoreVertical, Unlink } from "lucide-react";
+import { Code2, Download, Eye, FileCode2, Globe, MoreVertical, Unlink } from "lucide-react";
+
 import { Button } from "@/shared/components/Button";
 import { DriftPanel } from "@/features/spec/components/DriftPanel";
 
@@ -11,16 +12,18 @@ interface CollectionMenuProps {
   onExportOpenAPI?: () => void;
   onPreviewOpenAPI?: () => void;
   onExportMarkdown?: () => void;
+  onExportHTML?: () => void;
   onLinkSpec: () => void;
   onUnlinkSpec: () => void;
+  onVariables: () => void;
   onDelete: () => void;
   onRun?: () => void;
 }
 
 export function CollectionMenu({
   hasSpec, specPath, onRename, onExport, onExportOpenAPI,
-  onPreviewOpenAPI, onExportMarkdown, onLinkSpec, onUnlinkSpec,
-  onDelete, onRun,
+  onPreviewOpenAPI, onExportMarkdown, onExportHTML, onLinkSpec, onUnlinkSpec,
+  onVariables, onDelete, onRun,
 }: CollectionMenuProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -40,7 +43,9 @@ export function CollectionMenu({
             {onExportOpenAPI && <Button variant="menu-item" onClick={() => { close(); onExportOpenAPI(); }}><FileCode2 size={12} />Export OpenAPI</Button>}
             {onPreviewOpenAPI && <Button variant="menu-item" onClick={() => { close(); onPreviewOpenAPI(); }}><Eye size={12} />Preview API Docs</Button>}
             {onExportMarkdown && <Button variant="menu-item" onClick={() => { close(); onExportMarkdown(); }}><Download size={12} />Export Markdown</Button>}
+            {onExportHTML && <Button variant="menu-item" onClick={() => { close(); onExportHTML(); }}><Globe size={12} />Export HTML Docs</Button>}
             {onRun && <Button variant="menu-item" onClick={() => { close(); onRun(); }}>Run</Button>}
+            <Button variant="menu-item" onClick={() => { close(); onVariables(); }}><Code2 size={12} />Variables</Button>
             <div className="border-t border-border my-1" />
             {hasSpec ? (
               <>

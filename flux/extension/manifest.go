@@ -1,5 +1,5 @@
-// Package manifest provides the Chrome extension manifest.json.
-package interceptor
+// Package extension provides the Chrome extension manifest.json.
+package extension
 
 // ManifestJSON returns the extension manifest as a byte slice.
 var ManifestJSON = []byte(`{

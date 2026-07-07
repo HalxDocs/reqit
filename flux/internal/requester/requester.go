@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"flux/internal/models"
+	"flux/internal/updater"
 )
 
 const defaultTimeout = 30 * time.Second
@@ -31,10 +32,29 @@ var sharedTransport = &http.Transport{
 
 var httpClient = &http.Client{Transport: sharedTransport}
 
+func transportForPayload(payload models.RequestPayload) *http.Transport {
+	if payload.ClientCert == "" && payload.ClientKey == "" {
+		return sharedTransport
+	}
+	cert, err := tls.X509KeyPair([]byte(payload.ClientCert), []byte(payload.ClientKey))
+	if err != nil {
+		return sharedTransport
+	}
+	return &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+		TLSClientConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		},
+	}
+}
+
 func Execute(ctx context.Context, payload models.RequestPayload, jar http.CookieJar) models.ResponseResult {
+	tr := transportForPayload(payload)
 	client := httpClient
-	if jar != nil {
-		client = &http.Client{Jar: jar, Transport: sharedTransport}
+	if jar != nil || tr != sharedTransport {
+		client = &http.Client{Jar: jar, Transport: tr}
 	}
 	start := time.Now()
 
@@ -61,7 +81,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		return errResult(err, time.Since(start))
 	}
 
-	req.Header.Set("User-Agent", "reqit/0.9.2")
+	req.Header.Set("User-Agent", "reqit/"+updater.CurrentVersion)
 	applyHeaders(req, payload.Headers)
 	if contentType != "" && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", contentType)

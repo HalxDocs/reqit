@@ -1,9 +1,10 @@
 import { useCallback } from "react";
-import { SendRequest } from "../../../../wailsjs/go/main/App";
+import { SendRequest, SetEnvVar } from "../../../../wailsjs/go/main/App";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { buildPayload } from "@/features/request/lib/buildPayload";
 import { runSecurityChecks } from "@/features/request/lib/securityCheck";
@@ -35,25 +36,73 @@ export function useSendRequest() {
     const warnings = runSecurityChecks(requestState);
     setSecurityWarnings(warnings);
 
-    // Resolve spec path from the loaded request's collection (for contract testing).
+    // Resolve spec path and collection vars from the loaded request's collection.
     const loadedID = useUIStore.getState().loadedRequestID;
     let specPath: string | undefined;
+    let collVars: Map<string, string> | undefined;
     if (loadedID) {
       const colls = useCollectionStore.getState().collections;
       for (const col of colls) {
-        if (col.requests.some((r) => r.id === loadedID) && col.spec) {
-          specPath = col.spec;
+        if (col.requests.some((r) => r.id === loadedID)) {
+          if (col.spec) specPath = col.spec;
+          if (col.variables?.length) {
+            collVars = new Map();
+            for (const v of col.variables) {
+              if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
+            }
+          }
           break;
         }
       }
     }
 
+    // Resolve PreSetVars into the active environment (request chaining data pipeline)
+    const preSetVars = requestState.preSetVars?.filter((v) => v.key);
+    if (preSetVars?.length) {
+      const resolve = useEnvStore.getState().resolve;
+      for (const v of preSetVars) {
+        const resolved = resolve(v.value, collVars);
+        try { await SetEnvVar(v.key, resolved); } catch {}
+      }
+    }
+
     setLoading(true);
     try {
-      const payload = buildPayload(requestState);
+      const payload = buildPayload(requestState, collVars);
       if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
       const result = (await SendRequest(payload as never)) as ResponseResult;
       setResponse(result);
+
+      // Apply ExtractRules to save response values into the environment (data pipeline)
+      const extractRules = requestState.extractRules?.filter((r) => r.target && r.source);
+      if (extractRules?.length && result) {
+        for (const rule of extractRules) {
+          let value = "";
+          if (rule.type === "header" && result.headers) {
+            const lower = rule.source.toLowerCase();
+            for (const [k, v] of Object.entries(result.headers)) {
+              if (k.toLowerCase() === lower) { value = v; break; }
+            }
+          } else if (rule.type === "body_json" && result.body) {
+            try {
+              const obj = JSON.parse(result.body);
+              const parts = rule.source.split(".");
+              let cur: unknown = obj;
+              for (const part of parts) {
+                if (cur && typeof cur === "object" && part in cur) {
+                  cur = (cur as Record<string, unknown>)[part];
+                } else { cur = undefined; break; }
+              }
+              if (typeof cur === "string" || typeof cur === "number" || typeof cur === "boolean") {
+                value = String(cur);
+              }
+            } catch {}
+          }
+          if (value) {
+            try { await SetEnvVar(rule.target, value); } catch {}
+          }
+        }
+      }
     } catch (err) {
       setResponse({
         status: "",

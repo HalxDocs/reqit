@@ -1,8 +1,10 @@
 package interceptor
 
 import (
+	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +15,9 @@ import (
 
 	"flux/internal/models"
 )
+
+// forwardTimeout is the maximum time to wait for a proxied upstream response.
+const forwardTimeout = 30 * time.Second
 
 // CapturedRequest represents an HTTP request intercepted from the browser.
 type CapturedRequest struct {
@@ -36,6 +41,13 @@ type Proxy struct {
 	captured  []CapturedRequest
 	onCapture func(CapturedRequest)
 	dataDir   string
+	stopCh    chan struct{}
+}
+
+var sharedProxyTransport = &http.Transport{
+	MaxIdleConns:        50,
+	MaxIdleConnsPerHost: 10,
+	IdleConnTimeout:     60 * time.Second,
 }
 
 // New creates a new interceptor proxy.
@@ -43,6 +55,7 @@ func New(dataDir string) *Proxy {
 	return &Proxy{
 		port:    0,
 		dataDir: dataDir,
+		stopCh:  make(chan struct{}),
 	}
 }
 
@@ -62,7 +75,9 @@ func (p *Proxy) Start() (int, error) {
 	p.server = &http.Server{Handler: p}
 	p.running = true
 	go func() {
-		_ = p.server.Serve(listener)
+		if err := p.server.Serve(listener); err != nil && err != http.ErrServerClosed {
+			log.Printf("interceptor: Serve error: %v", err)
+		}
 	}()
 	p.loadCaptured()
 	return p.port, nil
@@ -71,16 +86,23 @@ func (p *Proxy) Start() (int, error) {
 // Stop shuts down the proxy.
 func (p *Proxy) Stop() error {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-	if !p.running {
+	running := p.running
+	server := p.server
+	listener := p.listener
+	p.running = false
+	p.server = nil
+	p.listener = nil
+	p.mu.Unlock()
+
+	if !running {
 		return nil
 	}
-	p.running = false
-	if p.server != nil {
-		_ = p.server.Close()
+	close(p.stopCh)
+	if server != nil {
+		_ = server.Close()
 	}
-	if p.listener != nil {
-		_ = p.listener.Close()
+	if listener != nil {
+		_ = listener.Close()
 	}
 	return nil
 }
@@ -146,13 +168,18 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if callback != nil {
 		callback(cr)
 	}
-	// Forward the request to the actual destination.
-	tr := &http.Transport{}
-	outReq, _ := http.NewRequest(r.Method, r.URL.String(), strings.NewReader(cr.Body))
+	// Forward the request to the actual destination (with timeout).
+	ctx, cancel := context.WithTimeout(r.Context(), forwardTimeout)
+	defer cancel()
+	outReq, err := http.NewRequestWithContext(ctx, r.Method, r.URL.String(), strings.NewReader(cr.Body))
+	if err != nil {
+		http.Error(w, "failed to create forward request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	for k, v := range r.Header {
 		outReq.Header.Set(k, strings.Join(v, ", "))
 	}
-	resp, err := tr.RoundTrip(outReq)
+	resp, err := sharedProxyTransport.RoundTrip(outReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -162,7 +189,9 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header()[k] = v
 	}
 	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		log.Printf("interceptor: error copying response body: %v", err)
+	}
 }
 
 func (p *Proxy) saveCapturedLocked() error {

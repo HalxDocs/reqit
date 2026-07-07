@@ -21,6 +21,8 @@ export interface WirePayload {
   mqttTopic?: string;
   soapAction?: string;
   soapVersion?: string;
+  clientCert?: string;
+  clientKey?: string;
 }
 
 const stripId = (kv: KeyValue) => ({
@@ -35,8 +37,8 @@ const resolveKV = (kv: KeyValue, resolve: (s: string) => string) => ({
   enabled: kv.enabled,
 });
 
-export function buildPayload(s: RequestState): WirePayload {
-  const resolve = useEnvStore.getState().resolve;
+export function buildPayload(s: RequestState, extraVars?: Map<string, string>): WirePayload {
+  const resolve = (text: string) => useEnvStore.getState().resolve(text, extraVars);
 
   let authValue = "";
   if (s.authType === "bearer") authValue = resolve(s.authToken);
@@ -69,6 +71,8 @@ export function buildPayload(s: RequestState): WirePayload {
     grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
     soapAction: s.bodyType === "soap" ? s.soapAction : undefined,
     soapVersion: s.bodyType === "soap" ? s.soapVersion : undefined,
+    clientCert: s.clientCert ?? "",
+    clientKey: s.clientKey ?? "",
   };
 }
 
@@ -104,5 +108,7 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
     soapAction: s.bodyType === "soap" ? s.soapAction : undefined,
     soapVersion: s.bodyType === "soap" ? s.soapVersion : undefined,
+    clientCert: s.clientCert ?? "",
+    clientKey: s.clientKey ?? "",
   };
 }

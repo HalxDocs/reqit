@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
-export type WorkspaceView = "http" | "socket" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens";
+export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins";
 
 type UIStore = {
   requestTab: RequestTab;
@@ -65,6 +65,13 @@ type UIStore = {
 
   responseBodyView: "pretty" | "raw" | "hex" | "tree";
   setResponseBodyView: (v: "pretty" | "raw" | "hex" | "tree") => void;
+
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+
+  shortcutsModalOpen: boolean;
+  openShortcutsModal: () => void;
+  closeShortcutsModal: () => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -127,4 +134,11 @@ export const useUIStore = create<UIStore>((set) => ({
 
   responseBodyView: "pretty",
   setResponseBodyView: (responseBodyView) => set({ responseBodyView }),
+
+  sidebarCollapsed: false,
+  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  shortcutsModalOpen: false,
+  openShortcutsModal: () => set({ shortcutsModalOpen: true }),
+  closeShortcutsModal: () => set({ shortcutsModalOpen: false }),
 }));

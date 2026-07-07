@@ -35,7 +35,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
     setRunning(false);
   }, [open]);
 
-  const resolvedRequests = useMemo(() => {
+  const resolvedRequests: models.RunnerRequest[] = useMemo(() => {
     return collection.requests.map((r) => ({
       id: r.id,
       name: r.name,
@@ -44,14 +44,14 @@ export function RunnerModal({ open, onClose, collection }: Props) {
       extractRules: r.extractRules,
       assertions: assertions[r.id] || [],
       retries: retries[r.id] || 0,
-    }));
-  }, [collection, resolve, assertions, retries]) as any;
+    } as models.RunnerRequest));
+  }, [collection, resolve, assertions, retries]);
 
   const handleRun = async () => {
     setRunning(true);
     setResult(null);
     try {
-      const res = await RunCollection(resolvedRequests as any, {} as any);
+      const res = await RunCollection(resolvedRequests, {} as Record<string, models.Assertion>);
       setResult(res);
     } catch (e) {
       console.error(e);
@@ -73,7 +73,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
   const handleExportHTML = async () => {
     if (!result) return;
     try {
-      const path = await ExportReportAsHTML(result, null as any);
+      const path = await ExportReportAsHTML(result, null as unknown as models.LoadTestResult);
       toast.success(`Report saved: ${path}`);
     } catch (e) {
       toast.error(String(e));

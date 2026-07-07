@@ -94,6 +94,9 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         authKeyName: requestState.authKeyName,
         authKeyValue: requestState.authKeyValue,
         authKeyIn: requestState.authKeyIn,
+        oauth2Config: requestState.oauth2Config ? { ...requestState.oauth2Config } : undefined,
+        clientCert: requestState.clientCert,
+        clientKey: requestState.clientKey,
         preSetVars: requestState.preSetVars.map((v) => ({ ...v })),
         extractRules: requestState.extractRules.map((r) => ({ ...r })),
         graphqlQuery: requestState.graphqlQuery,
@@ -221,6 +224,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
             type="button"
             onClick={startMock}
             disabled={mockStarting}
+            title="Start mock server"
             className="h-[34px] px-2.5 flex items-center gap-1.5 bg-bg border border-border rounded-lg text-11 text-subtext hover:text-text hover:border-cyan/50 transition-all disabled:opacity-50"
           >
             <Server size={12} />
@@ -234,6 +238,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           <button
             type="button"
             onClick={() => void CancelRequest()}
+            title="Cancel request"
             className="h-[34px] px-4 bg-danger/90 hover:bg-danger active:scale-[0.97] rounded-lg font-bold text-13 text-white flex items-center gap-2 transition-all"
           >
             <X size={14} />
@@ -243,6 +248,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           <button
             type="button"
             onClick={onSend}
+            title="Send request (Ctrl+Enter)"
             className="h-[34px] px-4 bg-cyan hover:bg-cyan-hover active:scale-[0.97] rounded-lg font-bold text-13 text-white flex items-center gap-2 transition-all shadow-sm shadow-cyan/20"
           >
             <Send size={14} />

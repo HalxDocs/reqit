@@ -98,6 +98,10 @@ export function CreateEnvironment(arg1) {
   return window['go']['main']['App']['CreateEnvironment'](arg1);
 }
 
+export function CreateSchedule(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['CreateSchedule'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function CreateSpec(arg1, arg2) {
   return window['go']['main']['App']['CreateSpec'](arg1, arg2);
 }
@@ -138,6 +142,10 @@ export function DeleteSavedRequests(arg1) {
   return window['go']['main']['App']['DeleteSavedRequests'](arg1);
 }
 
+export function DeleteSchedule(arg1) {
+  return window['go']['main']['App']['DeleteSchedule'](arg1);
+}
+
 export function DeleteTestGroup(arg1, arg2) {
   return window['go']['main']['App']['DeleteTestGroup'](arg1, arg2);
 }
@@ -172,6 +180,10 @@ export function DownloadBinaryResponse(arg1, arg2) {
 
 export function EmitSocketIOEvent(arg1, arg2) {
   return window['go']['main']['App']['EmitSocketIOEvent'](arg1, arg2);
+}
+
+export function ExportCollectionHTML(arg1, arg2) {
+  return window['go']['main']['App']['ExportCollectionHTML'](arg1, arg2);
 }
 
 export function ExportCollectionMarkdown(arg1, arg2) {
@@ -290,6 +302,10 @@ export function GetAirGapConfig() {
   return window['go']['main']['App']['GetAirGapConfig']();
 }
 
+export function GetAutoSync() {
+  return window['go']['main']['App']['GetAutoSync']();
+}
+
 export function GetBadges() {
   return window['go']['main']['App']['GetBadges']();
 }
@@ -396,6 +412,10 @@ export function GetRecipes() {
 
 export function GetSSOProviders() {
   return window['go']['main']['App']['GetSSOProviders']();
+}
+
+export function GetSchedules() {
+  return window['go']['main']['App']['GetSchedules']();
 }
 
 export function GetSocketIOState() {
@@ -654,6 +674,10 @@ export function RemoveMaskingRule(arg1) {
   return window['go']['main']['App']['RemoveMaskingRule'](arg1);
 }
 
+export function RemovePlugin(arg1) {
+  return window['go']['main']['App']['RemovePlugin'](arg1);
+}
+
 export function RemoveSSOProvider(arg1) {
   return window['go']['main']['App']['RemoveSSOProvider'](arg1);
 }
@@ -750,6 +774,14 @@ export function SetAirGapConfig(arg1) {
   return window['go']['main']['App']['SetAirGapConfig'](arg1);
 }
 
+export function SetAutoSync(arg1) {
+  return window['go']['main']['App']['SetAutoSync'](arg1);
+}
+
+export function SetCollectionVariables(arg1, arg2) {
+  return window['go']['main']['App']['SetCollectionVariables'](arg1, arg2);
+}
+
 export function SetDevProfilePublic(arg1) {
   return window['go']['main']['App']['SetDevProfilePublic'](arg1);
 }
@@ -828,6 +860,10 @@ export function UpdateProfile(arg1, arg2) {
 
 export function UpdateSavedRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateSavedRequest'](arg1, arg2, arg3);
+}
+
+export function UpdateSchedule(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['UpdateSchedule'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateScriptRules(arg1, arg2, arg3) {

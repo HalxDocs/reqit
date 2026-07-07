@@ -13,6 +13,7 @@ import {cookies} from '../models';
 import {environments} from '../models';
 import {locks} from '../models';
 import {plugin} from '../models';
+import {scheduler} from '../models';
 import {openapi} from '../models';
 import {telemetry} from '../models';
 import {mqtt} from '../models';
@@ -65,6 +66,8 @@ export function CreateCollection(arg1:string):Promise<models.Collection>;
 
 export function CreateEnvironment(arg1:string):Promise<models.Environment>;
 
+export function CreateSchedule(arg1:string,arg2:string,arg3:string,arg4:string,arg5:boolean):Promise<void>;
+
 export function CreateSpec(arg1:string,arg2:string):Promise<string>;
 
 export function CreateTestSuite(arg1:string,arg2:string,arg3:string):Promise<models.TestSuite>;
@@ -85,6 +88,8 @@ export function DeleteSavedRequest(arg1:string):Promise<void>;
 
 export function DeleteSavedRequests(arg1:Array<string>):Promise<void>;
 
+export function DeleteSchedule(arg1:string):Promise<void>;
+
 export function DeleteTestGroup(arg1:string,arg2:string):Promise<void>;
 
 export function DeleteTestSuite(arg1:string):Promise<void>;
@@ -102,6 +107,8 @@ export function DisconnectSocketIO():Promise<void>;
 export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<void>;
 
 export function EmitSocketIOEvent(arg1:string,arg2:any):Promise<void>;
+
+export function ExportCollectionHTML(arg1:string,arg2:main.ExportHTMLDocsOpts):Promise<string>;
 
 export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;
 
@@ -161,6 +168,8 @@ export function GetActiveWorkspace():Promise<workspaces.Info>;
 
 export function GetAirGapConfig():Promise<string>;
 
+export function GetAutoSync():Promise<boolean>;
+
 export function GetBadges():Promise<string>;
 
 export function GetBranches():Promise<Array<string>>;
@@ -214,6 +223,8 @@ export function GetRecipeCategories():Promise<Array<string>>;
 export function GetRecipes():Promise<string>;
 
 export function GetSSOProviders():Promise<string>;
+
+export function GetSchedules():Promise<Array<scheduler.ScheduledRun>>;
 
 export function GetSocketIOState():Promise<models.SocketState>;
 
@@ -343,6 +354,8 @@ export function RelocateWorkspace(arg1:string,arg2:string):Promise<void>;
 
 export function RemoveMaskingRule(arg1:string):Promise<void>;
 
+export function RemovePlugin(arg1:string):Promise<void>;
+
 export function RemoveSSOProvider(arg1:string):Promise<void>;
 
 export function RemoveSpecEndpoint(arg1:string,arg2:string,arg3:string):Promise<void>;
@@ -391,6 +404,10 @@ export function SetActiveEnvironment(arg1:string):Promise<void>;
 
 export function SetAirGapConfig(arg1:string):Promise<void>;
 
+export function SetAutoSync(arg1:boolean):Promise<void>;
+
+export function SetCollectionVariables(arg1:string,arg2:Array<models.EnvVar>):Promise<void>;
+
 export function SetDevProfilePublic(arg1:boolean):Promise<void>;
 
 export function SetDiscordURL(arg1:string):Promise<void>;
@@ -430,6 +447,8 @@ export function UpdateHistoryEntry(arg1:string,arg2:Record<string, any>):Promise
 export function UpdateProfile(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPayload):Promise<void>;
+
+export function UpdateSchedule(arg1:string,arg2:any,arg3:any,arg4:any):Promise<void>;
 
 export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:Array<models.ExtractRule>):Promise<void>;
 

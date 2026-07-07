@@ -143,7 +143,7 @@ export function TestSuitePanel({
     setRunning(true);
     setRunResult(null);
     try {
-      const res = await RunCollection(reqs, {} as any);
+      const res = await RunCollection(reqs, {} as Record<string, models.Assertion>);
       setRunResult(res);
     } catch (e) {
       toast.error(String(e));
@@ -152,8 +152,12 @@ export function TestSuitePanel({
     }
   };
 
-  // @ts-ignore
-  const suite = selected ?? suites.find((s: any) => s?.id === selected?.id) ?? null;
+  let suite: models.TestSuite | null = selected;
+  if (!suite) {
+    for (const s of suites) {
+      if ((s as any)?.id === selected?.id) { suite = s; break; }
+    }
+  }
 
   return (
     <Modal open={open} onClose={onClose} title="Test Suites">
@@ -217,7 +221,7 @@ export function TestSuitePanel({
                 <input
                   type="text"
                   value={suite.name}
-                  onChange={(e) => setSelected({ ...suite, name: e.target.value } as any)}
+                  onChange={(e) => setSelected({ ...suite, name: e.target.value } as models.TestSuite)}
                   className="h-[28px] flex-1 px-2 bg-surface border border-border rounded text-12 text-text font-semibold outline-none focus:border-cyan"
                 />
                   <button
@@ -323,12 +327,12 @@ function GroupEditor({
         <input
           type="text"
           value={group.name}
-          onChange={(e) => onChange({ ...group, name: e.target.value } as any)}
+          onChange={(e) => onChange({ ...group, name: e.target.value } as models.TestGroup)}
           className="h-[24px] flex-1 px-2 bg-transparent border border-transparent hover:border-border rounded text-12 text-text outline-none focus:border-cyan"
         />
         <select
           value={group.requestId}
-          onChange={(e) => onChange({ ...group, requestId: e.target.value } as any)}
+          onChange={(e) => onChange({ ...group, requestId: e.target.value } as models.TestGroup)}
           className="h-[24px] max-w-[160px] px-1 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
         >
           <option value="">Select request…</option>
@@ -348,7 +352,7 @@ function GroupEditor({
         <div className="pl-5">
           <AssertionEditor
             assertions={group.assertions}
-            onChange={(assertions) => onChange({ ...group, assertions } as any)}
+            onChange={(assertions) => onChange({ ...group, assertions } as models.TestGroup)}
           />
         </div>
       )}

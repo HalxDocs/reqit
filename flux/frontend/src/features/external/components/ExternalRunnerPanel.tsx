@@ -95,7 +95,7 @@ export function ExternalRunnerPanel({
 
           <select
             value={format}
-            onChange={(e) => setFormat(e.target.value as any)}
+            onChange={(e) => setFormat(e.target.value as "cli" | "github" | "playwright" | "jest" | "gitlab")}
             className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan"
           >
             <option value="playwright">Playwright</option>

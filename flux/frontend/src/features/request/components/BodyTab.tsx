@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useRef } from "react";
 import { Check, AlertTriangle, RefreshCw, ChevronRight, ChevronDown } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
@@ -90,8 +90,30 @@ export function BodyTab() {
     }
   }, [url, headers, authType, authValue, setGraphqlSchema, setGraphqlSchemaLoading, setGraphqlSchemaError]);
 
+  const pasteDetectRef = useRef<HTMLDivElement>(null);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (bodyType !== "none") return;
+    const text = e.clipboardData.getData("text/plain").trim();
+    if (!text) return;
+    if (text.startsWith("{") || text.startsWith("[")) {
+      try {
+        JSON.parse(text);
+        setBodyType("json");
+        setBodyRaw(text);
+        e.preventDefault();
+        return;
+      } catch {}
+    }
+    if (text.startsWith("<") && text.endsWith(">")) {
+      setBodyType("json");
+      setBodyRaw(text);
+      e.preventDefault();
+    }
+  }, [bodyType, setBodyType, setBodyRaw]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div ref={pasteDetectRef} className="flex flex-col h-full" onPaste={handlePaste}>
       <div className="flex items-center gap-2 px-3 py-3 border-b border-border flex-wrap">
         {MODES.map((m) => (
           <button

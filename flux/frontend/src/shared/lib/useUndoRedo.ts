@@ -4,8 +4,7 @@ import type { RequestState } from "@/features/request/types/request";
 
 const MAX_HISTORY = 50;
 
-// Snapshot the entire RequestState from the store (excludes schema/loading/error)
-function snapshot(s: any): RequestState {
+function snapshot(s: ReturnType<typeof useRequestStore.getState>): RequestState {
   return {
     method: s.method,
     url: s.url,

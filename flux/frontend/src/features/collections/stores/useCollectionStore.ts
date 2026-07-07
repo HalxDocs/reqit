@@ -10,6 +10,7 @@ import {
   RenameCollection,
   ReorderCollection,
   ReorderRequest,
+  SetCollectionVariables,
   UpdateSavedRequest,
 } from "../../../../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../../../../wailsjs/runtime";
@@ -46,6 +47,7 @@ type CollectionStore = {
   reorderCollection: (id: string, newIndex: number) => Promise<void>;
   reorderRequest: (collID: string, reqID: string, newIndex: number) => Promise<void>;
   moveRequest: (reqID: string, targetCollID: string) => Promise<void>;
+  updateCollectionVariables: (collID: string, variables: models.EnvVar[]) => Promise<void>;
 };
 
 const COLL_EVENT = "collections:changed";
@@ -156,10 +158,10 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
         bodyForm: req.payload.bodyForm ?? [],
         authType: req.payload.authType,
         authValue: req.payload.authValue,
-        graphqlQuery: (req.payload as any).graphqlQuery ?? "",
-        graphqlVariables: (req.payload as any).graphqlVariables ?? "",
-        preScript: (req.payload as any).preScript ?? "",
-        postScript: (req.payload as any).postScript ?? "",
+        graphqlQuery: req.payload.graphqlQuery ?? "",
+        graphqlVariables: req.payload.graphqlVariables ?? "",
+        preScript: req.payload.preScript ?? "",
+        postScript: req.payload.postScript ?? "",
       };
       await AddRequestToCollection(c.id, `${req.name} (copy)`, wire as never);
       await get().load();
@@ -179,6 +181,11 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
 
   moveRequest: async (reqID, targetCollID) => {
     await MoveRequest(reqID, targetCollID);
+    await get().load();
+  },
+
+  updateCollectionVariables: async (collID, variables) => {
+    await SetCollectionVariables(collID, variables);
     await get().load();
   },
 

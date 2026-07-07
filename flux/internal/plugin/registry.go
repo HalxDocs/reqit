@@ -95,6 +95,20 @@ func loadPlugin(dir string) (*RegisteredPlugin, error) {
 	}, nil
 }
 
+// Remove deletes a plugin by name from disk and the registry.
+func (r *Registry) Remove(name string) error {
+	for i, p := range r.plugins {
+		if p.Manifest.Name == name {
+			if err := os.RemoveAll(p.Dir); err != nil {
+				return fmt.Errorf("remove plugin dir: %w", err)
+			}
+			r.plugins = append(r.plugins[:i], r.plugins[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("plugin %q not found", name)
+}
+
 // PluginDir returns the standard plugin directory.
 func PluginDir(appDataDir string) string {
 	return filepath.Join(appDataDir, "plugins")

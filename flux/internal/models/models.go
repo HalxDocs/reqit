@@ -28,6 +28,9 @@ type RequestPayload struct {
 	MQTTTopic   string `json:"mqttTopic,omitempty"`
 	SOAPAction  string `json:"soapAction,omitempty"`
 	SOAPVersion string `json:"soapVersion,omitempty"` // "1.1" | "1.2"
+	// mTLS client certificate
+	ClientCert string `json:"clientCert,omitempty"` // PEM-encoded certificate
+	ClientKey  string `json:"clientKey,omitempty"`  // PEM-encoded private key
 }
 
 // OAuth2Config stored as JSON in AuthValue when AuthType=="oauth2"
@@ -122,6 +125,7 @@ type Collection struct {
 	Description string         `json:"description,omitempty"`
 	SpecPath    string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
 	Public      bool           `json:"public,omitempty"`
+	Variables   []EnvVar       `json:"variables,omitempty"` // collection-scoped variables
 	Requests    []SavedRequest `json:"requests"`
 }
 
@@ -356,6 +360,9 @@ type SocketMessage struct {
 	Timestamp int64  `json:"timestamp"`
 	Direction string `json:"direction"` // "sent" | "received"
 	Body      string `json:"body"`
+	EventType string `json:"eventType,omitempty"`
+	EventID   string `json:"eventId,omitempty"`
+	Retry     int    `json:"retry,omitempty"`
 }
 
 type SocketState struct {

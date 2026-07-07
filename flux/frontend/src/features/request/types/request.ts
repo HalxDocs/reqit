@@ -53,6 +53,9 @@ export interface RequestState {
   soapAction?: string;
   soapVersion?: string;
   soapBody?: string;
+  // mTLS
+  clientCert?: string;
+  clientKey?: string;
   // MQTT
   mqttTopic?: string;
   mqttPayload?: string;

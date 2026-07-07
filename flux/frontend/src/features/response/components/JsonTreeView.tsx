@@ -125,6 +125,7 @@ function TreeNodeComponent({
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
         onClick={handleClick}
+        data-shortcut={isExpandable ? (isExpanded ? "tree.collapse" : "tree.expand") : undefined}
       >
         {isExpandable ? (
           <span className="w-4 h-4 flex items-center justify-center text-subtext shrink-0">
@@ -203,6 +204,7 @@ function CopyNodeButton({ path, value }: { path: string; value: unknown }) {
     <button
       type="button"
       onClick={handleCopy}
+      data-shortcut="tree.copy"
       className="ml-auto opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-opacity"
       title="Copy value"
     >
@@ -283,6 +285,8 @@ export function JsonTreeView({ data, className }: JsonTreeViewProps) {
           setSelectedPath={setSelectedPath}
         />
       ))}
+      <button type="button" data-shortcut="tree.expandAll" onClick={expandAll} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
+      <button type="button" data-shortcut="tree.collapseAll" onClick={collapseAll} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
     </div>
   );
 }

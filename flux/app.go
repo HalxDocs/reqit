@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"flux/internal/environments"
 	"flux/internal/external"
 	"flux/internal/export/markdown"
+	htmldoc "flux/internal/export/html"
 	gitpkg "flux/internal/git"
 	graphqlpkg "flux/internal/graphqlpkg"
 	"flux/internal/grpc"
@@ -57,6 +59,7 @@ import (
 	"flux/internal/sso"
 	"flux/internal/storage"
 	"flux/internal/runner"
+	schedpkg "flux/internal/scheduler"
 	"flux/internal/sock"
 	"flux/internal/socketio"
 	"flux/internal/telemetry"
@@ -105,7 +108,13 @@ type App struct {
 
 	sock       *sock.Socket
 	sockio     *socketio.Client
-	mqttClient *mqtt.Client
+	mqttClient     *mqtt.Client
+	oauthState     *oauth2.State
+	oauthMu        sync.Mutex
+	schedulerStor  *schedpkg.Store
+	schedulerExec  *schedpkg.Executor
+	autoSyncOn     bool
+	autoSyncMu     sync.Mutex
 }
 
 func NewApp() *App {
@@ -212,6 +221,15 @@ func (a *App) startup(ctx context.Context) {
 	})
 }
 
+func (a *App) shutdown(ctx context.Context) {
+	if a.interceptor != nil {
+		_ = a.interceptor.Stop()
+	}
+	if a.audit != nil {
+		_ = a.audit.Close()
+	}
+}
+
 func (a *App) CheckForUpdates() *updater.UpdateManifest {
 	if strings.HasPrefix(updater.CurrentVersion, "v0.0.0") {
 		return nil
@@ -283,8 +301,22 @@ func (a *App) InstallPlugin(sourceDir string) error {
 		return err
 	}
 	if a.plugins != nil {
-		return a.plugins.Registry.Discover()
+		if err := a.plugins.Registry.Discover(); err != nil {
+			return err
+		}
+		runtime.EventsEmit(a.ctx, "plugins:changed", nil)
 	}
+	return nil
+}
+
+func (a *App) RemovePlugin(name string) error {
+	if a.plugins == nil {
+		return errors.New("plugin system not initialized")
+	}
+	if err := a.plugins.Registry.Remove(name); err != nil {
+		return err
+	}
+	runtime.EventsEmit(a.ctx, "plugins:changed", nil)
 	return nil
 }
 
@@ -478,6 +510,17 @@ func (a *App) mountWorkspace(dir string) {
 	} else {
 		a.git = nil
 	}
+
+	// Init scheduler store + executor for this workspace.
+	a.schedulerStor = schedpkg.NewStore(dir)
+	if a.schedulerExec != nil {
+		a.schedulerExec.Stop()
+	}
+	a.schedulerExec = schedpkg.NewExecutor(a.schedulerStor, a.collections)
+	a.schedulerExec.OnRun(func(results []models.CollectionRunResult) {
+		runtime.EventsEmit(a.ctx, "scheduler:run", results)
+	})
+	a.schedulerExec.Start(a.ctx)
 }
 
 // --- Workspaces ---
@@ -566,7 +609,7 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 
 	vars, logs, pass, fail, err := scripting.RunPreScript(payload.PreScript, &payload)
 	if err != nil {
-		// Log pre-script error but continue
+		runtime.EventsEmit(a.ctx, "script:error", map[string]interface{}{"phase": "pre", "error": err.Error()})
 	}
 	if len(vars) > 0 && a.environments != nil {
 		_ = a.environments.MergeVars(vars)
@@ -579,7 +622,7 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 
 	vars2, logs2, pass2, fail2, err2 := scripting.RunPostScript(payload.PostScript, &payload, &result)
 	if err2 != nil {
-		// Log post-script error but continue
+		runtime.EventsEmit(a.ctx, "script:error", map[string]interface{}{"phase": "post", "error": err2.Error()})
 	}
 	if len(vars2) > 0 && a.environments != nil {
 		_ = a.environments.MergeVars(vars2)
@@ -638,6 +681,52 @@ func (a *App) CancelRequest() {
 	}
 }
 
+// --- Scheduler ---
+
+func (a *App) GetSchedules() ([]schedpkg.ScheduledRun, error) {
+	if a.schedulerStor == nil {
+		return nil, errors.New("no active workspace")
+	}
+	return a.schedulerStor.GetAll()
+}
+
+func (a *App) CreateSchedule(id, collectionID, name, cronExpr string, enabled bool) error {
+	if a.schedulerStor == nil {
+		return errors.New("no active workspace")
+	}
+	return a.schedulerStor.Create(schedpkg.ScheduledRun{
+		ID:           id,
+		CollectionID: collectionID,
+		Name:         name,
+		CronExpr:     cronExpr,
+		Enabled:      enabled,
+	})
+}
+
+func (a *App) UpdateSchedule(id string, name, cronExpr *string, enabled *bool) error {
+	if a.schedulerStor == nil {
+		return errors.New("no active workspace")
+	}
+	patch := map[string]interface{}{}
+	if name != nil {
+		patch["name"] = *name
+	}
+	if cronExpr != nil {
+		patch["cronExpr"] = *cronExpr
+	}
+	if enabled != nil {
+		patch["enabled"] = *enabled
+	}
+	return a.schedulerStor.Update(id, patch)
+}
+
+func (a *App) DeleteSchedule(id string) error {
+	if a.schedulerStor == nil {
+		return errors.New("no active workspace")
+	}
+	return a.schedulerStor.Delete(id)
+}
+
 // --- OAuth2 ---
 
 func (a *App) OAuth2AuthorizeURL(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI string, usePKCE bool) (string, string, error) {
@@ -650,19 +739,31 @@ func (a *App) OAuth2AuthorizeURL(authURL, tokenURL, clientID, clientSecret, scop
 		RedirectURI:  redirectURI,
 		UsePKCE:      usePKCE,
 	})
-	return o.AuthorizeURL()
+	url, state, err := o.AuthorizeURL()
+	if err != nil {
+		return "", "", err
+	}
+	a.oauthMu.Lock()
+	a.oauthState = o
+	a.oauthMu.Unlock()
+	return url, state, nil
 }
 
 func (a *App) OAuth2Exchange(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI, code string, usePKCE bool) (*models.OAuth2TokenResponse, error) {
-	o := oauth2.New(oauth2.OAuth2Config{
-		AuthURL:      authURL,
-		TokenURL:     tokenURL,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       scopes,
-		RedirectURI:  redirectURI,
-		UsePKCE:      usePKCE,
-	})
+	a.oauthMu.Lock()
+	o := a.oauthState
+	a.oauthMu.Unlock()
+	if o == nil {
+		o = oauth2.New(oauth2.OAuth2Config{
+			AuthURL:      authURL,
+			TokenURL:     tokenURL,
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			Scopes:       scopes,
+			RedirectURI:  redirectURI,
+			UsePKCE:      usePKCE,
+		})
+	}
 	token, err := o.Exchange(context.Background(), code)
 	if err != nil {
 		return nil, err
@@ -889,77 +990,121 @@ func (a *App) CreateCollection(name string) (models.Collection, error) {
 	if a.collections == nil {
 		return models.Collection{}, errors.New("no active workspace")
 	}
-	return a.collections.CreateCollection(name)
+	c, err := a.collections.CreateCollection(name)
+	if err == nil {
+		go a.autoSync("create collection " + name)
+	}
+	return c, err
 }
 
 func (a *App) RenameCollection(id, name string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.RenameCollection(id, name)
+	if err := a.collections.RenameCollection(id, name); err != nil {
+		return err
+	}
+	go a.autoSync("rename collection to " + name)
+	return nil
 }
 
 func (a *App) DeleteCollection(id string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.DeleteCollection(id)
+	if err := a.collections.DeleteCollection(id); err != nil {
+		return err
+	}
+	go a.autoSync("delete collection " + id)
+	return nil
 }
 
 func (a *App) AddRequestToCollection(collID, name string, payload models.RequestPayload) (models.SavedRequest, error) {
 	if a.collections == nil {
 		return models.SavedRequest{}, errors.New("no active workspace")
 	}
-	return a.collections.AddRequest(collID, name, payload)
+	r, err := a.collections.AddRequest(collID, name, payload)
+	if err == nil {
+		go a.autoSync("add request " + name)
+	}
+	return r, err
 }
 
 func (a *App) UpdateSavedRequest(reqID, name string, payload models.RequestPayload) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.UpdateRequest(reqID, name, payload)
+	if err := a.collections.UpdateRequest(reqID, name, payload); err != nil {
+		return err
+	}
+	go a.autoSync("update request " + name)
+	return nil
 }
 
 func (a *App) UpdateScriptRules(reqID string, preSetVars []models.PreSetVar, extractRules []models.ExtractRule) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.UpdateRequestScripts(reqID, preSetVars, extractRules)
+	if err := a.collections.UpdateRequestScripts(reqID, preSetVars, extractRules); err != nil {
+		return err
+	}
+	go a.autoSync("update script rules for " + reqID)
+	return nil
 }
 
 func (a *App) DeleteSavedRequest(reqID string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.DeleteRequest(reqID)
+	if err := a.collections.DeleteRequest(reqID); err != nil {
+		return err
+	}
+	go a.autoSync("delete request " + reqID)
+	return nil
 }
 
 func (a *App) DeleteSavedRequests(reqIDs []string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.DeleteRequests(reqIDs)
+	if err := a.collections.DeleteRequests(reqIDs); err != nil {
+		return err
+	}
+	go a.autoSync("delete " + strconv.Itoa(len(reqIDs)) + " requests")
+	return nil
 }
 
 func (a *App) ReorderCollection(id string, newIndex int) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.ReorderCollection(id, newIndex)
+	if err := a.collections.ReorderCollection(id, newIndex); err != nil {
+		return err
+	}
+	go a.autoSync("reorder collection " + id)
+	return nil
 }
 
 func (a *App) ReorderRequest(collID, reqID string, newIndex int) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.ReorderRequest(collID, reqID, newIndex)
+	if err := a.collections.ReorderRequest(collID, reqID, newIndex); err != nil {
+		return err
+	}
+	go a.autoSync("reorder request " + reqID)
+	return nil
 }
 
 func (a *App) MoveRequest(reqID, targetCollID string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	return a.collections.MoveRequest(reqID, targetCollID)
+	if err := a.collections.MoveRequest(reqID, targetCollID); err != nil {
+		return err
+	}
+	go a.autoSync("move request " + reqID)
+	return nil
 }
 
 // --- History ---
@@ -1005,28 +1150,44 @@ func (a *App) CreateEnvironment(name string) (models.Environment, error) {
 	if a.environments == nil {
 		return models.Environment{}, errors.New("no active workspace")
 	}
-	return a.environments.Create(name)
+	e, err := a.environments.Create(name)
+	if err == nil {
+		go a.autoSync("create environment " + name)
+	}
+	return e, err
 }
 
 func (a *App) UpdateEnvironment(id, name string, vars []models.EnvVar) error {
 	if a.environments == nil {
 		return errors.New("no active workspace")
 	}
-	return a.environments.Update(id, name, vars)
+	if err := a.environments.Update(id, name, vars); err != nil {
+		return err
+	}
+	go a.autoSync("update environment " + name)
+	return nil
 }
 
 func (a *App) DeleteEnvironment(id string) error {
 	if a.environments == nil {
 		return errors.New("no active workspace")
 	}
-	return a.environments.Delete(id)
+	if err := a.environments.Delete(id); err != nil {
+		return err
+	}
+	go a.autoSync("delete environment " + id)
+	return nil
 }
 
 func (a *App) SetActiveEnvironment(id string) error {
 	if a.environments == nil {
 		return errors.New("no active workspace")
 	}
-	return a.environments.SetActive(id)
+	if err := a.environments.SetActive(id); err != nil {
+		return err
+	}
+	go a.autoSync("set active environment " + id)
+	return nil
 }
 
 // SetEnvVar adds or updates a single variable in the active environment.
@@ -1361,18 +1522,62 @@ type GitStatus struct {
 	HasChanges    bool   `json:"hasChanges"`
 	CurrentBranch string `json:"currentBranch"`
 	RemoteURL     string `json:"remoteUrl"`
+	AutoSync      bool   `json:"autoSync"`
 }
 
 func (a *App) GetGitStatus() GitStatus {
 	if a.git == nil {
 		return GitStatus{}
 	}
+	a.autoSyncMu.Lock()
+	as := a.autoSyncOn
+	a.autoSyncMu.Unlock()
 	return GitStatus{
 		Initialised:   true,
 		HasChanges:    a.git.HasChanges(),
 		CurrentBranch: a.git.CurrentBranch(),
 		RemoteURL:     a.git.GetRemote(),
+		AutoSync:      as,
 	}
+}
+
+func (a *App) SetAutoSync(enabled bool) {
+	a.autoSyncMu.Lock()
+	a.autoSyncOn = enabled
+	a.autoSyncMu.Unlock()
+}
+
+func (a *App) GetAutoSync() bool {
+	a.autoSyncMu.Lock()
+	defer a.autoSyncMu.Unlock()
+	return a.autoSyncOn
+}
+
+func (a *App) autoSync(description string) {
+	a.autoSyncMu.Lock()
+	enabled := a.autoSyncOn
+	a.autoSyncMu.Unlock()
+	if !enabled || a.git == nil {
+		return
+	}
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil || dir == "" {
+		return
+	}
+	p, err := a.profile.Get()
+	if err != nil {
+		return
+	}
+	pat := gitpkg.LoadPAT(dir)
+	if pat == "" {
+		return
+	}
+	_ = a.git.Pull(pat)
+	if a.git.HasChanges() {
+		_ = a.git.CommitAll("[reqit] auto-sync: "+description, p.Name, p.Email)
+		_ = a.git.Push(pat)
+	}
+	runtime.EventsEmit(a.ctx, "git:sync:complete", nil)
 }
 
 // InitGit initialises (or opens) a git repo in the active workspace,
@@ -2261,9 +2466,29 @@ func (a *App) SaveResponseToRequest(colID, reqID string) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")
 	}
-	// This is called after SendRequest; the last response is stored on a.history.
-	// We'll take it from the response store — frontend passes the response explicitly.
-	return nil // See SaveCapturedResponse below.
+	entries, err := a.history.GetAll()
+	if err != nil || len(entries) == 0 {
+		return errors.New("no recent response to save")
+	}
+	last := entries[len(entries)-1]
+	resp := models.SavedResponse{
+		StatusCode: last.Response.StatusCode,
+		Headers:    last.Response.Headers,
+		Body:       last.Response.Body,
+		CapturedAt: time.Now().Format(time.RFC3339),
+	}
+	return a.collections.SetSavedResponse(colID, reqID, resp)
+}
+
+func (a *App) SetCollectionVariables(collID string, vars []models.EnvVar) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	if err := a.collections.SetCollectionVariables(collID, vars); err != nil {
+		return err
+	}
+	go a.autoSync("update collection variables " + collID)
+	return nil
 }
 
 // --- Test Suites ---
@@ -2560,6 +2785,65 @@ func (a *App) ExportCollectionMarkdown(colID string, opts ExportMarkdownOpts) (s
 		return "", nil // user cancelled
 	}
 	return path, os.WriteFile(path, []byte(md), 0644)
+}
+
+type ExportHTMLDocsOpts struct {
+	IncludeHeaders  bool   `json:"includeHeaders"`
+	IncludeBody     bool   `json:"includeBody"`
+	IncludeExamples bool   `json:"includeExamples"`
+	BaseURL         string `json:"baseUrl"`
+	Timestamp       bool   `json:"timestamp"`
+	DarkMode        bool   `json:"darkMode"`
+}
+
+func (a *App) ExportCollectionHTML(colID string, opts ExportHTMLDocsOpts) (string, error) {
+	if a.collections == nil {
+		return "", errors.New("no active workspace")
+	}
+	all, err := a.collections.GetAll()
+	if err != nil {
+		return "", err
+	}
+	var col *models.Collection
+	for i := range all {
+		if all[i].ID == colID {
+			col = &all[i]
+			break
+		}
+	}
+	if col == nil {
+		return "", errors.New("collection not found")
+	}
+	ho := htmldoc.ExportOptions{
+		IncludeHeaders:  opts.IncludeHeaders,
+		IncludeBody:     opts.IncludeBody,
+		IncludeExamples: opts.IncludeExamples,
+		BaseURL:         opts.BaseURL,
+		Timestamp:       opts.Timestamp,
+		DarkMode:        opts.DarkMode,
+	}
+	g := htmldoc.New(ho)
+	html, err := g.Generate(col)
+	if err != nil {
+		return "", err
+	}
+
+	if a.ctx == nil {
+		return "", errors.New("app context not ready")
+	}
+	filename := col.Name + "_api_docs.html"
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save HTML API Documentation",
+		DefaultFilename: filename,
+		Filters:         []runtime.FileFilter{{DisplayName: "HTML Files", Pattern: "*.html"}},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil // user cancelled
+	}
+	return path, os.WriteFile(path, []byte(html), 0644)
 }
 
 func (a *App) SaveCapturedResponse(colID, reqID string, resp models.SavedResponse) error {

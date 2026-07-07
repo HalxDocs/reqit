@@ -508,6 +508,28 @@ export namespace main {
 	        this.model = source["model"];
 	    }
 	}
+	export class ExportHTMLDocsOpts {
+	    includeHeaders: boolean;
+	    includeBody: boolean;
+	    includeExamples: boolean;
+	    baseUrl: string;
+	    timestamp: boolean;
+	    darkMode: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportHTMLDocsOpts(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.includeHeaders = source["includeHeaders"];
+	        this.includeBody = source["includeBody"];
+	        this.includeExamples = source["includeExamples"];
+	        this.baseUrl = source["baseUrl"];
+	        this.timestamp = source["timestamp"];
+	        this.darkMode = source["darkMode"];
+	    }
+	}
 	export class ExportMarkdownOpts {
 	    includeHeaders: boolean;
 	    includeBody: boolean;
@@ -533,6 +555,7 @@ export namespace main {
 	    hasChanges: boolean;
 	    currentBranch: string;
 	    remoteUrl: string;
+	    autoSync: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new GitStatus(source);
@@ -544,6 +567,7 @@ export namespace main {
 	        this.hasChanges = source["hasChanges"];
 	        this.currentBranch = source["currentBranch"];
 	        this.remoteUrl = source["remoteUrl"];
+	        this.autoSync = source["autoSync"];
 	    }
 	}
 	export class InterceptorStatus {
@@ -745,6 +769,8 @@ export namespace models {
 	    mqttTopic?: string;
 	    soapAction?: string;
 	    soapVersion?: string;
+	    clientCert?: string;
+	    clientKey?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -771,6 +797,8 @@ export namespace models {
 	        this.mqttTopic = source["mqttTopic"];
 	        this.soapAction = source["soapAction"];
 	        this.soapVersion = source["soapVersion"];
+	        this.clientCert = source["clientCert"];
+	        this.clientKey = source["clientKey"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -837,12 +865,29 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class EnvVar {
+	    key: string;
+	    value: string;
+	    enabled: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EnvVar(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.value = source["value"];
+	        this.enabled = source["enabled"];
+	    }
+	}
 	export class Collection {
 	    id: string;
 	    name: string;
 	    description?: string;
 	    spec?: string;
 	    public?: boolean;
+	    variables?: EnvVar[];
 	    requests: SavedRequest[];
 	
 	    static createFrom(source: any = {}) {
@@ -856,6 +901,7 @@ export namespace models {
 	        this.description = source["description"];
 	        this.spec = source["spec"];
 	        this.public = source["public"];
+	        this.variables = this.convertValues(source["variables"], EnvVar);
 	        this.requests = this.convertValues(source["requests"], SavedRequest);
 	    }
 	
@@ -975,22 +1021,7 @@ export namespace models {
 	        this.secure = source["secure"];
 	    }
 	}
-	export class EnvVar {
-	    key: string;
-	    value: string;
-	    enabled: boolean;
 	
-	    static createFrom(source: any = {}) {
-	        return new EnvVar(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.value = source["value"];
-	        this.enabled = source["enabled"];
-	    }
-	}
 	export class Environment {
 	    id: string;
 	    name: string;
@@ -1480,6 +1511,9 @@ export namespace models {
 	    timestamp: number;
 	    direction: string;
 	    body: string;
+	    eventType?: string;
+	    eventId?: string;
+	    retry?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new SocketMessage(source);
@@ -1490,6 +1524,9 @@ export namespace models {
 	        this.timestamp = source["timestamp"];
 	        this.direction = source["direction"];
 	        this.body = source["body"];
+	        this.eventType = source["eventType"];
+	        this.eventId = source["eventId"];
+	        this.retry = source["retry"];
 	    }
 	}
 	export class SocketState {
@@ -2056,6 +2093,37 @@ export namespace profile {
 		}
 	}
 	
+
+}
+
+export namespace scheduler {
+	
+	export class ScheduledRun {
+	    id: string;
+	    collectionId: string;
+	    name: string;
+	    cronExpr: string;
+	    enabled: boolean;
+	    lastRunAt?: string;
+	    nextRunAt?: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScheduledRun(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.collectionId = source["collectionId"];
+	        this.name = source["name"];
+	        this.cronExpr = source["cronExpr"];
+	        this.enabled = source["enabled"];
+	        this.lastRunAt = source["lastRunAt"];
+	        this.nextRunAt = source["nextRunAt"];
+	        this.createdAt = source["createdAt"];
+	    }
+	}
 
 }
 

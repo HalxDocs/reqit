@@ -212,6 +212,7 @@ export function EnvironmentsModal() {
                   <button
                     type="button"
                     onClick={close}
+                    data-shortcut="env.cancel"
                     className="h-[32px] px-3 text-12 text-subtext hover:text-text rounded-md transition-colors"
                   >
                     Close
@@ -220,6 +221,7 @@ export function EnvironmentsModal() {
                     type="button"
                     onClick={handleSave}
                     disabled={busy}
+                    data-shortcut="env.save"
                     className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
                   >
                     {busy ? "Saving…" : "Save"}

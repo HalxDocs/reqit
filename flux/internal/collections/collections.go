@@ -212,11 +212,8 @@ func (s *Store) ReorderCollection(id string, newIndex int) error {
 	if old == -1 {
 		return errors.New("collection not found")
 	}
-	if newIndex < 0 {
-		newIndex = 0
-	}
-	if newIndex >= len(s.collections) {
-		newIndex = len(s.collections) - 1
+	if newIndex < 0 || newIndex >= len(s.collections) {
+		return errors.New("new index out of range")
 	}
 	if old == newIndex {
 		return nil
@@ -248,11 +245,8 @@ func (s *Store) ReorderRequest(collID, reqID string, newIndex int) error {
 		if old == -1 {
 			return errors.New("request not found")
 		}
-		if newIndex < 0 {
-			newIndex = 0
-		}
-		if newIndex >= len(s.collections[i].Requests) {
-			newIndex = len(s.collections[i].Requests) - 1
+		if newIndex < 0 || newIndex >= len(s.collections[i].Requests) {
+			return errors.New("new index out of range")
 		}
 		if old == newIndex {
 			return nil
@@ -368,6 +362,22 @@ func (s *Store) SetSavedResponse(colID, reqID string, resp models.SavedResponse)
 		}
 	}
 	return errors.New("request not found")
+}
+
+// SetCollectionVariables updates the variables for a collection.
+func (s *Store) SetCollectionVariables(collID string, vars []models.EnvVar) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.load(); err != nil {
+		return err
+	}
+	for i := range s.collections {
+		if s.collections[i].ID == collID {
+			s.collections[i].Variables = vars
+			return s.save()
+		}
+	}
+	return errors.New("collection not found")
 }
 
 // SetMockOverride updates the mock override settings for a saved request.

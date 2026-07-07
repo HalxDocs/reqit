@@ -23,7 +23,7 @@ type EnvStore = {
   update: (id: string, name: string, vars: models.EnvVar[]) => Promise<void>;
   remove: (id: string) => Promise<void>;
 
-  resolve: (text: string) => string;
+  resolve: (text: string, extraVars?: Map<string, string>) => string;
   unresolved: (text: string) => string[];
 };
 
@@ -75,11 +75,12 @@ export const useEnvStore = create<EnvStore>((set, get) => {
     await get().load();
   },
 
-  resolve: (text) => {
+  resolve: (text, extraVars?: Map<string, string>) => {
     if (!text) return text;
     const map = activeMap(get().environments, get().activeID);
+    const merged = extraVars ? new Map([...map, ...extraVars]) : map;
     return text.replace(VAR_PATTERN, (full, name: string) => {
-      const v = map.get(name);
+      const v = merged.get(name);
       return v === undefined ? full : v;
     });
   },
@@ -100,6 +101,14 @@ export const useEnvStore = create<EnvStore>((set, get) => {
   },
   };
 });
+
+export function collectionVarMap(vars: models.EnvVar[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const v of vars ?? []) {
+    if (v.enabled !== false && v.key) out.set(v.key, v.value ?? "");
+  }
+  return out;
+}
 
 function activeMap(envs: models.Environment[], activeID: string): Map<string, string> {
   const out = new Map<string, string>();

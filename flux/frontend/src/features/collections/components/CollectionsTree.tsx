@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckSquare, ChevronDown, ChevronRight, Copy,
-  FileCode2, Pencil, Plus, Square, Trash2,
+  FileCode2, Lock, Pencil, Plus, Square, Trash2,
 } from "lucide-react";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
+import { useGitStore } from "@/features/git/stores/useGitStore";
 import { decodePayload } from "@/shared/lib/loadPayload";
 import { MethodBadge } from "@/shared/components/MethodBadge";
 import { CollectionMenu } from "./CollectionMenu";
@@ -14,6 +15,7 @@ import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
 import {
   ExportCollectionMarkdown,
+  ExportCollectionHTML,
   ExportOpenAPI,
   PreviewOpenAPI,
   GetActiveWorkspace,
@@ -23,7 +25,7 @@ import {
   FetchSpecFromURL,
 } from "../../../../wailsjs/go/main/App";
 import type { main, models } from "../../../../wailsjs/go/models";
-import type { HttpMethod } from "@/features/request/types/request";
+import type { HttpMethod, PreSetVar, ExtractRule } from "@/features/request/types/request";
 
 const COLL_H = 32;
 const REQ_H = 28;
@@ -61,6 +63,7 @@ export function CollectionsTree() {
   const reorderCollection = useCollectionStore((s) => s.reorderCollection);
   const reorderRequest = useCollectionStore((s) => s.reorderRequest);
   const moveRequest = useCollectionStore((s) => s.moveRequest);
+  const updateCollectionVariables = useCollectionStore((s) => s.updateCollectionVariables);
   const newTab = useTabsStore((s) => s.newTab);
   const setLoadedRequestID = useUIStore((s) => s.setLoadedRequestID);
   const loadedRequestID = useUIStore((s) => s.loadedRequestID);
@@ -77,8 +80,14 @@ export function CollectionsTree() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moveTargetOpen, setMoveTargetOpen] = useState(false);
   const [mdExportColl, setMdExportColl] = useState<models.Collection | null>(null);
+  const [varsEditorColl, setVarsEditorColl] = useState<models.Collection | null>(null);
+  const [varsEditorDraft, setVarsEditorDraft] = useState<models.EnvVar[]>([]);
   const [mdOpts, setMdOpts] = useState<main.ExportMarkdownOpts>({
     includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true,
+  });
+  const [htmlExportColl, setHtmlExportColl] = useState<models.Collection | null>(null);
+  const [htmlOpts, setHtmlOpts] = useState<main.ExportHTMLDocsOpts>({
+    includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true, darkMode: true,
   });
   const renameReqRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -243,8 +252,16 @@ export function CollectionsTree() {
     } catch (e) { toast.error(String(e)); }
   };
 
+  const handleExportHTML = async (c: models.Collection) => {
+    try {
+      const path = await ExportCollectionHTML(c.id, htmlOpts);
+      toast.success(`Exported to ${path}`);
+      setHtmlExportColl(null);
+    } catch (e) { toast.error(String(e)); }
+  };
+
   const loadRequest = (req: models.SavedRequest) => {
-    newTab({ title: req.name, savedRequestID: req.id, request: decodePayload(req.payload, { preSetVars: req.preSetVars as any, extractRules: req.extractRules as any }), response: null, dirty: false });
+    newTab({ title: req.name, savedRequestID: req.id, request: decodePayload(req.payload, { preSetVars: req.preSetVars as unknown as PreSetVar[], extractRules: req.extractRules as unknown as ExtractRule[] }), response: null, dirty: false });
     setLoadedRequestID(req.id);
   };
 
@@ -360,7 +377,7 @@ export function CollectionsTree() {
             </div>
           ) : (
             <>
-              <button type="button" onClick={() => setCreating(true)}
+              <button type="button" onClick={() => setCreating(true)} data-shortcut="sidebar.newFolder"
                 className="flex-1 h-[28px] px-2 flex items-center gap-2 text-12 text-subtext hover:text-cyan hover:bg-cardHover rounded-md border border-dashed border-border hover:border-cyan transition-colors">
                 <Plus size={12} /><span>New collection</span>
               </button>
@@ -433,7 +450,7 @@ export function CollectionsTree() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}>
-                    <button type="button" onClick={() => toggleExpanded(c.id)}
+                    <button type="button" onClick={() => toggleExpanded(c.id)} data-shortcut={row.isOpen ? "sidebar.collapse" : "sidebar.expand"}
                       className="text-subtext hover:text-text transition-colors shrink-0" aria-label={row.isOpen ? "Collapse" : "Expand"}>
                       {row.isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                     </button>
@@ -443,8 +460,11 @@ export function CollectionsTree() {
                         onKeyDown={(e) => { if (e.key === "Enter") handleRename(c.id); if (e.key === "Escape") setRenamingID(null); }}
                         className="flex-1 h-[20px] px-1 bg-surface border border-cyan rounded-sm text-12 text-text outline-none" />
                     ) : (
-                      <button type="button" onClick={() => toggleExpanded(c.id)}
+                      <button type="button" onClick={() => toggleExpanded(c.id)} data-shortcut="sidebar.open"
                         className="flex-1 text-left text-12 font-semibold text-text truncate">{c.name}</button>
+                    )}
+                    {useGitStore.getState().locks[c.id] && (
+                      <span title={`Locked by ${useGitStore.getState().locks[c.id].user}`} className="shrink-0 text-amber-400"><Lock size={10} /></span>
                     )}
                     {row.hasSpec && <span title={`Contract spec: ${c.spec}`} className="shrink-0 text-10 text-cyan/70 font-mono"><FileCode2 size={10} /></span>}
                     <span className="text-11 text-subtext font-mono shrink-0 mr-1">{c.requests.length}</span>
@@ -457,9 +477,11 @@ export function CollectionsTree() {
                       onExportOpenAPI={async () => { try { const s = await ExportOpenAPI(c.id); downloadText(s, `${safeFilename(c.name)}.openapi.json`); toast.success(`OpenAPI exported for "${c.name}"`); } catch (e) { toast.error(String(e)); } }}
                       onPreviewOpenAPI={async () => { try { await PreviewOpenAPI(c.id); toast.success(`API docs opened for "${c.name}"`); } catch (e) { toast.error(String(e)); } }}
                       onExportMarkdown={() => { setMdOpts({ includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true }); setMdExportColl(c); }}
+                      onExportHTML={() => { setHtmlOpts({ includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true, darkMode: true }); setHtmlExportColl(c); }}
                       onLinkSpec={() => handleLinkSpec(c.id)}
                       onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                       onRun={row.requests.length > 0 ? () => openRunner(c.id) : undefined}
+                      onVariables={() => { setVarsEditorDraft(c.variables ?? []); setVarsEditorColl(c); }}
                       onDelete={async () => { if (!confirm(`Delete "${c.name}"?`)) return; try { await deleteCollection(c.id); toast.success(`Deleted "${c.name}"`); } catch { toast.error(`Failed`); } }} />
                   </div>
                 );
@@ -467,7 +489,7 @@ export function CollectionsTree() {
               if (row.type === "req") {
                 const req = row.req;
                 return (
-                  <div key={req.id} style={{ height: REQ_H }}
+                  <div key={req.id} style={{ height: REQ_H }} data-shortcut="sidebar.open"
                     className={cn(
                       `group flex items-center gap-1 cursor-pointer transition-colors relative hover:bg-cardHover`,
                       dropLine(req.id),
@@ -503,11 +525,11 @@ export function CollectionsTree() {
                       <span className="flex-1 text-12 text-text truncate">{req.name}</span>
                     )}
                     {req.savedResponse && <span title="Saved for mock replay" className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />}
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setRenameReqValue(req.name); setRenamingReqID(req.id); }}
+                    <button type="button" data-shortcut="sidebar.rename" onClick={(e) => { e.stopPropagation(); setRenameReqValue(req.name); setRenamingReqID(req.id); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Rename"><Pencil size={12} /></button>
                     <button type="button" onClick={(e) => { e.stopPropagation(); duplicateRequest(req.id).catch(() => undefined); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Duplicate"><Copy size={12} /></button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${req.name}"?`)) deleteRequest(req.id); }}
+                    <button type="button" data-shortcut="sidebar.delete" onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${req.name}"?`)) deleteRequest(req.id); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-danger transition-all shrink-0" title="Delete"><Trash2 size={12} /></button>
                   </div>
                 );
@@ -518,6 +540,10 @@ export function CollectionsTree() {
           </div>
         </div>
       )}
+
+      <button type="button" data-shortcut="sidebar.moveUp" onClick={() => { (document.querySelector<HTMLElement>('[data-shortcut="sidebar.search"]'))?.focus(); }} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
+      <button type="button" data-shortcut="sidebar.moveDown" onClick={() => { (document.querySelector<HTMLElement>('[data-shortcut="sidebar.open"]'))?.click(); }} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
+      <button type="button" data-shortcut="sidebar.newRequest" onClick={() => newTab()} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
 
       {/* Markdown export options modal */}
       {mdExportColl && (
@@ -552,6 +578,103 @@ export function CollectionsTree() {
                   className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
                 <button type="button" onClick={() => handleExportMarkdown(mdExportColl)}
                   className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Export</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* HTML export options modal */}
+      {htmlExportColl && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setHtmlExportColl(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="bg-card border border-border rounded-lg shadow-xl p-4 w-[320px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-13 font-semibold text-text mb-3">Export HTML Docs — {htmlExportColl.name}</h3>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
+                  <input type="checkbox" checked={htmlOpts.includeHeaders} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeHeaders: e.target.checked })} className="accent-cyan" />
+                  Include Headers
+                </label>
+                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
+                  <input type="checkbox" checked={htmlOpts.includeBody} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeBody: e.target.checked })} className="accent-cyan" />
+                  Include Body
+                </label>
+                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
+                  <input type="checkbox" checked={htmlOpts.includeExamples} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeExamples: e.target.checked })} className="accent-cyan" />
+                  Include Examples
+                </label>
+                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
+                  <input type="checkbox" checked={htmlOpts.timestamp} onChange={(e) => setHtmlOpts({ ...htmlOpts, timestamp: e.target.checked })} className="accent-cyan" />
+                  Timestamp
+                </label>
+                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
+                  <input type="checkbox" checked={htmlOpts.darkMode} onChange={(e) => setHtmlOpts({ ...htmlOpts, darkMode: e.target.checked })} className="accent-cyan" />
+                  Dark mode
+                </label>
+                <input type="text" value={htmlOpts.baseUrl} onChange={(e) => setHtmlOpts({ ...htmlOpts, baseUrl: e.target.value })}
+                  placeholder="Base URL (optional)"
+                  className="w-full h-[28px] px-2 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan" />
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button type="button" onClick={() => setHtmlExportColl(null)}
+                  className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
+                <button type="button" onClick={() => handleExportHTML(htmlExportColl)}
+                  className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Export</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Collection variables editor modal */}
+      {varsEditorColl && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setVarsEditorColl(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="bg-card border border-border rounded-lg shadow-xl p-4 w-[420px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-13 font-semibold text-text mb-3">Variables — {varsEditorColl.name}</h3>
+              <p className="text-11 text-subtext mb-3">Collection-scoped variables override environment variables of the same name.</p>
+              <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+                {varsEditorDraft.map((v, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input type="checkbox" checked={v.enabled} onChange={(e) => {
+                      const next = [...varsEditorDraft];
+                      next[i] = { ...next[i], enabled: e.target.checked };
+                      setVarsEditorDraft(next);
+                    }} className="accent-cyan w-[14px] h-[14px]" />
+                    <input type="text" value={v.key} onChange={(e) => {
+                      const next = [...varsEditorDraft];
+                      next[i] = { ...next[i], key: e.target.value };
+                      setVarsEditorDraft(next);
+                    }} placeholder="Key" className="flex-1 h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan font-mono" />
+                    <input type="text" value={v.value} onChange={(e) => {
+                      const next = [...varsEditorDraft];
+                      next[i] = { ...next[i], value: e.target.value };
+                      setVarsEditorDraft(next);
+                    }} placeholder="Value" className="flex-1 h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan font-mono" />
+                    <button type="button" onClick={() => setVarsEditorDraft(varsEditorDraft.filter((_, j) => j !== i))}
+                      className="text-subtext hover:text-danger transition-colors p-1 shrink-0">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setVarsEditorDraft([...varsEditorDraft, { key: "", value: "", enabled: true } as models.EnvVar])}
+                className="flex items-center gap-1 mt-2 text-12 text-cyan hover:text-cyan-hover transition-colors">
+                <Plus size={12} /> Add variable
+              </button>
+              <div className="flex justify-end gap-2 mt-4">
+                <button type="button" onClick={() => setVarsEditorColl(null)}
+                  className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
+                <button type="button" onClick={async () => {
+                  if (varsEditorColl) {
+                    await updateCollectionVariables(varsEditorColl.id, varsEditorDraft);
+                    setVarsEditorColl(null);
+                    toast.success("Collection variables saved");
+                  }
+                }}
+                  className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Save</button>
               </div>
             </div>
           </div>

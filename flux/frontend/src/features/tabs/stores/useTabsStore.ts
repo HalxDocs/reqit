@@ -37,6 +37,9 @@ const emptyRequest = (): RequestState => ({
   authKeyIn: "header",
   preSetVars: [{ id: uid("sv"), key: "", value: "" }],
   extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
+  oauth2Config: undefined,
+  clientCert: "",
+  clientKey: "",
   graphqlQuery: "",
   graphqlVariables: "",
   preScript: "",
@@ -70,6 +73,9 @@ const pickRequestState = (): RequestState => {
     authKeyName: s.authKeyName,
     authKeyValue: s.authKeyValue,
     authKeyIn: s.authKeyIn,
+    oauth2Config: s.oauth2Config,
+    clientCert: s.clientCert,
+    clientKey: s.clientKey,
     preSetVars: s.preSetVars,
     extractRules: s.extractRules,
     graphqlQuery: s.graphqlQuery,
@@ -102,6 +108,7 @@ type TabsStore = {
   updateActiveTitle: () => void;
   syncFromActiveStores: () => void;
   markActiveSaved: (savedRequestID: string, title: string) => void;
+  moveTab: (id: string, toIndex: number) => void;
   refreshTitleFromUrl: () => void;
   resetTabs: () => void;
 };
@@ -249,6 +256,18 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
           : t,
       ),
     }));
+    persist({ tabs: get().tabs, activeID: get().activeID });
+  },
+
+  moveTab: (id, toIndex) => {
+    set((s) => {
+      const idx = s.tabs.findIndex((t) => t.id === id);
+      if (idx === -1 || toIndex < 0 || toIndex >= s.tabs.length) return s;
+      const tabs = [...s.tabs];
+      const [moved] = tabs.splice(idx, 1);
+      tabs.splice(toIndex, 0, moved);
+      return { tabs };
+    });
     persist({ tabs: get().tabs, activeID: get().activeID });
   },
 

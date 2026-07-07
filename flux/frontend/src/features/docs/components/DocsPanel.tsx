@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { HttpMethod } from "@/features/request/types/request";
 import { Book, ChevronDown, ChevronRight, Copy, Search } from "lucide-react";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { MethodBadge } from "@/shared/components/MethodBadge";
@@ -97,7 +98,7 @@ function RequestCard({ req }: { req: SavedRequest }) {
       <button type="button" onClick={() => setExpanded((e) => !e)}
         className="w-full flex items-center gap-2 px-3 py-2 hover:bg-cardHover transition-colors text-left">
         {expanded ? <ChevronDown size={12} className="shrink-0 text-subtext" /> : <ChevronRight size={12} className="shrink-0 text-subtext" />}
-        <MethodBadge method={p.method as any} />
+        <MethodBadge method={p.method as HttpMethod} />
         <span className="text-12 text-text font-medium truncate">{req.name}</span>
         <code className="ml-auto text-11 text-subtext font-mono truncate max-w-[50%]">{p.url}</code>
       </button>

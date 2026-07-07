@@ -10,12 +10,14 @@ import {
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { useGitStore } from "@/features/git/stores/useGitStore";
 
 interface GitStatus {
   initialised: boolean;
   hasChanges: boolean;
   currentBranch: string;
   remoteUrl: string;
+  autoSync: boolean;
 }
 interface CommitInfo { hash: string; message: string; author: string; when: string; }
 interface Contributor { name: string; email: string; commits: number; lastSeen: string; }
@@ -319,6 +321,33 @@ export function TeamModal() {
               </div>
             )}
           </div>
+
+          {/* Auto-sync */}
+          {status?.initialised && (
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-12 text-text font-medium">Auto-sync on save</span>
+                <span className="text-11 text-subtext">Automatically commit & push changes</span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const newVal = !status.autoSync;
+                  await useGitStore.getState().setAutoSync(newVal);
+                  setStatus((prev) => prev ? { ...prev, autoSync: newVal } : prev);
+                }}
+                className={`relative w-[40px] h-[22px] rounded-full transition-colors ${
+                  status.autoSync ? "bg-cyan" : "bg-cardHover"
+                }`}
+              >
+                <span
+                  className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform ${
+                    status.autoSync ? "translate-x-[20px]" : "translate-x-[2px]"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
 
           {/* Branch */}
           {status?.initialised && (

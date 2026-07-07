@@ -55,6 +55,8 @@ const initialState: RequestState = {
   mqttTopic: "",
   mqttPayload: "",
   mqttQoS: 0,
+  clientCert: "",
+  clientKey: "",
 };
 
 type RequestStore = RequestState & {
@@ -116,6 +118,9 @@ type RequestStore = RequestState & {
   setMqttTopic: (s: string) => void;
   setMqttPayload: (s: string) => void;
   setMqttQoS: (n: number) => void;
+
+  setClientCert: (s: string) => void;
+  setClientKey: (s: string) => void;
 
   reset: () => void;
   loadState: (s: RequestState) => void;
@@ -193,6 +198,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setMqttPayload: (mqttPayload) => set({ mqttPayload }),
   setMqttQoS: (mqttQoS) => set({ mqttQoS }),
 
+  setClientCert: (clientCert) => set({ clientCert }),
+  setClientKey: (clientKey) => set({ clientKey }),
+
   addPreSetVar: () => set((s) => ({ preSetVars: [...s.preSetVars, { id: uid("sv"), key: "", value: "" }] })),
   updatePreSetVar: (id, patch) =>
     set((s) => ({ preSetVars: s.preSetVars.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
@@ -246,6 +254,8 @@ export const useRequestStore = create<RequestStore>((set) => ({
       mqttTopic: "",
       mqttPayload: "",
       mqttQoS: 0,
+      clientCert: "",
+      clientKey: "",
       graphqlSchema: null,
       graphqlSchemaLoading: false,
       graphqlSchemaError: "",

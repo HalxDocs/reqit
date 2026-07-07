@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, Webhook, Code2, Server, ScanEye } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
+import { useGitStore } from "@/features/git/stores/useGitStore";
 import { cn } from "@/shared/lib/cn";
 import { CollectionsTree } from "@/features/collections/components/CollectionsTree";
 import { HistoryList } from "@/features/history/components/HistoryList";
@@ -79,15 +80,19 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const activeID = useWorkspaceStore((s) => s.activeID);
   const activeWs = workspaces.find((w) => w.id === activeID);
 
-  const [hasChanges, setHasChanges] = useState(false);
+  const gitStatus = useGitStore((s) => s.status);
+  const syncing = useGitStore((s) => s.syncing);
+  const syncNow = useGitStore((s) => s.syncNow);
   const theme = useThemeStore((s) => s.resolved);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   useEffect(() => {
-    GetGitStatus().then((s: { hasChanges: boolean }) => setHasChanges(s.hasChanges)).catch(() => {});
+    useGitStore.getState().startPolling();
+    return () => useGitStore.getState().stopPolling();
   }, []);
 
   return (
-    <aside data-scope="sidebar" className="w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
+    <aside data-scope="sidebar" className={cn("w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col", sidebarCollapsed && "hidden")}>
       <button
         type="button"
         onClick={onGoHome}
@@ -167,9 +172,21 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         <CollapsibleSection label="Tools" defaultOpen={false}>
           <NavItem
             icon={<Radio size={13} />}
-            label="WebSocket / SSE"
+            label="WebSocket"
             active={view === "socket"}
             onClick={() => setView(view === "socket" ? "http" : "socket")}
+          />
+          <NavItem
+            icon={<Radio size={13} />}
+            label="SSE Viewer"
+            active={view === "sse"}
+            onClick={() => setView(view === "sse" ? "http" : "sse")}
+          />
+          <NavItem
+            icon={<Clock size={13} />}
+            label="Scheduler"
+            active={view === "scheduler"}
+            onClick={() => setView(view === "scheduler" ? "http" : "scheduler")}
           />
           <NavItem
             icon={<Code2 size={13} />}
@@ -237,6 +254,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             active={view === "growth"}
             onClick={() => setView(view === "growth" ? "http" : "growth")}
           />
+          <NavItem
+            icon={<Puzzle size={13} />}
+            label="Plugins"
+            active={view === "plugins"}
+            onClick={() => setView(view === "plugins" ? "http" : "plugins")}
+          />
         </CollapsibleSection>
       </div>
 
@@ -250,12 +273,26 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         >
           <div className="w-[22px] h-[22px] rounded-full bg-cyan/15 flex items-center justify-center text-cyan shrink-0 relative">
             <Users size={11} />
-            {hasChanges && (
+            {syncing ? (
+              <RefreshCw size={10} className="absolute -top-1 -right-1 text-cyan animate-spin" />
+            ) : gitStatus?.hasChanges ? (
               <span className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full bg-amber-400 border border-surface" />
-            )}
+            ) : gitStatus?.initialised && gitStatus?.remoteUrl ? (
+              <span className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full bg-green-400 border border-surface" />
+            ) : null}
           </div>
           <span className="text-12 text-subtext group-hover:text-text transition-colors">Team</span>
-          <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Invite · Sync</span>
+          <span className="ml-auto flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); syncNow(); }}
+              className="text-subtext/50 hover:text-cyan transition-colors"
+              title="Sync now"
+            >
+              <RefreshCw size={11} className={syncing ? "animate-spin" : ""} />
+            </button>
+            <span className="text-10 text-subtext/50 group-hover:text-subtext transition-colors">Sync</span>
+          </span>
         </button>
 
         <button

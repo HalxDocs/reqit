@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { EditorView } from "@codemirror/view";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Plus, Trash2 } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -27,8 +27,35 @@ export function ScriptsPanel() {
     [],
   );
 
+  const pipeInputs = preSetVars.filter((v) => v.key);
+  const pipeOutputs = extractRules.filter((r) => r.target);
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
+      {/* Data Pipeline indicator */}
+      {(pipeInputs.length > 0 || pipeOutputs.length > 0) && (
+        <div className="px-4 py-2 bg-cyan/5 border-b border-cyan/10">
+          <div className="flex items-center gap-2 text-11 text-cyan">
+            <ArrowRightLeft size={12} />
+            <span className="font-semibold">Data Pipeline Active</span>
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-10 text-subtext font-mono">
+            {pipeInputs.length > 0 && (
+              <span title="Values set into environment before request">
+                Input: {pipeInputs.map((v) => v.key).join(", ")}
+              </span>
+            )}
+            {pipeInputs.length > 0 && pipeOutputs.length > 0 && (
+              <span className="text-tertiary">→</span>
+            )}
+            {pipeOutputs.length > 0 && (
+              <span title="Values extracted from response into environment">
+                Output: {pipeOutputs.map((r) => r.target).join(", ")}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
       {/* Pre-request Script */}
       <div className="border-b border-border">
         <div className="flex items-center justify-between px-4 py-2">

@@ -186,7 +186,7 @@ func TestToolHandlerError(t *testing.T) {
 		Description: "Always fails",
 		InputSchema: InputSchema{Type: "object"},
 	}, func(args json.RawMessage) (string, error) {
-		return "", json.Unmarshal(nil, nil) // force error
+		var x struct{}; return "", json.Unmarshal([]byte("invalid"), &x) // force error
 	})
 
 	params, _ := json.Marshal(ToolCallParams{
