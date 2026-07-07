@@ -15,7 +15,7 @@ export function HeadersView({ headers }: { headers: Record<string, string> }) {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
       <div className="grid grid-cols-[1fr_2fr] gap-3 px-4 py-2 text-11 text-subtext font-semibold uppercase tracking-wider border-b border-border">
         <span>Name</span>
         <span>Value</span>

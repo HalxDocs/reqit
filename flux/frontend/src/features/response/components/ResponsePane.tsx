@@ -126,6 +126,7 @@ function lineDiff(oldLines: string[], newLines: string[]) {
 export function ResponsePane() {
   const response = useResponseStore((s) => s.response);
   const isLoading = useResponseStore((s) => s.isLoading);
+  const panelLayout = useUIStore((s) => s.panelLayout);
   const responseTab = useUIStore((s) => s.responseTab);
   const setResponseTab = useUIStore((s) => s.setResponseTab);
   const loadedRequestID = useUIStore((s) => s.loadedRequestID);
@@ -188,7 +189,7 @@ export function ResponsePane() {
   };
 
   return (
-    <section className="flex-1 h-full bg-bg flex flex-col min-w-0">
+    <section className={panelLayout === "horizontal" ? "flex-1 h-full bg-bg flex flex-col min-w-0" : "flex-1 w-full min-h-0 bg-bg flex flex-col"}>
       <StatusBar />
 
       <SecurityWarnings />

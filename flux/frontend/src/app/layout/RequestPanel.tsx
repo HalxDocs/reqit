@@ -1,3 +1,4 @@
+import { PanelBottom, PanelRight } from "lucide-react";
 import { useUIStore, type RequestTab } from "@/app/stores/useUIStore";
 import { Tabs, type TabItem } from "@/shared/components/Tabs";
 import { ParamsTab } from "@/features/request/components/ParamsTab";
@@ -14,16 +15,32 @@ const TABS: TabItem<RequestTab>[] = [
   { id: "scripts", label: "Scripts" },
 ];
 
-export function RequestPanel({ width }: { width: number }) {
+export function RequestPanel({ width, height }: { width?: number; height?: number }) {
   const requestTab = useUIStore((s) => s.requestTab);
   const setRequestTab = useUIStore((s) => s.setRequestTab);
+  const panelLayout = useUIStore((s) => s.panelLayout);
+  const togglePanelLayout = useUIStore((s) => s.togglePanelLayout);
 
   return (
     <section
-      style={{ width: `${width}px` }}
-      className="shrink-0 h-full bg-bg flex flex-col min-w-0"
+      style={height != null ? { height: `${height}px` } : { width: `${width}px` }}
+      className={
+        height != null
+          ? "shrink-0 w-full bg-bg flex flex-col min-h-0"
+          : "shrink-0 h-full bg-bg flex flex-col min-w-0"
+      }
     >
-      <Tabs tabs={TABS} active={requestTab} onChange={setRequestTab} />
+      <div className="flex items-center justify-between border-b border-border bg-surface">
+        <Tabs tabs={TABS} active={requestTab} onChange={setRequestTab} className="border-b-0" />
+        <button
+          type="button"
+          onClick={togglePanelLayout}
+          title={panelLayout === "horizontal" ? "Switch to stacked layout" : "Switch to side-by-side layout"}
+          className="mr-2 shrink-0 p-1.5 rounded-sm text-subtext hover:text-text hover:bg-bg transition-colors"
+        >
+          {panelLayout === "horizontal" ? <PanelBottom size={14} /> : <PanelRight size={14} />}
+        </button>
+      </div>
       <div className="flex-1 overflow-y-auto">
         {requestTab === "params" && <ParamsTab />}
         {requestTab === "headers" && <HeadersTab />}
