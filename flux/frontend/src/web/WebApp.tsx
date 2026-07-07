@@ -82,8 +82,36 @@ function useGitHubStars(repo: string) {
   return stars;
 }
 
+function useGitHubDownloads(repo: string) {
+  const [downloads, setDownloads] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const fetch_ = async () => {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=5`, {
+          headers: { Accept: "application/vnd.github.v3+json" },
+        });
+        if (!res.ok || cancelled) return;
+        const releases = (await res.json()) as { assets: { download_count: number }[] }[];
+        const total = releases.reduce((sum, r) => sum + r.assets.reduce((a, b) => a + b.download_count, 0), 0);
+        setDownloads(total);
+      } catch { /* ignore */ }
+    };
+    void fetch_();
+    const interval = setInterval(() => void fetch_(), 60_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [repo]);
+  return downloads;
+}
+
+function fmtNum(n: number | null) {
+  if (n === null) return "—";
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
 function fmtStars(n: number | null) {
-  return n === null ? "—" : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+  return fmtNum(n);
 }
 
 const FEATURES = [
@@ -557,6 +585,7 @@ export function WebApp() {
   const [docsCat, setDocsCat] = useState<string | undefined>(init.docsCat);
   const [docsPage, setDocsPage] = useState<string | undefined>(init.docsPage);
   const stars = useGitHubStars("HalxDocs/reqit");
+  const downloads = useGitHubDownloads("HalxDocs/reqit");
 
   // Prevent browser scroll restoration so every navigation starts at top
   useEffect(() => {
@@ -632,18 +661,30 @@ export function WebApp() {
       <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-[56px] flex items-center justify-between">
           <img src={reqitLogo} alt="reqit" className="h-[28px] sm:h-[32px] w-auto object-contain" />
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all shrink-0"
-          >
-            <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-            <span className="font-mono text-11 min-w-[22px] text-center tabular-nums">
-              {stars === null ? "—" : fmtStars(stars)}
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="opacity-50"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+              <span className="font-mono text-11 min-w-[20px] text-center tabular-nums">
+                {fmtStars(stars)}
+              </span>
             </span>
-          </a>
+            <span className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span className="font-mono text-11 min-w-[20px] text-center tabular-nums">
+                {fmtNum(downloads)}
+              </span>
+              <span className="text-10 opacity-50 hidden sm:inline">downloads</span>
+            </span>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext bg-card border border-border rounded-lg hover:border-cyan/40 hover:text-text transition-all shrink-0"
+            >
+              <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
+              <span className="hidden sm:inline">GitHub</span>
+            </a>
+          </div>
         </div>
       </header>
 
