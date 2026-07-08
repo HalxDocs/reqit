@@ -243,12 +243,12 @@ function GitDiffMockup() {
         <div className="text-10">{'  "method": "POST",'}</div>
         <div className="text-10">{'  "headers": {'}</div>
         <div className="text-10">{'    "Content-Type": "application/json",'}</div>
-        <div className="text-success bg-success/5">+    "Authorization": "Bearer {{token}}",</div>
-        <div className="text-success bg-success/5">+    "X-Idempotency-Key": "{{uuid}}",</div>
+        <div className="text-success bg-success/5">{'+    "Authorization": "Bearer {{token}}",'}</div>
+        <div className="text-success bg-success/5">{'+    "X-Idempotency-Key": "{{uuid}}",'}</div>
         <div className="text-10">{'  },'}</div>
         <div className="text-10">{'  "body": {'}</div>
         <div className="text-danger bg-danger/5">-    "email": "user@example.com",</div>
-        <div className="text-success bg-success/5">+    "email": "{{email}}",</div>
+        <div className="text-success bg-success/5">{'+    "email": "{{email}}",'}</div>
         <div className="text-success bg-success/5">+    "role": "viewer",</div>
         <div className="text-10">{'  }'}</div>
       </div>
@@ -373,7 +373,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {/* Collection Runner */}
           <div className="group bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all hover:shadow-lg hover:shadow-cyan/5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><TestTubeIcon size={14} color="#0891B2" /></div>
+              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><HugeiconsIcon icon={TestTubeIcon} size={14} color="#0891B2" /></div>
               <span className="text-13 font-semibold text-text">Collection Runner</span>
             </div>
             <div className="bg-bg/60 border border-border rounded-lg p-3 font-mono text-[10px] leading-relaxed space-y-1">
@@ -395,7 +395,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {/* Mock Server */}
           <div className="group bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all hover:shadow-lg hover:shadow-cyan/5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><CodeIcon size={14} color="#0891B2" /></div>
+              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><HugeiconsIcon icon={CodeIcon} size={14} color="#0891B2" /></div>
               <span className="text-13 font-semibold text-text">Mock Server</span>
             </div>
             <div className="bg-bg/60 border border-border rounded-lg p-3 font-mono text-[10px] leading-relaxed space-y-1">
@@ -437,7 +437,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {/* BYOK AI Layer */}
           <div className="group bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all hover:shadow-lg hover:shadow-cyan/5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><Lightning size={14} color="#0891B2" /></div>
+              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><HugeiconsIcon icon={Lightning} size={14} color="#0891B2" /></div>
               <span className="text-13 font-semibold text-text">BYOK AI Layer</span>
             </div>
             <div className="bg-bg/60 border border-border rounded-lg p-3 font-mono text-[10px] leading-relaxed space-y-1">
@@ -456,7 +456,7 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
           {/* MCP Server */}
           <div className="group bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all hover:shadow-lg hover:shadow-cyan/5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><TerminalIcon size={14} color="#0891B2" /></div>
+              <div className="w-[32px] h-[32px] rounded-lg bg-cyan/10 flex items-center justify-center"><HugeiconsIcon icon={TerminalIcon} size={14} color="#0891B2" /></div>
               <span className="text-13 font-semibold text-text">MCP Server</span>
             </div>
             <div className="bg-bg/60 border border-border rounded-lg p-3 font-mono text-[10px] leading-relaxed">
