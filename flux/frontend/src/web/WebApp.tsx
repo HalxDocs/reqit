@@ -527,35 +527,16 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
             Every reqit user gets a public profile at <code className="text-cyan text-12">reqit.dev/:username</code> — share your collections, stats, and skills with the world.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[900px] mx-auto">
-          <DevProfileCard
-            name="Alex Rivera"
-            username="alexrivera"
-            bio="Backend engineer. Building fintech APIs in Go. reqit replaced my entire Postman workspace."
-            skills={["Go", "PostgreSQL", "GraphQL", "gRPC"]}
-            avatarColor="bg-violet-500"
-          />
-          <DevProfileCard
-            name="Sarah Chen"
-            username="sarahchen"
-            bio="Developer advocate and OpenAPI enthusiast. I publish all my collection templates here."
-            skills={["OpenAPI", "TypeScript", "Node.js", "Docs"]}
-            avatarColor="bg-emerald-500"
-          />
-          <DevProfileCard
-            name="Emeka Okafor"
-            username="emeka"
-            bio="Full-stack dev in Lagos. Paystack + Stripe integrations. reqit's MCP server is a game changer."
-            skills={["Python", "Django", "Payments", "MCP"]}
-            avatarColor="bg-amber-500"
-          />
-          <DevProfileCard
-            name="Priya Sharma"
-            username="priyasharma"
-            bio="Platform engineer. Managing 40+ internal APIs. reqit collections live in our monorepo."
-            skills={["Rust", "Kubernetes", "OpenAPI", "CI/CD"]}
-            avatarColor="bg-rose-500"
-          />
+        <div className="flex justify-center">
+          <div className="w-full max-w-[320px]">
+            <DevProfileCard
+              name="HalxDocs"
+              username="halxdocs"
+              bio="Backend-focused full-stack engineer working in Go (Gin) and TypeScript (NestJS/Express). Building reqit, a local-first, git-native API client with collection runner, mock server, and an MCP server. Plays chess, thinks too much about how systems work."
+              skills={["Go", "TypeScript", "NestJS", "React", "PostgreSQL"]}
+              avatarColor="bg-cyan-500"
+            />
+          </div>
         </div>
       </section>
 
