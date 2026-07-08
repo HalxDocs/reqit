@@ -85,7 +85,7 @@ function Sidebar({ categories, activeCategory, activePage, onSelectPage }: {
   };
 
   return (
-    <nav className="w-[260px] shrink-0 hidden md:block border-r border-border overflow-y-auto" style={{ height: "calc(100vh - 56px)" }}>
+    <nav className="w-[260px] shrink-0 hidden lg:block border-r border-border overflow-y-auto" style={{ height: "calc(100dvh - 56px)" }}>
       <div className="p-4">
         <div className="flex items-center gap-2 px-1 mb-4">
           <BookOpen size={14} className="text-cyan" />
@@ -162,9 +162,9 @@ function SearchModal({ open, onClose, onSelect }: { open: boolean; onClose: () =
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] sm:pt-[15vh]" onClick={onClose}>
       <div className="fixed inset-0 bg-black/40" />
-      <div className="relative w-full max-w-[560px] bg-card rounded-xl shadow-2xl border border-border overflow-hidden"
+      <div className="relative w-full max-w-[560px] mx-3 sm:mx-auto bg-card rounded-xl shadow-2xl border border-border overflow-hidden"
         onClick={(e) => e.stopPropagation()} onKeyDown={handleKeyDown}>
         <div className="flex items-center gap-2 px-4 h-[52px] border-b border-border">
           <Search size={15} className="text-subtext/50 shrink-0" />
@@ -251,13 +251,13 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-bg text-text">
+    <div className="min-h-screen flex flex-col bg-bg text-text">
       {/* Top nav */}
       <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border shrink-0">
         <div className="max-w-[1400px] mx-auto px-5 h-[56px] flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setSidebarOpen(true)}
-              className="md:hidden flex items-center justify-center w-[32px] h-[32px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              className="lg:hidden flex items-center justify-center w-[32px] h-[32px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
               <Menu size={15} />
             </button>
             <img src="/reqitlogo.jpeg" alt="reqit" className="h-[28px] w-auto object-contain" />
@@ -275,7 +275,7 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
               <span>GitHub</span>
             </a>
             <button type="button" onClick={goHome}
-              className="flex items-center gap-1.5 h-[32px] px-3 text-[13px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
+              className="hidden lg:flex items-center gap-1.5 h-[32px] px-3 text-[13px] text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors">
               <ArrowLeft size={13} />
               <span>Home</span>
             </button>
@@ -283,10 +283,24 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
         </div>
       </header>
 
+      {/* Mobile breadcrumb bar */}
+      <div className="sticky top-[56px] z-30 bg-bg border-b border-border shrink-0 lg:hidden">
+        <div className="flex items-center gap-2 px-4 h-[44px]">
+          <button type="button" onClick={goHome}
+            className="flex items-center gap-1.5 h-[30px] px-2.5 text-12 text-subtext hover:text-text border border-border rounded-lg hover:border-cyan/40 transition-colors shrink-0">
+            <ArrowLeft size={13} />
+            <span>Home</span>
+          </button>
+          <div className="flex-1 min-w-0 text-right text-12 text-subtext/50 font-mono truncate">
+            {activeDocPage ? `${activeCatTitle} / ${activeDocPage.title}` : activeCatTitle}
+          </div>
+        </div>
+      </div>
+
       {/* Three-column layout */}
-      <div className="flex flex-1 min-h-0 max-w-[1400px] mx-auto w-full">
+      <div className="flex flex-1 min-h-[100dvh] max-w-[1400px] mx-auto w-full">
         <Sidebar categories={DOC_CATEGORIES} activeCategory={activeCategory} activePage={activePage} onSelectPage={handleSelectPage} />
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain">
           <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
             {activeDocPage ? (
               <>
@@ -330,7 +344,7 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <div className="fixed top-0 left-0 bottom-0 w-[280px] bg-bg border-r border-border shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between px-4 h-[56px] border-b border-border">

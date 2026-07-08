@@ -208,7 +208,7 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
   return (
     <div className="w-full flex flex-col">
       {/* Reading progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-[2px] bg-border/30">
+      <div className="sticky top-0 left-0 right-0 z-50 h-[2px] bg-border/30">
         <div
           className="h-full bg-cyan transition-[width] duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
@@ -235,7 +235,7 @@ export function BlogContent({ post, onBack }: { post: BlogPost; onBack: () => vo
           </div>
         </div>
       )}
-      <div ref={contentRef} className="w-full max-w-[720px] mx-auto px-4 sm:px-6 py-5">
+      <div ref={contentRef} className="w-full max-w-[720px] mx-auto px-4 sm:px-6 py-5 min-w-0 break-words">
         <h1 className="text-17 sm:text-20 font-bold text-text leading-snug mb-3">{post.title}</h1>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-12 text-subtext mb-6">
           <span className="flex items-center gap-1.5">
