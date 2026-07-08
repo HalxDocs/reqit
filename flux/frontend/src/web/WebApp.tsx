@@ -278,23 +278,33 @@ function TweetCard({ handle, name, text, likes, retweets, avatarColor }: { handl
   );
 }
 
-function CollectionCard({ name, author, stars, tag }: { name: string; author: string; stars: number; tag: string }) {
+function DevProfileCard({ name, username, bio, skills, avatarColor }: { name: string; username: string; bio: string; skills: string[]; avatarColor: string }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all group hover:shadow-lg hover:shadow-cyan/5">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-semibold text-cyan uppercase tracking-wider bg-cyan/5 px-2 py-0.5 rounded-full border border-cyan/10">{tag}</span>
-        <span className="text-11 text-subtext flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-          {stars}
-        </span>
+    <a
+      href={`https://reqit.dev/${username}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all group hover:shadow-lg hover:shadow-cyan/5"
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-[40px] h-[40px] rounded-full ${avatarColor} flex items-center justify-center text-14 font-bold text-white shrink-0`}>
+          {name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+        </div>
+        <div className="min-w-0">
+          <div className="text-13 font-semibold text-text group-hover:text-cyan transition-colors truncate">{name}</div>
+          <div className="text-11 text-subtext">@{username}</div>
+        </div>
       </div>
-      <div className="text-13 font-semibold text-text mb-1 group-hover:text-cyan transition-colors">{name}</div>
-      <div className="text-11 text-subtext">by {author}</div>
-      <div className="mt-2.5 flex items-center gap-1 text-[9px] text-subtext/50 border border-border/50 rounded-full px-2 py-0.5 w-fit">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        Deploy to custom domain
+      <p className="text-11 text-subtext leading-relaxed mb-3 line-clamp-2">{bio}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {skills.slice(0, 3).map((s) => (
+          <span key={s} className="text-[9px] text-cyan bg-cyan/5 border border-cyan/10 rounded-full px-2 py-0.5">{s}</span>
+        ))}
+        {skills.length > 3 && (
+          <span className="text-[9px] text-subtext/50">+{skills.length - 3}</span>
+        )}
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -506,19 +516,46 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
         </p>
       </section>
 
-      {/* Collection Showcase */}
+      {/* Developer Profiles */}
       <section>
         <div className="text-center mb-6">
-          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Collection showcase</p>
+          <p className="text-[10px] font-semibold text-cyan uppercase tracking-[0.14em] mb-2">Developer profiles</p>
           <h2 className="text-22 sm:text-26 font-bold text-text" style={{ fontFamily: 'Syne, system-ui, sans-serif' }}>
-            Ready-to-use API collections
+            Publish your API identity
           </h2>
+          <p className="text-13 text-subtext mt-2 max-w-[480px] mx-auto leading-relaxed">
+            Every reqit user gets a public profile at <code className="text-cyan text-12">reqit.dev/:username</code> — share your collections, stats, and skills with the world.
+          </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[800px] mx-auto">
-          <CollectionCard name="Stripe Webhooks Starter" author="@halxdocs" stars={34} tag="Payments" />
-          <CollectionCard name="Paystack Integration" author="@halxdocs" stars={28} tag="Payments" />
-          <CollectionCard name="M-Pesa Sandbox" author="@halxdocs" stars={22} tag="Fintech" />
-          <CollectionCard name="OpenAI API Collection" author="@halxdocs" stars={47} tag="AI" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[900px] mx-auto">
+          <DevProfileCard
+            name="Alex Rivera"
+            username="alexrivera"
+            bio="Backend engineer. Building fintech APIs in Go. reqit replaced my entire Postman workspace."
+            skills={["Go", "PostgreSQL", "GraphQL", "gRPC"]}
+            avatarColor="bg-violet-500"
+          />
+          <DevProfileCard
+            name="Sarah Chen"
+            username="sarahchen"
+            bio="Developer advocate and OpenAPI enthusiast. I publish all my collection templates here."
+            skills={["OpenAPI", "TypeScript", "Node.js", "Docs"]}
+            avatarColor="bg-emerald-500"
+          />
+          <DevProfileCard
+            name="Emeka Okafor"
+            username="emeka"
+            bio="Full-stack dev in Lagos. Paystack + Stripe integrations. reqit's MCP server is a game changer."
+            skills={["Python", "Django", "Payments", "MCP"]}
+            avatarColor="bg-amber-500"
+          />
+          <DevProfileCard
+            name="Priya Sharma"
+            username="priyasharma"
+            bio="Platform engineer. Managing 40+ internal APIs. reqit collections live in our monorepo."
+            skills={["Rust", "Kubernetes", "OpenAPI", "CI/CD"]}
+            avatarColor="bg-rose-500"
+          />
         </div>
       </section>
 
@@ -532,14 +569,14 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
           {[
-            { name: "Postman", icon: "📮" },
-            { name: "Insomnia", icon: "🌙" },
-            { name: "OpenAPI 3.0", icon: "📋" },
-            { name: "cURL", icon: "🔗" },
-            { name: "Hoppscotch", icon: "⚡" },
+            { name: "Postman", logo: <svg width="18" height="18" viewBox="0 0 256 256" fill="none"><rect width="256" height="256" rx="48" fill="#FF6C37"/><path d="M176 80L112 144l-24-24" stroke="#fff" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round"/><circle cx="152" cy="136" r="8" fill="#fff"/></svg> },
+            { name: "Insomnia", logo: <svg width="18" height="18" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="120" fill="#4000BF" opacity="0.9"/><path d="M128 208a80 80 0 1 1 0-160 80 80 0 0 1 0 160z" fill="#fff"/><path d="M128 168a40 40 0 1 1 0-80 40 40 0 0 1 0 80z" fill="#4000BF"/></svg> },
+            { name: "OpenAPI 3.0", logo: <svg width="18" height="18" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="120" fill="#85EA2D"/><path d="M96 96h64v64H96z" fill="#1C1C1C" opacity="0.8"/><path d="M112 112h32v32h-32z" fill="#85EA2D"/></svg> },
+            { name: "cURL", logo: <svg width="18" height="18" viewBox="0 0 256 256" fill="none"><rect x="16" y="64" width="224" height="128" rx="24" fill="#073551"/><path d="M72 112l-16 16 16 16M184 112l16 16-16 16M144 96l-32 64" stroke="#FFF" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+            { name: "Hoppscotch", logo: <svg width="18" height="18" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="120" fill="#2EC46A"/><path d="M192 96L96 192M96 96l96 96" stroke="#fff" strokeWidth="20" strokeLinecap="round"/></svg> },
           ].map((t) => (
             <div key={t.name} className="flex items-center gap-2 px-3 py-2 bg-bg border border-border rounded-lg text-12 text-text">
-              <span>{t.icon}</span>
+              <span className="shrink-0">{t.logo}</span>
               <span>{t.name}</span>
             </div>
           ))}
