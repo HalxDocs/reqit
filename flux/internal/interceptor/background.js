@@ -2,6 +2,7 @@
 const REQIT_CONFIG_KEY = 'reqit_interceptor_config';
 
 let config = { proxyHost: '127.0.0.1', proxyPort: 0, enabled: false };
+let capturedRequests = [];
 
 // Load config from storage
 chrome.storage.local.get(REQIT_CONFIG_KEY, (result) => {
@@ -17,28 +18,32 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
-chrome.webRequest.onBeforeRequest.addListener(
-  (details) => {
-    if (!config.enabled || !config.proxyPort) return;
-    // Skip requests to the proxy itself
-    if (details.url.indexOf('127.0.0.1:' + config.proxyPort) !== -1) return;
-    // Forward captured request to reqit proxy
-    const payload = {
-      method: details.method,
-      url: details.url,
-      requestBody: details.requestBody ? JSON.stringify(details.requestBody) : '',
-      tabId: details.tabId,
-      type: details.type,
-      timeStamp: details.timeStamp
-    };
-    fetch(`http://${config.proxyHost}:${config.proxyPort}/__capture`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(() => {
-      // Proxy not running — silently ignore
-    });
-  },
-  { urls: ['<all_urls>'] },
-  ['requestBody']
-);
+// Capture via declarativeNetRequest
+chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
+  if (!config.enabled || !config.proxyPort) return;
+  const req = info.request;
+  if (req.url.indexOf('127.0.0.1:' + config.proxyPort) !== -1) return;
+
+  const payload = {
+    method: req.method,
+    url: req.url,
+    tabId: req.tabId,
+    type: req.type,
+    timeStamp: Date.now()
+  };
+  capturedRequests.push(payload);
+  if (capturedRequests.length > 50) capturedRequests.shift();
+
+  fetch(`http://${config.proxyHost}:${config.proxyPort}/__capture`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+});
+
+// Popup gets captured requests
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type === 'getCaptured') {
+    sendResponse(capturedRequests);
+  }
+});
