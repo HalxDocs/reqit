@@ -4,25 +4,71 @@
   <meta charset="utf-8">
   <title>reqit Interceptor</title>
   <style>
-    body { width: 280px; padding: 12px; font-family: system-ui, sans-serif; font-size: 13px; }
-    h2 { margin: 0 0 8px; font-size: 15px; }
-    .status { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
-    .dot.active { background: #22c55e; }
-    label { display: block; margin: 6px 0 2px; }
-    input { width: 100%; box-sizing: border-box; padding: 4px 6px; }
-    button { margin-top: 8px; width: 100%; padding: 6px; cursor: pointer; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 360px; max-height: 500px; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; background: #0a0a0f; color: #e4e4e7; overflow: hidden; display: flex; flex-direction: column; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #1e1e2a; background: #0d0d14; }
+    .header h2 { font-size: 14px; font-weight: 600; }
+    .status { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #52525b; }
+    .dot.active { background: #22c55e; box-shadow: 0 0 6px #22c55e66; }
+    .controls { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #1e1e2a; align-items: center; }
+    .controls input { flex: 1; padding: 5px 8px; background: #14141f; border: 1px solid #27272a; border-radius: 6px; color: #e4e4e7; font-size: 12px; outline: none; }
+    .controls input:focus { border-color: #0891b2; }
+    .controls button { padding: 5px 10px; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-connect { background: #0891b2; color: #fff; }
+    .btn-connect:hover { background: #0e7490; }
+    .btn-disconnect { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; }
+    .btn-disconnect:hover { background: #3f3f46; }
+    .btn-primary { background: #0891b2; color: #fff; }
+    .btn-primary:hover { background: #0e7490; }
+    .btn-primary:disabled { opacity: 0.4; cursor: default; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-ghost { background: transparent; color: #a1a1aa; border: 1px solid #27272a; }
+    .btn-ghost:hover { border-color: #0891b2; color: #e4e4e7; }
+    .action-bar { display: flex; gap: 6px; padding: 6px 12px; border-bottom: 1px solid #1e1e2a; }
+    .count { font-size: 11px; color: #a1a1aa; margin-left: auto; align-self: center; }
+    .list { flex: 1; overflow-y: auto; min-height: 0; }
+    .list::-webkit-scrollbar { width: 4px; }
+    .list::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+    .req { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #14141f; cursor: default; }
+    .req:hover { background: #14141f; }
+    .req input[type="checkbox"] { accent-color: #0891b2; }
+    .method { font-size: 10px; font-weight: 700; font-family: monospace; min-width: 44px; }
+    .method.GET { color: #22c55e; }
+    .method.POST { color: #0891b2; }
+    .method.PUT { color: #f59e0b; }
+    .method.PATCH { color: #a855f7; }
+    .method.DELETE { color: #ef4444; }
+    .url { font-size: 11px; color: #a1a1aa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .type-badge { font-size: 9px; color: #52525b; font-family: monospace; }
+    .empty { padding: 24px; text-align: center; color: #52525b; font-size: 12px; }
+    .toast { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 8px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
-  <h2>reqit Interceptor</h2>
-  <div class="status">
-    <span class="dot" id="statusDot"></span>
-    <span id="statusText">Disconnected</span>
+  <div class="header">
+    <h2>reqit Interceptor</h2>
+    <div class="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText" style="font-size:11px;color:#a1a1aa">Off</span>
+    </div>
   </div>
-  <label>Proxy Port</label>
-  <input type="number" id="proxyPort" value="0" min="1024" max="65535">
-  <button id="toggleBtn">Connect</button>
+  <div class="controls">
+    <input type="number" id="proxyPort" value="3100" min="1024" max="65535" placeholder="Port">
+    <button id="toggleBtn" class="btn-connect">Start Capturing</button>
+  </div>
+  <div class="action-bar" id="actionBar" style="display:none">
+    <button id="selectAllBtn" class="btn-ghost" style="font-size:10px;padding:3px 8px">Select all</button>
+    <button id="sendBtn" class="btn-primary" style="font-size:11px;padding:4px 10px" disabled>Send to reqit</button>
+    <button id="clearBtn" class="btn-ghost" style="font-size:10px;padding:3px 8px">Clear</button>
+    <span class="count" id="count">0 requests</span>
+  </div>
+  <div class="list" id="list">
+    <div class="empty">Not capturing. Set a port and click Start.</div>
+  </div>
+  <div class="toast" id="toast"></div>
   <script src="popup.js"></script>
 </body>
 </html>
