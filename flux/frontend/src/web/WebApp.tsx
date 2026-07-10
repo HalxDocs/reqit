@@ -256,7 +256,7 @@ function GitDiffMockup() {
   );
 }
 
-function TweetCard({ handle, name, text, likes, retweets, avatarColor }: { handle: string; name: string; text: string; likes: number; retweets: number; avatarColor: string }) {
+function TweetCard({ handle, name, text, avatarColor }: { handle: string; name: string; text: string; avatarColor: string }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:border-cyan/30 transition-all group hover:shadow-lg hover:shadow-cyan/5">
       <div className="flex items-center gap-3 mb-3">
@@ -270,10 +270,7 @@ function TweetCard({ handle, name, text, likes, retweets, avatarColor }: { handl
         <svg className="ml-auto shrink-0 text-cyan" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
       </div>
       <p className="text-13 text-text leading-relaxed mb-3">{text}</p>
-      <div className="flex items-center gap-4 text-11 text-subtext/60">
-        <span className="flex items-center gap-1">❤️ {likes}</span>
-        <span className="flex items-center gap-1">🔁 {retweets}</span>
-      </div>
+
     </div>
   );
 }
@@ -584,24 +581,18 @@ $ reqit import curl -- "curl -X POST https://api.stripe.com/v1/charges -u sk_tes
             handle="@apidev_jane"
             name="Jane Cooper"
             text="Ditched Postman after 4 years. reqit's git-native collections alone are worth the switch. No more exporting JSON blobs to share with the team."
-            likes={142}
-            retweets={38}
             avatarColor="bg-violet-500"
           />
           <TweetCard
             handle="@backend_marc"
             name="Marc Thompson"
             text="The fact that reqit starts in under 400ms and has mTLS support out of the box is wild. This thing is legit."
-            likes={98}
-            retweets={22}
             avatarColor="bg-emerald-500"
           />
           <TweetCard
             handle="@devops_raj"
             name="Raj Patel"
             text="We ship our .reqit/ folder in our monorepo. CI runs the collection as a smoke test. No SaaS, no account, just git. Beautiful."
-            likes={215}
-            retweets={57}
             avatarColor="bg-amber-500"
           />
         </div>
