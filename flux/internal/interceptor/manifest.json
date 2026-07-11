@@ -11,13 +11,6 @@
   "background": {
     "service_worker": "background.js"
   },
-  "declarative_net_request": {
-    "rule_resources": [{
-      "id": "all_urls",
-      "enabled": true,
-      "path": "rules.json"
-    }]
-  },
   "description": "Capture HTTP/S requests and send them to reqit for testing.",
   "host_permissions": ["<all_urls>"],
   "icons": {
@@ -28,9 +21,9 @@
   "manifest_version": 3,
   "name": "reqit Interceptor",
   "permissions": [
-    "declarativeNetRequest",
+    "webRequest",
     "storage",
-    "activeTab"
+    "tabs"
   ],
   "version": "1.0.0"
 }

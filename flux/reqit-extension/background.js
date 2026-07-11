@@ -14,23 +14,28 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes[REQIT_CONFIG_KEY]) config = { ...config, ...changes[REQIT_CONFIG_KEY].newValue };
 });
 
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
-  if (!config.enabled) return;
-  const req = info.request;
-  if (req.url.indexOf('127.0.0.1:' + config.proxyPort) !== -1) return;
+// Intercept all requests for local capture
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    if (!config.enabled) return;
+    if (details.url.indexOf('127.0.0.1:' + config.proxyPort) !== -1) return;
 
-  capturedRequests.push({
-    id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    method: req.method,
-    url: req.url,
-    tabId: req.tabId,
-    type: req.type,
-    timeStamp: Date.now()
-  });
-  if (capturedRequests.length > 100) capturedRequests = capturedRequests.slice(-100);
-  chrome.storage.local.set({ [CAPTURED_KEY]: capturedRequests });
-});
+    capturedRequests.push({
+      id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      method: details.method,
+      url: details.url,
+      tabId: details.tabId,
+      type: details.type,
+      timeStamp: details.timeStamp
+    });
+    if (capturedRequests.length > 100) capturedRequests = capturedRequests.slice(-100);
+    chrome.storage.local.set({ [CAPTURED_KEY]: capturedRequests });
+  },
+  { urls: ['<all_urls>'] },
+  []
+);
 
+// Handle popup requests
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'getCaptured') sendResponse(capturedRequests);
   if (msg.type === 'clearCaptured') {

@@ -15,7 +15,6 @@ try {
     Copy-Item -Path (Join-Path $src "background.js") -Destination $tmp
     Copy-Item -Path (Join-Path $src "popup.html") -Destination $tmp
     Copy-Item -Path (Join-Path $src "popup.js") -Destination $tmp
-    Copy-Item -Path (Join-Path $src "rules.json") -Destination $tmp
     $icons = Join-Path $tmp "icons"
     New-Item -ItemType Directory -Path $icons -Force | Out-Null
     Copy-Item -Path (Join-Path $src "icons\icon16.png") -Destination $icons
