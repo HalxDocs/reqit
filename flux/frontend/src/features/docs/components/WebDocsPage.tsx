@@ -251,7 +251,7 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg text-text">
+    <div className="flex flex-col bg-bg text-text" style={{ height: '100dvh' }}>
       {/* Top nav */}
       <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-border shrink-0">
         <div className="max-w-[1400px] mx-auto px-5 h-[56px] flex items-center justify-between">
@@ -298,7 +298,7 @@ export function WebDocsPage({ goHome, initialCategory, initialPage, onNavigate }
       </div>
 
       {/* Three-column layout */}
-      <div className="flex flex-1 min-h-[100dvh] max-w-[1400px] mx-auto w-full">
+      <div className="flex flex-1 min-h-0 max-w-[1400px] mx-auto w-full">
         <Sidebar categories={DOC_CATEGORIES} activeCategory={activeCategory} activePage={activePage} onSelectPage={handleSelectPage} />
         <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain">
           <div className="max-w-[720px] mx-auto px-4 sm:px-8 py-6 sm:py-10">
