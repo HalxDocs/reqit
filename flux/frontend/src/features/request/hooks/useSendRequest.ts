@@ -8,6 +8,7 @@ import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { buildPayload } from "@/features/request/lib/buildPayload";
 import { runSecurityChecks } from "@/features/request/lib/securityCheck";
+import { setEndpointCache } from "@/features/request/stores/useEndpointCache";
 import type { ResponseResult } from "@/features/request/types/request";
 
 export function useSendRequest() {
@@ -72,6 +73,10 @@ export function useSendRequest() {
       if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
       const result = (await SendRequest(payload as never)) as ResponseResult;
       setResponse(result);
+
+      if (result && result.statusCode > 0) {
+        setEndpointCache(requestState.method, requestState.url, result.statusCode, result.timingMs, result.status);
+      }
 
       // Apply ExtractRules to save response values into the environment (data pipeline)
       const extractRules = requestState.extractRules?.filter((r) => r.target && r.source);

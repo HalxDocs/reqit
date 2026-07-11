@@ -11,6 +11,7 @@ import { uid } from "@/shared/lib/id";
 import { CancelRequest, StartMockServer, StopMockServer, GetMockStatus, ToggleMockRecording } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { useEndpointCache } from "@/features/request/stores/useEndpointCache";
 import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
 
@@ -29,6 +30,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const requestState = useRequestStore.getState();
   const toast = useToastStore((s) => s.push);
 
+  const cached = useEndpointCache(method, url);
   const [mockStatus, setMockStatus] = useState<main.MockStatus | null>(null);
   const [mockStarting, setMockStarting] = useState(false);
   const [showMockRoutes, setShowMockRoutes] = useState(false);
@@ -233,6 +235,17 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         )}
 
         <div className="w-px h-[24px] bg-border mx-0.5" />
+
+        {cached && !isLoading && (
+          <span
+            className={`text-11 font-mono font-semibold whitespace-nowrap tabular-nums ${
+              cached.statusCode < 300 ? "text-teal" : cached.statusCode < 500 ? "text-warn" : "text-danger"
+            }`}
+            title={`Last response: ${cached.status} in ${cached.timingMs}ms`}
+          >
+            {cached.statusCode} · {cached.timingMs}ms
+          </span>
+        )}
 
         {isLoading ? (
           <button
