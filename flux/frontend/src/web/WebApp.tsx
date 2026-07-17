@@ -355,6 +355,17 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
         </div>
       </section>
 
+      {/* 300 downloads milestone */}
+      <section className="flex justify-center">
+        <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-cyan/10 via-teal/10 to-cyan/10 border border-cyan/20 rounded-xl text-center">
+          <span className="text-20">🎉</span>
+          <div className="flex flex-col items-start">
+            <span className="text-13 font-bold text-text">300+ Downloads</span>
+            <span className="text-11 text-subtext">and growing — thank you for being part of the journey</span>
+          </div>
+        </div>
+      </section>
+
       {/* Contrast strip */}
       <section>
         <div className="text-center mb-6">
