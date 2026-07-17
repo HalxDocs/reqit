@@ -70,7 +70,7 @@ func RunEvalSuite(workspaceDir string, colls []models.Collection, passRateThresh
 	aiCfg := aiSettings.Get()
 
 	// Map all requests to tools
-	cfg, _ := LoadConfig(workspaceDir)
+	cfg := LoadConfigOrDefault(workspaceDir)
 	var allTools []ToolDefinition
 	for _, coll := range colls {
 		for _, req := range coll.Requests {
@@ -226,7 +226,9 @@ func argsMatch(expected, actual map[string]any) bool {
 // persistRunResult saves the eval result to .reqit/agent-lens/runs/
 func persistRunResult(workspaceDir string, result *EvalSuiteResult) {
 	dir := filepath.Join(ConfigDir(workspaceDir), "runs")
-	os.MkdirAll(dir, 0700)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return
+	}
 
 	filename := time.Now().UTC().Format("2006-01-02T150405Z") + ".json"
 	data, err := json.MarshalIndent(result, "", "  ")

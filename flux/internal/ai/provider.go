@@ -219,11 +219,17 @@ func chatAnthropic(cfg Config, messages []Message, stream bool, onChunk ...func(
 		body["system"] = systemMsg
 	}
 
-	req, _ := http.NewRequest("POST", cfg.BaseURL+"/v1/messages", nil)
+	req, err := http.NewRequest("POST", cfg.BaseURL+"/v1/messages", nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", cfg.APIKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
-	b, _ := json.Marshal(body)
+	b, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request body: %w", err)
+	}
 	req.Body = io.NopCloser(bytes.NewReader(b))
 
 	client := &http.Client{Timeout: 120 * time.Second}
@@ -517,11 +523,17 @@ func chatAnthropicWithTools(cfg Config, messages []Message, tools []ToolDef) (To
 		body["system"] = systemMsg
 	}
 
-	req, _ := http.NewRequest("POST", cfg.BaseURL+"/v1/messages", nil)
+	req, err := http.NewRequest("POST", cfg.BaseURL+"/v1/messages", nil)
+	if err != nil {
+		return ToolCallResult{}, fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", cfg.APIKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
-	b, _ := json.Marshal(body)
+	b, err := json.Marshal(body)
+	if err != nil {
+		return ToolCallResult{}, fmt.Errorf("failed to marshal request body: %w", err)
+	}
 	req.Body = io.NopCloser(bytes.NewReader(b))
 
 	client := &http.Client{Timeout: 120 * time.Second}

@@ -228,6 +228,12 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.audit != nil {
 		_ = a.audit.Close()
 	}
+	if a.schedulerExec != nil {
+		a.schedulerExec.Stop()
+	}
+	if a.mockServer != nil {
+		_ = a.mockServer.Stop()
+	}
 }
 
 func (a *App) CheckForUpdates() *updater.UpdateManifest {
@@ -287,7 +293,7 @@ func (a *App) RemoveSpecEndpoint(specPath, method, path string) error {
 
 func (a *App) GetPlugins() []plugin.RegisteredPlugin {
 	if a.plugins == nil {
-		return nil
+		return []plugin.RegisteredPlugin{}
 	}
 	return a.plugins.Registry.List()
 }
@@ -328,11 +334,11 @@ func (a *App) InstallUpdate(manifest updater.UpdateManifest) error {
 // RunCollection executes all requests in a resolved payload set with the given
 // assertions and returns pass/fail results for each request.
 func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
-	return runner.RunCollection(reqs, assertions)
+	return runner.RunCollection(a.ctx, reqs, assertions)
 }
 
 func (a *App) RunCollectionWithConcurrency(reqs []models.RunnerRequest, assertions map[string]models.Assertion, maxConcurrent int) models.CollectionRunResult {
-	return runner.RunCollection(reqs, assertions, maxConcurrent)
+	return runner.RunCollection(a.ctx, reqs, assertions, maxConcurrent)
 }
 
 // --- OpenAPI Export ---
@@ -457,6 +463,9 @@ func (a *App) mountWorkspace(dir string) {
 	// Ensure .reqit/ directory structure exists for Git-native storage.
 	_ = gitpkg.ReqitInit(dir)
 
+	// Ensure .gitignore protects secret files from being committed.
+	a.ensureWorkspaceGitignore(dir)
+
 	a.collections = collections.NewStore(dir)
 	a.history = history.NewStore(dir)
 	a.environments = environments.NewStore(dir)
@@ -521,6 +530,33 @@ func (a *App) mountWorkspace(dir string) {
 		runtime.EventsEmit(a.ctx, "scheduler:run", results)
 	})
 	a.schedulerExec.Start(a.ctx)
+}
+
+// ensureWorkspaceGitignore creates a .gitignore in the workspace root that
+// excludes sensitive files from being committed to git.
+func (a *App) ensureWorkspaceGitignore(dir string) {
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	secretPatterns := []byte(
+		"# Protect secrets from being committed\n" +
+			"*.env\n" +
+			"*.env.*\n" +
+			"*.key\n" +
+			"*.pem\n" +
+			"*.p12\n" +
+			"*.pfx\n" +
+			"*.cert\n" +
+			"*.crt\n" +
+			"**/secrets.json\n" +
+			"**/credentials.json\n" +
+			".reqit/ai.json\n" +
+			".reqit/cookies.json\n" +
+			".reqit/interceptor/\n" +
+			"*.log\n",
+	)
+	// Only write if file doesn't exist — don't overwrite user's custom gitignore.
+	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
+		_ = os.WriteFile(gitignorePath, secretPatterns, 0644)
+	}
 }
 
 // --- Workspaces ---
@@ -635,8 +671,8 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 	if a.inflight != nil {
 		a.inflight = nil
 	}
-	cancel()
 	a.mu.Unlock()
+	cancel()
 
 	// Contract validation — only when a spec path was provided by the frontend.
 	if payload.SpecPath != "" && result.Error == "" {
@@ -963,6 +999,10 @@ func (a *App) BuildSOAPEnvelope(action, body, serviceURL, soapVersion string, he
 func (a *App) DownloadBinaryResponse(data []byte, filename string) error {
 	if a.ctx == nil {
 		return errors.New("app context not ready")
+	}
+	const maxSize = 50 << 20 // 50MB
+	if len(data) > maxSize {
+		return fmt.Errorf("response too large (%d bytes, max %d)", len(data), maxSize)
 	}
 	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:           "Save Binary Response",
@@ -2287,7 +2327,7 @@ func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
 		return "", fmt.Errorf("spec URL returned status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20)) // 10MB limit
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -2553,7 +2593,7 @@ func (a *App) RunLoadTest(config models.LoadTestConfig) models.LoadTestResult {
 func (a *App) RunCollectionWithConfig(config models.RunnerConfig) models.CollectionRunResult {
 	reqs := config.Requests
 	assertionsMap := make(map[string]models.Assertion)
-	return runner.RunCollection(reqs, assertionsMap, config.MaxConcurrent)
+	return runner.RunCollection(a.ctx, reqs, assertionsMap, config.MaxConcurrent)
 }
 
 // --- Reports ---

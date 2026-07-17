@@ -92,6 +92,7 @@ func (p *Proxy) Stop() error {
 	p.running = false
 	p.server = nil
 	p.listener = nil
+	p.stopCh = make(chan struct{})
 	p.mu.Unlock()
 
 	if !running {
@@ -157,10 +158,15 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		cr.Headers[k] = strings.Join(v, ", ")
 	}
 	if r.Body != nil {
-		data, _ := io.ReadAll(r.Body)
-		cr.Body = string(data)
+		data, err := io.ReadAll(io.LimitReader(r.Body, 10<<20)) // 10MB limit
+		if err == nil {
+			cr.Body = string(data)
+		}
 	}
 	p.mu.Lock()
+	if len(p.captured) >= 1000 {
+		p.captured = p.captured[len(p.captured)-999:]
+	}
 	p.captured = append(p.captured, cr)
 	callback := p.onCapture
 	_ = p.saveCapturedLocked()

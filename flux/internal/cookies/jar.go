@@ -72,7 +72,7 @@ func (s *Store) SetCookies(u *url.URL, cookies []*http.Cookie) {
 		}
 	}
 	s.data[host] = valid
-	_ = s.save()
+	s.save()
 }
 
 // Cookies returns stored cookies for the URL's host, skipping expired ones.
@@ -143,7 +143,7 @@ func (s *Store) ClearDomain(domain string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.data, domain)
-	_ = s.save()
+	s.save()
 }
 
 // ClearAll wipes every stored cookie.
@@ -151,7 +151,7 @@ func (s *Store) ClearAll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data = make(map[string][]stored)
-	_ = s.save()
+	s.save()
 }
 
 func (s *Store) save() error {

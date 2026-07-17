@@ -104,7 +104,10 @@ func writeMeta(dir string, m Meta) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	data, _ := json.MarshalIndent(m, "", "  ")
+	data, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(filepath.Join(dir, metaFile), data, 0o644)
 }
 

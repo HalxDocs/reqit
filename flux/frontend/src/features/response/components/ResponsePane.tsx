@@ -13,6 +13,7 @@ import { TimelineView } from "@/features/response/components/TimelineView";
 import { LoadingState } from "@/features/response/components/LoadingState";
 import { ErrorState } from "@/features/response/components/ErrorState";
 import { AIDiagnosisPanel } from "@/features/ai/components/AIDiagnosisPanel";
+import { useSendRequest } from "@/features/request/hooks/useSendRequest";
 import { SecurityWarnings } from "@/features/response/components/SecurityWarnings";
 import { PartyModeToggle, PartyModeEffects } from "@/features/response/components/PartyMode";
 import { useDiffStore, type ResponseSnapshot } from "@/features/response/stores/useDiffStore";
@@ -45,7 +46,8 @@ function DiffSnapshots({ method, url, response, snapshotKey }: {
 
   const oldLines = (existing.body ?? "").split("\n");
   const newLines = (response.body ?? "").split("\n");
-  const diffs = lineDiff(oldLines, newLines);
+  const tooLarge = oldLines.length > 5000 || newLines.length > 5000;
+  const diffs = tooLarge ? [] : lineDiff(oldLines, newLines);
   const adds = diffs.filter((d) => d.type === "added").length;
   const rems = diffs.filter((d) => d.type === "removed").length;
 
@@ -124,6 +126,7 @@ function lineDiff(oldLines: string[], newLines: string[]) {
 }
 
 export function ResponsePane() {
+  const send = useSendRequest();
   const response = useResponseStore((s) => s.response);
   const isLoading = useResponseStore((s) => s.isLoading);
   const panelLayout = useUIStore((s) => s.panelLayout);
@@ -189,7 +192,7 @@ export function ResponsePane() {
   };
 
   return (
-    <section className={panelLayout === "horizontal" ? "flex-1 h-full bg-bg flex flex-col min-w-0" : "flex-1 w-full min-h-0 bg-bg flex flex-col"}>
+    <section className={panelLayout === "horizontal" ? "flex-1 self-stretch bg-bg flex flex-col min-w-0 min-h-0" : "flex-1 w-full min-h-0 bg-bg flex flex-col"}>
       <StatusBar />
 
       <SecurityWarnings />
@@ -281,7 +284,7 @@ export function ResponsePane() {
         </div>
       )}
 
-      <div data-scope="responseTree" className="flex-1 min-h-0 flex flex-col">
+      <div data-scope="responseTree" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
         {isLoading && <LoadingState />}
 
         {!isLoading && !response && (
@@ -290,7 +293,7 @@ export function ResponsePane() {
           </div>
         )}
 
-        {!isLoading && response && response.error && <ErrorState message={response.error} />}
+        {!isLoading && response && response.error && <ErrorState message={response.error} onRetry={send} />}
 
         {!isLoading && response && !response.error && responseTab === "body" && (
           <BodyView
@@ -308,11 +311,11 @@ export function ResponsePane() {
         {!isLoading && response && !response.error && responseTab === "timeline" && (
           <TimelineView />
         )}
+        <DiffSnapshots method={method} url={url} response={response} snapshotKey={snapshotKey} />
+        <AIDiagnosisPanel />
       </div>
 
-      <DiffSnapshots method={method} url={url} response={response} snapshotKey={snapshotKey} />
       <PartyModeEffects />
-      <AIDiagnosisPanel />
     </section>
   );
 }

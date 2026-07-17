@@ -23,6 +23,7 @@ type CollectionStore = {
   collections: models.Collection[];
   expanded: Record<string, boolean>;
   loaded: boolean;
+  loadError: string | null;
   lastExternalChange: number | null;
 
   load: (external?: boolean) => Promise<void>;
@@ -75,6 +76,7 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
   collections: [],
   expanded: {},
   loaded: false,
+  loadError: null,
   lastExternalChange: null,
 
   load: async (external = false) => {
@@ -84,10 +86,12 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
       for (const c of collections) {
         if (!(c.id in expanded)) expanded[c.id] = true;
       }
-      set({ collections, expanded, loaded: true, lastExternalChange: external ? Date.now() : null });
+      set({ collections, expanded, loaded: true, loadError: null, lastExternalChange: external ? Date.now() : null });
       if (external) reconcileTabs(collections);
-    } catch {
-      set({ loaded: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load collections";
+      toast.error(msg);
+      set({ loaded: true, loadError: msg });
     }
   },
 

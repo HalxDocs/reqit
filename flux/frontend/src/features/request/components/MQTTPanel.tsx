@@ -10,6 +10,7 @@ import {
   MQTTGetMessages,
   MQTTClearMessages,
 } from "../../../../wailsjs/go/main/App";
+import { toast } from "@/app/stores/useToastStore";
 
 type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
@@ -54,21 +55,28 @@ export default function MQTTPanel() {
       setStatus("connected");
     } catch (e) {
       setStatus("disconnected");
+      toast.error(`Connection failed: ${e instanceof Error ? e.message : String(e)}`);
       return;
     }
   }, [brokerUrl, clientId, username, password, subscribeTopics, canConnect]);
 
   const handleDisconnect = useCallback(async () => {
     if (!canDisconnect) return;
-    await MQTTDisconnect();
-    setStatus("disconnected");
+    try {
+      await MQTTDisconnect();
+      setStatus("disconnected");
+    } catch (e) {
+      toast.error(`Disconnect failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }, [canDisconnect]);
 
   const handlePublish = useCallback(async () => {
     if (!canPublish) return;
     try {
       await MQTTPublish(mqttTopic ?? "", mqttPayload ?? "", mqttQoS ?? 0);
-    } catch { /* ignore */ }
+    } catch (e) {
+      toast.error(`Publish failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }, [mqttTopic, mqttPayload, mqttQoS, canPublish]);
 
   const handleClearMessages = useCallback(async () => {

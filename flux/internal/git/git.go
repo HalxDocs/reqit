@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -315,12 +316,17 @@ func LoadConfig(dir string) (GitConfig, error) {
 	return cfg, json.Unmarshal(data, &cfg)
 }
 
-// gitExec runs a git command in the store's directory.
+// gitExec runs a git command in the store's directory with a timeout.
 func (s *Store) gitExec(args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = s.dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("git %s: timed out after 60s", strings.Join(args, " "))
+		}
 		return "", fmt.Errorf("git %s: %s: %w", strings.Join(args, " "), strings.TrimSpace(string(out)), err)
 	}
 	return strings.TrimSpace(string(out)), nil

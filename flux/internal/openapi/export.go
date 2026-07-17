@@ -277,7 +277,10 @@ func ExportToHTML(coll models.Collection, dir string) (htmlPath string, err erro
 	if err != nil {
 		return "", err
 	}
-	specJSON, _ := json.Marshal(json.RawMessage(spec))
+	specJSON, err := json.Marshal(json.RawMessage(spec))
+	if err != nil {
+		return "", fmt.Errorf("marshal spec for HTML: %w", err)
+	}
 
 	html := fmt.Sprintf(`<!doctype html>
 <html lang="en">

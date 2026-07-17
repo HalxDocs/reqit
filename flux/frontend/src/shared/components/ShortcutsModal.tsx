@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { getCommands } from "@/shared/lib/commands";
 import { X } from "lucide-react";
@@ -7,6 +8,15 @@ const CATEGORY_ORDER = ["General", "Request", "Tabs", "Response", "Import", "Col
 export function ShortcutsModal() {
   const open = useUIStore((s) => s.shortcutsModalOpen);
   const close = useUIStore((s) => s.closeShortcutsModal);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, close]);
 
   if (!open) return null;
 

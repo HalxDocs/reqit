@@ -287,6 +287,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); syncNow(); }}
               className="text-subtext/50 hover:text-cyan transition-colors"
+              aria-label="Sync now"
               title="Sync now"
             >
               <RefreshCw size={11} className={syncing ? "animate-spin" : ""} />
@@ -330,6 +331,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             type="button"
             onClick={toggleTheme}
             className="flex items-center justify-center w-[20px] h-[20px] text-subtext hover:text-text transition-colors shrink-0 mr-1"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}

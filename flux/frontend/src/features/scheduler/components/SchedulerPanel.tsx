@@ -34,8 +34,11 @@ export function SchedulerPanel() {
     return () => off();
   }, [load]);
 
+  const isValidCron = (c: string) => /^\S+\s+\S+\s+\S+\s+\S+\s+\S+$/.test(c.trim());
+
   const handleCreate = async () => {
     if (!newName.trim() || !newCollID) { setError("Name and collection required"); return; }
+    if (!isValidCron(newCron)) { setError("Invalid cron format (expected 5 fields: minute hour day month weekday)"); return; }
     setError("");
     try {
       await CreateSchedule(nanoid(), newCollID, newName.trim(), newCron, true);
@@ -55,6 +58,7 @@ export function SchedulerPanel() {
   };
 
   const saveEdit = async (id: string) => {
+    if (!isValidCron(editCron)) { setError("Invalid cron format"); return; }
     try {
       await UpdateSchedule(id, null, editCron, null);
       setEditingID(null);
@@ -63,6 +67,7 @@ export function SchedulerPanel() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Delete this schedule?")) return;
     try {
       await DeleteSchedule(id);
       await load();

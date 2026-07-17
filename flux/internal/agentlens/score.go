@@ -11,7 +11,7 @@ func AnalyzeCollection(coll models.Collection, workspaceDir string) CollectionSc
 
 // AnalyzeCollections analyzes multiple collections together (for cross-collection duplicate detection).
 func AnalyzeCollections(colls []models.Collection, workspaceDir string) CollectionScore {
-	cfg, _ := LoadConfig(workspaceDir)
+	cfg := LoadConfigOrDefault(workspaceDir)
 
 	// Phase 1: Map all requests to tools
 	var allTools []ToolDefinition
@@ -81,7 +81,7 @@ func AnalyzeCollections(colls []models.Collection, workspaceDir string) Collecti
 
 // AnalyzeRequest scores a single request as a tool.
 func AnalyzeRequest(req models.SavedRequest, folderName string, allColls []models.Collection, workspaceDir string) ToolScore {
-	cfg, _ := LoadConfig(workspaceDir)
+	cfg := LoadConfigOrDefault(workspaceDir)
 
 	// Map the target request
 	tool := MapRequestToTool(req, folderName)

@@ -1,0 +1,19 @@
+{
+  "version": "v1.0.0",
+  "notes": "See release notes at https://github.com/HalxDocs/reqit/releases/tag/v1.0.0",
+  "pub_date": "2026-07-07T18:57:33Z",
+  "platforms": {
+    "windows-amd64": {
+      "url": "https://github.com/HalxDocs/reqit/releases/download/v1.0.0/reqit-windows-amd64.exe",
+      "sha256": "ae6ae1c1710084c3bee2bda132651de898ad589a80c9214545f005adedc746e5"
+    },
+    "darwin-universal": {
+      "url": "https://github.com/HalxDocs/reqit/releases/download/v1.0.0/reqit-macos-universal.zip",
+      "sha256": "331660f8bf7cfcd65609e96bc5b8b0f2a4b5b4d316b3a8661da37ce73d7f2318"
+    },
+    "linux-amd64": {
+      "url": "https://github.com/HalxDocs/reqit/releases/download/v1.0.0/reqit-linux-amd64",
+      "sha256": "f85bb4fa54df11eec7fba626ed974a3b2185c1501870821dcec63c19d728323b"
+    }
+  }
+}

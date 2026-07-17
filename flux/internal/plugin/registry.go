@@ -47,6 +47,9 @@ func (r *Registry) Discover() error {
 
 // List returns all discovered plugins.
 func (r *Registry) List() []RegisteredPlugin {
+	if r.plugins == nil {
+		return []RegisteredPlugin{}
+	}
 	return r.plugins
 }
 

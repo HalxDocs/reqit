@@ -2,6 +2,7 @@ package locks
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,7 +21,10 @@ type Store struct {
 
 func New(workspaceDir string) *Store {
 	dir := filepath.Join(workspaceDir, ".locks")
-	_ = os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		// Directory creation failed; lock operations will fail with write errors.
+		return &Store{dir: dir}
+	}
 	return &Store{dir: dir}
 }
 
@@ -30,7 +34,10 @@ func (s *Store) Lock(id, user, email string) error {
 		Email: email,
 		Since: time.Now().Format(time.RFC3339),
 	}
-	data, _ := json.MarshalIndent(info, "", "  ")
+	data, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal lock info: %w", err)
+	}
 	return os.WriteFile(filepath.Join(s.dir, id+".lock"), data, 0644)
 }
 
@@ -68,7 +75,10 @@ func (s *Store) GetAll() (map[string]LockInfo, error) {
 }
 
 func (s *Store) UnlockAll(user string) {
-	entries, _ := os.ReadDir(s.dir)
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return
+	}
 	for _, e := range entries {
 		if !strings.HasSuffix(e.Name(), ".lock") {
 			continue
@@ -79,7 +89,7 @@ func (s *Store) UnlockAll(user string) {
 		}
 		var info LockInfo
 		if json.Unmarshal(raw, &info) == nil && info.User == user {
-			_ = os.Remove(filepath.Join(s.dir, e.Name()))
+			os.Remove(filepath.Join(s.dir, e.Name()))
 		}
 	}
 }

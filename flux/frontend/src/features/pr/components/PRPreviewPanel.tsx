@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
+import { toast } from "@/app/stores/useToastStore";
 import { Button } from "@/shared/components/Button";
 import {
   GetGitStatus, GitStash, GitPopStash, GetGitStashList,
@@ -36,20 +37,32 @@ export function PRPreviewPanel() {
     try { setDiff(await GetGitDiff("", "")); } catch { setDiff([]); }
   };
 
-  const handleStash = async () => { try { await GitStash(); } catch {} refresh(); };
-  const handlePop = async () => { try { await GitPopStash(); } catch {} refresh(); };
+  const handleStash = async () => {
+    if (!confirm("Stash current changes?")) return;
+    try { await GitStash(); } catch (e) { toast.error(`Stash failed: ${e}`); }
+    refresh();
+  };
+  const handlePop = async () => {
+    if (!confirm("Pop latest stash? This may cause conflicts.")) return;
+    try { await GitPopStash(); } catch (e) { toast.error(`Pop failed: ${e}`); }
+    refresh();
+  };
 
   const handleMerge = async () => {
     if (!targetBranch) return;
-    try { await GitMergeBranch(targetBranch); } catch {}
+    if (!confirm(`Merge ${targetBranch} into current branch?`)) return;
+    try { await GitMergeBranch(targetBranch); } catch (e) { toast.error(`Merge failed: ${e}`); }
     refresh();
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };
 
-  const handleSwitch = async (branch: string) => { try { await SwitchBranch(branch); } catch {} refresh(); };
+  const handleSwitch = async (branch: string) => {
+    try { await SwitchBranch(branch); } catch (e) { toast.error(`Switch failed: ${e}`); }
+    refresh();
+  };
   const handleCreateBranch = async () => {
     if (!newBranch) return;
-    try { await CreateBranch(newBranch); } catch {}
+    try { await CreateBranch(newBranch); } catch (e) { toast.error(`Create branch failed: ${e}`); }
     setNewBranch("");
     refresh();
   };
@@ -64,19 +77,21 @@ export function PRPreviewPanel() {
         try {
           const raw = await GetGitDiffContent(path);
           setDiffContent((prev) => ({ ...prev, [path]: raw }));
-        } catch {}
+        } catch (e) { toast.error(`Failed to load diff: ${e}`); }
       }
     }
     setOpenFiles(next);
   };
 
   const handleResolveOurs = async (path: string) => {
-    try { await GitResolveConflictOurs(path); } catch {}
+    if (!confirm(`Use OURS version for ${path}?`)) return;
+    try { await GitResolveConflictOurs(path); } catch (e) { toast.error(`Resolve failed: ${e}`); }
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };
 
   const handleResolveTheirs = async (path: string) => {
-    try { await GitResolveConflictTheirs(path); } catch {}
+    if (!confirm(`Use THEIRS version for ${path}?`)) return;
+    try { await GitResolveConflictTheirs(path); } catch (e) { toast.error(`Resolve failed: ${e}`); }
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };
 

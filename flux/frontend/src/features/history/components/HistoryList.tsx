@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Filter, Heart, Search, Star, Trash2, X } from "lucide-react";
+import { Download, Filter, Heart, Loader2, Search, Star, Trash2, X } from "lucide-react";
 import { toast } from "@/app/stores/useToastStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -159,7 +159,9 @@ export function HistoryList() {
     try {
       await DeleteHistoryEntry(id);
       await reload();
-    } catch {}
+    } catch (err) {
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
 
   const handleToggleFav = async (id: string, current: boolean | undefined, ev: React.MouseEvent) => {
@@ -168,8 +170,12 @@ export function HistoryList() {
       await UpdateHistoryEntry(id, { favorite: !current });
       await reload();
       toast.success(current ? "Removed from favourites" : "Added to favourites");
-    } catch {}
+    } catch (err) {
+      toast.error(`Failed to update: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
+
+  const [clearing, setClearing] = useState(false);
 
   const toggleMethod = (m: string) => {
     setMethods((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
@@ -285,14 +291,17 @@ export function HistoryList() {
             type="button"
             onClick={async () => {
               if (entries.length && confirm("Clear all history?")) {
-                try { await clear(); } catch {}
+                setClearing(true);
+                try { await clear(); } catch (err) {
+                  toast.error(`Failed to clear: ${err instanceof Error ? err.message : String(err)}`);
+                } finally { setClearing(false); }
               }
             }}
-            disabled={!entries.length}
+            disabled={!entries.length || clearing}
             className="text-subtext hover:text-danger disabled:opacity-30 transition-colors p-1 rounded-sm"
             aria-label="Clear history"
           >
-            <Trash2 size={12} />
+            {clearing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
           </button>
         </div>
       </div>

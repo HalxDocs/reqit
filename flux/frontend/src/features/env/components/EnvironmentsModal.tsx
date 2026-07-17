@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -84,6 +84,8 @@ export function EnvironmentsModal() {
     try {
       const env = await create("New environment");
       setSelectedID(env.id);
+    } catch (err) {
+      toast.error(`Failed to create: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
     }
@@ -96,6 +98,8 @@ export function EnvironmentsModal() {
       await update(draft.id, draft.name.trim() || "Untitled", toVars(draft.rows));
       toast.success(`Saved "${draft.name.trim() || "Untitled"}"`);
       close();
+    } catch (err) {
+      toast.error(`Failed to save: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
     }
@@ -108,6 +112,8 @@ export function EnvironmentsModal() {
     try {
       await remove(draft.id);
       setSelectedID(null);
+    } catch (err) {
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
     }
@@ -123,7 +129,7 @@ export function EnvironmentsModal() {
             disabled={busy}
             className="flex items-center gap-2 h-[28px] px-2 mb-2 text-12 text-subtext hover:text-cyan transition-colors"
           >
-            <Plus size={12} />
+            {busy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             <span>New</span>
           </button>
           <div className="flex flex-col">

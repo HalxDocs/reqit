@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -80,7 +81,10 @@ func (c *Client) Publish(ctx context.Context, topic, payload string, qos int) er
 		"payload": payload,
 		"qos":     qos,
 	}
-	b, _ := json.Marshal(body)
+	b, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("mqtt publish marshal: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", broker+"/api/v2/publish", bytes.NewReader(b))
 	if err != nil {

@@ -66,7 +66,14 @@ func Execute(req Request) Response {
 		bodyMap["operationName"] = req.OperationName
 	}
 
-	bodyBytes, _ := json.Marshal(bodyMap)
+	bodyBytes, err := json.Marshal(bodyMap)
+	if err != nil {
+		return Response{
+			Errors:     []GraphQLError{{Message: fmt.Sprintf("Failed to marshal request body: %v", err)}},
+			StatusCode: 0,
+			TimingMs:   time.Since(start).Milliseconds(),
+		}
+	}
 	httpReq, err := http.NewRequest("POST", req.URL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return Response{
@@ -92,7 +99,14 @@ func Execute(req Request) Response {
 	}
 	defer resp.Body.Close()
 
-	respBytes, _ := io.ReadAll(resp.Body)
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Response{
+			Errors:     []GraphQLError{{Message: fmt.Sprintf("Failed to read response body: %v", err)}},
+			StatusCode: resp.StatusCode,
+			TimingMs:   time.Since(start).Milliseconds(),
+		}
+	}
 
 	var gqlResp struct {
 		Data   json.RawMessage `json:"data"`
@@ -179,7 +193,10 @@ func Introspect(url string, headers map[string]string) ([]byte, error) {
 	}`
 
 	bodyMap := map[string]interface{}{"query": introspectionQuery}
-	bodyBytes, _ := json.Marshal(bodyMap)
+	bodyBytes, err := json.Marshal(bodyMap)
+	if err != nil {
+		return nil, fmt.Errorf("introspect: marshal body: %w", err)
+	}
 
 	httpReq, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
 	if err != nil {
@@ -219,7 +236,7 @@ func Subscribe(url string, query string, variables string, headers map[string]st
 		conn = conn2
 	}
 
-	msgCh := make(chan SubscriptionMessage, 64)
+	msgCh := make(chan SubscriptionMessage, 256)
 
 	// Send init message
 	initPayload := map[string]interface{}{}
@@ -232,7 +249,12 @@ func Subscribe(url string, query string, variables string, headers map[string]st
 		Type: "connection_init",
 	}
 	if len(initPayload) > 0 {
-		payloadBytes, _ := json.Marshal(initPayload)
+		payloadBytes, err := json.Marshal(initPayload)
+		if err != nil {
+			conn.Close()
+			close(msgCh)
+			return nil, nil, fmt.Errorf("graphql ws marshal init payload: %w", err)
+		}
 		initMsg.Payload = payloadBytes
 	}
 	if err := conn.WriteJSON(initMsg); err != nil {
@@ -251,7 +273,12 @@ func Subscribe(url string, query string, variables string, headers map[string]st
 		"query":     query,
 		"variables": vars,
 	}
-	subPayloadBytes, _ := json.Marshal(subPayload)
+	subPayloadBytes, err := json.Marshal(subPayload)
+	if err != nil {
+		conn.Close()
+		close(msgCh)
+		return nil, nil, fmt.Errorf("graphql ws marshal subscribe payload: %w", err)
+	}
 	subMsg := SubscriptionMessage{
 		Type:    "subscribe",
 		ID:      subID,

@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"flux/internal/ai"
 	"flux/internal/collections"
@@ -262,7 +265,10 @@ func handleGetCollection(wsDir string) ToolHandler {
 		}
 		for _, c := range all {
 			if c.Name == p.Name {
-				b, _ := json.MarshalIndent(c, "", "  ")
+				b, err := json.MarshalIndent(c, "", "  ")
+				if err != nil {
+					return "", fmt.Errorf("marshal collection: %w", err)
+				}
 				return string(b), nil
 			}
 		}
@@ -416,7 +422,10 @@ func handleRunCollection(wsDir string) ToolHandler {
 
 		// Load environments
 		es := environments.NewStore(wsDir)
-		envSnap, _ := es.Get()
+		envSnap, err := es.Get()
+		if err != nil {
+			return "", fmt.Errorf("load environments: %w", err)
+		}
 		var env *models.Environment
 		if p.Environment != "" {
 			for i := range envSnap.Environments {
@@ -447,9 +456,16 @@ func handleRunCollection(wsDir string) ToolHandler {
 		var passed, failed int
 		fmt.Fprintf(&sb, "Running collection: %s (%d requests)\n\n", p.Name, len(coll.Requests))
 
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
 		for _, req := range coll.Requests {
+			if ctx.Err() != nil {
+				fmt.Fprintf(&sb, "\n⚠ Collection run cancelled (timeout)\n")
+				break
+			}
 			payload := resolvePayloadMCP(req.Payload, envMap)
-			res := requester.Execute(context.Background(), payload, nil)
+			res := requester.Execute(ctx, payload, nil)
 
 			if res.Error != "" {
 				failed++
@@ -504,7 +520,10 @@ func handleGetEnvironment(wsDir string) ToolHandler {
 		}
 		for _, e := range snap.Environments {
 			if e.Name == p.Name {
-				b, _ := json.MarshalIndent(e, "", "  ")
+				b, err := json.MarshalIndent(e, "", "  ")
+				if err != nil {
+					return "", fmt.Errorf("marshal environment: %w", err)
+				}
 				return string(b), nil
 			}
 		}
@@ -580,6 +599,33 @@ func handleSwitchEnvironment(wsDir string) ToolHandler {
 
 // --- Execution ---
 
+// isSSRFRisk checks if a URL targets internal/loopback addresses.
+func isSSRFRisk(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return true // block on parse error
+	}
+	hostname := u.Hostname()
+	if hostname == "" {
+		return false
+	}
+	// Block loopback.
+	if hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == "0.0.0.0" {
+		return true
+	}
+	// Block private IP ranges.
+	if ip := net.ParseIP(hostname); ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return true
+		}
+	}
+	// Block metadata endpoints.
+	if strings.HasSuffix(hostname, ".internal") || strings.HasSuffix(hostname, ".local") {
+		return true
+	}
+	return false
+}
+
 func handleSendRequest() ToolHandler {
 	return func(args json.RawMessage) (string, error) {
 		var p struct {
@@ -590,6 +636,10 @@ func handleSendRequest() ToolHandler {
 		}
 		if err := json.Unmarshal(args, &p); err != nil {
 			return "", err
+		}
+
+		if isSSRFRisk(p.URL) {
+			return "", fmt.Errorf("blocked: request to %s is not allowed (SSRF protection: no localhost/internal URLs)", p.URL)
 		}
 
 		payload := models.RequestPayload{

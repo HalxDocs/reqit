@@ -20,7 +20,7 @@ var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
 
 // RunCollection runs requests with the given runner config and assertions.
 // Supports retries, conditional execution, and all assertion types.
-func RunCollection(reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, maxConcurrent ...int) models.CollectionRunResult {
+func RunCollection(ctx context.Context, reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, maxConcurrent ...int) models.CollectionRunResult {
 	start := time.Now()
 	results := make([]models.RequestRunResult, len(reqs))
 	passed, failed, skipped := 0, 0, 0
@@ -39,9 +39,9 @@ func RunCollection(reqs []models.RunnerRequest, assertionsMap map[string]models.
 	}
 
 	if hasScripts {
-		runSequential(reqs, assertionsMap, &results, &passed, &failed, &skipped)
+		runSequential(ctx, reqs, assertionsMap, &results, &passed, &failed, &skipped)
 	} else {
-		runConcurrent(reqs, assertionsMap, conc, &results, &passed, &failed, &skipped)
+		runConcurrent(ctx, reqs, assertionsMap, conc, &results, &passed, &failed, &skipped)
 	}
 
 	return models.CollectionRunResult{
@@ -56,11 +56,14 @@ func RunCollection(reqs []models.RunnerRequest, assertionsMap map[string]models.
 	}
 }
 
-func runSequential(reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, results *[]models.RequestRunResult, passed, failed, skipped *int) {
+func runSequential(ctx context.Context, reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, results *[]models.RequestRunResult, passed, failed, skipped *int) {
 	env := make(map[string]string)
 
 	for i, r := range reqs {
-		res := executeRequestWithRetries(r, assertionsMap, env)
+		if ctx.Err() != nil {
+			break
+		}
+		res := executeRequestWithRetries(ctx, r, assertionsMap, env)
 		(*results)[i] = res
 		if res.Skipped {
 			*skipped++
@@ -90,12 +93,15 @@ func runSequential(reqs []models.RunnerRequest, assertionsMap map[string]models.
 	}
 }
 
-func runConcurrent(reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, conc int, results *[]models.RequestRunResult, passed, failed, skipped *int) {
+func runConcurrent(ctx context.Context, reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, conc int, results *[]models.RequestRunResult, passed, failed, skipped *int) {
 	var mu sync.Mutex
 	sem := make(chan struct{}, conc)
 	var wg sync.WaitGroup
 
 	for i, r := range reqs {
+		if ctx.Err() != nil {
+			break
+		}
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(idx int, req models.RunnerRequest) {
@@ -103,7 +109,7 @@ func runConcurrent(reqs []models.RunnerRequest, assertionsMap map[string]models.
 			defer func() { <-sem }()
 
 			env := make(map[string]string)
-			res := executeRequestWithRetries(req, assertionsMap, env)
+			res := executeRequestWithRetries(ctx, req, assertionsMap, env)
 
 			mu.Lock()
 			(*results)[idx] = res
@@ -120,7 +126,7 @@ func runConcurrent(reqs []models.RunnerRequest, assertionsMap map[string]models.
 	wg.Wait()
 }
 
-func executeRequestWithRetries(req models.RunnerRequest, assertionsMap map[string]models.Assertion, env map[string]string) models.RequestRunResult {
+func executeRequestWithRetries(ctx context.Context, req models.RunnerRequest, assertionsMap map[string]models.Assertion, env map[string]string) models.RequestRunResult {
 	// Check condition
 	if req.Condition != "" {
 		shouldRun := evaluateCondition(req.Condition, env)
@@ -157,7 +163,7 @@ func executeRequestWithRetries(req models.RunnerRequest, assertionsMap map[strin
 	for attempt := 0; attempt <= retries; attempt++ {
 		payload := resolvePayload(req.Payload, env)
 
-		resp := requester.Execute(context.Background(), payload, nil)
+		resp := requester.Execute(ctx, payload, nil)
 
 		lastRes = models.RequestRunResult{
 			RequestID:   req.ID,
@@ -199,11 +205,30 @@ func evaluateCondition(condition string, env map[string]string) bool {
 	_ = vm.Set("vars", vars)
 
 	script := fmt.Sprintf("(function() { return %s; })()", condition)
-	val, err := vm.RunString(script)
+	val, err := runScriptWithTimeout(vm, script)
 	if err != nil {
 		return true // run on error
 	}
 	return val.ToBoolean()
+}
+
+const scriptTimeout = 10 * time.Second
+
+func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
+	done := make(chan struct{})
+	var val goja.Value
+	var err error
+	go func() {
+		defer close(done)
+		val, err = vm.RunString(script)
+	}()
+	select {
+	case <-done:
+		return val, err
+	case <-time.After(scriptTimeout):
+		vm.Interrupt("script timeout")
+		return nil, fmt.Errorf("script execution timed out after %v", scriptTimeout)
+	}
 }
 
 func singleResult(req models.RunnerRequest, resp models.ResponseResult, assertion models.Assertion) models.RequestRunResult {

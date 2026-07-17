@@ -25,6 +25,8 @@ function ToastItem({
   const [exiting, setExiting] = useState(false);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const remainingRef = useRef(0);
+  const startedAtRef = useRef(0);
   const { icon: Icon, bg, tint, bar } = STYLES[toast.kind];
   const duration = DURATION[toast.kind];
 
@@ -33,16 +35,29 @@ function ToastItem({
     setTimeout(() => onDismiss(toast.id), 200);
   }, [onDismiss, toast.id]);
 
+  const startTimer = useCallback((ms: number) => {
+    startedAtRef.current = Date.now();
+    remainingRef.current = ms;
+    timerRef.current = setTimeout(dismiss, ms);
+  }, [dismiss]);
+
   useEffect(() => {
     if (!paused) {
-      timerRef.current = setTimeout(dismiss, duration);
-    } else if (timerRef.current) {
-      clearTimeout(timerRef.current);
+      startTimer(remainingRef.current || duration);
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      remainingRef.current -= Date.now() - startedAtRef.current;
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [paused, dismiss, duration]);
+  }, [paused, startTimer, duration]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   return (
     <div
@@ -73,6 +88,7 @@ function ToastItem({
           className={cn("h-full rounded-full", bar)}
           style={{
             animation: exiting ? "none" : paused ? "none" : `toast-progress ${duration}ms linear forwards`,
+            animationPlayState: paused ? "paused" : "running",
           }}
         />
       </div>

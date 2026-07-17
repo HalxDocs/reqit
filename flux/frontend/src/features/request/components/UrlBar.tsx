@@ -59,22 +59,32 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   };
 
   const stopMock = async () => {
-    await StopMockServer();
-    setMockStatus(null);
-    toast("success", "Mock server stopped");
+    try {
+      await StopMockServer();
+      setMockStatus(null);
+      toast("success", "Mock server stopped");
+    } catch (e) {
+      toast("error", String(e));
+    }
   };
 
   const copyMockUrl = () => {
     if (mockStatus?.baseUrl) {
-      void navigator.clipboard.writeText(mockStatus.baseUrl);
-      toast("success", "Copied to clipboard");
+      navigator.clipboard.writeText(mockStatus.baseUrl).then(
+        () => toast("success", "Copied to clipboard"),
+        () => toast("error", "Failed to copy"),
+      );
     }
   };
 
   const toggleRecording = async () => {
     if (!mockStatus) return;
-    await ToggleMockRecording(!mockStatus.recording);
-    toast("success", mockStatus.recording ? "Recording stopped" : "Recording started");
+    try {
+      await ToggleMockRecording(!mockStatus.recording);
+      toast("success", mockStatus.recording ? "Recording stopped" : "Recording started");
+    } catch (e) {
+      toast("error", String(e));
+    }
   };
 
   const handleFork = () => {

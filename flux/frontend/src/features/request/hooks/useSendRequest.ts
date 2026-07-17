@@ -63,7 +63,7 @@ export function useSendRequest() {
       const resolve = useEnvStore.getState().resolve;
       for (const v of preSetVars) {
         const resolved = resolve(v.value, collVars);
-        try { await SetEnvVar(v.key, resolved); } catch {}
+        try { await SetEnvVar(v.key, resolved); } catch { /* best-effort */ }
       }
     }
 
@@ -104,7 +104,7 @@ export function useSendRequest() {
             } catch {}
           }
           if (value) {
-            try { await SetEnvVar(rule.target, value); } catch {}
+            try { await SetEnvVar(rule.target, value); } catch { /* best-effort */ }
           }
         }
       }

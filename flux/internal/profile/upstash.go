@@ -83,7 +83,9 @@ func SaveUpstashConfig(url, token string) error {
 		configDir = filepath.Join(home, ".config", "reqit")
 	}
 
-	os.MkdirAll(configDir, 0700)
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return fmt.Errorf("create config dir: %w", err)
+	}
 
 	cfg := struct {
 		URL   string `json:"url"`
@@ -111,7 +113,10 @@ func (c *upstashClient) get(key string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("upstash GET read body: %w", err)
+	}
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("upstash GET %d: %s", resp.StatusCode, string(respBody))
 	}
@@ -139,7 +144,10 @@ func (c *upstashClient) set(key, value string) error {
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("upstash SET read body: %w", err)
+	}
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("upstash SET %d: %s", resp.StatusCode, string(respBody))
 	}

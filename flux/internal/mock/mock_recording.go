@@ -7,12 +7,14 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
 // RecordingSink captures real traffic and stores it as mock responses.
 type RecordingSink struct {
 	registry *Registry
+	mu       sync.RWMutex
 	enabled  bool
 }
 
@@ -20,9 +22,21 @@ func NewRecordingSink(reg *Registry) *RecordingSink {
 	return &RecordingSink{registry: reg}
 }
 
-func (rs *RecordingSink) Enable()  { rs.enabled = true }
-func (rs *RecordingSink) Disable() { rs.enabled = false }
-func (rs *RecordingSink) Enabled() bool { return rs.enabled }
+func (rs *RecordingSink) Enable() {
+	rs.mu.Lock()
+	rs.enabled = true
+	rs.mu.Unlock()
+}
+func (rs *RecordingSink) Disable() {
+	rs.mu.Lock()
+	rs.enabled = false
+	rs.mu.Unlock()
+}
+func (rs *RecordingSink) Enabled() bool {
+	rs.mu.RLock()
+	defer rs.mu.RUnlock()
+	return rs.enabled
+}
 
 // Record captures a proxied HTTP response as a mock rule.
 func (rs *RecordingSink) Record(method, path string, resp *http.Response) error {

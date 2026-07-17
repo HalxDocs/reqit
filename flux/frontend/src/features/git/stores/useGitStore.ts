@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { GetGitStatus, GetLocks, GitPull, CommitAndPush, SetAutoSync } from "../../../../wailsjs/go/main/App";
-import { EventsOn } from "../../../../wailsjs/runtime/runtime";
+import { EventsOn, EventsOff } from "../../../../wailsjs/runtime/runtime";
 
 interface GitSyncStatus {
   initialised: boolean;
@@ -58,6 +58,12 @@ export const useGitStore = create<GitStore>((set, get) => {
 
     loadStatus,
     loadLocks,
+
+    cleanup: () => {
+      EventsOff("git:pull:complete");
+      EventsOff("git:sync:complete");
+      EventsOff("lock:changed");
+    },
 
     syncNow: async () => {
       set({ syncing: true });

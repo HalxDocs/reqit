@@ -89,7 +89,10 @@ func GeneratePlaywrightTest(collection models.Collection, requests []models.Save
 				tr.Headers[h.Key] = h.Value
 			}
 		}
-		hJSON, _ := json.Marshal(tr.Headers)
+		hJSON, err := json.Marshal(tr.Headers)
+		if err != nil {
+			return "", fmt.Errorf("marshal headers: %w", err)
+		}
 		tr.HeadersJSON = string(hJSON)
 
 		if req.Payload.Body != "" && req.Payload.BodyType != "none" {

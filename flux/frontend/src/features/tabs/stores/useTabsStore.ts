@@ -192,11 +192,10 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
   closeTab: (id) => {
     const tabs = get().tabs;
     if (tabs.length === 1) {
-      // Don't close the last tab — reset it to a fresh state instead.
-      const replacement = newTab();
-      set({ tabs: [replacement], activeID: replacement.id });
-      persist({ tabs: [replacement], activeID: replacement.id });
-      useRequestStore.getState().loadState(replacement.request);
+      // Close the last tab — show empty state until a new tab is created.
+      set({ tabs: [], activeID: "" });
+      persist({ tabs: [], activeID: "" });
+      useRequestStore.getState().reset();
       useResponseStore.setState({ response: null, isLoading: false, startedAt: null });
       return;
     }

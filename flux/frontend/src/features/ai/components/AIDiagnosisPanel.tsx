@@ -46,9 +46,13 @@ export function AIDiagnosisPanel() {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    navigator.clipboard.writeText(result).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
   };
 
   return (

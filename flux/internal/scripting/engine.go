@@ -2,6 +2,7 @@ package scripting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,26 @@ import (
 	"github.com/dop251/goja"
 	"flux/internal/models"
 )
+
+const scriptTimeout = 10 * time.Second
+
+// runScriptWithTimeout executes a goja script with a timeout to prevent infinite loops.
+func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
+	done := make(chan struct{})
+	var val goja.Value
+	var err error
+	go func() {
+		defer close(done)
+		val, err = vm.RunString(script)
+	}()
+	select {
+	case <-done:
+		return val, err
+	case <-time.After(scriptTimeout):
+		vm.Interrupt("script timeout")
+		return nil, fmt.Errorf("script execution timed out after %v", scriptTimeout)
+	}
+}
 
 type RequestAPI struct {
 	Method  string   `json:"method"`
@@ -99,7 +120,9 @@ func reqSend(req map[string]interface{}) map[string]interface{} {
 	}
 
 	start := time.Now()
-	httpReq, err := http.NewRequest(method, url, bodyReader)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	httpReq, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
 	if err != nil {
 		return map[string]interface{}{
 			"statusCode": 0, "body": fmt.Sprintf("Error: %v", err), "responseTime": int64(0),
@@ -353,7 +376,7 @@ func RunPreScript(script string, payload *models.RequestPayload) (vars map[strin
 
 	exposeReqNamespace(vm, varsStore, reqObj, nil)
 
-	if _, runErr := vm.RunString(script); runErr != nil {
+	if _, runErr := runScriptWithTimeout(vm, script); runErr != nil {
 		return nil, nil, 0, 0, fmt.Errorf("pre-script error: %w", runErr)
 	}
 
@@ -458,7 +481,7 @@ func RunPostScript(script string, payload *models.RequestPayload, result *models
 
 	exposeReqNamespace(vm, varsStore, reqObj, respObj)
 
-	if _, runErr := vm.RunString(script); runErr != nil {
+	if _, runErr := runScriptWithTimeout(vm, script); runErr != nil {
 		return nil, nil, 0, 0, fmt.Errorf("post-script error: %w", runErr)
 	}
 

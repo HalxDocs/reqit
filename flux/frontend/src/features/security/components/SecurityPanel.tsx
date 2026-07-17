@@ -64,20 +64,26 @@ function E2EETab({ onMsg }: { onMsg: (m: string) => void }) {
   useEffect(() => { HasEncryptionKey().then(setHasKey).catch(() => {}); }, []);
 
   const genKey = async () => {
-    await GenerateEncryptionKey();
-    setHasKey(true);
-    onMsg("Encryption key generated and stored in OS keychain.");
+    try {
+      await GenerateEncryptionKey();
+      setHasKey(true);
+      onMsg("Encryption key generated and stored in OS keychain.");
+    } catch (e) { onMsg(`Failed: ${e}`); }
   };
   const setKey = async () => {
     if (!pass) { onMsg("Enter a passphrase."); return; }
-    await SetEncryptionPassphrase(pass);
-    setHasKey(true);
-    onMsg("Passphrase-derived key stored in OS keychain.");
+    try {
+      await SetEncryptionPassphrase(pass);
+      setHasKey(true);
+      onMsg("Passphrase-derived key stored in OS keychain.");
+    } catch (e) { onMsg(`Failed: ${e}`); }
   };
   const delKey = async () => {
-    await DeleteEncryptionKey();
-    setHasKey(false);
-    onMsg("Encryption key deleted.");
+    try {
+      await DeleteEncryptionKey();
+      setHasKey(false);
+      onMsg("Encryption key deleted.");
+    } catch (e) { onMsg(`Failed: ${e}`); }
   };
 
   return (
@@ -200,13 +206,17 @@ function SSOTab({ onMsg }: { onMsg: (m: string) => void }) {
   };
 
   const removeProvider = async (id: string) => {
-    await RemoveSSOProvider(id);
-    setProvidersJSON(await GetSSOProviders());
+    try {
+      await RemoveSSOProvider(id);
+      setProvidersJSON(await GetSSOProviders());
+    } catch (e) { onMsg(`Failed: ${e}`); }
   };
 
   const toggleProvider = async (id: string) => {
-    await ToggleSSOProvider(id);
-    setProvidersJSON(await GetSSOProviders());
+    try {
+      await ToggleSSOProvider(id);
+      setProvidersJSON(await GetSSOProviders());
+    } catch (e) { onMsg(`Failed: ${e}`); }
   };
 
   const authProvider = async (id: string) => {

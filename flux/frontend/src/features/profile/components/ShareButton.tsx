@@ -15,11 +15,15 @@ export function ShareButton({ collectionId, collectionName, isPublic, onTogglePu
     ? `${window.location.origin}/share/${collectionId}`
     : "";
 
-  const copyLink = () => {
+  const copyLink = async () => {
     if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API failed — ignore
+    }
   };
 
   return (

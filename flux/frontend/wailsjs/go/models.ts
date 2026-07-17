@@ -1791,8 +1791,8 @@ export namespace plugin {
 		}
 	}
 	export class RegisteredPlugin {
-	    Manifest: Manifest;
-	    Dir: string;
+	    manifest: Manifest;
+	    dir: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RegisteredPlugin(source);
@@ -1800,8 +1800,8 @@ export namespace plugin {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Manifest = this.convertValues(source["Manifest"], Manifest);
-	        this.Dir = source["Dir"];
+	        this.manifest = this.convertValues(source["manifest"], Manifest);
+	        this.dir = source["dir"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

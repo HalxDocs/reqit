@@ -106,6 +106,18 @@ export function CollectionsTree() {
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (mdExportColl) setMdExportColl(null);
+        else if (htmlExportColl) setHtmlExportColl(null);
+        else if (varsEditorColl) setVarsEditorColl(null);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [mdExportColl, htmlExportColl, varsEditorColl]);
+
   const visible = useMemo(() => {
     const q = filter.trim().toLowerCase();
     if (!q) return collections.map((c) => ({ coll: c, requests: c.requests }));
@@ -527,7 +539,7 @@ export function CollectionsTree() {
                     {req.savedResponse && <span title="Saved for mock replay" className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />}
                     <button type="button" data-shortcut="sidebar.rename" onClick={(e) => { e.stopPropagation(); setRenameReqValue(req.name); setRenamingReqID(req.id); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Rename"><Pencil size={12} /></button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); duplicateRequest(req.id).catch(() => undefined); }}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); duplicateRequest(req.id).catch((err) => { toast.error(`Failed to duplicate: ${err instanceof Error ? err.message : String(err)}`); }); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Duplicate"><Copy size={12} /></button>
                     <button type="button" data-shortcut="sidebar.delete" onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${req.name}"?`)) deleteRequest(req.id); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-danger transition-all shrink-0" title="Delete"><Trash2 size={12} /></button>

@@ -123,8 +123,17 @@ function isSafeUrl(url: string): boolean {
 function sanitizeHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<object[\s\S]*?<\/object>/gi, "")
+    .replace(/<embed[\s\S]*?\/?>/gi, "")
+    .replace(/<form[\s\S]*?<\/form>/gi, "")
     .replace(/on\w+="[^"]*"/gi, "")
-    .replace(/on\w+='[^']*'/gi, "");
+    .replace(/on\w+='[^']*'/gi, "")
+    .replace(/on\w+=[^\s>]+/gi, "")
+    .replace(/href\s*=\s*["']?\s*javascript:/gi, 'href="#"')
+    .replace(/src\s*=\s*["']?\s*javascript:/gi, 'src=""')
+    .replace(/href\s*=\s*["']?\s*data:/gi, 'href="#"')
+    .replace(/style\s*=\s*["'][^"']*expression\s*\(/gi, 'style=""');
 }
 
 function renderMarkdown(text: string): string {

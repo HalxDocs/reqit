@@ -35,7 +35,7 @@ type ExportResult struct {
 
 // ExportMCPServer generates a standalone Go module implementing an MCP server.
 func ExportMCPServer(workspaceDir string, colls []models.Collection, score int, passRate float64) (*ExportResult, error) {
-	cfg, _ := LoadConfig(workspaceDir)
+	cfg := LoadConfigOrDefault(workspaceDir)
 	result := &ExportResult{}
 
 	// Collect exposed tools
@@ -69,17 +69,24 @@ func ExportMCPServer(workspaceDir string, colls []models.Collection, score int, 
 
 	// Create output directory
 	outDir := filepath.Join(workspaceDir, ".reqit", "agent-lens", "mcp-server")
-	os.MkdirAll(outDir, 0700)
+	if err := os.MkdirAll(outDir, 0700); err != nil {
+		return nil, fmt.Errorf("failed to create export directory: %w", err)
+	}
 	result.OutputDir = outDir
 	result.Tools = len(exported)
 
 	// 1. Write exported-tools.json
-	expData, _ := json.MarshalIndent(ExportConfig{
+	expData, err := json.MarshalIndent(ExportConfig{
 		ServerName: "reqit-agent-lens-server",
 		Version:    "1.0.0",
 		Tools:      exported,
 	}, "", "  ")
-	os.WriteFile(filepath.Join(outDir, "exported-tools.json"), expData, 0600)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal export config: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(outDir, "exported-tools.json"), expData, 0600); err != nil {
+		return nil, fmt.Errorf("failed to write exported-tools.json: %w", err)
+	}
 	result.Files = append(result.Files, "exported-tools.json")
 
 	// 2. Write go.mod
@@ -87,21 +94,29 @@ func ExportMCPServer(workspaceDir string, colls []models.Collection, score int, 
 
 go 1.21
 `
-	os.WriteFile(filepath.Join(outDir, "go.mod"), []byte(gomod), 0600)
+	if err := os.WriteFile(filepath.Join(outDir, "go.mod"), []byte(gomod), 0600); err != nil {
+		return nil, fmt.Errorf("failed to write go.mod: %w", err)
+	}
 	result.Files = append(result.Files, "go.mod")
 
 	// 3. Write go.sum (empty placeholder — user runs go mod tidy)
-	os.WriteFile(filepath.Join(outDir, "go.sum"), nil, 0600)
+	if err := os.WriteFile(filepath.Join(outDir, "go.sum"), nil, 0600); err != nil {
+		return nil, fmt.Errorf("failed to write go.sum: %w", err)
+	}
 	result.Files = append(result.Files, "go.sum")
 
 	// 4. Write main.go
 	mainGo := generateMainGo(exported)
-	os.WriteFile(filepath.Join(outDir, "main.go"), []byte(mainGo), 0600)
+	if err := os.WriteFile(filepath.Join(outDir, "main.go"), []byte(mainGo), 0600); err != nil {
+		return nil, fmt.Errorf("failed to write main.go: %w", err)
+	}
 	result.Files = append(result.Files, "main.go")
 
 	// 5. Write README
 	readme := generateReadme(exported, score, passRate)
-	os.WriteFile(filepath.Join(outDir, "README.md"), []byte(readme), 0600)
+	if err := os.WriteFile(filepath.Join(outDir, "README.md"), []byte(readme), 0600); err != nil {
+		return nil, fmt.Errorf("failed to write README.md: %w", err)
+	}
 	result.Files = append(result.Files, "README.md")
 
 	return result, nil

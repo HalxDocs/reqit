@@ -54,7 +54,10 @@ func (c *SwaggerHubClient) Push(specJSON []byte) (*SwaggerHubPushResult, error) 
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("swaggerhub push: read body: %w", err)
+	}
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("swaggerhub push: %s: %s", resp.Status, string(body))
 	}

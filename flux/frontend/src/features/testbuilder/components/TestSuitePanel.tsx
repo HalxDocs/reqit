@@ -101,6 +101,7 @@ export function TestSuitePanel({
 
   const handleDeleteGroup = async (groupID: string) => {
     if (!selected) return;
+    if (!confirm("Delete this test group?")) return;
     try {
       await DeleteTestGroup(selected.id, groupID);
       await load();

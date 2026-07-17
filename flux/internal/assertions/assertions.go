@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/dop251/goja"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -243,9 +244,19 @@ func runCustomScript(ctx *Context, script string) string {
 				scriptErr = fmt.Errorf("script panic: %v", r)
 			}
 		}()
-		_, err := vm.RunString(script)
-		if err != nil {
-			scriptErr = fmt.Errorf("script error: %v", err)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			_, err := vm.RunString(script)
+			if err != nil {
+				scriptErr = fmt.Errorf("script error: %v", err)
+			}
+		}()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			vm.Interrupt("script timeout")
+			scriptErr = fmt.Errorf("script execution timed out")
 		}
 	}()
 	if scriptErr != nil {

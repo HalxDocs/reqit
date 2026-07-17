@@ -99,10 +99,10 @@ func (s *Store) Track(typ EventType, name string, metadata map[string]interface{
 	if len(s.events) > s.maxLocal {
 		// Rotate: keep the last maxLocal/s events and flush
 		keep := s.events[len(s.events)-s.maxLocal/2:]
-		_ = s.flushLocked(s.events[:len(s.events)-len(keep)])
+		s.flushLocked(s.events[:len(s.events)-len(keep)])
 		s.events = keep
 	} else {
-		_ = s.flushLocked([]Event{evt})
+		s.flushLocked([]Event{evt})
 	}
 	s.mu.Unlock()
 }
@@ -169,7 +169,10 @@ func (s *Store) saveConfig() error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
-	data, _ := json.MarshalIndent(s.config, "", "  ")
+	data, err := json.MarshalIndent(s.config, "", "  ")
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(filepath.Join(dir, "config.json"), data, 0600)
 }
 
@@ -187,9 +190,12 @@ func (s *Store) flushLocked(evts []Event) error {
 	}
 	defer f.Close()
 	for _, evt := range evts {
-		line, _ := json.Marshal(evt)
-		_, _ = f.Write(line)
-		_, _ = f.Write([]byte("\n"))
+		line, err := json.Marshal(evt)
+		if err != nil {
+			continue
+		}
+		f.Write(line)
+		f.Write([]byte("\n"))
 	}
 	return nil
 }

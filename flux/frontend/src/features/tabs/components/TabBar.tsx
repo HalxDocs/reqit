@@ -1,4 +1,4 @@
-import { Plus, X } from "lucide-react";
+import { Plus, X, MousePointer2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { deriveTitle, useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
@@ -19,6 +19,25 @@ export function TabBar() {
 
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dragRef = useRef<string | null>(null);
+
+  if (tabs.length === 0) {
+    return (
+      <div className="h-[34px] flex items-center gap-2 bg-surface border-b border-border px-3 text-12 text-subtext">
+        <MousePointer2 size={11} />
+        <span>No tabs — open a request from the sidebar or click +</span>
+        <button
+          type="button"
+          onClick={() => newTab()}
+          className="ml-auto shrink-0 flex items-center gap-1 px-2 h-[22px] text-11 text-cyan hover:bg-cyan/10 rounded-sm transition-colors"
+          aria-label="New tab"
+          title="New tab (Ctrl+T)"
+        >
+          <Plus size={11} />
+          New tab
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[34px] flex items-stretch bg-surface overflow-x-auto border-b border-border">

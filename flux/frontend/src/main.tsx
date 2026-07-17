@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client'
 import './style.css'
 import { initTheme } from './shared/lib/useTheme'
 import App from './App'
+import { ErrorBoundary } from './shared/components/ErrorBoundary'
 
 initTheme()
 
@@ -13,6 +14,8 @@ const root = createRoot(container)
 
 root.render(
     <React.StrictMode>
-        <App/>
+        <ErrorBoundary>
+            <App/>
+        </ErrorBoundary>
     </React.StrictMode>
 )

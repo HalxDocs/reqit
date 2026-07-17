@@ -43,22 +43,32 @@ export function MockPanel() {
   };
 
   const stop = async () => {
-    await StopMockServer();
-    setStatus(null);
-    toast("success", "Mock server stopped");
+    try {
+      await StopMockServer();
+      setStatus(null);
+      toast("success", "Mock server stopped");
+    } catch (e) {
+      toast("error", String(e));
+    }
   };
 
   const copy = () => {
     if (status?.baseUrl) {
-      void navigator.clipboard.writeText(status.baseUrl);
-      toast("success", "Copied to clipboard");
+      navigator.clipboard.writeText(status.baseUrl).then(
+        () => toast("success", "Copied to clipboard"),
+        () => toast("error", "Failed to copy"),
+      );
     }
   };
 
   const toggleRecording = async () => {
     if (!status) return;
-    await ToggleMockRecording(!status.recording);
-    toast("success", status.recording ? "Recording stopped" : "Recording started — traffic will be captured as mock routes");
+    try {
+      await ToggleMockRecording(!status.recording);
+      toast("success", status.recording ? "Recording stopped" : "Recording started — traffic will be captured as mock routes");
+    } catch (e) {
+      toast("error", String(e));
+    }
   };
 
   if (!status?.running) {

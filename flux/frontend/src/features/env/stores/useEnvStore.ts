@@ -14,6 +14,7 @@ type EnvStore = {
   environments: models.Environment[];
   activeID: string;
   loaded: boolean;
+  loadError: string | null;
 
   load: () => Promise<void>;
   setActive: (id: string) => Promise<void>;
@@ -40,6 +41,7 @@ export const useEnvStore = create<EnvStore>((set, get) => {
   environments: [],
   activeID: "",
   loaded: false,
+  loadError: null,
 
   load: async () => {
     try {
@@ -48,9 +50,12 @@ export const useEnvStore = create<EnvStore>((set, get) => {
         environments: snap.environments ?? [],
         activeID: snap.active ?? "",
         loaded: true,
+        loadError: null,
       });
-    } catch {
-      set({ loaded: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load environments";
+      toast.error(msg);
+      set({ loaded: true, loadError: msg });
     }
   },
 

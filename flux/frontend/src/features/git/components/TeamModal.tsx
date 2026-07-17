@@ -139,9 +139,13 @@ export function TeamModal() {
 
   const copyRemoteUrl = async () => {
     if (!status?.remoteUrl) return;
-    await navigator.clipboard.writeText(status.remoteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(status.remoteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
   };
 
   if (!open) return null;

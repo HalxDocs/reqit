@@ -34,12 +34,17 @@ func NewStoplightClient(apiToken, projectSlug string) *StoplightClient {
 func (c *StoplightClient) Push(specJSON []byte) (*StoplightPushResult, error) {
 	url := fmt.Sprintf("%s/projects/%s/versions/default/apis", c.BaseURL, c.ProjectSlug)
 	var payload map[string]interface{}
-	_ = json.Unmarshal(specJSON, &payload)
-	body, _ := json.Marshal(map[string]interface{}{
+	if err := json.Unmarshal(specJSON, &payload); err != nil {
+		return nil, fmt.Errorf("stoplight: unmarshal spec: %w", err)
+	}
+	body, err := json.Marshal(map[string]interface{}{
 		"name":        fmt.Sprintf("reqit-export-%d", time.Now().Unix()),
 		"content":     payload,
 		"contentType": "application/vnd.oai.openapi+json",
 	})
+	if err != nil {
+		return nil, fmt.Errorf("stoplight: marshal payload: %w", err)
+	}
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -51,7 +56,10 @@ func (c *StoplightClient) Push(specJSON []byte) (*StoplightPushResult, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("stoplight push: read body: %w", err)
+	}
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("stoplight push: %s: %s", resp.Status, string(respBody))
 	}
@@ -74,7 +82,10 @@ func (c *StoplightClient) Pull() ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("stoplight pull: read body: %w", err)
+	}
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("stoplight pull: %s: %s", resp.Status, string(body))
 	}

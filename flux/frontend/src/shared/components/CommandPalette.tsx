@@ -6,6 +6,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const commands = useMemo(() => getCommands(), []);
 
@@ -26,9 +28,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   useEffect(() => {
     if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
       setQuery("");
       setSelected(0);
       setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      previousFocusRef.current?.focus();
     }
   }, [open]);
 
@@ -49,6 +54,14 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       onClose();
     } else if (e.key === "Escape") {
       onClose();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        inputRef.current?.focus();
+      } else {
+        const buttons = containerRef.current?.querySelectorAll<HTMLElement>("button");
+        if (buttons && buttons.length > 0) buttons[buttons.length - 1].focus();
+      }
     }
   };
 
@@ -57,6 +70,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={onClose}>
       <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         className="w-[520px] max-h-[380px] bg-surface border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >

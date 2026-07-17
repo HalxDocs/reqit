@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -97,23 +98,22 @@ func NewHashiCorp(token, addr string) *HashiCorpProvider {
 func (p *HashiCorpProvider) Name() string { return "HashiCorp Vault" }
 
 func (p *HashiCorpProvider) GetSecret(path string) (string, error) {
-	out, err := exec.Command("vault", "kv", "get",
-		"-address="+p.addr, "-token="+p.token,
-		"-field=value", path).Output()
-	if err != nil {
-		return "", fmt.Errorf("vault: %w", err)
-	}
-	return strings.TrimSpace(string(out)), nil
+	return p.execWithToken("kv", "get", "-address="+p.addr, "-field=value", path)
 }
 
 func (p *HashiCorpProvider) SetSecret(path, value string) error {
-	_, err := exec.Command("vault", "kv", "put",
-		"-address="+p.addr, "-token="+p.token,
-		path, "value="+value).Output()
+	_, err := p.execWithToken("kv", "put", "-address="+p.addr, path, "value="+value)
+	return err
+}
+
+func (p *HashiCorpProvider) execWithToken(args ...string) (string, error) {
+	cmd := exec.Command("vault", args...)
+	cmd.Env = append(os.Environ(), "VAULT_TOKEN="+p.token)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("vault: %w", err)
+		return "", fmt.Errorf("vault: %s: %w", strings.TrimSpace(string(out)), err)
 	}
-	return nil
+	return strings.TrimSpace(string(out)), nil
 }
 
 // AWSProvider talks to AWS Secrets Manager.

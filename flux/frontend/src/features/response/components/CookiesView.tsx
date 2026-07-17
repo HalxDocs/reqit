@@ -34,12 +34,14 @@ export function CookiesView({ currentDomain }: Props) {
   useEffect(() => { void load(); }, []);
 
   const clearDomain = async (domain: string) => {
+    if (!confirm(`Clear all cookies for ${domain}?`)) return;
     await ClearCookiesForDomain(domain);
     toast("success", `Cleared cookies for ${domain}`);
     void load();
   };
 
   const clearAll = async () => {
+    if (!confirm("Clear all cookies?")) return;
     await ClearAllCookies();
     toast("success", "All cookies cleared");
     void load();

@@ -5,7 +5,7 @@ export const fluxCmTheme = EditorView.theme({
     backgroundColor: "var(--cm-bg)",
     fontSize: "12px",
     fontFamily: "'JetBrains Mono', ui-monospace, Menlo, monospace",
-    height: "100%",
+    height: "auto",
   },
   ".cm-gutters": {
     backgroundColor: "var(--cm-gutter-bg)",

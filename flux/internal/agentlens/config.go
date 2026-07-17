@@ -49,6 +49,12 @@ func LoadConfig(workspaceDir string) (*LensConfig, error) {
 	return &cfg, nil
 }
 
+// LoadConfigOrDefault is a convenience wrapper that returns a default config if loading fails.
+func LoadConfigOrDefault(workspaceDir string) *LensConfig {
+	cfg, _ := LoadConfig(workspaceDir)
+	return cfg
+}
+
 // SaveConfig persists the agent-lens config.yaml to disk.
 func SaveConfig(workspaceDir string, cfg *LensConfig) error {
 	dir := ConfigDir(workspaceDir)

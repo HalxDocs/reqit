@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { Button } from "@/shared/components/Button";
-import { GetPlugins, InstallPlugin } from "../../../../wailsjs/go/main/App";
+import { GetPlugins, InstallPlugin, RemovePlugin, PickFolder } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { Puzzle, FolderOpen, Trash2, ExternalLink } from "lucide-react";
+import { toast } from "@/app/stores/useToastStore";
 
 interface PluginInfo {
   manifest: {
@@ -23,8 +24,10 @@ export function PluginManager() {
   const load = useCallback(async () => {
     try {
       const p = await GetPlugins();
-      setPlugins(p as unknown as PluginInfo[]);
-    } catch { /* noop */ }
+      setPlugins((p ?? []) as unknown as PluginInfo[]);
+    } catch (e) {
+      console.error("Failed to load plugins:", e);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -35,24 +38,24 @@ export function PluginManager() {
 
   const handleInstall = async () => {
     try {
-      const { PickFile } = await import("../../../../wailsjs/go/main/App");
-      const path = await PickFile("Select plugin folder", "");
+      const path = await PickFolder("Select plugin folder");
       if (!path) return;
-      const { toast } = await import("@/app/stores/useToastStore");
       await InstallPlugin(path);
       toast.success("Plugin installed");
       await load();
-    } catch (e) { /* noop */ }
+    } catch (e) {
+      console.error("Install failed:", e);
+    }
   };
 
   const handleRemove = async (name: string) => {
     try {
-      const { RemovePlugin } = await import("../../../../wailsjs/go/main/App");
       await RemovePlugin(name);
-      const { toast } = await import("@/app/stores/useToastStore");
       toast.success(`Removed ${name}`);
       await load();
-    } catch (e) { /* noop */ }
+    } catch (e) {
+      console.error("Remove failed:", e);
+    }
   };
 
   return (

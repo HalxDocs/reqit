@@ -4,7 +4,6 @@ import { TabBar } from "@/features/tabs/components/TabBar";
 import { UrlBar } from "@/features/request/components/UrlBar";
 import { Breadcrumb } from "@/features/request/components/Breadcrumb";
 import { UrlPreview } from "@/features/request/components/UrlPreview";
-import { StatusBarEnvSwitcher } from "@/features/env/components/StatusBarEnvSwitcher";
 import { RequestPanel } from "@/app/layout/RequestPanel";
 import { ResponsePane } from "@/features/response/components/ResponsePane";
 import { CommandPalette } from "@/shared/components/CommandPalette";
@@ -17,6 +16,7 @@ import { ImportPostmanModal } from "@/shared/components/ImportPostmanModal";
 import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
 import { WelcomeModal } from "@/app/components/WelcomeModal";
+import { MilestoneBanner } from "@/app/components/MilestoneBanner";
 import { DocsContentViewer } from "@/features/docs/components/DocsContentViewer";
 import { SpecEditor } from "@/features/spec/components/SpecEditor";
 import { IntegrationsPanel } from "@/features/integrations/components/IntegrationsPanel";
@@ -94,11 +94,29 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsLoaded]);
 
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      const tabs = useTabsStore.getState().tabs;
+      const hasDirty = tabs.some((t) => t.request && (t.request.url || t.request.bodyRaw));
+      if (hasDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
   const enterApp = async () => {
     resetTabs();
     clearResponse();
-    await Promise.all([loadCollections(), loadHistory(), loadEnvs()]);
-    setScreen("app");
+    try {
+      await Promise.all([loadCollections(), loadHistory(), loadEnvs()]);
+      setScreen("app");
+    } catch (err) {
+      console.warn("Failed to load data:", err);
+      setScreen("app");
+    }
   };
 
   if (screen === "loading") {
@@ -113,6 +131,7 @@ export default function App() {
     return (
       <>
         <HomeScreen onEnter={enterApp} />
+        <MilestoneBanner />
         <ToastHost />
       </>
     );
@@ -286,6 +305,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         </button>
       </div>
       <Sidebar onGoHome={onGoHome} />
+      <div className="flex-1 min-w-0 flex flex-col animate-[fade-in_0.15s_ease-out]" key={view}>
       {view === "socket" ? (
         <SocketPanel />
       ) : view === "sse" ? (
@@ -337,22 +357,16 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           )}
           <ResponsePane />
         </div>
-        <div className="h-[26px] shrink-0 flex items-center justify-between px-3 bg-surface border-t border-border">
-          <div className="flex items-center gap-2">
-            <StatusBarEnvSwitcher />
-          </div>
-          <div className="flex items-center gap-3 text-10 text-subtext/50">
-            <span>reqit v0.9.2</span>
-          </div>
-        </div>
       </div>
       )}
+      </div>
       <SaveRequestModal />
       <EnvironmentsModal />
       <ImportPostmanModal />
       <CodeGenModal />
       <SettingsModal />
       <WelcomeModal />
+      <MilestoneBanner />
       <PasteCurlModal />
       <TeamModal />
       <DevProfileModal open={devProfileOpen} onClose={closeDevProfile} />

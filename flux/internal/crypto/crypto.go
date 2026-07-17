@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,7 +40,7 @@ func (s *Store) GenerateKey() error {
 	if _, err := rand.Read(key); err != nil {
 		return fmt.Errorf("rand: %w", err)
 	}
-	return keyring.Set(keyringSvc, "e2ee-key", string(key))
+	return keyring.Set(keyringSvc, "e2ee-key", hex.EncodeToString(key))
 }
 
 // SetKey stores a user-provided passphrase-derived key.
@@ -49,11 +50,13 @@ func (s *Store) SetKey(passphrase string) error {
 		return fmt.Errorf("salt: %w", err)
 	}
 	key := argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, keyLen)
-	// Store salt + key
-	blob, _ := json.Marshal(map[string]string{
-		"salt": string(salt),
-		"key":  string(key),
+	blob, err := json.Marshal(map[string]string{
+		"salt": hex.EncodeToString(salt),
+		"key":  hex.EncodeToString(key),
 	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal key: %w", err)
+	}
 	return keyring.Set(keyringSvc, "e2ee-key", string(blob))
 }
 
@@ -70,12 +73,20 @@ func (s *Store) loadKey() ([]byte, error) {
 		}
 		return nil, err
 	}
-	// Try parsing as JSON blob (passphrase-derived)
+	// Try parsing as JSON blob (passphrase-derived, hex-encoded)
 	var blob map[string]string
 	if json.Unmarshal([]byte(raw), &blob) == nil && blob["key"] != "" {
-		return []byte(blob["key"]), nil
+		key, err := hex.DecodeString(blob["key"])
+		if err != nil {
+			return nil, fmt.Errorf("invalid key encoding: %w", err)
+		}
+		return key, nil
 	}
-	// Raw key
+	// Try hex-encoded raw key
+	if key, err := hex.DecodeString(raw); err == nil && len(key) == keyLen {
+		return key, nil
+	}
+	// Legacy: raw bytes (for backward compatibility)
 	return []byte(raw), nil
 }
 

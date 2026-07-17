@@ -102,7 +102,7 @@ export function BodyView({
   }, [cycleView]);
 
   return (
-    <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1 min-h-0">
       <div className="h-[32px] px-3 flex items-center justify-between border-b border-border shrink-0">
         <div className="flex items-center gap-1">
           {showViewToggle && (
@@ -187,7 +187,8 @@ export function BodyView({
         <CopyButton text={body} />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 overflow-auto">
         {isImage ? (
           <div className="flex items-center justify-center h-full p-4">
             <img
@@ -220,12 +221,11 @@ export function BodyView({
               highlightActiveLineGutter: true,
               searchKeymap: true,
             }}
-            height="100%"
-            className="h-full"
           />
         ) : (
           <div className="p-5 text-12 text-subtext">No body returned.</div>
         )}
+        </div>
       </div>
     </div>
   );

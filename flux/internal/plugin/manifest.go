@@ -21,6 +21,6 @@ type Hooks struct {
 
 // RegisteredPlugin is a loaded and validated plugin.
 type RegisteredPlugin struct {
-	Manifest Manifest
-	Dir      string
+	Manifest Manifest `json:"manifest"`
+	Dir      string   `json:"dir"`
 }

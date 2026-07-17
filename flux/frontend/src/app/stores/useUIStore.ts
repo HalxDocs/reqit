@@ -89,7 +89,7 @@ type UIStore = {
   closeShortcutsModal: () => void;
 };
 
-export const useUIStore = create<UIStore>((set) => ({
+export const useUIStore = create<UIStore>((set, get) => ({
   requestTab: "params",
   responseTab: "body",
   setRequestTab: (requestTab) => set({ requestTab }),
@@ -106,39 +106,66 @@ export const useUIStore = create<UIStore>((set) => ({
   setView: (view) => set({ view }),
 
   saveModalOpen: false,
-  openSaveModal: () => set({ saveModalOpen: true }),
+  openSaveModal: () => {
+    if (get().saveModalOpen) return;
+    set({ saveModalOpen: true });
+  },
   closeSaveModal: () => set({ saveModalOpen: false }),
 
   envModalOpen: false,
-  openEnvModal: () => set({ envModalOpen: true }),
+  openEnvModal: () => {
+    if (get().envModalOpen) return;
+    set({ envModalOpen: true });
+  },
   closeEnvModal: () => set({ envModalOpen: false }),
 
   importModalOpen: false,
-  openImportModal: () => set({ importModalOpen: true }),
+  openImportModal: () => {
+    if (get().importModalOpen) return;
+    set({ importModalOpen: true });
+  },
   closeImportModal: () => set({ importModalOpen: false }),
 
   codeGenModalOpen: false,
-  openCodeGenModal: () => set({ codeGenModalOpen: true }),
+  openCodeGenModal: () => {
+    if (get().codeGenModalOpen) return;
+    set({ codeGenModalOpen: true });
+  },
   closeCodeGenModal: () => set({ codeGenModalOpen: false }),
 
   settingsModalOpen: false,
-  openSettingsModal: () => set({ settingsModalOpen: true }),
+  openSettingsModal: () => {
+    if (get().settingsModalOpen) return;
+    set({ settingsModalOpen: true });
+  },
   closeSettingsModal: () => set({ settingsModalOpen: false }),
 
   welcomeModalOpen: false,
-  openWelcomeModal: () => set({ welcomeModalOpen: true }),
+  openWelcomeModal: () => {
+    if (get().welcomeModalOpen) return;
+    set({ welcomeModalOpen: true });
+  },
   closeWelcomeModal: () => set({ welcomeModalOpen: false }),
 
   pasteCurlModalOpen: false,
-  openPasteCurlModal: () => set({ pasteCurlModalOpen: true }),
+  openPasteCurlModal: () => {
+    if (get().pasteCurlModalOpen) return;
+    set({ pasteCurlModalOpen: true });
+  },
   closePasteCurlModal: () => set({ pasteCurlModalOpen: false }),
 
   teamModalOpen: false,
-  openTeamModal: () => set({ teamModalOpen: true }),
+  openTeamModal: () => {
+    if (get().teamModalOpen) return;
+    set({ teamModalOpen: true });
+  },
   closeTeamModal: () => set({ teamModalOpen: false }),
 
   devProfileModalOpen: false,
-  openDevProfileModal: () => set({ devProfileModalOpen: true }),
+  openDevProfileModal: () => {
+    if (get().devProfileModalOpen) return;
+    set({ devProfileModalOpen: true });
+  },
   closeDevProfileModal: () => set({ devProfileModalOpen: false }),
 
   loadedRequestID: null,
@@ -161,6 +188,9 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
   shortcutsModalOpen: false,
-  openShortcutsModal: () => set({ shortcutsModalOpen: true }),
+  openShortcutsModal: () => {
+    if (get().shortcutsModalOpen) return;
+    set({ shortcutsModalOpen: true });
+  },
   closeShortcutsModal: () => set({ shortcutsModalOpen: false }),
 }));

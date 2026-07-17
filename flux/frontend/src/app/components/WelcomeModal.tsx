@@ -4,6 +4,8 @@ import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 
+const DISMISSED_KEY = "flux:welcomeDismissed";
+
 export function WelcomeModal() {
   const profile = useProfileStore((s) => s.profile);
   const loaded = useProfileStore((s) => s.loaded);
@@ -16,18 +18,25 @@ export function WelcomeModal() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Pop the welcome modal once when the profile loads with no name set
-  // (i.e., first launch — Go side already minted the user ID + timestamps).
+  // Pop the welcome modal only on first launch — skip if already dismissed.
   useEffect(() => {
-    if (loaded && profile && !profile.name) {
+    if (!loaded || !profile) return;
+    if (localStorage.getItem(DISMISSED_KEY) === "1") return;
+    if (!profile.name) {
       openWelcome();
     }
   }, [loaded, profile, openWelcome]);
+
+  const handleDismiss = () => {
+    try { localStorage.setItem(DISMISSED_KEY, "1"); } catch {}
+    closeWelcome();
+  };
 
   const handleSave = async () => {
     setBusy(true);
     try {
       await update(name.trim(), email.trim());
+      try { localStorage.setItem(DISMISSED_KEY, "1"); } catch {}
       closeWelcome();
     } finally {
       setBusy(false);
@@ -70,7 +79,7 @@ export function WelcomeModal() {
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
-            onClick={closeWelcome}
+            onClick={handleDismiss}
             className="h-[32px] px-3 text-12 text-subtext hover:text-text rounded-md transition-colors"
           >
             Skip

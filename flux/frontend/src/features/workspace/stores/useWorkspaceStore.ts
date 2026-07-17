@@ -10,11 +10,13 @@ import {
   SwitchWorkspace,
 } from "../../../../wailsjs/go/main/App";
 import type { workspaces } from "../../../../wailsjs/go/models";
+import { toast } from "@/app/stores/useToastStore";
 
 type WorkspaceStore = {
   workspaces: workspaces.Info[];
   activeID: string | null;
   loaded: boolean;
+  loadError: string | null;
 
   load: () => Promise<void>;
   create: (name: string, description: string, color: string) => Promise<workspaces.Info>;
@@ -29,6 +31,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   workspaces: [],
   activeID: null,
   loaded: false,
+  loadError: null,
 
   load: async () => {
     try {
@@ -37,9 +40,12 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
         workspaces: all,
         activeID: active?.id ?? null,
         loaded: true,
+        loadError: null,
       });
-    } catch {
-      set({ loaded: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load workspaces";
+      toast.error(msg);
+      set({ loaded: true, loadError: msg });
     }
   },
 

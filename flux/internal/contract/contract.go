@@ -32,8 +32,6 @@ func (sc *SpecCache) Load(path string) (*openapi3.T, error) {
 		return nil, err
 	}
 	// Skip remote $ref validation so offline specs still load.
-	ctx := loader.Context
-	_ = ctx
 
 	sc.mu.Lock()
 	sc.cache[path] = doc
