@@ -98,11 +98,13 @@ const M_COLORS: Record<string, string> = {
 };
 
 function LiveRequestMockup() {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setStep((s) => (s + 1) % 3), 2500);
-    return () => clearInterval(t);
-  }, []);
+  const [step, setStep] = useState<"idle" | "sending" | "done">("idle");
+
+  const handleSend = () => {
+    if (step === "sending") return;
+    setStep("sending");
+    setTimeout(() => setStep("done"), 1200);
+  };
 
   return (
     <TerminalWindow title="reqit — send request" className="w-full max-w-[580px] mx-auto">
@@ -115,16 +117,23 @@ function LiveRequestMockup() {
           <span>Headers: 3</span>
           <span>Auth: Bearer ***</span>
         </div>
-        {step === 0 && (
+        {step === "idle" && (
+          <button
+            type="button"
+            onClick={handleSend}
+            className="flex items-center gap-2 h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-11 font-bold rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+            Send
+          </button>
+        )}
+        {step === "sending" && (
           <div className="flex items-center gap-2 text-subtext py-2">
             <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" className="opacity-30" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeDashoffset="10" strokeLinecap="round" /></svg>
             Sending request...
           </div>
         )}
-        {step === 1 && (
-          <div className="text-teal font-semibold text-10">← 200 OK · 312ms · 2.4 KB</div>
-        )}
-        {step === 2 && (
+        {step === "done" && (
           <>
             <div className="text-teal font-semibold text-10">← 200 OK · 312ms · 2.4 KB</div>
             <div className="bg-bg/80 rounded-lg p-3 text-10 overflow-x-auto">
@@ -152,6 +161,14 @@ function LiveRequestMockup() {
               <span className="text-cyan/80 bg-cyan/5 px-1.5 py-0.5 rounded">Cookies</span>
               <span className="text-subtext/50">Timeline: 312ms</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setStep("idle")}
+              className="flex items-center gap-1.5 h-[26px] px-3 mt-1 text-10 text-subtext hover:text-text bg-card border border-border rounded-md transition-colors"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+              Reset
+            </button>
           </>
         )}
       </div>
@@ -308,6 +325,17 @@ function DevProfileCard({ name, username, bio, skills, avatarColor }: { name: st
 function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | null }) {
   return (
     <>
+      {/* 300 downloads milestone */}
+      <section className="flex justify-center">
+        <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-cyan/10 via-teal/10 to-cyan/10 border border-cyan/20 rounded-xl text-center">
+          <span className="text-20">🎉</span>
+          <div className="flex flex-col items-start">
+            <span className="text-13 font-bold text-text">300+ Downloads</span>
+            <span className="text-11 text-subtext">and growing — thank you for being part of the journey</span>
+          </div>
+        </div>
+      </section>
+
       {/* Hero */}
       <section className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-5 flex-1">
@@ -352,17 +380,6 @@ function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | n
         </div>
         <div className="flex-1 flex justify-center lg:justify-end w-full max-w-[500px] lg:max-w-none">
           <LiveRequestMockup />
-        </div>
-      </section>
-
-      {/* 300 downloads milestone */}
-      <section className="flex justify-center">
-        <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-cyan/10 via-teal/10 to-cyan/10 border border-cyan/20 rounded-xl text-center">
-          <span className="text-20">🎉</span>
-          <div className="flex flex-col items-start">
-            <span className="text-13 font-bold text-text">300+ Downloads</span>
-            <span className="text-11 text-subtext">and growing — thank you for being part of the journey</span>
-          </div>
         </div>
       </section>
 
