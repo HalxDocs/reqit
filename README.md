@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="flux/frontend/src/assets/images/reqitloo.jpeg" alt="reqit" height="56" />
+  <img src="flux/frontend/src/assets/images/reqitlogo.jpeg" alt="reqit" height="56" />
 </p>
 
 <h1 align="center">reqit</h1>
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="flux/frontend/src/assets/images/reqitloo.jpeg" alt="reqit screenshot" width="720" />
+  <img src="flux/frontend/src/assets/images/reqitlogo.jpeg" alt="reqit screenshot" width="720" />
 </p>
 
 ---
