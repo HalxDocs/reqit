@@ -42,15 +42,16 @@ function useRequestSnapshot() {
   const graphqlVariables = useRequestStore((s) => s.graphqlVariables);
   const preScript = useRequestStore((s) => s.preScript);
   const postScript = useRequestStore((s) => s.postScript);
+  const notes = useRequestStore((s) => s.notes);
   return useMemo(() => ({
     method, url, headers, params, bodyType, bodyRaw, bodyForm,
     authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
     preSetVars, extractRules, graphqlQuery, graphqlVariables,
-    preScript, postScript,
+    preScript, postScript, notes,
   }), [method, url, headers, params, bodyType, bodyRaw, bodyForm,
       authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
       preSetVars, extractRules, graphqlQuery, graphqlVariables,
-      preScript, postScript]);
+      preScript, postScript, notes]);
 }
 
 export function CodeGenModal() {

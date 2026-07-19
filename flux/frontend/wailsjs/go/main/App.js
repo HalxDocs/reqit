@@ -502,6 +502,10 @@ export function HasEncryptionKey() {
   return window['go']['main']['App']['HasEncryptionKey']();
 }
 
+export function ImportHAR(arg1, arg2) {
+  return window['go']['main']['App']['ImportHAR'](arg1, arg2);
+}
+
 export function ImportHoppscotch(arg1, arg2) {
   return window['go']['main']['App']['ImportHoppscotch'](arg1, arg2);
 }

@@ -65,6 +65,7 @@ export interface RequestState {
   graphqlVariables: string;
   preScript: string;
   postScript: string;
+  notes: string;
 }
 
 export interface CookieSummary {

@@ -305,5 +305,6 @@ export function parseCurl(input: string): RequestState {
     extractRules: [{ id: uid("er"), type: "body_json", source: "", target: "" }],
     preScript: "",
     postScript: "",
+    notes: "",
   };
 }

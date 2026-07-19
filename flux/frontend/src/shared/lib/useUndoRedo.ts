@@ -26,6 +26,7 @@ function snapshot(s: ReturnType<typeof useRequestStore.getState>): RequestState 
     graphqlVariables: s.graphqlVariables,
     preScript: s.preScript,
     postScript: s.postScript,
+    notes: s.notes,
   };
 }
 

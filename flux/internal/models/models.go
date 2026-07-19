@@ -22,6 +22,7 @@ type RequestPayload struct {
 	GraphQLVariables string   `json:"graphqlVariables"`
 	PreScript        string   `json:"preScript"`
 	PostScript       string   `json:"postScript"`
+	Notes            string   `json:"notes,omitempty"`
 	// Protocol-specific
 	GRPCService string `json:"grpcService,omitempty"`
 	GRPCMethod  string `json:"grpcMethod,omitempty"`
@@ -110,6 +111,7 @@ type MockOverride struct {
 type SavedRequest struct {
 	ID           string         `json:"id"`
 	Name         string         `json:"name"`
+	Notes        string         `json:"notes,omitempty"`
 	CollID       string         `json:"collectionId"`
 	Payload      RequestPayload `json:"payload"`
 	CreatedAt    string         `json:"createdAt"`

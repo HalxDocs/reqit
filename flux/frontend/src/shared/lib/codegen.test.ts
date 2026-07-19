@@ -19,6 +19,7 @@ function makePayload(overrides: Partial<WirePayload> = {}): WirePayload {
     graphqlVariables: "",
     preScript: "",
     postScript: "",
+    notes: "",
     ...overrides,
   };
 }

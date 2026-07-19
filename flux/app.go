@@ -1517,6 +1517,105 @@ func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
 	return result, nil
 }
 
+// ImportHAR imports an HTTP Archive (HAR) file as a new collection.
+func (a *App) ImportHAR(jsonData, targetCollID string) (int, error) {
+	if a.collections == nil {
+		return 0, errors.New("no active workspace")
+	}
+
+	var har struct {
+		Log struct {
+			Entries []struct {
+				Request struct {
+					Method  string `json:"method"`
+					URL     string `json:"url"`
+					Headers []struct {
+						Name  string `json:"name"`
+						Value string `json:"value"`
+					} `json:"headers"`
+					PostData struct {
+						MimeType string `json:"mimeType"`
+						Text     string `json:"text"`
+					} `json:"postData"`
+				} `json:"request"`
+				Response struct {
+					Status  int `json:"status"`
+					Content struct {
+						Text string `json:"text"`
+					} `json:"content"`
+				} `json:"response"`
+			} `json:"entries"`
+		} `json:"log"`
+	}
+
+	if err := json.Unmarshal([]byte(jsonData), &har); err != nil {
+		return 0, fmt.Errorf("invalid HAR JSON: %w", err)
+	}
+
+	if len(har.Log.Entries) == 0 {
+		return 0, fmt.Errorf("HAR file contains no entries")
+	}
+
+	// Create or use target collection.
+	collID := targetCollID
+	if collID == "" {
+		coll, cerr := a.collections.CreateCollection("HAR Import")
+		if cerr != nil {
+			return 0, cerr
+		}
+		collID = coll.ID
+	}
+
+	count := 0
+	for _, entry := range har.Log.Entries {
+		method := strings.ToUpper(entry.Request.Method)
+		if method == "" {
+			method = "GET"
+		}
+
+		// Build headers.
+		var headers []models.Header
+		for _, h := range entry.Request.Headers {
+			headers = append(headers, models.Header{
+				Key:     h.Name,
+				Value:   h.Value,
+				Enabled: true,
+			})
+		}
+
+		// Build body.
+		bodyType := "none"
+		body := ""
+		if entry.Request.PostData.Text != "" {
+			bodyType = "raw"
+			body = entry.Request.PostData.Text
+		}
+
+		payload := models.RequestPayload{
+			Method:   method,
+			URL:      entry.Request.URL,
+			Headers:  headers,
+			BodyType: bodyType,
+			Body:     body,
+			BodyForm: []models.Header{},
+			Params:   []models.Header{},
+		}
+
+		name := fmt.Sprintf("%s %s", method, entry.Request.URL)
+		if len(name) > 80 {
+			name = name[:80] + "…"
+		}
+
+		if _, aerr := a.collections.AddRequest(collID, name, payload); aerr != nil {
+			continue
+		}
+		count++
+	}
+
+	runtime.EventsEmit(a.ctx, "collections:changed")
+	return count, nil
+}
+
 // --- Native dialogs ---
 
 func (a *App) PickFile(title string, filter string) (string, error) {

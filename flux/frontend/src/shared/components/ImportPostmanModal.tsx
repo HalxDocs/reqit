@@ -2,10 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
-import { ImportPostman } from "../../../wailsjs/go/main/App";
+import { ImportPostman, ImportHAR } from "../../../wailsjs/go/main/App";
 import { toast } from "@/app/stores/useToastStore";
+import { cn } from "@/shared/lib/cn";
 
 const NEW_COLLECTION = "__new__";
+
+type ImportFormat = "postman" | "har";
+
+const FORMATS: { id: ImportFormat; label: string; accept: string }[] = [
+  { id: "postman", label: "Postman v2.1", accept: ".json,application/json" },
+  { id: "har", label: "HAR (HTTP Archive)", accept: ".har,application/json" },
+];
 
 export function ImportPostmanModal() {
   const open = useUIStore((s) => s.importModalOpen);
@@ -14,6 +22,7 @@ export function ImportPostmanModal() {
   const createCollection = useCollectionStore((s) => s.createCollection);
   const reload = useCollectionStore((s) => s.load);
 
+  const [format, setFormat] = useState<ImportFormat>("postman");
   const [target, setTarget] = useState<string>("");
   const [newCollName, setNewCollName] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -24,6 +33,7 @@ export function ImportPostmanModal() {
 
   useEffect(() => {
     if (!open) return;
+    setFormat("postman");
     setErr(null);
     setImported(null);
     setFile(null);
@@ -34,7 +44,7 @@ export function ImportPostmanModal() {
 
   const handleImport = async () => {
     if (!file) {
-      setErr("Choose a Postman v2.1 collection JSON file");
+      setErr(`Choose a ${format === "har" ? "HAR" : "Postman v2.1"} file`);
       return;
     }
     setBusy(true);
@@ -52,7 +62,9 @@ export function ImportPostmanModal() {
         targetID = created.id;
       }
       const text = await file.text();
-      const count = await ImportPostman(targetID, text);
+      const count = format === "har"
+        ? await ImportHAR(targetID, text)
+        : await ImportPostman(targetID, text);
       await reload();
       setImported(count);
       toast.success(`Imported ${count} request${count === 1 ? "" : "s"}`);
@@ -63,17 +75,38 @@ export function ImportPostmanModal() {
     }
   };
 
+  const currentFormat = FORMATS.find((f) => f.id === format)!;
+
   return (
-    <Modal open={open} onClose={close} title="Import Postman v2.1">
+    <Modal open={open} onClose={close} title="Import Collection">
       <div className="flex flex-col gap-4">
+        {/* Format selector */}
+        <div className="flex gap-1.5">
+          {FORMATS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => { setFormat(f.id); setFile(null); setErr(null); }}
+              className={cn(
+                "h-[28px] px-3 text-11 rounded-sm transition-colors font-medium",
+                format === f.id
+                  ? "bg-cyan/15 text-cyan"
+                  : "text-subtext hover:text-text bg-surface border border-border",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-col gap-2">
           <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-            Collection JSON
+            {format === "har" ? "HAR file" : "Collection JSON"}
           </label>
           <input
             ref={fileRef}
             type="file"
-            accept=".json,application/json"
+            accept={currentFormat.accept}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="text-12 text-text file:mr-3 file:py-1 file:px-3 file:rounded-md file:border file:border-border file:bg-surface file:text-text file:cursor-pointer hover:file:bg-cardHover"
           />

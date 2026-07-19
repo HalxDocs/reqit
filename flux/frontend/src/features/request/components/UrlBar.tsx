@@ -115,6 +115,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         graphqlVariables: requestState.graphqlVariables,
         preScript: requestState.preScript,
         postScript: requestState.postScript,
+        notes: requestState.notes,
       },
       response: null,
       dirty: true,

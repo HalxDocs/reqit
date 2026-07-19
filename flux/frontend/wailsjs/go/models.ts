@@ -764,6 +764,7 @@ export namespace models {
 	    graphqlVariables: string;
 	    preScript: string;
 	    postScript: string;
+	    notes?: string;
 	    grpcService?: string;
 	    grpcMethod?: string;
 	    mqttTopic?: string;
@@ -792,6 +793,7 @@ export namespace models {
 	        this.graphqlVariables = source["graphqlVariables"];
 	        this.preScript = source["preScript"];
 	        this.postScript = source["postScript"];
+	        this.notes = source["notes"];
 	        this.grpcService = source["grpcService"];
 	        this.grpcMethod = source["grpcMethod"];
 	        this.mqttTopic = source["mqttTopic"];
@@ -822,6 +824,7 @@ export namespace models {
 	export class SavedRequest {
 	    id: string;
 	    name: string;
+	    notes?: string;
 	    collectionId: string;
 	    payload: RequestPayload;
 	    createdAt: string;
@@ -838,6 +841,7 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.notes = source["notes"];
 	        this.collectionId = source["collectionId"];
 	        this.payload = this.convertValues(source["payload"], RequestPayload);
 	        this.createdAt = source["createdAt"];

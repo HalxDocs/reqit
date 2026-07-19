@@ -45,6 +45,7 @@ const initialState: RequestState = {
   graphqlVariables: "",
   preScript: "",
   postScript: "",
+  notes: "",
   oauth2Config: undefined,
   grpcService: "",
   grpcMethod: "",
@@ -106,6 +107,7 @@ type RequestStore = RequestState & {
   setGraphqlSchemaError: (e: string) => void;
   setPreScript: (s: string) => void;
   setPostScript: (s: string) => void;
+  setNotes: (s: string) => void;
 
   setGrpcService: (s: string) => void;
   setGrpcMethod: (s: string) => void;
@@ -185,6 +187,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setGraphqlSchemaError: (graphqlSchemaError) => set({ graphqlSchemaError }),
   setPreScript: (preScript) => set({ preScript }),
   setPostScript: (postScript) => set({ postScript }),
+  setNotes: (notes) => set({ notes }),
 
   setGrpcService: (grpcService) => set({ grpcService }),
   setGrpcMethod: (grpcMethod) => set({ grpcMethod }),
@@ -244,6 +247,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
       graphqlVariables: "",
       preScript: "",
       postScript: "",
+      notes: "",
       oauth2Config: undefined,
       grpcService: "",
       grpcMethod: "",

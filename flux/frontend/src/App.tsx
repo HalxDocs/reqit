@@ -193,7 +193,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
             authKeyName: s.authKeyName, authKeyValue: s.authKeyValue, authKeyIn: s.authKeyIn,
             preSetVars: s.preSetVars, extractRules: s.extractRules,
             graphqlQuery: s.graphqlQuery, graphqlVariables: s.graphqlVariables,
-            preScript: s.preScript, postScript: s.postScript,
+            preScript: s.preScript, postScript: s.postScript, notes: s.notes,
           }) + " (fork)",
           savedRequestID: null,
           request: {
@@ -208,7 +208,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
             preSetVars: s.preSetVars.map((v: any) => ({ ...v })),
             extractRules: s.extractRules.map((r: any) => ({ ...r })),
             graphqlQuery: s.graphqlQuery, graphqlVariables: s.graphqlVariables,
-            preScript: s.preScript, postScript: s.postScript,
+            preScript: s.preScript, postScript: s.postScript, notes: s.notes,
           },
           response: null,
           dirty: true,

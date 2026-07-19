@@ -111,6 +111,7 @@ describe("useRequestStore", () => {
       graphqlVariables: "",
       preScript: "",
       postScript: "",
+      notes: "",
     });
     const s = useRequestStore.getState();
     expect(s.method).toBe("PUT");

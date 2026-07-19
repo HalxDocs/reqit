@@ -6,6 +6,7 @@ import { HeadersTab } from "@/features/request/components/HeadersTab";
 import { BodyTab } from "@/features/request/components/BodyTab";
 import { AuthTab } from "@/features/request/components/AuthTab";
 import { ScriptsPanel } from "@/features/scripts/components/ScriptsPanel";
+import { NotesTab } from "@/features/request/components/NotesTab";
 
 const TABS: TabItem<RequestTab>[] = [
   { id: "params", label: "Params" },
@@ -13,6 +14,7 @@ const TABS: TabItem<RequestTab>[] = [
   { id: "body", label: "Body" },
   { id: "auth", label: "Auth" },
   { id: "scripts", label: "Scripts" },
+  { id: "notes", label: "Notes" },
 ];
 
 export function RequestPanel({ width, height }: { width?: number; height?: number }) {
@@ -47,6 +49,7 @@ export function RequestPanel({ width, height }: { width?: number; height?: numbe
         {requestTab === "body" && <BodyTab />}
         {requestTab === "auth" && <AuthTab />}
         {requestTab === "scripts" && <ScriptsPanel />}
+        {requestTab === "notes" && <NotesTab />}
       </div>
     </section>
   );

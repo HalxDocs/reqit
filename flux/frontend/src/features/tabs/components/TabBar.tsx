@@ -1,5 +1,5 @@
-import { Plus, X, MousePointer2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { Plus, X, MousePointer2, Pin } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { deriveTitle, useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { MethodBadge } from "@/shared/components/MethodBadge";
@@ -13,12 +13,20 @@ export function TabBar() {
   const closeTab = useTabsStore((s) => s.closeTab);
   const newTab = useTabsStore((s) => s.newTab);
   const moveTab = useTabsStore((s) => s.moveTab);
+  const togglePin = useTabsStore((s) => s.togglePin);
 
   const liveUrl = useRequestStore((s) => s.url);
   const liveMethod = useRequestStore((s) => s.method);
 
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dragRef = useRef<string | null>(null);
+
+  // Sort tabs: pinned first, then unpinned, preserving relative order within each group.
+  const sortedTabs = useMemo(() => {
+    const pinned = tabs.filter((t) => t.pinned);
+    const unpinned = tabs.filter((t) => !t.pinned);
+    return [...pinned, ...unpinned];
+  }, [tabs]);
 
   if (tabs.length === 0) {
     return (
@@ -42,7 +50,7 @@ export function TabBar() {
   return (
     <div className="h-[34px] flex items-stretch bg-surface overflow-x-auto border-b border-border">
       <div className="flex items-stretch">
-        {tabs.map((tab, idx) => {
+        {sortedTabs.map((tab, idx) => {
           const isActive = tab.id === activeID;
           const method = (isActive ? liveMethod : tab.request.method) as HttpMethod;
           const title =
@@ -76,11 +84,31 @@ export function TabBar() {
               {isActive && (
                 <span className="absolute top-0 left-3 right-3 h-[2px] bg-cyan rounded-full" />
               )}
+              {tab.pinned && (
+                <Pin size={9} className="text-cyan/60 shrink-0 fill-current" />
+              )}
               <MethodBadge method={method} className="text-[9px] h-[15px] px-[5px]" />
               <span className="flex-1 truncate text-12 font-mono leading-none flex items-center gap-1">
                 {tab.dirty && <span className="w-[6px] h-[6px] rounded-full bg-amber shrink-0" />}
                 {title}
               </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePin(tab.id);
+                }}
+                className={cn(
+                  "shrink-0 rounded-sm transition-all",
+                  tab.pinned
+                    ? "text-cyan/60 hover:text-cyan opacity-80"
+                    : "opacity-0 group-hover:opacity-60 hover:opacity-100 text-subtext hover:text-text",
+                )}
+                aria-label={tab.pinned ? "Unpin tab" : "Pin tab"}
+                title={tab.pinned ? "Unpin tab" : "Pin tab"}
+              >
+                <Pin size={10} className={cn(tab.pinned && "fill-current")} />
+              </button>
               <button
                 type="button"
                 onClick={(e) => {

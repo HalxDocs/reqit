@@ -268,6 +268,8 @@ export function GraphQLIntrospect(arg1:string,arg2:string):Promise<string>;
 
 export function HasEncryptionKey():Promise<boolean>;
 
+export function ImportHAR(arg1:string,arg2:string):Promise<number>;
+
 export function ImportHoppscotch(arg1:string,arg2:string):Promise<number>;
 
 export function ImportInsomnia(arg1:string,arg2:string):Promise<number>;

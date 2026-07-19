@@ -31,6 +31,7 @@ interface WirePayload {
   graphqlVariables?: string;
   preScript?: string;
   postScript?: string;
+  notes?: string;
   clientCert?: string;
   clientKey?: string;
 }
@@ -137,6 +138,7 @@ export function decodePayload(
     graphqlVariables: bodyType === "graphql" ? p.graphqlVariables ?? "" : "",
     preScript: p.preScript ?? "",
     postScript: p.postScript ?? "",
+    notes: p.notes ?? "",
     preSetVars: extras?.preSetVars?.length ? extras.preSetVars : [{ id: uid("sv"), key: "", value: "" }],
     extractRules: extras?.extractRules?.length ? extras.extractRules : [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   };

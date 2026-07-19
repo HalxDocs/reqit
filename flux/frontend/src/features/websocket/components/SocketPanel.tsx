@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Send, Terminal, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { ArrowLeft, Send, Terminal, Plus, X, Search } from "lucide-react";
 import { useSocketStore } from "@/features/websocket/stores/useSocketStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
@@ -27,8 +27,20 @@ export function SocketPanel() {
   const [eventName, setEventName] = useState("message");
   const [cookies, setCookies] = useState("");
   const [headers, setHeaders] = useState<Array<{ key: string; value: string }>>([{ key: "", value: "" }]);
+  const [msgSearch, setMsgSearch] = useState("");
   const logEnd = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const filteredMessages = useMemo(() => {
+    if (!msgSearch.trim()) return messages;
+    const q = msgSearch.toLowerCase();
+    return messages.filter(
+      (m) =>
+        m.body.toLowerCase().includes(q) ||
+        m.direction.toLowerCase().includes(q) ||
+        (m.eventType && m.eventType.toLowerCase().includes(q)),
+    );
+  }, [messages, msgSearch]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -206,16 +218,36 @@ export function SocketPanel() {
 
       {/* Message log */}
       <div ref={logContainer} className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-12">
-        {messages.length === 0 && (
+        {messages.length > 0 && (
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/30">
+            <Search size={12} className="text-subtext/50 shrink-0" />
+            <input
+              type="text"
+              value={msgSearch}
+              onChange={(e) => setMsgSearch(e.target.value)}
+              placeholder="Search messages…"
+              spellCheck={false}
+              className="flex-1 h-[24px] px-2 bg-bg border border-border rounded-sm text-11 text-text font-mono outline-none focus:border-cyan"
+            />
+            {msgSearch && (
+              <span className="text-10 text-subtext/50 shrink-0">
+                {filteredMessages.length}/{messages.length}
+              </span>
+            )}
+          </div>
+        )}
+        {filteredMessages.length === 0 && (
           <div className="text-subtext/60 italic">
             {isConnected
-              ? isSocketIO
-                ? "Connected. Send events below."
-                : "Connected. Send messages below."
+              ? msgSearch
+                ? "No messages match your search."
+                : isSocketIO
+                  ? "Connected. Send events below."
+                  : "Connected. Send messages below."
               : "No messages yet."}
           </div>
         )}
-        {messages.map((msg, i) => (
+        {filteredMessages.map((msg, i) => (
           <div
             key={i}
             className={cn(

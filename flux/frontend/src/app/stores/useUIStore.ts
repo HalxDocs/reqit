@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts";
+export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
 export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins";

@@ -7,6 +7,7 @@ import { useResponseStore } from "@/features/request/stores/useResponseStore";
 export interface Tab {
   id: string;
   title: string;
+  pinned: boolean;
   // savedRequestID links the tab to a persisted SavedRequest so subsequent
   // saves can update in place rather than always creating new entries.
   savedRequestID: string | null;
@@ -44,11 +45,13 @@ const emptyRequest = (): RequestState => ({
   graphqlVariables: "",
   preScript: "",
   postScript: "",
+  notes: "",
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
   id: uid("tab"),
   title: "Untitled",
+  pinned: false,
   savedRequestID: null,
   request: emptyRequest(),
   response: null,
@@ -82,6 +85,7 @@ const pickRequestState = (): RequestState => {
     graphqlVariables: s.graphqlVariables,
     preScript: s.preScript,
     postScript: s.postScript,
+    notes: s.notes,
   };
 };
 
@@ -105,6 +109,7 @@ type TabsStore = {
   newTab: (overrides?: Partial<Tab>) => Tab;
   setActive: (id: string) => void;
   closeTab: (id: string) => void;
+  togglePin: (id: string) => void;
   updateActiveTitle: () => void;
   syncFromActiveStores: () => void;
   markActiveSaved: (savedRequestID: string, title: string) => void;
@@ -267,6 +272,15 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
       tabs.splice(toIndex, 0, moved);
       return { tabs };
     });
+    persist({ tabs: get().tabs, activeID: get().activeID });
+  },
+
+  togglePin: (id) => {
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id === id ? { ...t, pinned: !t.pinned } : t,
+      ),
+    }));
     persist({ tabs: get().tabs, activeID: get().activeID });
   },
 

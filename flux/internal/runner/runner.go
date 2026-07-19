@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +19,12 @@ import (
 )
 
 var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
+
+// fakerNames are common first names for test data generation.
+var fakerNames = []string{"Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Hank", "Iris", "Jack", "Kate", "Liam", "Mia", "Noah", "Olivia", "Paul", "Quinn", "Rose", "Sam", "Tina", "Uma", "Vince", "Wendy", "Xander", "Yara", "Zane"}
+
+// fakerDomains are common email domains for test data.
+var fakerDomains = []string{"example.com", "test.org", "demo.dev", "sample.io", "acme.co"}
 
 // RunCollection runs requests with the given runner config and assertions.
 // Supports retries, conditional execution, and all assertion types.
@@ -278,8 +286,72 @@ func resolve(s string, env map[string]string) string {
 		if v, ok := env[name]; ok {
 			return v
 		}
+		// Faker variables: {{faker.name}}, {{faker.email}}, {{faker.uuid}}, etc.
+		if strings.HasPrefix(name, "faker.") {
+			return resolveFaker(name[6:])
+		}
 		return match
 	})
+}
+
+func resolveFaker(typ string) string {
+	now := time.Now()
+	switch strings.ToLower(typ) {
+	case "name":
+		return fakerNames[rand.Intn(len(fakerNames))]
+	case "first_name":
+		return fakerNames[rand.Intn(len(fakerNames))]
+	case "last_name":
+		return fakerNames[rand.Intn(len(fakerNames))]
+	case "email":
+		name := strings.ToLower(fakerNames[rand.Intn(len(fakerNames))])
+		domain := fakerDomains[rand.Intn(len(fakerDomains))]
+		return name + "@" + domain
+	case "phone":
+		return fmt.Sprintf("(%03d) %03d-%04d", rand.Intn(900)+100, rand.Intn(900)+100, rand.Intn(9000)+1000)
+	case "uuid":
+		b := make([]byte, 16)
+		rand.Read(b)
+		b[6] = (b[6] & 0x0f) | 0x40
+		b[8] = (b[8] & 0x3f) | 0x80
+		return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+	case "int", "number":
+		return strconv.Itoa(rand.Intn(10000))
+	case "float":
+		return fmt.Sprintf("%.2f", rand.Float64()*1000)
+	case "bool":
+		return strconv.FormatBool(rand.Intn(2) == 0)
+	case "word":
+		words := []string{"alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo", "sierra", "tango"}
+		return words[rand.Intn(len(words))]
+	case "sentence":
+		return "The quick brown fox jumps over the lazy dog"
+	case "date":
+		return now.Format("2006-01-02")
+	case "time":
+		return now.Format("15:04:05")
+	case "datetime":
+		return now.Format("2006-01-02T15:04:05Z")
+	case "timestamp":
+		return strconv.FormatInt(now.Unix(), 10)
+	case "url":
+		return "https://example.com/resource/" + strconv.Itoa(rand.Intn(10000))
+	case "color":
+		colors := []string{"#FF5733", "#33FF57", "#3357FF", "#F0F033", "#FF33A1", "#33FFF0"}
+		return colors[rand.Intn(len(colors))]
+	case "price":
+		return fmt.Sprintf("%.2f", rand.Float64()*500)
+	case "country":
+		countries := []string{"US", "GB", "DE", "FR", "JP", "CA", "AU", "BR", "IN", "NG"}
+		return countries[rand.Intn(len(countries))]
+	case "city":
+		cities := []string{"New York", "London", "Berlin", "Paris", "Tokyo", "Toronto", "Sydney", "São Paulo", "Mumbai", "Lagos"}
+		return cities[rand.Intn(len(cities))]
+	case "zip":
+		return strconv.Itoa(rand.Intn(90000) + 10000)
+	default:
+		return ""
+	}
 }
 
 func extractValueStatic(resp models.ResponseResult, rule models.ExtractRule) string {
