@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { useGitStore } from "@/features/git/stores/useGitStore";
@@ -71,6 +71,8 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openImport = useUIStore((s) => s.openImportModal);
   const openPasteCurl = useUIStore((s) => s.openPasteCurlModal);
   const openSettings = useUIStore((s) => s.openSettingsModal);
+  const openLoadTest = useUIStore((s) => s.openLoadTestModal);
+  const openTestSuites = useUIStore((s) => s.openTestSuitesModal);
   const openTeam = useUIStore((s) => s.openTeamModal);
   const openDevProfile = useUIStore((s) => s.openDevProfileModal);
   const view = useUIStore((s) => s.view);
@@ -259,6 +261,24 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             label="Plugins"
             active={view === "plugins"}
             onClick={() => setView(view === "plugins" ? "http" : "plugins")}
+          />
+          <NavItem
+            icon={<Zap size={13} />}
+            label="Load Test"
+            active={false}
+            onClick={openLoadTest}
+          />
+          <NavItem
+            icon={<ClipboardCheck size={13} />}
+            label="Test Suites"
+            active={false}
+            onClick={openTestSuites}
+          />
+          <NavItem
+            icon={<Server size={13} />}
+            label="Mock Server"
+            active={view === "mockpanel"}
+            onClick={() => setView(view === "mockpanel" ? "http" : "mockpanel")}
           />
         </CollapsibleSection>
       </div>

@@ -28,6 +28,9 @@ import { GrowthPanel } from "@/features/growth/components/GrowthPanel";
 import { GraphQLPanel } from "@/features/graphql/components/GraphQLPanel";
 import { GRPCPanel } from "@/features/grpc/components/GRPCPanel";
 import { AgentLensPanel } from "@/features/agentlens/components/AgentLensPanel";
+import { LoadTestPanel } from "@/features/loadtest/components/LoadTestPanel";
+import { TestSuitePanel } from "@/features/testbuilder/components/TestSuitePanel";
+import { MockPanel } from "@/features/mock/components/MockPanel";
 
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
 import { TeamModal } from "@/features/git/components/TeamModal";
@@ -161,6 +164,10 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const devProfileOpen = useUIStore((s) => s.devProfileModalOpen);
   const closeDevProfile = useUIStore((s) => s.closeDevProfileModal);
   const openCodeGen = useUIStore((s) => s.openCodeGenModal);
+  const loadTestOpen = useUIStore((s) => s.loadTestModalOpen);
+  const closeLoadTest = useUIStore((s) => s.closeLoadTestModal);
+  const testSuitesOpen = useUIStore((s) => s.testSuitesModalOpen);
+  const closeTestSuites = useUIStore((s) => s.closeTestSuitesModal);
   const newTab = useTabsStore((s) => s.newTab);
   const closeTab = useTabsStore((s) => s.closeTab);
   const activeID = useTabsStore((s) => s.activeID);
@@ -338,6 +345,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <GRPCPanel />
       ) : view === "plugins" ? (
         <PluginManager />
+      ) : view === "mockpanel" ? (
+        <MockPanel />
       ) : (
       <div className="flex-1 flex flex-col min-w-0">
         <TabBar />
@@ -373,6 +382,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <TeamModal />
       <DevProfileModal open={devProfileOpen} onClose={closeDevProfile} />
       <ShortcutsModal />
+      <LoadTestPanel open={loadTestOpen} onClose={closeLoadTest} />
+      <TestSuitePanel open={testSuitesOpen} onClose={closeTestSuites} />
       {runnerColl && (
         <RunnerModal
           open={true}

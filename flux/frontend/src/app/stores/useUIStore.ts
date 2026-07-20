@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline";
 
-export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins";
+export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel";
 
 export type PanelLayout = "horizontal" | "vertical";
 
@@ -87,6 +87,14 @@ type UIStore = {
   shortcutsModalOpen: boolean;
   openShortcutsModal: () => void;
   closeShortcutsModal: () => void;
+
+  loadTestModalOpen: boolean;
+  openLoadTestModal: () => void;
+  closeLoadTestModal: () => void;
+
+  testSuitesModalOpen: boolean;
+  openTestSuitesModal: () => void;
+  closeTestSuitesModal: () => void;
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -193,4 +201,18 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ shortcutsModalOpen: true });
   },
   closeShortcutsModal: () => set({ shortcutsModalOpen: false }),
+
+  loadTestModalOpen: false,
+  openLoadTestModal: () => {
+    if (get().loadTestModalOpen) return;
+    set({ loadTestModalOpen: true });
+  },
+  closeLoadTestModal: () => set({ loadTestModalOpen: false }),
+
+  testSuitesModalOpen: false,
+  openTestSuitesModal: () => {
+    if (get().testSuitesModalOpen) return;
+    set({ testSuitesModalOpen: true });
+  },
+  closeTestSuitesModal: () => set({ testSuitesModalOpen: false }),
 }));
