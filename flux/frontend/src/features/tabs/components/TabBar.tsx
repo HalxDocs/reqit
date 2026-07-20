@@ -1,8 +1,9 @@
-import { Plus, X, MousePointer2, Pin } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Plus, X, MousePointer2, Pin, Copy, Clipboard } from "lucide-react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { deriveTitle, useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { MethodBadge } from "@/shared/components/MethodBadge";
+import { ContextMenu, type ContextMenuItem } from "@/shared/components/ContextMenu";
 import { cn } from "@/shared/lib/cn";
 import type { HttpMethod } from "@/features/request/types/request";
 
@@ -20,6 +21,40 @@ export function TabBar() {
 
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dragRef = useRef<string | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; tabID: string } | null>(null);
+
+  const handleTabCtx = useCallback((e: React.MouseEvent, tabID: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, tabID });
+  }, []);
+
+  const ctxItems: ContextMenuItem[] = useMemo(() => {
+    if (!ctxMenu) return [];
+    const tab = tabs.find((t) => t.id === ctxMenu.tabID);
+    if (!tab) return [];
+    return [
+      { label: "Close", action: () => closeTab(tab.id) },
+      { label: "Close Others", action: () => { tabs.forEach((t) => { if (t.id !== tab.id) closeTab(t.id); }); } },
+      { label: "Close All", action: () => { tabs.forEach((t) => closeTab(t.id)); } },
+      { divider: true, label: "", action: () => {} },
+      { label: tab.pinned ? "Unpin" : "Pin", action: () => togglePin(tab.id) },
+      { label: "Duplicate", action: () => {
+        const req = useRequestStore.getState();
+        newTab({ title: tab.title + " (copy)", savedRequestID: null, request: { ...req, method: req.method, url: req.url } as any, response: null, dirty: true });
+      }},
+      { divider: true, label: "", action: () => {} },
+      { label: "Copy URL", icon: <Copy size={12} />, action: () => { navigator.clipboard.writeText(tab.request?.url ?? ""); } },
+      { label: "Copy as cURL", icon: <Clipboard size={12} />, action: () => {
+        const r = tab.request;
+        if (!r) return;
+        const parts = ["curl", "-X", r.method ?? "GET", `"${r.url}"`];
+        (r.headers ?? []).forEach((h: any) => { if (h.enabled !== false && h.key) parts.push(`-H "${h.key}: ${h.value}"`); });
+        if (r.bodyRaw) parts.push(`-d '${r.bodyRaw}'`);
+        navigator.clipboard.writeText(parts.join(" "));
+      }},
+    ];
+  }, [ctxMenu, tabs, closeTab, togglePin, newTab]);
 
   // Sort tabs: pinned first, then unpinned, preserving relative order within each group.
   const sortedTabs = useMemo(() => {
@@ -62,6 +97,7 @@ export function TabBar() {
               key={tab.id}
               draggable
               onClick={() => setActive(tab.id)}
+              onContextMenu={(e) => handleTabCtx(e, tab.id)}
               onDragStart={() => { dragRef.current = tab.id; setDragOverIdx(null); }}
               onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
               onDragLeave={() => setDragOverIdx(null)}
@@ -139,6 +175,13 @@ export function TabBar() {
       >
         <Plus size={13} />
       </button>
+      <ContextMenu
+        open={ctxMenu !== null}
+        x={ctxMenu?.x ?? 0}
+        y={ctxMenu?.y ?? 0}
+        items={ctxItems}
+        onClose={() => setCtxMenu(null)}
+      />
     </div>
   );
 }

@@ -1,11 +1,12 @@
-import { useMemo, useCallback, useEffect } from "react";
-import { Download } from "lucide-react";
+import { useMemo, useCallback, useEffect, useState } from "react";
+import { Download, Copy, FileJson, Save } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
 import { EditorView, Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from "@codemirror/view";
 import { CopyButton } from "@/features/response/components/CopyButton";
 import { JsonTreeView } from "@/features/response/components/JsonTreeView";
+import { ContextMenu, type ContextMenuItem } from "@/shared/components/ContextMenu";
 import { tryPretty, detectBodyKind } from "@/shared/lib/format";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -105,6 +106,30 @@ export function BodyView({
     const q = responseSearch.toLowerCase();
     return value.split("\n").filter((l) => l.toLowerCase().includes(q)).join("\n");
   }, [value, responseSearch]);
+
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleBodyCtx = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setCtxMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const ctxItems: ContextMenuItem[] = useMemo(() => [
+    { label: "Copy", icon: <Copy size={12} />, action: () => { navigator.clipboard.writeText(body); } },
+    { label: "Copy as JSON", icon: <FileJson size={12} />, action: () => {
+      try { navigator.clipboard.writeText(JSON.stringify(JSON.parse(body), null, 2)); } catch { navigator.clipboard.writeText(body); }
+    }},
+    { divider: true, label: "", action: () => {} },
+    { label: "Save As...", icon: <Save size={12} />, action: () => {
+      const ext = kind === "json" ? "json" : kind === "xml" ? "xml" : "txt";
+      const blob = new Blob([body], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = safeFilename(`response.${ext}`);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }},
+  ], [body, kind]);
 
   const showViewToggle = !isImage;
 
@@ -224,7 +249,7 @@ export function BodyView({
         <CopyButton text={body} />
       </div>
 
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1 min-h-0 relative" onContextMenu={handleBodyCtx}>
         <div className="absolute inset-0 overflow-auto">
         {isImage ? (
           <div className="flex items-center justify-center h-full p-4">
@@ -264,6 +289,13 @@ export function BodyView({
         )}
         </div>
       </div>
+      <ContextMenu
+        open={ctxMenu !== null}
+        x={ctxMenu?.x ?? 0}
+        y={ctxMenu?.y ?? 0}
+        items={ctxItems}
+        onClose={() => setCtxMenu(null)}
+      />
     </div>
   );
 }
