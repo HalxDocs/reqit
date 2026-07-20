@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const isWeb = mode === "web";
   const isTest = mode === "test";
   return {
-    plugins: [react()],
+    plugins: [react({ fastRefresh: !isTest })],
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),
