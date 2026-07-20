@@ -262,6 +262,24 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         const idx = order.indexOf(cur);
         setResponseBodyView(order[(idx + 1) % order.length]);
       }},
+      { id: "response.searchNext", label: "Next Search Match", category: "Response", scope: "global", defaultKeys: ["f3", "enter"], action: () => {
+        const { searchMatchIndex, setSearchMatchIndex } = useUIStore.getState();
+        const body = useResponseStore.getState().response?.body ?? "";
+        const q = useUIStore.getState().responseSearch.toLowerCase();
+        if (!q) return;
+        let count = 0; let idx = 0;
+        while (idx < body.length) { const pos = body.toLowerCase().indexOf(q, idx); if (pos === -1) break; count++; idx = pos + q.length; }
+        if (count > 0) setSearchMatchIndex(searchMatchIndex >= count - 1 ? 0 : searchMatchIndex + 1);
+      }},
+      { id: "response.searchPrev", label: "Previous Search Match", category: "Response", scope: "global", defaultKeys: ["shift+f3", "shift+enter"], action: () => {
+        const { searchMatchIndex, setSearchMatchIndex } = useUIStore.getState();
+        const body = useResponseStore.getState().response?.body ?? "";
+        const q = useUIStore.getState().responseSearch.toLowerCase();
+        if (!q) return;
+        let count = 0; let idx = 0;
+        while (idx < body.length) { const pos = body.toLowerCase().indexOf(q, idx); if (pos === -1) break; count++; idx = pos + q.length; }
+        if (count > 0) setSearchMatchIndex(searchMatchIndex <= 0 ? count - 1 : searchMatchIndex - 1);
+      }},
 
       { id: "sidebar.moveUp", label: "Move Up", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowup", "k"], action: () => dispatchShortcut("sidebar.moveUp") },
       { id: "sidebar.moveDown", label: "Move Down", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowdown", "j"], action: () => dispatchShortcut("sidebar.moveDown") },

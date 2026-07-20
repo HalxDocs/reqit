@@ -77,6 +77,8 @@ type UIStore = {
 
   responseSearch: string;
   setResponseSearch: (q: string) => void;
+  searchMatchIndex: number;
+  setSearchMatchIndex: (i: number) => void;
 
   responseBodyView: "pretty" | "raw" | "hex" | "tree";
   setResponseBodyView: (v: "pretty" | "raw" | "hex" | "tree") => void;
@@ -187,7 +189,9 @@ export const useUIStore = create<UIStore>((set, get) => ({
   closeRunner: () => set({ runnerCollID: null }),
 
   responseSearch: "",
-  setResponseSearch: (responseSearch) => set({ responseSearch }),
+  setResponseSearch: (responseSearch) => set({ responseSearch, searchMatchIndex: 0 }),
+  searchMatchIndex: 0,
+  setSearchMatchIndex: (searchMatchIndex) => set({ searchMatchIndex }),
 
   responseBodyView: "pretty",
   setResponseBodyView: (responseBodyView) => set({ responseBodyView }),

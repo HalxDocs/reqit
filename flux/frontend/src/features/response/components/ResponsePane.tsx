@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { BookmarkPlus, Search, X, Camera, GitCompare } from "lucide-react";
+import { useMemo, useState, useCallback } from "react";
+import { BookmarkPlus, Search, X, Camera, GitCompare, ChevronUp, ChevronDown } from "lucide-react";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useUIStore, type ResponseTab } from "@/app/stores/useUIStore";
@@ -147,6 +147,31 @@ export function ResponsePane() {
   const cookieCount = (response?.cookies ?? []).length;
   const responseSearch = useUIStore((s) => s.responseSearch);
   const setResponseSearch = useUIStore((s) => s.setResponseSearch);
+  const searchMatchIndex = useUIStore((s) => s.searchMatchIndex);
+  const setSearchMatchIndex = useUIStore((s) => s.setSearchMatchIndex);
+
+  const matchCount = useMemo(() => {
+    if (!responseSearch || !response?.body) return 0;
+    const body = response.body.toLowerCase();
+    const q = responseSearch.toLowerCase();
+    let count = 0;
+    let idx = 0;
+    while (idx < body.length) {
+      const pos = body.indexOf(q, idx);
+      if (pos === -1) break;
+      count++;
+      idx = pos + q.length;
+    }
+    return count;
+  }, [responseSearch, response?.body]);
+
+  const prevMatch = useCallback(() => {
+    setSearchMatchIndex(searchMatchIndex <= 0 ? matchCount - 1 : searchMatchIndex - 1);
+  }, [searchMatchIndex, matchCount, setSearchMatchIndex]);
+
+  const nextMatch = useCallback(() => {
+    setSearchMatchIndex(searchMatchIndex >= matchCount - 1 ? 0 : searchMatchIndex + 1);
+  }, [searchMatchIndex, matchCount, setSearchMatchIndex]);
 
   const TABS: TabItem<ResponseTab>[] = useMemo(() => [
     { id: "body", label: "Body" },
@@ -257,24 +282,40 @@ export function ResponsePane() {
                   type="text"
                   value={responseSearch}
                   onChange={(e) => setResponseSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (e.shiftKey) prevMatch();
+                      else nextMatch();
+                    }
+                  }}
                   placeholder="Search body…"
                   spellCheck={false}
-                  className="bg-transparent text-11 text-text outline-none w-[120px] placeholder:text-tertiary"
+                  className="bg-transparent text-11 text-text outline-none w-[100px] placeholder:text-tertiary"
                 />
                 {responseSearch && (
                   <>
-                    <button type="button" onClick={() => {
-                      const body = useResponseStore.getState().response?.body ?? "";
-                      const q = responseSearch.toLowerCase();
-                      const count = body.toLowerCase().split("\n").filter((l) => l.toLowerCase().includes(q)).length;
-                      if (count > 0) setResponseSearch(responseSearch);
-                    }} className="text-subtext hover:text-text" title="Match count">
-                      <span className="text-10 text-cyan font-mono">{(() => {
-                        const body = useResponseStore.getState().response?.body ?? "";
-                        const q = responseSearch.toLowerCase();
-                        return body.toLowerCase().split("\n").filter((l) => l.toLowerCase().includes(q)).length;
-                      })()}</span>
+                    <button
+                      type="button"
+                      onClick={prevMatch}
+                      disabled={matchCount === 0}
+                      className="text-subtext hover:text-text disabled:opacity-30"
+                      title="Previous match (Shift+Enter)"
+                    >
+                      <ChevronUp size={11} />
                     </button>
+                    <button
+                      type="button"
+                      onClick={nextMatch}
+                      disabled={matchCount === 0}
+                      className="text-subtext hover:text-text disabled:opacity-30"
+                      title="Next match (Enter)"
+                    >
+                      <ChevronDown size={11} />
+                    </button>
+                    <span className="text-10 text-cyan font-mono tabular-nums min-w-[24px] text-center">
+                      {matchCount > 0 ? `${searchMatchIndex + 1}/${matchCount}` : "0/0"}
+                    </span>
                     <button type="button" onClick={() => setResponseSearch("")} className="text-subtext hover:text-text">
                       <X size={10} />
                     </button>
