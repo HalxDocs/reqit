@@ -6,6 +6,7 @@ import {
   GenerateCLIRunner,
   GenerateGitHubAction,
   GenerateGitLabCI,
+  GenerateJenkins,
   SaveGeneratedTest,
 } from "../../../../wailsjs/go/main/App";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
@@ -24,7 +25,7 @@ export function ExternalRunnerPanel({
   const [useTS, setUseTS] = useState(true);
   const [generated, setGenerated] = useState("");
   const [output, setOutput] = useState("");
-  const [format, setFormat] = useState<"playwright" | "jest" | "cli" | "github" | "gitlab">("playwright");
+  const [format, setFormat] = useState<"playwright" | "jest" | "cli" | "github" | "gitlab" | "jenkins">("playwright");
   const [runnerFilename, setRunnerFilename] = useState("runner.mjs");
 
   useEffect(() => {
@@ -54,6 +55,9 @@ export function ExternalRunnerPanel({
         case "gitlab":
           code = await GenerateGitLabCI(collID, runnerFilename);
           break;
+        case "jenkins":
+          code = await GenerateJenkins(collID, runnerFilename);
+          break;
       }
       setGenerated(code);
       setOutput(code);
@@ -69,6 +73,7 @@ export function ExternalRunnerPanel({
     if (format === "cli") { ext = ".mjs"; prefix = "runner"; }
     else if (format === "github") { ext = ".yml"; prefix = "github-workflow"; }
     else if (format === "gitlab") { ext = ".yml"; prefix = "gitlab-ci"; }
+    else if (format === "jenkins") { ext = ".groovy"; prefix = "jenkins-pipeline"; }
     try {
       const path = await SaveGeneratedTest(generated, `${prefix}-${collID.slice(0, 8)}${ext}`);
       toast.success(`Saved to ${path}`);
@@ -95,7 +100,7 @@ export function ExternalRunnerPanel({
 
           <select
             value={format}
-            onChange={(e) => setFormat(e.target.value as "cli" | "github" | "playwright" | "jest" | "gitlab")}
+            onChange={(e) => setFormat(e.target.value as "cli" | "github" | "playwright" | "jest" | "gitlab" | "jenkins")}
             className="h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan"
           >
             <option value="playwright">Playwright</option>
@@ -103,9 +108,10 @@ export function ExternalRunnerPanel({
             <option value="cli">Node.js CLI Runner</option>
             <option value="github">GitHub Actions</option>
             <option value="gitlab">GitLab CI</option>
+            <option value="jenkins">Jenkins</option>
           </select>
 
-          {format !== "cli" && format !== "github" && format !== "gitlab" && (
+          {format !== "cli" && format !== "github" && format !== "gitlab" && format !== "jenkins" && (
             <label className="flex items-center gap-1.5 text-12 text-text cursor-pointer">
               <input
                 type="checkbox"
@@ -116,7 +122,7 @@ export function ExternalRunnerPanel({
               TypeScript
             </label>
           )}
-          {(format === "github" || format === "gitlab") && (
+          {(format === "github" || format === "gitlab" || format === "jenkins") && (
             <input
               type="text"
               value={runnerFilename}

@@ -26,7 +26,7 @@ export function PluginManager() {
       const p = await GetPlugins();
       setPlugins((p ?? []) as unknown as PluginInfo[]);
     } catch (e) {
-      console.error("Failed to load plugins:", e);
+      toast.error(`Failed to load plugins: ${e}`);
     }
   }, []);
 
@@ -44,7 +44,7 @@ export function PluginManager() {
       toast.success("Plugin installed");
       await load();
     } catch (e) {
-      console.error("Install failed:", e);
+      toast.error(`Install failed: ${e}`);
     }
   };
 
@@ -54,7 +54,7 @@ export function PluginManager() {
       toast.success(`Removed ${name}`);
       await load();
     } catch (e) {
-      console.error("Remove failed:", e);
+      toast.error(`Remove failed: ${e}`);
     }
   };
 

@@ -54,7 +54,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
       const res = await RunCollection(resolvedRequests, {} as Record<string, models.Assertion>);
       setResult(res);
     } catch (e) {
-      console.error(e);
+      toast.error(String(e));
     } finally {
       setRunning(false);
     }

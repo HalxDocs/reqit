@@ -2,11 +2,25 @@ import { useState, useEffect, useCallback } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { Button } from "@/shared/components/Button";
-import { GetSchedules, CreateSchedule, UpdateSchedule, DeleteSchedule } from "../../../../wailsjs/go/main/App";
+import { GetSchedules, CreateSchedule, UpdateSchedule, DeleteSchedule, GetSchedulerHistory } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { nanoid } from "nanoid";
-import { Clock, Plus, Trash2, Play, Pause, Edit2, Check, X } from "lucide-react";
+import { Clock, Plus, Trash2, Play, Pause, Edit2, Check, X, History, ChevronRight, ChevronDown } from "lucide-react";
 import type { scheduler } from "../../../../wailsjs/go/models";
+
+interface RunRecord {
+  id: string;
+  scheduleId: string;
+  collectionId: string;
+  collectionName: string;
+  passed: number;
+  failed: number;
+  total: number;
+  durationMs: number;
+  startedAt: string;
+  finishedAt: string;
+  error?: string;
+}
 
 export function SchedulerPanel() {
   const setView = useUIStore((s) => s.setView);
@@ -19,6 +33,9 @@ export function SchedulerPanel() {
   const [error, setError] = useState("");
   const [editingID, setEditingID] = useState<string | null>(null);
   const [editCron, setEditCron] = useState("");
+  const [historyScheduleID, setHistoryScheduleID] = useState<string | null>(null);
+  const [history, setHistory] = useState<RunRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -27,12 +44,28 @@ export function SchedulerPanel() {
     } catch { /* noop */ }
   }, []);
 
+  const loadHistory = useCallback(async (scheduleID: string) => {
+    setHistoryLoading(true);
+    try {
+      const raw = await GetSchedulerHistory(scheduleID, 50);
+      const records: RunRecord[] = typeof raw === "string" ? JSON.parse(raw) : raw;
+      setHistory(records);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    const off = EventsOn("scheduler:run", () => { load(); });
+    const off = EventsOn("scheduler:run", () => {
+      load();
+      if (historyScheduleID) loadHistory(historyScheduleID);
+    });
     return () => off();
-  }, [load]);
+  }, [load, historyScheduleID, loadHistory]);
 
   const isValidCron = (c: string) => /^\S+\s+\S+\s+\S+\s+\S+\s+\S+$/.test(c.trim());
 
@@ -70,8 +103,19 @@ export function SchedulerPanel() {
     if (!confirm("Delete this schedule?")) return;
     try {
       await DeleteSchedule(id);
+      if (historyScheduleID === id) { setHistoryScheduleID(null); setHistory([]); }
       await load();
     } catch (e) { setError(String(e)); }
+  };
+
+  const toggleHistory = async (id: string) => {
+    if (historyScheduleID === id) {
+      setHistoryScheduleID(null);
+      setHistory([]);
+    } else {
+      setHistoryScheduleID(id);
+      await loadHistory(id);
+    }
   };
 
   return (
@@ -131,38 +175,68 @@ export function SchedulerPanel() {
         )}
 
         {schedules.map((s) => (
-          <div key={s.id} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
-            <button onClick={() => toggleEnabled(s)} className="shrink-0" title={s.enabled ? "Pause" : "Enable"}>
-              {s.enabled ? <Play size={16} className="text-green-400" /> : <Pause size={16} className="text-subtext" />}
-            </button>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-13 font-medium text-text">{s.name}</span>
-                <span className={`text-11 px-2 py-0.5 rounded-full ${s.enabled ? "bg-green-500/10 text-green-400" : "bg-subtext/10 text-subtext"}`}>
-                  {s.enabled ? "Active" : "Paused"}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-11 text-subtext mt-1">
-                {editingID === s.id ? (
-                  <span className="flex items-center gap-1">
-                    <input value={editCron} onChange={(e) => setEditCron(e.target.value)}
-                      className="w-32 px-2 py-0.5 rounded bg-bg border border-border text-12 font-mono text-text" />
-                    <button onClick={() => saveEdit(s.id)} className="text-green-400 hover:text-green-300"><Check size={12} /></button>
-                    <button onClick={() => setEditingID(null)} className="text-subtext hover:text-text"><X size={12} /></button>
+          <div key={s.id} className="bg-surface border border-border rounded-xl">
+            <div className="p-4 flex items-center gap-4">
+              <button onClick={() => toggleEnabled(s)} className="shrink-0" title={s.enabled ? "Pause" : "Enable"}>
+                {s.enabled ? <Play size={16} className="text-green-400" /> : <Pause size={16} className="text-subtext" />}
+              </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-13 font-medium text-text">{s.name}</span>
+                  <span className={`text-11 px-2 py-0.5 rounded-full ${s.enabled ? "bg-green-500/10 text-green-400" : "bg-subtext/10 text-subtext"}`}>
+                    {s.enabled ? "Active" : "Paused"}
                   </span>
-                ) : (
-                  <span className="font-mono">{s.cronExpr}
-                    <button onClick={() => { setEditingID(s.id); setEditCron(s.cronExpr); }} className="ml-1 text-subtext hover:text-cyan"><Edit2 size={10} /></button>
-                  </span>
-                )}
-                <span>Collection: {collections.find((c) => c.id === s.collectionId)?.name ?? s.collectionId}</span>
-                {s.lastRunAt && <span>Last: {new Date(s.lastRunAt).toLocaleString()}</span>}
-                {s.nextRunAt && <span>Next: {new Date(s.nextRunAt).toLocaleString()}</span>}
+                </div>
+                <div className="flex items-center gap-3 text-11 text-subtext mt-1">
+                  {editingID === s.id ? (
+                    <span className="flex items-center gap-1">
+                      <input value={editCron} onChange={(e) => setEditCron(e.target.value)}
+                        className="w-32 px-2 py-0.5 rounded bg-bg border border-border text-12 font-mono text-text" />
+                      <button onClick={() => saveEdit(s.id)} className="text-green-400 hover:text-green-300"><Check size={12} /></button>
+                      <button onClick={() => setEditingID(null)} className="text-subtext hover:text-text"><X size={12} /></button>
+                    </span>
+                  ) : (
+                    <span className="font-mono">{s.cronExpr}
+                      <button onClick={() => { setEditingID(s.id); setEditCron(s.cronExpr); }} className="ml-1 text-subtext hover:text-cyan"><Edit2 size={10} /></button>
+                    </span>
+                  )}
+                  <span>Collection: {collections.find((c) => c.id === s.collectionId)?.name ?? s.collectionId}</span>
+                  {s.lastRunAt && <span>Last: {new Date(s.lastRunAt).toLocaleString()}</span>}
+                  {s.nextRunAt && <span>Next: {new Date(s.nextRunAt).toLocaleString()}</span>}
+                </div>
               </div>
+              <button onClick={() => toggleHistory(s.id)} className={`transition-colors ${historyScheduleID === s.id ? "text-cyan" : "text-subtext hover:text-cyan"}`} title="Run history">
+                <History size={14} />
+              </button>
+              <button onClick={() => handleDelete(s.id)} className="text-subtext hover:text-danger transition-colors" title="Delete schedule">
+                <Trash2 size={14} />
+              </button>
             </div>
-            <button onClick={() => handleDelete(s.id)} className="text-subtext hover:text-danger transition-colors" title="Delete schedule">
-              <Trash2 size={14} />
-            </button>
+
+            {historyScheduleID === s.id && (
+              <div className="border-t border-border px-4 py-3">
+                <h4 className="text-11 font-semibold text-subtext uppercase tracking-wider mb-2">Run History</h4>
+                {historyLoading ? (
+                  <p className="text-12 text-subtext">Loading…</p>
+                ) : history.length === 0 ? (
+                  <p className="text-12 text-subtext">No runs recorded yet.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+                    {history.map((r) => (
+                      <div key={r.id} className="flex items-center gap-3 text-11 py-1 px-2 rounded bg-bg border border-border/50">
+                        <span className={`font-bold ${r.failed === 0 ? "text-green-400" : "text-danger"}`}>
+                          {r.failed === 0 ? "PASS" : "FAIL"}
+                        </span>
+                        <span className="text-text">{r.passed}/{r.total} passed</span>
+                        <span className="text-subtext">{r.durationMs}ms</span>
+                        <span className="text-subtext">{new Date(r.finishedAt).toLocaleString()}</span>
+                        {r.error && <span className="text-danger truncate max-w-[200px]">{r.error}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

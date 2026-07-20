@@ -224,6 +224,8 @@ export function GetRecipes():Promise<string>;
 
 export function GetSSOProviders():Promise<string>;
 
+export function GetSchedulerHistory(arg1:string,arg2:number):Promise<string>;
+
 export function GetSchedules():Promise<Array<scheduler.ScheduledRun>>;
 
 export function GetSocketIOState():Promise<models.SocketState>;

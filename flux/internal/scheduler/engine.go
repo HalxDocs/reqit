@@ -70,13 +70,14 @@ func (e *Executor) tick() {
 	}
 
 	var results []models.CollectionRunResult
-	start := time.Now()
 
 	for _, sched := range due {
 		col, ok := colMap[sched.CollectionID]
 		if !ok {
 			continue
 		}
+
+		runStart := time.Now()
 
 		var reqs []models.RunnerRequest
 		for _, r := range col.Requests {
@@ -114,12 +115,28 @@ func (e *Executor) tick() {
 			result.Results = append(result.Results, rrResult)
 		}
 
-		result.DurationMs = time.Since(start).Milliseconds()
+		result.DurationMs = time.Since(runStart).Milliseconds()
 		results = append(results, result)
 
+		runFinished := time.Now().UTC().Format(time.RFC3339)
+
 		e.store.Update(sched.ID, map[string]interface{}{
-			"lastRunAt": time.Now().UTC().Format(time.RFC3339),
+			"lastRunAt": runFinished,
 		})
+
+		rec := RunRecord{
+			ID:             runFinished + "-" + sched.ID,
+			ScheduleID:     sched.ID,
+			CollectionID:   col.ID,
+			CollectionName: col.Name,
+			Passed:         result.Passed,
+			Failed:         result.Failed,
+			Total:          result.Total,
+			DurationMs:     result.DurationMs,
+			StartedAt:      runStart.UTC().Format(time.RFC3339),
+			FinishedAt:     runFinished,
+		}
+		_ = e.store.RecordRun(rec)
 	}
 
 	if e.onRun != nil && len(results) > 0 {

@@ -414,6 +414,10 @@ export function GetSSOProviders() {
   return window['go']['main']['App']['GetSSOProviders']();
 }
 
+export function GetSchedulerHistory(arg1, arg2) {
+  return window['go']['main']['App']['GetSchedulerHistory'](arg1, arg2);
+}
+
 export function GetSchedules() {
   return window['go']['main']['App']['GetSchedules']();
 }

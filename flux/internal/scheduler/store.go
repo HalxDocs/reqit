@@ -18,6 +18,20 @@ type ScheduledRun struct {
 	CreatedAt    string `json:"createdAt"`
 }
 
+type RunRecord struct {
+	ID             string `json:"id"`
+	ScheduleID     string `json:"scheduleId"`
+	CollectionID   string `json:"collectionId"`
+	CollectionName string `json:"collectionName"`
+	Passed         int    `json:"passed"`
+	Failed         int    `json:"failed"`
+	Total          int    `json:"total"`
+	DurationMs     int64  `json:"durationMs"`
+	StartedAt      string `json:"startedAt"`
+	FinishedAt     string `json:"finishedAt"`
+	Error          string `json:"error,omitempty"`
+}
+
 type Store struct {
 	mu      sync.Mutex
 	dir     string
@@ -153,4 +167,75 @@ func (s *Store) DueEntries() []ScheduledRun {
 		}
 	}
 	return due
+}
+
+// --- Run History ---
+
+func historyPath(dir string) string {
+	return dir + "/scheduler_history.json"
+}
+
+func (s *Store) loadHistory() ([]RunRecord, error) {
+	path := historyPath(s.dir)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var records []RunRecord
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
+func (s *Store) saveHistory(records []RunRecord) error {
+	data, err := json.MarshalIndent(records, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(historyPath(s.dir), data, 0644)
+}
+
+func (s *Store) RecordRun(rec RunRecord) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	records, err := s.loadHistory()
+	if err != nil {
+		return err
+	}
+	records = append(records, rec)
+	// Keep last 200 records.
+	if len(records) > 200 {
+		records = records[len(records)-200:]
+	}
+	return s.saveHistory(records)
+}
+
+func (s *Store) GetHistory(scheduleID string, limit int) ([]RunRecord, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	records, err := s.loadHistory()
+	if err != nil {
+		return nil, err
+	}
+	if scheduleID != "" {
+		var filtered []RunRecord
+		for _, r := range records {
+			if r.ScheduleID == scheduleID {
+				filtered = append(filtered, r)
+			}
+		}
+		records = filtered
+	}
+	// Newest first.
+	for i, j := 0, len(records)-1; i < j; i, j = i+1, j-1 {
+		records[i], records[j] = records[j], records[i]
+	}
+	if limit > 0 && len(records) > limit {
+		records = records[:limit]
+	}
+	return records, nil
 }

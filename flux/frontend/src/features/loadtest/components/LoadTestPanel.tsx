@@ -5,6 +5,7 @@ import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import type { models } from "../../../../wailsjs/go/models";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
+import { toast } from "@/app/stores/useToastStore";
 
 export function LoadTestPanel({
   open,
@@ -46,7 +47,7 @@ export function LoadTestPanel({
       const res = await RunLoadTest(config);
       setResult(res);
     } catch (e) {
-      console.error(e);
+      toast.error(String(e));
     } finally {
       setRunning(false);
     }
