@@ -27,6 +27,7 @@ function snapshot(s: ReturnType<typeof useRequestStore.getState>): RequestState 
     preScript: s.preScript,
     postScript: s.postScript,
     notes: s.notes,
+    timeout: 0,
   };
 }
 

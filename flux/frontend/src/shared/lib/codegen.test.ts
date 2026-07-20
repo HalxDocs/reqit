@@ -20,6 +20,7 @@ function makePayload(overrides: Partial<WirePayload> = {}): WirePayload {
     preScript: "",
     postScript: "",
     notes: "",
+    timeout: 0,
     ...overrides,
   };
 }

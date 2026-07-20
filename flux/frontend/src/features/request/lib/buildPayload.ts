@@ -17,6 +17,7 @@ export interface WirePayload {
   preScript: string;
   postScript: string;
   notes: string;
+  timeout: number;
   grpcService?: string;
   grpcMethod?: string;
   mqttTopic?: string;
@@ -69,6 +70,7 @@ export function buildPayload(s: RequestState, extraVars?: Map<string, string>): 
     preScript: s.preScript ?? "",
     postScript: s.postScript ?? "",
     notes: s.notes ?? "",
+    timeout: s.timeout ?? 0,
     grpcService: s.bodyType === "grpc" ? s.grpcService : undefined,
     grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
     soapAction: s.bodyType === "soap" ? s.soapAction : undefined,
@@ -107,6 +109,7 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     preScript: s.preScript ?? "",
     postScript: s.postScript ?? "",
     notes: s.notes ?? "",
+    timeout: s.timeout ?? 0,
     grpcService: s.bodyType === "grpc" ? s.grpcService : undefined,
     grpcMethod: s.bodyType === "grpc" ? s.grpcMethod : undefined,
     soapAction: s.bodyType === "soap" ? s.soapAction : undefined,

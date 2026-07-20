@@ -167,6 +167,7 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
         preScript: req.payload.preScript ?? "",
         postScript: req.payload.postScript ?? "",
         notes: req.payload.notes ?? "",
+        timeout: req.payload.timeout ?? 0,
       };
       await AddRequestToCollection(c.id, `${req.name} (copy)`, wire as never);
       await get().load();

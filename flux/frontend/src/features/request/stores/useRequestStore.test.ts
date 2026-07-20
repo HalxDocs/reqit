@@ -112,6 +112,7 @@ describe("useRequestStore", () => {
       preScript: "",
       postScript: "",
       notes: "",
+      timeout: 0,
     });
     const s = useRequestStore.getState();
     expect(s.method).toBe("PUT");

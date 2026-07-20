@@ -46,6 +46,7 @@ const initialState: RequestState = {
   preScript: "",
   postScript: "",
   notes: "",
+  timeout: 0,
   oauth2Config: undefined,
   grpcService: "",
   grpcMethod: "",
@@ -108,6 +109,7 @@ type RequestStore = RequestState & {
   setPreScript: (s: string) => void;
   setPostScript: (s: string) => void;
   setNotes: (s: string) => void;
+  setTimeout: (s: number) => void;
 
   setGrpcService: (s: string) => void;
   setGrpcMethod: (s: string) => void;
@@ -188,6 +190,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
   setPreScript: (preScript) => set({ preScript }),
   setPostScript: (postScript) => set({ postScript }),
   setNotes: (notes) => set({ notes }),
+  setTimeout: (timeout) => set({ timeout }),
 
   setGrpcService: (grpcService) => set({ grpcService }),
   setGrpcMethod: (grpcMethod) => set({ grpcMethod }),
@@ -248,6 +251,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
       preScript: "",
       postScript: "",
       notes: "",
+      timeout: 0,
       oauth2Config: undefined,
       grpcService: "",
       grpcMethod: "",

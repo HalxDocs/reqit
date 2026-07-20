@@ -46,6 +46,7 @@ const emptyRequest = (): RequestState => ({
   preScript: "",
   postScript: "",
   notes: "",
+  timeout: 0,
 });
 
 const newTab = (overrides: Partial<Tab> = {}): Tab => ({
@@ -86,6 +87,7 @@ const pickRequestState = (): RequestState => {
     preScript: s.preScript,
     postScript: s.postScript,
     notes: s.notes,
+    timeout: s.timeout ?? 0,
   };
 };
 

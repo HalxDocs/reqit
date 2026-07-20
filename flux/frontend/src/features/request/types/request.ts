@@ -66,6 +66,7 @@ export interface RequestState {
   preScript: string;
   postScript: string;
   notes: string;
+  timeout: number; // seconds, 0 = default (30s)
 }
 
 export interface CookieSummary {

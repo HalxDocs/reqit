@@ -76,6 +76,11 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
+	if payload.Timeout > 0 {
+		reqCtx, cancel = context.WithTimeout(ctx, time.Duration(payload.Timeout)*time.Second)
+		defer cancel()
+	}
+
 	req, err := http.NewRequestWithContext(reqCtx, method, finalURL, body)
 	if err != nil {
 		return errResult(err, time.Since(start))

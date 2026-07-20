@@ -306,5 +306,6 @@ export function parseCurl(input: string): RequestState {
     preScript: "",
     postScript: "",
     notes: "",
+    timeout: 0,
   };
 }

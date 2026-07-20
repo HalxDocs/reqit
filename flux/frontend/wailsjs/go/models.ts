@@ -772,6 +772,7 @@ export namespace models {
 	    soapVersion?: string;
 	    clientCert?: string;
 	    clientKey?: string;
+	    timeout?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -801,6 +802,7 @@ export namespace models {
 	        this.soapVersion = source["soapVersion"];
 	        this.clientCert = source["clientCert"];
 	        this.clientKey = source["clientKey"];
+	        this.timeout = source["timeout"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

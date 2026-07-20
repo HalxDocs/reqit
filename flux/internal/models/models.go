@@ -32,6 +32,7 @@ type RequestPayload struct {
 	// mTLS client certificate
 	ClientCert string `json:"clientCert,omitempty"` // PEM-encoded certificate
 	ClientKey  string `json:"clientKey,omitempty"`  // PEM-encoded private key
+	Timeout    int    `json:"timeout,omitempty"`     // seconds, 0 = default (30s)
 }
 
 // OAuth2Config stored as JSON in AuthValue when AuthType=="oauth2"

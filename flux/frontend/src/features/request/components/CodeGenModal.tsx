@@ -47,7 +47,7 @@ function useRequestSnapshot() {
     method, url, headers, params, bodyType, bodyRaw, bodyForm,
     authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
     preSetVars, extractRules, graphqlQuery, graphqlVariables,
-    preScript, postScript, notes,
+    preScript, postScript, notes, timeout: 0,
   }), [method, url, headers, params, bodyType, bodyRaw, bodyForm,
       authType, authToken, authUser, authPass, authKeyName, authKeyValue, authKeyIn,
       preSetVars, extractRules, graphqlQuery, graphqlVariables,

@@ -139,6 +139,7 @@ export function decodePayload(
     preScript: p.preScript ?? "",
     postScript: p.postScript ?? "",
     notes: p.notes ?? "",
+    timeout: 0,
     preSetVars: extras?.preSetVars?.length ? extras.preSetVars : [{ id: uid("sv"), key: "", value: "" }],
     extractRules: extras?.extractRules?.length ? extras.extractRules : [{ id: uid("er"), type: "body_json", source: "", target: "" }],
   };

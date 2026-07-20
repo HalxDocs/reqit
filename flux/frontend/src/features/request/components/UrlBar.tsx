@@ -1,4 +1,4 @@
-import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
@@ -117,6 +117,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
         preScript: requestState.preScript,
         postScript: requestState.postScript,
         notes: requestState.notes,
+        timeout: 0,
       },
       response: null,
       dirty: true,
@@ -167,6 +168,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 
       <div className="flex items-center gap-1.5">
         <EnvQuickSwitch />
+        <TimeoutControl />
 
         <button
           type="button"
@@ -299,6 +301,68 @@ function highlightVars(text: string) {
     }
     return <span key={i} className="text-text">{part}</span>;
   });
+}
+
+function TimeoutControl() {
+  const timeout = useRequestStore((s) => s.timeout);
+  const setTimeout = useRequestStore((s) => s.setTimeout);
+  const [open, setOpen] = useState(false);
+
+  const presets = [0, 5, 10, 30, 60, 120];
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-[34px] px-2 flex items-center gap-1 bg-bg border border-border hover:border-cyan/50 rounded-lg text-11 text-subtext hover:text-text transition-all"
+        title="Request timeout"
+      >
+        <Clock size={12} />
+        <span className="font-mono">{timeout === 0 ? "30s" : `${timeout}s`}</span>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full right-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-xl p-3 min-w-[180px]">
+            <div className="text-11 font-semibold text-text mb-2">Timeout (seconds)</div>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {presets.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTimeout(t); setOpen(false); }}
+                  className={cn(
+                    "px-2 py-1 text-11 rounded-md border transition-colors",
+                    timeout === t
+                      ? "bg-cyan/10 border-cyan/30 text-cyan font-semibold"
+                      : "bg-bg border-border text-subtext hover:text-text",
+                  )}
+                >
+                  {t === 0 ? "Default" : `${t}s`}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={300}
+                value={timeout || ""}
+                placeholder="30"
+                onChange={(e) => {
+                  const v = parseInt(e.target.value) || 0;
+                  setTimeout(Math.min(Math.max(v, 0), 300));
+                }}
+                className="w-[60px] h-[26px] px-2 bg-bg border border-border rounded text-12 font-mono text-text outline-none focus:border-cyan"
+              />
+              <span className="text-11 text-subtext">Custom (1-300s)</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 function EnvQuickSwitch() {
