@@ -1,12 +1,13 @@
 import { useCallback } from "react";
-import { SendRequest, SetEnvVar } from "../../../../wailsjs/go/main/App";
+import { SendRequest, SetEnvVar, UpdateSavedRequest } from "../../../../wailsjs/go/main/App";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
-import { buildPayload } from "@/features/request/lib/buildPayload";
+import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
+import { buildPayload, buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import { runSecurityChecks } from "@/features/request/lib/securityCheck";
 import { setEndpointCache } from "@/features/request/stores/useEndpointCache";
 import type { ResponseResult } from "@/features/request/types/request";
@@ -73,6 +74,21 @@ export function useSendRequest() {
       if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
       const result = (await SendRequest(payload as never)) as ResponseResult;
       setResponse(result);
+
+      // Auto-save request back to collection if it's a saved request
+      const tabsState = useTabsStore.getState();
+      const activeTab = tabsState.tabs.find((t) => t.id === tabsState.activeID);
+      if (activeTab?.savedRequestID) {
+        const colls = useCollectionStore.getState().collections;
+        for (const col of colls) {
+          const saved = col.requests.find((r) => r.id === activeTab.savedRequestID);
+          if (saved) {
+            const literal = buildPayloadLiteral(requestState);
+            UpdateSavedRequest(activeTab.savedRequestID, saved.name, literal as never).catch(() => {});
+            break;
+          }
+        }
+      }
 
       if (result && result.statusCode > 0) {
         setEndpointCache(requestState.method, requestState.url, result.statusCode, result.timingMs, result.status);
