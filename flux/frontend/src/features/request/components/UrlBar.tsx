@@ -1,4 +1,4 @@
-import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp } from "lucide-react";
+import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
@@ -8,10 +8,11 @@ import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
 import { MethodSelect } from "@/shared/components/MethodSelect";
 import { buildQueryString, parseQueryString, splitUrl } from "@/shared/lib/url";
 import { uid } from "@/shared/lib/id";
-import { CancelRequest, StartMockServer, StopMockServer, GetMockStatus, ToggleMockRecording } from "../../../../wailsjs/go/main/App";
+import { CancelRequest, StartMockServer, StopMockServer, GetMockStatus, ToggleMockRecording, SetActiveEnvironment } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { useToastStore } from "@/app/stores/useToastStore";
 import { useEndpointCache } from "@/features/request/stores/useEndpointCache";
+import { cn } from "@/shared/lib/cn";
 import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
 
@@ -165,6 +166,8 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       </div>
 
       <div className="flex items-center gap-1.5">
+        <EnvQuickSwitch />
+
         <button
           type="button"
           onClick={openCodeGen}
@@ -296,6 +299,69 @@ function highlightVars(text: string) {
     }
     return <span key={i} className="text-text">{part}</span>;
   });
+}
+
+function EnvQuickSwitch() {
+  const environments = useEnvStore((s) => s.environments);
+  const activeID = useEnvStore((s) => s.activeID);
+  const [open, setOpen] = useState(false);
+
+  const switchEnv = async (id: string) => {
+    try {
+      await SetActiveEnvironment(id);
+      useEnvStore.getState().load();
+      setOpen(false);
+    } catch {}
+  };
+
+  if (environments.length === 0) return null;
+
+  const active = environments.find((e) => e.id === activeID);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-[34px] px-2 flex items-center gap-1.5 bg-bg border border-border hover:border-cyan/50 rounded-lg text-11 text-subtext hover:text-text transition-all"
+        title="Switch environment"
+      >
+        <Globe size={12} />
+        <span className="max-w-[80px] truncate">{active?.name ?? "None"}</span>
+        <ChevronDown size={10} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-xl min-w-[160px] py-1">
+            <button
+              type="button"
+              onClick={() => switchEnv("")}
+              className={cn(
+                "w-full px-3 py-1.5 text-12 text-left hover:bg-cardHover transition-colors",
+                !activeID ? "text-cyan font-semibold" : "text-text",
+              )}
+            >
+              No environment
+            </button>
+            {environments.map((env) => (
+              <button
+                key={env.id}
+                type="button"
+                onClick={() => switchEnv(env.id)}
+                className={cn(
+                  "w-full px-3 py-1.5 text-12 text-left hover:bg-cardHover transition-colors",
+                  env.id === activeID ? "text-cyan font-semibold" : "text-text",
+                )}
+              >
+                {env.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 const emptyRow = (): KeyValue => ({
