@@ -3,7 +3,7 @@ import { Download } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
-import { EditorView } from "@codemirror/view";
+import { EditorView, Decoration, ViewPlugin, type DecorationSet, type ViewUpdate } from "@codemirror/view";
 import { CopyButton } from "@/features/response/components/CopyButton";
 import { JsonTreeView } from "@/features/response/components/JsonTreeView";
 import { tryPretty, detectBodyKind } from "@/shared/lib/format";
@@ -62,6 +62,43 @@ export function BodyView({
     if (kind === "xml" || kind === "html") return [xml(), ...base];
     return base;
   }, [kind, bodyView, isImage]);
+
+  const matchHighlightPlugin = useMemo(() => {
+    if (!responseSearch) return [];
+    const query = responseSearch.toLowerCase();
+    const buildDecos = (text: string) => {
+      const ranges: { from: number; to: number }[] = [];
+      const lower = text.toLowerCase();
+      let idx = 0;
+      while (idx < lower.length) {
+        const pos = lower.indexOf(query, idx);
+        if (pos === -1) break;
+        ranges.push({ from: pos, to: pos + query.length });
+        idx = pos + query.length;
+      }
+      return Decoration.set(
+        ranges.map((r) =>
+          Decoration.mark({ class: "bg-cyan/30 text-text rounded-sm" }).range(r.from, r.to)
+        ),
+        true,
+      );
+    };
+    return [
+      ViewPlugin.define(
+        (view: EditorView) => ({
+          decorations: buildDecos(view.state.doc.toString()),
+          update(update: ViewUpdate) {
+            if (update.docChanged) {
+              this.decorations = buildDecos(update.state.doc.toString());
+            }
+          },
+        }),
+        {
+          decorations: (v: { decorations: DecorationSet }) => v.decorations,
+        },
+      ),
+    ];
+  }, [responseSearch]);
 
   const filteredValue = useMemo(() => {
     if (!responseSearch) return value;
@@ -206,13 +243,13 @@ export function BodyView({
           </div>
         ) : bodyView === "tree" && parsedJson !== null ? (
           <div className="h-full overflow-auto p-2">
-            <JsonTreeView data={parsedJson} />
+            <JsonTreeView data={parsedJson} searchQuery={responseSearch} />
           </div>
         ) : body ? (
           <CodeMirror
             value={filteredValue}
             theme={theme}
-            extensions={cmExtensions}
+            extensions={[...cmExtensions, ...matchHighlightPlugin]}
             editable={false}
             basicSetup={{
               lineNumbers: true,

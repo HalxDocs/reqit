@@ -13,6 +13,7 @@ interface TreeNode {
 interface JsonTreeViewProps {
   data: unknown;
   className?: string;
+  searchQuery?: string;
 }
 
 const LARGE_ARRAY_THRESHOLD = 100;
@@ -70,6 +71,20 @@ function JsonValue({ value, type }: { value: unknown; type: TreeNode["type"] }) 
   return null;
 }
 
+function Highlight({ text, query }: { text: string; query?: string }) {
+  if (!query) return <>{text}</>;
+  const q = query.toLowerCase();
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="bg-cyan/30 rounded-sm">{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
 function TreeNodeComponent({
   node,
   depth,
@@ -77,6 +92,7 @@ function TreeNodeComponent({
   togglePath,
   selectedPath,
   setSelectedPath,
+  searchQuery,
 }: {
   node: TreeNode;
   depth: number;
@@ -84,6 +100,7 @@ function TreeNodeComponent({
   togglePath: (path: string) => void;
   selectedPath: string | null;
   setSelectedPath: (path: string) => void;
+  searchQuery?: string;
 }) {
   const isExpandable = node.type === "object" || node.type === "array";
   const isExpanded = expandedPaths.has(node.path);
@@ -136,7 +153,7 @@ function TreeNodeComponent({
         )}
 
         <span className="font-mono text-12 text-subtext mr-1 shrink-0">
-          {String(node.key)}
+          <Highlight text={String(node.key)} query={searchQuery} />
           {isExpandable ? "" : ":"}
         </span>
 
@@ -164,6 +181,7 @@ function TreeNodeComponent({
               togglePath={togglePath}
               selectedPath={selectedPath}
               setSelectedPath={setSelectedPath}
+              searchQuery={searchQuery}
             />
           ))}
           {hasMore && (
@@ -213,7 +231,7 @@ function CopyNodeButton({ path, value }: { path: string; value: unknown }) {
   );
 }
 
-export function JsonTreeView({ data, className }: JsonTreeViewProps) {
+export function JsonTreeView({ data, className, searchQuery }: JsonTreeViewProps) {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(["$"]));
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
@@ -272,6 +290,52 @@ export function JsonTreeView({ data, className }: JsonTreeViewProps) {
 
   const tree = useMemo(() => parseJsonToTree(data), [data]);
 
+  const matchingPaths = useMemo(() => {
+    if (!searchQuery) return new Set<string>();
+    const q = searchQuery.toLowerCase();
+    const paths = new Set<string>();
+    const walk = (val: unknown, path: string) => {
+      if (val !== null && typeof val === "object" && !Array.isArray(val)) {
+        for (const [k, v] of Object.entries(val)) {
+          const childPath = `${path}.${k}`;
+          if (k.toLowerCase().includes(q)) {
+            paths.add(childPath);
+            let p = path;
+            while (p !== "$") { paths.add(p); p = p.substring(0, p.lastIndexOf(".", p.length - 1) === -1 ? 0 : p.lastIndexOf(".")); }
+          }
+          if (typeof v === "string" && v.toLowerCase().includes(q)) {
+            paths.add(childPath);
+            let p = path;
+            while (p !== "$") { paths.add(p); p = p.substring(0, p.lastIndexOf(".", p.length - 1) === -1 ? 0 : p.lastIndexOf(".")); }
+          }
+          walk(v, childPath);
+        }
+      } else if (Array.isArray(val)) {
+        val.forEach((item, i) => {
+          const childPath = `${path}[${i}]`;
+          if (typeof item === "string" && item.toLowerCase().includes(q)) {
+            paths.add(childPath);
+            let p = path;
+            while (p !== "$") { paths.add(p); p = p.substring(0, p.lastIndexOf(".", p.length - 1) === -1 ? 0 : p.lastIndexOf(".")); }
+          }
+          walk(item, childPath);
+        });
+      }
+    };
+    walk(data, "$");
+    return paths;
+  }, [data, searchQuery]);
+
+  useEffect(() => {
+    if (matchingPaths.size > 0) {
+      setExpandedPaths((prev) => {
+        const next = new Set(prev);
+        for (const p of matchingPaths) next.add(p);
+        return next;
+      });
+    }
+  }, [matchingPaths]);
+
   return (
     <div className={cn("overflow-auto h-full font-mono text-12 select-text", className)}>
       {tree.map((node) => (
@@ -283,6 +347,7 @@ export function JsonTreeView({ data, className }: JsonTreeViewProps) {
           togglePath={togglePath}
           selectedPath={selectedPath}
           setSelectedPath={setSelectedPath}
+          searchQuery={searchQuery}
         />
       ))}
       <button type="button" data-shortcut="tree.expandAll" onClick={expandAll} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />

@@ -262,9 +262,23 @@ export function ResponsePane() {
                   className="bg-transparent text-11 text-text outline-none w-[120px] placeholder:text-tertiary"
                 />
                 {responseSearch && (
-                  <button type="button" onClick={() => setResponseSearch("")} className="text-subtext hover:text-text">
-                    <X size={10} />
-                  </button>
+                  <>
+                    <button type="button" onClick={() => {
+                      const body = useResponseStore.getState().response?.body ?? "";
+                      const q = responseSearch.toLowerCase();
+                      const count = body.toLowerCase().split("\n").filter((l) => l.toLowerCase().includes(q)).length;
+                      if (count > 0) setResponseSearch(responseSearch);
+                    }} className="text-subtext hover:text-text" title="Match count">
+                      <span className="text-10 text-cyan font-mono">{(() => {
+                        const body = useResponseStore.getState().response?.body ?? "";
+                        const q = responseSearch.toLowerCase();
+                        return body.toLowerCase().split("\n").filter((l) => l.toLowerCase().includes(q)).length;
+                      })()}</span>
+                    </button>
+                    <button type="button" onClick={() => setResponseSearch("")} className="text-subtext hover:text-text">
+                      <X size={10} />
+                    </button>
+                  </>
                 )}
               </div>
             )}
