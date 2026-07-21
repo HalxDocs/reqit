@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckSquare, ChevronDown, ChevronRight, Copy,
-  FileCode2, Lock, Pencil, Plus, Square, Trash2,
+  FileCode2, Folder, Lock, Pencil, Plus, Square, Trash2,
 } from "lucide-react";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -13,6 +13,7 @@ import { CollectionMenu } from "./CollectionMenu";
 import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
+import { buildFolderTree, countNodes, type TreeNode, type FolderNode, type RequestNode } from "@/features/collections/lib/folderTree";
 import {
   ExportCollectionMarkdown,
   ExportCollectionHTML,
@@ -34,7 +35,8 @@ const OVERSCAN = 10;
 
 type Row =
   | { type: "coll"; id: string; coll: models.Collection; requests: models.SavedRequest[]; hasSpec: boolean; isOpen: boolean }
-  | { type: "req"; id: string; collID: string; req: models.SavedRequest; method: HttpMethod }
+  | { type: "folder"; id: string; collID: string; name: string; depth: number; isOpen: boolean; childCount: number }
+  | { type: "req"; id: string; collID: string; req: models.SavedRequest; method: HttpMethod; depth: number }
   | { type: "empty" };
 
 interface DragItem {
@@ -95,6 +97,11 @@ export function CollectionsTree() {
   const [containerH, setContainerH] = useState(400);
   const dragItem = useRef<DragItem | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [folderExpanded, setFolderExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleFolder = useCallback((path: string) => {
+    setFolderExpanded((prev) => ({ ...prev, [path]: !prev[path] }));
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -135,19 +142,41 @@ export function CollectionsTree() {
       const isOpen = expanded[c.id] !== false || !!filter;
       r.push({ type: "coll", id: c.id, coll: c, requests: reqs, hasSpec: !!c.spec, isOpen });
       if (isOpen) {
-        if (reqs.length === 0) r.push({ type: "empty" });
-        else for (const req of reqs) r.push({ type: "req", id: req.id, collID: c.id, req, method: (req.payload.method as HttpMethod) || "GET" });
+        if (reqs.length === 0) {
+          r.push({ type: "empty" });
+        } else {
+          const tree = buildFolderTree(reqs, c.id);
+          const hasFolders = tree.some((n) => n.type === "folder");
+          if (hasFolders) {
+            const renderTree = (nodes: TreeNode[], depth: number) => {
+              for (const node of nodes) {
+                if (node.type === "folder") {
+                  const fIsOpen = folderExpanded[node.path] !== false;
+                  r.push({ type: "folder", id: `f:${node.path}`, collID: c.id, name: node.name, depth, isOpen: fIsOpen, childCount: countNodes(node.children) });
+                  if (fIsOpen) renderTree(node.children, depth + 1);
+                } else {
+                  r.push({ type: "req", id: node.req.id, collID: c.id, req: node.req, method: node.method, depth });
+                }
+              }
+            };
+            renderTree(tree, 1);
+          } else {
+            for (const req of reqs) r.push({ type: "req", id: req.id, collID: c.id, req, method: (req.payload.method as HttpMethod) || "GET", depth: 0 });
+          }
+        }
       }
     }
     return r;
-  }, [visible, expanded, filter]);
+  }, [visible, expanded, filter, folderExpanded]);
 
   const { totalH, offsets } = useMemo(() => {
     const o: number[] = [];
     let acc = 0;
     for (const row of rows) {
       o.push(acc);
-      acc += row.type === "coll" ? COLL_H : EMPTY_H;
+      if (row.type === "coll") acc += COLL_H;
+      else if (row.type === "folder") acc += COLL_H;
+      else acc += REQ_H;
     }
     return { totalH: acc, offsets: o };
   }, [rows]);
@@ -161,7 +190,7 @@ export function CollectionsTree() {
 
   const visibleRows = rows.slice(startIdx, endIdx);
   const topPad = offsets[startIdx] || 0;
-  const bottomPad = totalH - (offsets[endIdx - 1] || 0) - (rows[endIdx - 1]?.type === "coll" ? COLL_H : EMPTY_H);
+  const bottomPad = totalH - (offsets[endIdx - 1] || 0) - (rows[endIdx - 1]?.type === "coll" || rows[endIdx - 1]?.type === "folder" ? COLL_H : REQ_H);
 
   const handleScroll = useCallback(() => {
     if (scrollRef.current) setScrollTop(scrollRef.current.scrollTop);
@@ -498,15 +527,29 @@ export function CollectionsTree() {
                   </div>
                 );
               }
+              if (row.type === "folder") {
+                return (
+                  <div key={row.id} style={{ height: COLL_H, paddingLeft: 12 + row.depth * 14 }}
+                    className="group flex items-center gap-1 hover:bg-cardHover transition-colors cursor-pointer"
+                    onClick={() => toggleFolder(row.id.replace("f:", ""))}>
+                    <button type="button" className="text-subtext hover:text-text transition-colors shrink-0">
+                      {row.isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                    </button>
+                    <Folder size={13} className="text-amber-400 shrink-0" />
+                    <span className="flex-1 text-12 text-text font-medium truncate">{row.name}</span>
+                    <span className="text-10 text-subtext/50 font-mono shrink-0 mr-1">{row.childCount}</span>
+                  </div>
+                );
+              }
               if (row.type === "req") {
                 const req = row.req;
                 return (
-                  <div key={req.id} style={{ height: REQ_H }} data-shortcut="sidebar.open"
+                  <div key={req.id} style={{ height: REQ_H, paddingLeft: 12 + row.depth * 14 }}
                     className={cn(
                       `group flex items-center gap-1 cursor-pointer transition-colors relative hover:bg-cardHover`,
                       dropLine(req.id),
                       loadedRequestID === req.id && "bg-card",
-                      selecting ? "pl-2" : "pl-6",
+                      selecting ? "pl-2" : undefined,
                     )}
                     onClick={() => {
                       if (selecting) { toggleSelect(req.id); return; }
@@ -546,7 +589,7 @@ export function CollectionsTree() {
                   </div>
                 );
               }
-              return <div key="empty" style={{ height: EMPTY_H }} className="pl-7 pr-3 py-1 text-11 text-subtext italic">Empty</div>;
+              return <div key="empty" style={{ height: REQ_H }} className="pl-7 pr-3 py-1 text-11 text-subtext italic">Empty</div>;
             })}
             <div style={{ height: Math.max(0, bottomPad) }} />
           </div>
