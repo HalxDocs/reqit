@@ -16,6 +16,7 @@ import { AIDiagnosisPanel } from "@/features/ai/components/AIDiagnosisPanel";
 import { useSendRequest } from "@/features/request/hooks/useSendRequest";
 import { SecurityWarnings } from "@/features/response/components/SecurityWarnings";
 import { PartyModeToggle, PartyModeEffects } from "@/features/response/components/PartyMode";
+import { PerformanceChart } from "@/features/response/components/PerformanceChart";
 import { useDiffStore, type ResponseSnapshot } from "@/features/response/stores/useDiffStore";
 import { SaveCapturedResponse } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
@@ -178,6 +179,7 @@ export function ResponsePane() {
     { id: "headers", label: "Headers" },
     { id: "cookies", label: cookieCount > 0 ? `Cookies (${cookieCount})` : "Cookies" },
     { id: "timeline", label: "Timeline" },
+    { id: "performance", label: "Performance" },
   ], [cookieCount]);
 
   const currentDomain = useMemo(() => {
@@ -365,6 +367,9 @@ export function ResponsePane() {
         )}
         {!isLoading && response && !response.error && responseTab === "timeline" && (
           <TimelineView />
+        )}
+        {!isLoading && response && !response.error && responseTab === "performance" && (
+          <PerformanceChart />
         )}
         <DiffSnapshots method={method} url={url} response={response} snapshotKey={snapshotKey} />
         <AIDiagnosisPanel />
