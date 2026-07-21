@@ -64,6 +64,85 @@ func RunCollection(ctx context.Context, reqs []models.RunnerRequest, assertionsM
 	}
 }
 
+// RunCollectionDataDriven runs requests multiple times, once per data row.
+// Each row's key-value pairs are injected as environment variables.
+func RunCollectionDataDriven(ctx context.Context, reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, dataRows []map[string]string, baseEnv map[string]string) models.CollectionRunResult {
+	start := time.Now()
+	var allResults []models.RequestRunResult
+	passed, failed, skipped := 0, 0, 0
+
+	for rowIdx, row := range dataRows {
+		if ctx.Err() != nil {
+			break
+		}
+		// Merge base env + row data (row overrides)
+		mergedEnv := make(map[string]string)
+		for k, v := range baseEnv {
+			mergedEnv[k] = v
+		}
+		for k, v := range row {
+			mergedEnv[k] = v
+		}
+		// Inject iteration index
+		mergedEnv["__row_index"] = fmt.Sprintf("%d", rowIdx)
+
+		env := make(map[string]string)
+		for _, r := range reqs {
+			if ctx.Err() != nil {
+				break
+			}
+			// Apply data row variables as pre-set vars
+			dataVars := make([]models.PreSetVar, 0, len(mergedEnv)+len(r.PreSetVars))
+			for k, v := range mergedEnv {
+				dataVars = append(dataVars, models.PreSetVar{Key: k, Value: v})
+			}
+			dataVars = append(dataVars, r.PreSetVars...)
+
+			rr := r
+			rr.PreSetVars = dataVars
+			res := executeRequestWithRetries(ctx, rr, assertionsMap, env)
+			res.RequestName = fmt.Sprintf("%s [row %d]", r.Name, rowIdx+1)
+			allResults = append(allResults, res)
+			if res.Skipped {
+				skipped++
+			} else if res.Passed {
+				passed++
+			} else {
+				failed++
+			}
+
+			if len(r.ExtractRules) > 0 && !res.Skipped {
+				resp := models.ResponseResult{
+					StatusCode: res.StatusCode,
+					Status:     res.StatusText,
+					Body:       "",
+					TimingMs:   res.TimingMs,
+					SizeBytes:  res.SizeBytes,
+				}
+				for _, rule := range r.ExtractRules {
+					if rule.Source == "" || rule.Target == "" {
+						continue
+					}
+					if val := extractValueStatic(resp, rule); val != "" {
+						env[rule.Target] = val
+					}
+				}
+			}
+		}
+	}
+
+	return models.CollectionRunResult{
+		CollectionID:   "",
+		CollectionName: "",
+		Results:        allResults,
+		Passed:         passed,
+		Failed:         failed,
+		Skipped:        skipped,
+		Total:          len(allResults),
+		DurationMs:     time.Since(start).Milliseconds(),
+	}
+}
+
 func runSequential(ctx context.Context, reqs []models.RunnerRequest, assertionsMap map[string]models.Assertion, results *[]models.RequestRunResult, passed, failed, skipped *int) {
 	env := make(map[string]string)
 

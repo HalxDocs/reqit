@@ -1460,6 +1460,7 @@ export namespace models {
 	    rampUp?: number;
 	    iterations?: number;
 	    retryDelayMs?: number;
+	    dataRows?: any[];
 	
 	    static createFrom(source: any = {}) {
 	        return new RunnerConfig(source);
@@ -1474,6 +1475,7 @@ export namespace models {
 	        this.rampUp = source["rampUp"];
 	        this.iterations = source["iterations"];
 	        this.retryDelayMs = source["retryDelayMs"];
+	        this.dataRows = source["dataRows"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

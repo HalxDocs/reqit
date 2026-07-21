@@ -218,6 +218,7 @@ type RunnerConfig struct {
 	RampUp           int                        `json:"rampUp,omitempty"`           // ramp-up duration in seconds
 	Iterations       int                        `json:"iterations,omitempty"`       // iterations per VU
 	RetryDelayMs     int                        `json:"retryDelayMs,omitempty"`
+	DataRows         []map[string]string        `json:"dataRows,omitempty"`         // data-driven: each map is one row of variables
 }
 
 type RequestRunResult struct {

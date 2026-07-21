@@ -34,6 +34,9 @@ func (a *App) RunLoadTest(config models.LoadTestConfig) models.LoadTestResult {
 func (a *App) RunCollectionWithConfig(config models.RunnerConfig) models.CollectionRunResult {
 	reqs := config.Requests
 	assertionsMap := make(map[string]models.Assertion)
+	if len(config.DataRows) > 0 {
+		return runner.RunCollectionDataDriven(a.ctx, reqs, assertionsMap, config.DataRows, config.Env)
+	}
 	return runner.RunCollection(a.ctx, reqs, assertionsMap, config.MaxConcurrent)
 }
 
