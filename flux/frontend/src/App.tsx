@@ -12,6 +12,7 @@ import { VariableAutocomplete } from "@/shared/components/VariableAutocomplete";
 import { Splitter } from "@/shared/components/Splitter";
 import { SaveRequestModal } from "@/features/collections/components/SaveRequestModal";
 import { EnvironmentsModal } from "@/features/env/components/EnvironmentsModal";
+import { EnvCompareModal } from "@/features/env/components/EnvCompareModal";
 import { ImportPostmanModal } from "@/shared/components/ImportPostmanModal";
 import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
@@ -168,6 +169,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const closeLoadTest = useUIStore((s) => s.closeLoadTestModal);
   const testSuitesOpen = useUIStore((s) => s.testSuitesModalOpen);
   const closeTestSuites = useUIStore((s) => s.closeTestSuitesModal);
+  const envCompareOpen = useUIStore((s) => s.envCompareModalOpen);
+  const closeEnvCompare = useUIStore((s) => s.closeEnvCompareModal);
   const newTab = useTabsStore((s) => s.newTab);
   const closeTab = useTabsStore((s) => s.closeTab);
   const activeID = useTabsStore((s) => s.activeID);
@@ -408,6 +411,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <ShortcutsModal />
       <LoadTestPanel open={loadTestOpen} onClose={closeLoadTest} />
       <TestSuitePanel open={testSuitesOpen} onClose={closeTestSuites} />
+      <EnvCompareModal open={envCompareOpen} onClose={closeEnvCompare} />
       {runnerColl && (
         <RunnerModal
           open={true}

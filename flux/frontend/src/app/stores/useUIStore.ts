@@ -97,6 +97,10 @@ type UIStore = {
   testSuitesModalOpen: boolean;
   openTestSuitesModal: () => void;
   closeTestSuitesModal: () => void;
+
+  envCompareModalOpen: boolean;
+  openEnvCompareModal: () => void;
+  closeEnvCompareModal: () => void;
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -219,4 +223,11 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ testSuitesModalOpen: true });
   },
   closeTestSuitesModal: () => set({ testSuitesModalOpen: false }),
+
+  envCompareModalOpen: false,
+  openEnvCompareModal: () => {
+    if (get().envCompareModalOpen) return;
+    set({ envCompareModalOpen: true });
+  },
+  closeEnvCompareModal: () => set({ envCompareModalOpen: false }),
 }));

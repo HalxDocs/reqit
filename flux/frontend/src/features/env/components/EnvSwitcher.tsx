@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Globe, Settings2 } from "lucide-react";
+import { ChevronDown, GitCompareArrows, Globe, Settings2 } from "lucide-react";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
@@ -23,6 +23,7 @@ export function EnvSwitcher() {
   }, [open]);
 
   const active = environments.find((e) => e.id === activeID);
+  const openCompare = useUIStore((s) => s.openEnvCompareModal);
 
   return (
     <div className="relative" ref={ref}>
@@ -80,6 +81,17 @@ export function EnvSwitcher() {
             </button>
           ))}
           <div className="border-t border-border mt-1 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openCompare();
+              }}
+              className="w-full px-3 py-1.5 text-left text-12 text-subtext hover:text-text hover:bg-cardHover transition-colors flex items-center gap-2"
+            >
+              <GitCompareArrows size={12} />
+              <span>Compare environments…</span>
+            </button>
             <button
               type="button"
               onClick={() => {
