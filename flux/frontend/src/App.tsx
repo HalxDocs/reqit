@@ -306,6 +306,12 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
 
   return (
     <div className="h-screen w-screen flex bg-bg text-text">
+      <a
+        href="#flux-url-bar"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-cyan focus:text-bg focus:rounded-lg focus:text-13 focus:font-semibold focus:outline-none"
+      >
+        Skip to URL bar
+      </a>
       <CommandPalette open={cmdPaletteOpen} onClose={() => setCmdPaletteOpen(false)} />
       <VariableAutocomplete />
       {/* Mobile: show a "use desktop" message instead of the full app UI */}

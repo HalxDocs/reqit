@@ -103,10 +103,17 @@ export function ToastHost() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
-      {toasts.map((t) => (
-        <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
-      ))}
-    </div>
+    <>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {toasts.map((t) => (
+          <span key={t.id}>{t.kind === "error" ? "Error: " : ""}{t.message}</span>
+        ))}
+      </div>
+      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((t) => (
+          <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
+        ))}
+      </div>
+    </>
   );
 }

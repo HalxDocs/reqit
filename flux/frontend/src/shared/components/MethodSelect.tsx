@@ -28,6 +28,9 @@ export function MethodSelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-label={`HTTP method: ${value}`}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className={cn(
           "flex items-center gap-2 h-[36px] px-3 rounded-md bg-card border border-border",
           "hover:border-cyan transition-colors",
