@@ -10,6 +10,9 @@ import { useGitStore } from "@/features/git/stores/useGitStore";
 import { decodePayload } from "@/shared/lib/loadPayload";
 import { MethodBadge } from "@/shared/components/MethodBadge";
 import { CollectionMenu } from "./CollectionMenu";
+import { MarkdownExportModal } from "./MarkdownExportModal";
+import { HTMLExportModal } from "./HTMLExportModal";
+import { VariablesEditorModal } from "./VariablesEditorModal";
 import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
@@ -599,141 +602,32 @@ export function CollectionsTree() {
       <button type="button" data-shortcut="sidebar.moveDown" onClick={() => { (document.querySelector<HTMLElement>('[data-shortcut="sidebar.open"]'))?.click(); }} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
       <button type="button" data-shortcut="sidebar.newRequest" onClick={() => newTab()} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
 
-      {/* Markdown export options modal */}
-      {mdExportColl && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setMdExportColl(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-card border border-border rounded-lg shadow-xl p-4 w-[320px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-13 font-semibold text-text mb-3">Export Markdown — {mdExportColl.name}</h3>
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={mdOpts.includeHeaders} onChange={(e) => setMdOpts({ ...mdOpts, includeHeaders: e.target.checked })} className="accent-cyan" />
-                  Include Headers
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={mdOpts.includeBody} onChange={(e) => setMdOpts({ ...mdOpts, includeBody: e.target.checked })} className="accent-cyan" />
-                  Include Body
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={mdOpts.includeExamples} onChange={(e) => setMdOpts({ ...mdOpts, includeExamples: e.target.checked })} className="accent-cyan" />
-                  Include Examples
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={mdOpts.timestamp} onChange={(e) => setMdOpts({ ...mdOpts, timestamp: e.target.checked })} className="accent-cyan" />
-                  Timestamp
-                </label>
-                <input type="text" value={mdOpts.baseUrl} onChange={(e) => setMdOpts({ ...mdOpts, baseUrl: e.target.value })}
-                  placeholder="Base URL (optional)"
-                  className="w-full h-[28px] px-2 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan" />
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button type="button" onClick={() => setMdExportColl(null)}
-                  className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
-                <button type="button" onClick={() => handleExportMarkdown(mdExportColl)}
-                  className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Export</button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <MarkdownExportModal
+        open={!!mdExportColl}
+        onClose={() => setMdExportColl(null)}
+        collection={mdExportColl!}
+        opts={mdOpts}
+        setOpts={setMdOpts}
+        onExport={handleExportMarkdown}
+      />
 
-      {/* HTML export options modal */}
-      {htmlExportColl && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setHtmlExportColl(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-card border border-border rounded-lg shadow-xl p-4 w-[320px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-13 font-semibold text-text mb-3">Export HTML Docs — {htmlExportColl.name}</h3>
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={htmlOpts.includeHeaders} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeHeaders: e.target.checked })} className="accent-cyan" />
-                  Include Headers
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={htmlOpts.includeBody} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeBody: e.target.checked })} className="accent-cyan" />
-                  Include Body
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={htmlOpts.includeExamples} onChange={(e) => setHtmlOpts({ ...htmlOpts, includeExamples: e.target.checked })} className="accent-cyan" />
-                  Include Examples
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={htmlOpts.timestamp} onChange={(e) => setHtmlOpts({ ...htmlOpts, timestamp: e.target.checked })} className="accent-cyan" />
-                  Timestamp
-                </label>
-                <label className="flex items-center gap-2 text-12 text-text cursor-pointer">
-                  <input type="checkbox" checked={htmlOpts.darkMode} onChange={(e) => setHtmlOpts({ ...htmlOpts, darkMode: e.target.checked })} className="accent-cyan" />
-                  Dark mode
-                </label>
-                <input type="text" value={htmlOpts.baseUrl} onChange={(e) => setHtmlOpts({ ...htmlOpts, baseUrl: e.target.value })}
-                  placeholder="Base URL (optional)"
-                  className="w-full h-[28px] px-2 bg-surface border border-border rounded-md text-12 text-text outline-none focus:border-cyan" />
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button type="button" onClick={() => setHtmlExportColl(null)}
-                  className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
-                <button type="button" onClick={() => handleExportHTML(htmlExportColl)}
-                  className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Export</button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <HTMLExportModal
+        open={!!htmlExportColl}
+        onClose={() => setHtmlExportColl(null)}
+        collection={htmlExportColl!}
+        opts={htmlOpts}
+        setOpts={setHtmlOpts}
+        onExport={handleExportHTML}
+      />
 
-      {/* Collection variables editor modal */}
-      {varsEditorColl && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setVarsEditorColl(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-card border border-border rounded-lg shadow-xl p-4 w-[420px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-13 font-semibold text-text mb-3">Variables — {varsEditorColl.name}</h3>
-              <p className="text-11 text-subtext mb-3">Collection-scoped variables override environment variables of the same name.</p>
-              <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
-                {varsEditorDraft.map((v, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input type="checkbox" checked={v.enabled} onChange={(e) => {
-                      const next = [...varsEditorDraft];
-                      next[i] = { ...next[i], enabled: e.target.checked };
-                      setVarsEditorDraft(next);
-                    }} className="accent-cyan w-[14px] h-[14px]" />
-                    <input type="text" value={v.key} onChange={(e) => {
-                      const next = [...varsEditorDraft];
-                      next[i] = { ...next[i], key: e.target.value };
-                      setVarsEditorDraft(next);
-                    }} placeholder="Key" className="flex-1 h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan font-mono" />
-                    <input type="text" value={v.value} onChange={(e) => {
-                      const next = [...varsEditorDraft];
-                      next[i] = { ...next[i], value: e.target.value };
-                      setVarsEditorDraft(next);
-                    }} placeholder="Value" className="flex-1 h-[28px] px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan font-mono" />
-                    <button type="button" onClick={() => setVarsEditorDraft(varsEditorDraft.filter((_, j) => j !== i))}
-                      className="text-subtext hover:text-danger transition-colors p-1 shrink-0">
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => setVarsEditorDraft([...varsEditorDraft, { key: "", value: "", enabled: true } as models.EnvVar])}
-                className="flex items-center gap-1 mt-2 text-12 text-cyan hover:text-cyan-hover transition-colors">
-                <Plus size={12} /> Add variable
-              </button>
-              <div className="flex justify-end gap-2 mt-4">
-                <button type="button" onClick={() => setVarsEditorColl(null)}
-                  className="h-[28px] px-3 text-12 text-subtext hover:text-text bg-cardHover rounded-md transition-colors">Cancel</button>
-                <button type="button" onClick={async () => {
-                  if (varsEditorColl) {
-                    await updateCollectionVariables(varsEditorColl.id, varsEditorDraft);
-                    setVarsEditorColl(null);
-                    toast.success("Collection variables saved");
-                  }
-                }}
-                  className="h-[28px] px-3 text-12 text-white bg-cyan rounded-md hover:bg-cyan/80 transition-colors">Save</button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <VariablesEditorModal
+        open={!!varsEditorColl}
+        onClose={() => setVarsEditorColl(null)}
+        collection={varsEditorColl!}
+        draft={varsEditorDraft}
+        setDraft={setVarsEditorDraft}
+        onSave={updateCollectionVariables}
+      />
     </div>
   );
 }
