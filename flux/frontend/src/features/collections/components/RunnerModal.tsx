@@ -213,7 +213,7 @@ export function RunnerModal({ open, onClose, collection }: Props) {
             {collection.requests.map((req) => {
               const a = assertions[req.id] || [];
               const retryCount = retries[req.id] || 0;
-              const reqResults = result?.results.filter((r) => r.requestId === req.id) ?? [];
+              const reqResults = result?.results?.filter((r) => r.requestId === req.id) ?? [];
               const hasDataDriven = dataRows.length > 0;
               return (
                 <div key={req.id} className="bg-card border border-border rounded-lg p-3 flex flex-col gap-2">

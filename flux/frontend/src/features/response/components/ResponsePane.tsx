@@ -355,7 +355,7 @@ export function ResponsePane() {
         {!isLoading && response && !response.error && responseTab === "body" && (
           <BodyView
             body={response.body}
-            contentType={response.headers["Content-Type"] ?? response.headers["content-type"] ?? ""}
+            contentType={response.headers?.["Content-Type"] ?? response.headers?.["content-type"] ?? ""}
             bodyIsBase64={response.bodyIsBase64}
           />
         )}

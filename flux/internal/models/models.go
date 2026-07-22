@@ -227,6 +227,7 @@ type RequestRunResult struct {
 	Passed          bool     `json:"passed"`
 	StatusCode      int      `json:"statusCode"`
 	StatusText      string   `json:"statusText"`
+	Body            string   `json:"body,omitempty"`
 	TimingMs        int64    `json:"timingMs"`
 	SizeBytes       int64    `json:"sizeBytes"`
 	Error           string   `json:"error"`

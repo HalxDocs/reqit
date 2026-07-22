@@ -164,7 +164,7 @@ func runSequential(ctx context.Context, reqs []models.RunnerRequest, assertionsM
 			resp := models.ResponseResult{
 				StatusCode: res.StatusCode,
 				Status:     res.StatusText,
-				Body:       "",
+				Body:       res.Body,
 				TimingMs:   res.TimingMs,
 				SizeBytes:  res.SizeBytes,
 			}
@@ -194,6 +194,18 @@ func runConcurrent(ctx context.Context, reqs []models.RunnerRequest, assertionsM
 		go func(idx int, req models.RunnerRequest) {
 			defer wg.Done()
 			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					mu.Lock()
+					(*results)[idx] = models.RequestRunResult{
+						RequestID:   req.ID,
+						RequestName: req.Name,
+						Error:       fmt.Sprintf("panic: %v", r),
+					}
+					*failed++
+					mu.Unlock()
+				}
+			}()
 
 			env := make(map[string]string)
 			res := executeRequestWithRetries(ctx, req, assertionsMap, env)
@@ -257,6 +269,7 @@ func executeRequestWithRetries(ctx context.Context, req models.RunnerRequest, as
 			RequestName: req.Name,
 			StatusCode:  resp.StatusCode,
 			StatusText:  resp.Status,
+			Body:        resp.Body,
 			TimingMs:    resp.TimingMs,
 			SizeBytes:   resp.SizeBytes,
 			Error:       resp.Error,
@@ -307,6 +320,11 @@ func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
 	var err error
 	go func() {
 		defer close(done)
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("script panic: %v", r)
+			}
+		}()
 		val, err = vm.RunString(script)
 	}()
 	select {
@@ -314,7 +332,8 @@ func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
 		return val, err
 	case <-time.After(scriptTimeout):
 		vm.Interrupt("script timeout")
-		return nil, fmt.Errorf("script execution timed out after %v", scriptTimeout)
+		<-done
+		return val, err
 	}
 }
 

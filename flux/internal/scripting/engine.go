@@ -24,6 +24,11 @@ func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
 	var err error
 	go func() {
 		defer close(done)
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("script panic: %v", r)
+			}
+		}()
 		val, err = vm.RunString(script)
 	}()
 	select {
@@ -31,7 +36,9 @@ func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
 		return val, err
 	case <-time.After(scriptTimeout):
 		vm.Interrupt("script timeout")
-		return nil, fmt.Errorf("script execution timed out after %v", scriptTimeout)
+		// Wait briefly for goroutine to finish after interrupt
+		<-done
+		return val, err
 	}
 }
 

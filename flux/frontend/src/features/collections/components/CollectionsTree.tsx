@@ -219,27 +219,26 @@ export function CollectionsTree() {
     const url = prompt("Enter OpenAPI spec URL (leave empty to pick a local file):", "http://localhost:3000/openapi.json");
     if (url === null) return;
 
-    try {
-      if (url.trim()) {
-        // URL mode — fetch and save
-        toast.info("Downloading spec from URL...");
-        const relativePath = await FetchSpecFromURL(url.trim());
-        await LinkCollectionSpec(collID, relativePath);
-        await loadCollections();
-        toast.success("Spec linked from URL");
-      } else {
-        // File picker mode
-        const fp = await PickFile("Select OpenAPI Spec", "*.yaml;*.yml;*.json");
-        if (!fp) return;
-        const ws = await GetActiveWorkspace();
-        const dir = ws.dataDir.replace(/\\/g, "/");
-        const n = fp.replace(/\\/g, "/");
-        if (!n.startsWith(dir)) { toast.error("Spec file must be inside your workspace folder"); return; }
-        await LinkCollectionSpec(collID, n.slice(dir.length).replace(/^\//, ""));
-        await loadCollections();
-        toast.success("Spec linked");
-      }
-    } catch (e) { toast.error(String(e)); }
+        try {
+          if (url.trim()) {
+            toast.info("Downloading spec from URL...");
+            const relativePath = await FetchSpecFromURL(url.trim());
+            await LinkCollectionSpec(collID, relativePath);
+            await loadCollections();
+            toast.success("Spec linked from URL");
+          } else {
+            const fp = await PickFile("Select OpenAPI Spec", "*.yaml;*.yml;*.json");
+            if (!fp) return;
+            const ws = await GetActiveWorkspace();
+            if (!ws?.dataDir) { toast.error("No active workspace"); return; }
+            const dir = ws.dataDir.replace(/\\/g, "/");
+            const n = fp.replace(/\\/g, "/");
+            if (!n.startsWith(dir)) { toast.error("Spec file must be inside your workspace folder"); return; }
+            await LinkCollectionSpec(collID, n.slice(dir.length).replace(/^\//, ""));
+            await loadCollections();
+            toast.success("Spec linked");
+          }
+        } catch (e) { toast.error(String(e)); }
   };
 
   const handleUnlinkSpec = async (collID: string, sp: string) => {

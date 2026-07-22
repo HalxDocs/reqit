@@ -247,6 +247,11 @@ func runCustomScript(ctx *Context, script string) string {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
+			defer func() {
+				if r := recover(); r != nil {
+					scriptErr = fmt.Errorf("script panic: %v", r)
+				}
+			}()
 			_, err := vm.RunString(script)
 			if err != nil {
 				scriptErr = fmt.Errorf("script error: %v", err)
@@ -256,7 +261,10 @@ func runCustomScript(ctx *Context, script string) string {
 		case <-done:
 		case <-time.After(10 * time.Second):
 			vm.Interrupt("script timeout")
-			scriptErr = fmt.Errorf("script execution timed out")
+			<-done
+			if scriptErr == nil {
+				scriptErr = fmt.Errorf("script execution timed out")
+			}
 		}
 	}()
 	if scriptErr != nil {

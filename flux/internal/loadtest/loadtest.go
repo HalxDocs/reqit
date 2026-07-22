@@ -51,6 +51,16 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 		wg.Add(1)
 		go func(vuID int) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					mu.Lock()
+					samples = append(samples, models.LoadTestSample{
+						TimestampMs: time.Since(start).Milliseconds(),
+						Error:       true,
+					})
+					mu.Unlock()
+				}
+			}()
 
 			if rampUp > 0 && vuID > 0 {
 				delay := time.Duration(float64(vuID)*rampInterval*1000) * time.Millisecond

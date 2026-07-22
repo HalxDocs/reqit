@@ -452,9 +452,9 @@ func (a *App) DeleteWorkspace(id string) error {
 	if dir, err := a.workspaces.ActiveDir(); err == nil && dir != "" {
 		a.mountWorkspace(dir)
 	} else {
-		a.collections = nil
-		a.history = nil
-		a.environments = nil
+		a.collections = collections.NewStore("")
+		a.history = history.NewStore("")
+		a.environments = environments.NewStore("")
 	}
 	return nil
 }

@@ -10,12 +10,12 @@ export function PerformanceChart() {
     if (!currentUrl) return [];
     const urlBase = currentUrl.split("?")[0].toLowerCase();
     return entries
-      .filter((e) => e.payload.url?.toLowerCase().split("?")[0] === urlBase && e.response.timingMs > 0)
+      .filter((e) => e.response && e.payload.url?.toLowerCase().split("?")[0] === urlBase && e.response.timingMs > 0)
       .slice(-50)
       .map((e) => ({
         time: e.createdAt,
-        timingMs: e.response.timingMs,
-        status: e.response.statusCode,
+        timingMs: e.response!.timingMs,
+        status: e.response!.statusCode,
       }));
   }, [entries, currentUrl]);
 
