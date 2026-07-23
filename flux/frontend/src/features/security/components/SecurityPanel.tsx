@@ -410,7 +410,9 @@ function AuditTab({ onMsg }: { onMsg: (m: string) => void }) {
         <Button onClick={query}>Query</Button>
       </div>
       <div className="space-y-1 max-h-[500px] overflow-y-auto">
-        {renderEntries().map((e: any, i: number) => (
+        {renderEntries().length === 0 ? (
+          <p className="text-12 text-subtext">No audit entries found.</p>
+        ) : renderEntries().map((e: any, i: number) => (
           <div key={i} className="flex items-start gap-2 bg-surface px-3 py-2 rounded-lg border border-border text-12">
             <span className="text-10 text-subtext/50 font-mono shrink-0">{new Date(e.ts).toLocaleString()}</span>
             <span className="text-cyan font-semibold shrink-0">{e.actor}</span>

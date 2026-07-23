@@ -310,6 +310,10 @@ func (a *App) InstallUpdate(manifest updater.UpdateManifest) error {
 	return u.Apply(a.ctx, manifest)
 }
 
+func (a *App) RestartApp() error {
+	return updater.RestartApp()
+}
+
 // mountWorkspace reinitializes the scoped stores with a new data directory.
 // Called at startup and whenever the user switches workspaces.
 func (a *App) mountWorkspace(dir string) {
@@ -428,6 +432,9 @@ func (a *App) CreateWorkspace(name, description, color string) (workspaces.Info,
 	if err != nil {
 		return workspaces.Info{}, err
 	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionCreate, "workspace", info.ID, "", map[string]string{"name": name})
+	}
 	a.mountWorkspace(info.DataDir)
 	return info, nil
 }
@@ -449,6 +456,9 @@ func (a *App) RenameWorkspace(id, name string) error {
 func (a *App) DeleteWorkspace(id string) error {
 	if err := a.workspaces.Delete(id); err != nil {
 		return err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionDelete, "workspace", id, "", nil)
 	}
 	// Re-mount whatever is now active (may be empty).
 	if dir, err := a.workspaces.ActiveDir(); err == nil && dir != "" {

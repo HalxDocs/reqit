@@ -710,6 +710,10 @@ export function ReorderRequest(arg1, arg2, arg3) {
   return window['go']['main']['App']['ReorderRequest'](arg1, arg2, arg3);
 }
 
+export function RestartApp() {
+  return window['go']['main']['App']['RestartApp']();
+}
+
 export function RunCollection(arg1, arg2) {
   return window['go']['main']['App']['RunCollection'](arg1, arg2);
 }

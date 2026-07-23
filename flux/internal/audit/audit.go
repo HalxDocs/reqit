@@ -190,6 +190,9 @@ func formatTime(ts int64) string {
 
 // MarshalEntries serialises a slice of audit entries to JSON.
 func MarshalEntries(entries []Entry) (string, error) {
+	if len(entries) == 0 {
+		return "[]", nil
+	}
 	data, err := json.Marshal(entries)
 	if err != nil {
 		return "", err

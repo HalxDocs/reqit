@@ -13,6 +13,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"flux/internal/audit"
 	"flux/internal/contract"
 	curlpkg "flux/internal/curl"
 	htmldoc "flux/internal/export/html"
@@ -59,7 +60,13 @@ func (a *App) ExportOpenAPI(collectionID string) (string, error) {
 	}
 	for _, c := range all {
 		if c.ID == collectionID {
-			return openapi.Export(c)
+			result, err := openapi.Export(c)
+			if err == nil && a.audit != nil {
+				_ = a.audit.Log("user", audit.ActionExport, "collection", collectionID, "", map[string]string{
+					"format": "openapi",
+				})
+			}
+			return result, err
 		}
 	}
 	return "", fmt.Errorf("collection not found: %s", collectionID)
@@ -136,6 +143,12 @@ func (a *App) ImportPostman(targetCollID, jsonData string) (int, error) {
 		if _, err := a.collections.AddRequest(targetCollID, r.Name, r.Payload); err != nil {
 			return 0, err
 		}
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionImport, "collection", targetCollID, "", map[string]string{
+			"source": "postman",
+			"count":  fmt.Sprintf("%d", len(requests)),
+		})
 	}
 	return len(requests), nil
 }
@@ -242,6 +255,12 @@ func (a *App) ImportInsomnia(jsonData, targetCollID string) (int, error) {
 		}
 	}
 	runtime.EventsEmit(a.ctx, "collections:changed")
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionImport, "collection", targetCollID, "", map[string]string{
+			"source": "insomnia",
+			"count":  fmt.Sprintf("%d", len(result.Requests)),
+		})
+	}
 	return len(result.Requests), nil
 }
 
@@ -349,6 +368,12 @@ func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
 	}
 
 	runtime.EventsEmit(a.ctx, "collections:changed")
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionImport, "spec", filepath.Base(path), "", map[string]string{
+			"source": "openapi",
+			"collections": fmt.Sprintf("%d", len(result.Collections)),
+		})
+	}
 	return result, nil
 }
 
@@ -448,6 +473,12 @@ func (a *App) ImportHAR(jsonData, targetCollID string) (int, error) {
 	}
 
 	runtime.EventsEmit(a.ctx, "collections:changed")
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionImport, "collection", collID, "", map[string]string{
+			"source": "har",
+			"count":  fmt.Sprintf("%d", count),
+		})
+	}
 	return count, nil
 }
 

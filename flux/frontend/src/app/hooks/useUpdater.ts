@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
-import { InstallUpdate, CheckForUpdates } from "../../../wailsjs/go/main/App";
+import { InstallUpdate, CheckForUpdates, RestartApp } from "../../../wailsjs/go/main/App";
 import type { updater } from "../../../wailsjs/go/models";
 
 export function useUpdater() {
@@ -37,10 +37,18 @@ export function useUpdater() {
     }
   };
 
+  const restart = async () => {
+    try {
+      await RestartApp();
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
   const dismiss = () => {
     if (update) localStorage.setItem("dismissed-version", update.version);
     setUpdate(null);
   };
 
-  return { update, installing, done, error, install, dismiss };
+  return { update, installing, done, error, install, restart, dismiss };
 }

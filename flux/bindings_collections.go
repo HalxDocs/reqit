@@ -6,6 +6,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"flux/internal/audit"
 	cookiestore "flux/internal/cookies"
 	"flux/internal/environments"
 	"flux/internal/locks"
@@ -27,6 +28,9 @@ func (a *App) CreateCollection(name string) (models.Collection, error) {
 	}
 	c, err := a.collections.CreateCollection(name)
 	if err == nil {
+		if a.audit != nil {
+			_ = a.audit.Log("user", audit.ActionCreate, "collection", c.ID, "", map[string]string{"name": name})
+		}
 		go a.autoSync("create collection " + name)
 	}
 	return c, err
@@ -39,6 +43,9 @@ func (a *App) RenameCollection(id, name string) error {
 	if err := a.collections.RenameCollection(id, name); err != nil {
 		return err
 	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionUpdate, "collection", id, "", map[string]string{"name": name})
+	}
 	go a.autoSync("rename collection to " + name)
 	return nil
 }
@@ -49,6 +56,9 @@ func (a *App) DeleteCollection(id string) error {
 	}
 	if err := a.collections.DeleteCollection(id); err != nil {
 		return err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionDelete, "collection", id, "", nil)
 	}
 	go a.autoSync("delete collection " + id)
 	return nil
@@ -72,6 +82,12 @@ func (a *App) UpdateSavedRequest(reqID, name string, payload models.RequestPaylo
 	if err := a.collections.UpdateRequest(reqID, name, payload); err != nil {
 		return err
 	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionUpdate, "request", reqID, "", map[string]string{
+			"method": payload.Method,
+			"url":    payload.URL,
+		})
+	}
 	go a.autoSync("update request " + name)
 	return nil
 }
@@ -93,6 +109,9 @@ func (a *App) DeleteSavedRequest(reqID string) error {
 	}
 	if err := a.collections.DeleteRequest(reqID); err != nil {
 		return err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionDelete, "request", reqID, "", nil)
 	}
 	go a.autoSync("delete request " + reqID)
 	return nil
@@ -187,6 +206,9 @@ func (a *App) CreateEnvironment(name string) (models.Environment, error) {
 	}
 	e, err := a.environments.Create(name)
 	if err == nil {
+		if a.audit != nil {
+			_ = a.audit.Log("user", audit.ActionCreate, "environment", e.ID, "", map[string]string{"name": name})
+		}
 		go a.autoSync("create environment " + name)
 	}
 	return e, err
@@ -199,6 +221,9 @@ func (a *App) UpdateEnvironment(id, name string, vars []models.EnvVar) error {
 	if err := a.environments.Update(id, name, vars); err != nil {
 		return err
 	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionUpdate, "environment", id, "", map[string]string{"name": name})
+	}
 	go a.autoSync("update environment " + name)
 	return nil
 }
@@ -209,6 +234,9 @@ func (a *App) DeleteEnvironment(id string) error {
 	}
 	if err := a.environments.Delete(id); err != nil {
 		return err
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionDelete, "environment", id, "", nil)
 	}
 	go a.autoSync("delete environment " + id)
 	return nil

@@ -1,0 +1,169 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+            asset_name: reqit-linux-amd64.tar.gz
+            pack: tar
+          - os: macos-latest
+            platform: darwin/universal
+            asset_name: reqit-darwin-universal.zip
+            pack: zip
+          - os: windows-latest
+            platform: windows/amd64
+            asset_name: reqit-windows-amd64.zip
+            pack: zip
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Get tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build
+        run: |
+          wails build \
+            -platform ${{ matrix.platform }} \
+            -ldflags "-s -w -X 'flux/internal/updater.CurrentVersion=${{ steps.tag.outputs.tag }}'"
+
+      - name: Package (tar.gz)
+        if: matrix.pack == 'tar'
+        run: |
+          cd build/bin
+          tar czf ../../${{ matrix.asset_name }} reqit
+        shell: bash
+
+      - name: Package (zip)
+        if: matrix.pack == 'zip'
+        run: |
+          cd build/bin
+          7z a -tzip ../../${{ matrix.asset_name }} reqit*
+        shell: bash
+        working-directory: .
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          echo "hash=$(sha256sum ${{ matrix.asset_name }} | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: |
+            ${{ matrix.asset_name }}
+          fail_on_unmatched_files: false
+
+  # Build NSIS installer for Windows (separate job since wails handles it)
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Get tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build installer
+        run: wails build -platform windows/amd64 -ldflags "-s -w -X 'flux/internal/updater.CurrentVersion=${{ steps.tag.outputs.tag }}'"
+
+      - name: Rename installer
+        run: |
+          mv build/bin/*-installer.exe reqit-windows-amd64-installer.exe
+        shell: bash
+
+      - name: Compute installer SHA256
+        id: sha
+        run: |
+          echo "hash=$(sha256sum reqit-windows-amd64-installer.exe | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Upload installer to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: reqit-windows-amd64-installer.exe
+          fail_on_unmatched_files: false
+
+  generate-manifest:
+    needs: [build, build-windows-installer]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Download all release artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: ""
+          list: true
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate SHA256SUMS
+        run: |
+          for f in *.zip *.tar.gz *.exe; do
+            [ -f "$f" ] || continue
+            sha256sum "$f"
+          done > SHA256SUMS.txt
+        shell: bash
+
+      - name: Generate manifest
+        run: python3 scripts/gen_manifest.py ${{ steps.tag.outputs.tag }} > latest.json
+        shell: bash
+
+      - name: Upload manifest to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: latest.json
+          fail_on_unmatched_files: false

@@ -372,6 +372,8 @@ export function ReorderCollection(arg1:string,arg2:number):Promise<void>;
 
 export function ReorderRequest(arg1:string,arg2:string,arg3:number):Promise<void>;
 
+export function RestartApp():Promise<void>;
+
 export function RunCollection(arg1:Array<models.RunnerRequest>,arg2:Record<string, models.Assertion>):Promise<models.CollectionRunResult>;
 
 export function RunCollectionWithConcurrency(arg1:Array<models.RunnerRequest>,arg2:Record<string, models.Assertion>,arg3:number):Promise<models.CollectionRunResult>;

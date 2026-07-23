@@ -10,6 +10,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"flux/internal/audit"
 	"flux/internal/contract"
 	"flux/internal/grpc"
 	graphqlpkg "flux/internal/graphqlpkg"
@@ -125,6 +126,14 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 
 	if a.history != nil {
 		_ = a.history.Append(payload, result)
+	}
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionRun, "request", "", "", map[string]string{
+			"method": payload.Method,
+			"url":    payload.URL,
+			"status": fmt.Sprintf("%d", result.StatusCode),
+			"error":  result.Error,
+		})
 	}
 	if result.Error == "" {
 		_ = a.profile.IncrementRequestCount()

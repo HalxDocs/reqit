@@ -9,6 +9,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"flux/internal/audit"
 	"flux/internal/external"
 	"flux/internal/loadtest"
 	"flux/internal/models"
@@ -20,7 +21,23 @@ import (
 )
 
 func (a *App) RunCollection(reqs []models.RunnerRequest, assertions map[string]models.Assertion) models.CollectionRunResult {
-	return runner.RunCollection(a.ctx, reqs, assertions)
+	result := runner.RunCollection(a.ctx, reqs, assertions)
+	if a.audit != nil {
+		pass, fail := 0, 0
+		for _, r := range result.Results {
+			if r.Error != "" {
+				fail++
+			} else {
+				pass++
+			}
+		}
+		_ = a.audit.Log("user", audit.ActionRun, "collection", "", "", map[string]string{
+			"total": fmt.Sprintf("%d", len(reqs)),
+			"pass":  fmt.Sprintf("%d", pass),
+			"fail":  fmt.Sprintf("%d", fail),
+		})
+	}
+	return result
 }
 
 func (a *App) RunCollectionWithConcurrency(reqs []models.RunnerRequest, assertions map[string]models.Assertion, maxConcurrent int) models.CollectionRunResult {
@@ -28,16 +45,41 @@ func (a *App) RunCollectionWithConcurrency(reqs []models.RunnerRequest, assertio
 }
 
 func (a *App) RunLoadTest(config models.LoadTestConfig) models.LoadTestResult {
-	return loadtest.RunLoadTest(config, a.cookies)
+	result := loadtest.RunLoadTest(config, a.cookies)
+	if a.audit != nil {
+		_ = a.audit.Log("user", audit.ActionRun, "loadtest", "", "", map[string]string{
+			"duration": fmt.Sprintf("%ds", config.DurationSec),
+			"vus":      fmt.Sprintf("%d", config.VUs),
+		})
+	}
+	return result
 }
 
 func (a *App) RunCollectionWithConfig(config models.RunnerConfig) models.CollectionRunResult {
 	reqs := config.Requests
 	assertionsMap := make(map[string]models.Assertion)
+	var result models.CollectionRunResult
 	if len(config.DataRows) > 0 {
-		return runner.RunCollectionDataDriven(a.ctx, reqs, assertionsMap, config.DataRows, config.Env)
+		result = runner.RunCollectionDataDriven(a.ctx, reqs, assertionsMap, config.DataRows, config.Env)
+	} else {
+		result = runner.RunCollection(a.ctx, reqs, assertionsMap, config.MaxConcurrent)
 	}
-	return runner.RunCollection(a.ctx, reqs, assertionsMap, config.MaxConcurrent)
+	if a.audit != nil {
+		pass, fail := 0, 0
+		for _, r := range result.Results {
+			if r.Error != "" {
+				fail++
+			} else {
+				pass++
+			}
+		}
+		_ = a.audit.Log("user", audit.ActionRun, "collection", "", "", map[string]string{
+			"total": fmt.Sprintf("%d", len(reqs)),
+			"pass":  fmt.Sprintf("%d", pass),
+			"fail":  fmt.Sprintf("%d", fail),
+		})
+	}
+	return result
 }
 
 func (a *App) CreateTestSuite(name, description, collID string) (models.TestSuite, error) {
