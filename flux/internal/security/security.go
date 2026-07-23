@@ -24,15 +24,24 @@ func ValidatePathWithinDir(dir, path string) error {
 	if !filepath.IsAbs(cleanPath) {
 		cleanPath = filepath.Join(cleanDir, cleanPath)
 	}
+	// Normalize to same volume/root for comparison
+	absDir, err := filepath.Abs(cleanDir)
+	if err != nil {
+		return fmt.Errorf("invalid directory: %w", err)
+	}
+	absPath, err := filepath.Abs(cleanPath)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
 	// Check for traversal
-	rel, err := filepath.Rel(cleanDir, cleanPath)
+	rel, err := filepath.Rel(absDir, absPath)
 	if err != nil {
 		return fmt.Errorf("invalid path: %w", err)
 	}
 	if strings.HasPrefix(rel, "..") {
 		return errors.New("path escapes workspace directory")
 	}
-	if len(cleanPath) > MaxFilePathLen {
+	if len(absPath) > MaxFilePathLen {
 		return errors.New("path too long")
 	}
 	return nil
