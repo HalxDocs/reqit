@@ -24,6 +24,7 @@ import (
 	"flux/internal/postman"
 	regpkg "flux/internal/registry"
 	schemapkg "flux/internal/schema"
+	"flux/internal/security"
 	"flux/internal/telemetry"
 )
 
@@ -513,6 +514,10 @@ func (a *App) InvalidateSpec(specPath string) {
 // FetchSpecFromURL downloads an OpenAPI spec from a URL, saves it to the
 // workspace folder, and returns the relative path suitable for LinkCollectionSpec.
 func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
+	if err := security.ValidateURL(rawURL); err != nil {
+		return "", err
+	}
+
 	dir, err := a.workspaces.ActiveDir()
 	if err != nil {
 		return "", err
@@ -530,6 +535,10 @@ func (a *App) FetchSpecFromURL(rawURL string) (string, error) {
 	// Ensure it has a valid extension.
 	if !strings.HasSuffix(name, ".json") && !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".yml") {
 		name += ".json"
+	}
+	// Validate filename doesn't escape workspace
+	if err := security.ValidatePathWithinDir(dir, name); err != nil {
+		return "", fmt.Errorf("invalid filename: %w", err)
 	}
 
 	client := &http.Client{Timeout: 15 * time.Second}

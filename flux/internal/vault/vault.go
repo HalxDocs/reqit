@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"flux/internal/security"
 )
 
 // Provider is the interface for secret vault backends.
@@ -57,6 +59,11 @@ func (p *OnePasswordProvider) GetSecret(path string) (string, error) {
 	if len(parts) < 2 {
 		return "", errors.New("path must be vault/item")
 	}
+	for _, part := range parts {
+		if err := security.SanitizeExecArg(part); err != nil {
+			return "", fmt.Errorf("invalid vault path: %w", err)
+		}
+	}
 	args := []string{"read", fmt.Sprintf("op://%s/%s", parts[0], parts[1])}
 	if p.token != "" {
 		args = append([]string{"--account", p.token}, args...)
@@ -72,6 +79,11 @@ func (p *OnePasswordProvider) SetSecret(path, value string) error {
 	parts := strings.SplitN(path, "/", 2)
 	if len(parts) < 2 {
 		return errors.New("path must be vault/item")
+	}
+	for _, part := range parts {
+		if err := security.SanitizeExecArg(part); err != nil {
+			return fmt.Errorf("invalid vault path: %w", err)
+		}
 	}
 	args := []string{"create", "item", "--vault=" + parts[0], "--title=" + parts[1],
 		fmt.Sprintf("password=%s", value)}
@@ -98,10 +110,16 @@ func NewHashiCorp(token, addr string) *HashiCorpProvider {
 func (p *HashiCorpProvider) Name() string { return "HashiCorp Vault" }
 
 func (p *HashiCorpProvider) GetSecret(path string) (string, error) {
+	if err := security.SanitizeExecArg(path); err != nil {
+		return "", fmt.Errorf("invalid vault path: %w", err)
+	}
 	return p.execWithToken("kv", "get", "-address="+p.addr, "-field=value", path)
 }
 
 func (p *HashiCorpProvider) SetSecret(path, value string) error {
+	if err := security.SanitizeExecArg(path); err != nil {
+		return fmt.Errorf("invalid vault path: %w", err)
+	}
 	_, err := p.execWithToken("kv", "put", "-address="+p.addr, path, "value="+value)
 	return err
 }
@@ -129,6 +147,9 @@ func NewAWS(secretKey, region string) *AWSProvider {
 func (p *AWSProvider) Name() string { return "AWS Secrets Manager" }
 
 func (p *AWSProvider) GetSecret(path string) (string, error) {
+	if err := security.SanitizeExecArg(path); err != nil {
+		return "", fmt.Errorf("invalid secret path: %w", err)
+	}
 	args := []string{"secretsmanager", "get-secret-value", "--secret-id", path, "--region", p.region,
 		"--query", "SecretString", "--output", "text"}
 	out, err := exec.Command("aws", args...).Output()
@@ -139,6 +160,9 @@ func (p *AWSProvider) GetSecret(path string) (string, error) {
 }
 
 func (p *AWSProvider) SetSecret(path, value string) error {
+	if err := security.SanitizeExecArg(path); err != nil {
+		return fmt.Errorf("invalid secret path: %w", err)
+	}
 	args := []string{"secretsmanager", "put-secret-value", "--secret-id", path,
 		"--secret-string", value, "--region", p.region}
 	_, err := exec.Command("aws", args...).Output()

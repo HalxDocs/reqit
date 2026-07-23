@@ -935,6 +935,7 @@ export namespace models {
 	    passed: boolean;
 	    statusCode: number;
 	    statusText: string;
+	    body?: string;
 	    timingMs: number;
 	    sizeBytes: number;
 	    error: string;
@@ -953,6 +954,7 @@ export namespace models {
 	        this.passed = source["passed"];
 	        this.statusCode = source["statusCode"];
 	        this.statusText = source["statusText"];
+	        this.body = source["body"];
 	        this.timingMs = source["timingMs"];
 	        this.sizeBytes = source["sizeBytes"];
 	        this.error = source["error"];

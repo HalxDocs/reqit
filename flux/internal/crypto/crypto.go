@@ -49,7 +49,7 @@ func (s *Store) SetKey(passphrase string) error {
 	if _, err := rand.Read(salt); err != nil {
 		return fmt.Errorf("salt: %w", err)
 	}
-	key := argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, keyLen)
+	key := argon2.IDKey([]byte(passphrase), salt, 3, 64*1024, 4, keyLen)
 	blob, err := json.Marshal(map[string]string{
 		"salt": hex.EncodeToString(salt),
 		"key":  hex.EncodeToString(key),

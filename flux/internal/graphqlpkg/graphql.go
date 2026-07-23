@@ -99,7 +99,7 @@ func Execute(req Request) Response {
 	}
 	defer resp.Body.Close()
 
-	respBytes, err := io.ReadAll(resp.Body)
+	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50MB limit
 	if err != nil {
 		return Response{
 			Errors:     []GraphQLError{{Message: fmt.Sprintf("Failed to read response body: %v", err)}},

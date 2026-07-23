@@ -17,6 +17,7 @@ import (
 	"flux/internal/mqtt"
 	"flux/internal/requester"
 	"flux/internal/scripting"
+	"flux/internal/security"
 	"flux/internal/soap"
 )
 
@@ -324,6 +325,13 @@ func (a *App) PickFile(title string, filter string) (string, error) {
 func (a *App) ReadFileText(path string) (string, error) {
 	if path == "" {
 		return "", errors.New("path is required")
+	}
+	dir, err := a.workspaces.ActiveDir()
+	if err != nil {
+		return "", err
+	}
+	if err := security.ValidatePathWithinDir(dir, path); err != nil {
+		return "", err
 	}
 	data, err := readFile(path)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/dop251/goja"
 	"flux/internal/models"
+	"flux/internal/security"
 )
 
 const scriptTimeout = 10 * time.Second
@@ -119,6 +120,11 @@ func reqSend(req map[string]interface{}) map[string]interface{} {
 	if method == "" {
 		method = "GET"
 	}
+	if err := security.ValidateURL(url); err != nil {
+		return map[string]interface{}{
+			"statusCode": 0, "body": fmt.Sprintf("Error: %v", err), "responseTime": int64(0),
+		}
+	}
 	bodyStr, _ := req["body"].(string)
 
 	var bodyReader io.Reader
@@ -151,7 +157,7 @@ func reqSend(req map[string]interface{}) map[string]interface{} {
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50MB limit
 	respHeaders := make(map[string]string)
 	for k := range resp.Header {
 		respHeaders[k] = resp.Header.Get(k)

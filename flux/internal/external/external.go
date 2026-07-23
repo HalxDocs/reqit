@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"flux/internal/models"
+	"flux/internal/security"
 )
 
 const playwrightTemplate = `// Auto-generated Playwright test from reqit collection: {{.Name}}
@@ -144,6 +145,9 @@ func GenerateJestTest(collection models.Collection, requests []models.SavedReque
 }
 
 func SaveTestFile(content, dir, filename string) (string, error) {
+	if err := security.ValidatePathWithinDir(dir, filename); err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}

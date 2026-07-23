@@ -33,7 +33,7 @@ export function TestSuitePanel({
   const load = useCallback(async () => {
     try {
       const list = await GetTestSuites();
-      setSuites(list);
+      setSuites(list ?? []);
     } catch { /* ignore */ }
   }, []);
 

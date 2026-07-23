@@ -307,7 +307,7 @@ func evaluateCondition(condition string, env map[string]string) bool {
 	script := fmt.Sprintf("(function() { return %s; })()", condition)
 	val, err := runScriptWithTimeout(vm, script)
 	if err != nil {
-		return true // run on error
+		return false // skip on error — safer than running unconditionally
 	}
 	return val.ToBoolean()
 }

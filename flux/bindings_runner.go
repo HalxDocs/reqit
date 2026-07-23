@@ -49,7 +49,7 @@ func (a *App) CreateTestSuite(name, description, collID string) (models.TestSuit
 
 func (a *App) GetTestSuites() []models.TestSuite {
 	if a.testSuites == nil {
-		return nil
+		return []models.TestSuite{}
 	}
 	return a.testSuites.GetAll()
 }

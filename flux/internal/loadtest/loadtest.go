@@ -27,6 +27,10 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 	if vus < 1 {
 		vus = 1
 	}
+	const maxVUs = 500
+	if vus > maxVUs {
+		vus = maxVUs
+	}
 
 	duration := time.Duration(config.DurationSec) * time.Second
 	if config.DurationSec <= 0 && config.Iterations <= 0 {

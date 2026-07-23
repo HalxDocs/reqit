@@ -83,7 +83,7 @@ func TestSaveAndReload(t *testing.T) {
 	sd := NewSpecDesign("SaveTest", "1.0")
 	sd.AddEndpoint("GET", "/ping", "Ping")
 	sd.path = specPath
-	if err := sd.Save(); err != nil {
+	if _, err := sd.Save(); err != nil {
 		t.Fatal(err)
 	}
 

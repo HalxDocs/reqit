@@ -166,25 +166,25 @@ func (sd *SpecDesign) RemoveEndpoint(method, path string) {
 	sd.dirty = true
 }
 
-// Save writes the spec to its file path.
-func (sd *SpecDesign) Save() error {
+// Save writes the spec to its file path and returns the actual path used.
+func (sd *SpecDesign) Save() (string, error) {
 	if !sd.dirty {
-		return nil
+		return sd.path, nil
 	}
 	data, err := sd.doc.MarshalJSON()
 	if err != nil {
-		return err
+		return "", err
 	}
 	path := sd.path
 	if path == "" {
 		path = fmt.Sprintf("%s.openapi.json", slugify(sd.doc.Info.Title))
 	}
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return err
+		return "", err
 	}
 	sd.path = path
 	sd.dirty = false
-	return nil
+	return path, nil
 }
 
 // Path returns the file path of the spec.

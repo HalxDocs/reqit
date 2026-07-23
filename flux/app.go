@@ -235,8 +235,8 @@ func (a *App) GetVersion() string {
 
 func (a *App) CreateSpec(title, version string) (string, error) {
 	sd := openapi.NewSpecDesign(title, version)
-	path := fmt.Sprintf("%s.openapi.json", strings.ReplaceAll(strings.ToLower(title), " ", "-"))
-	if err := sd.Save(); err != nil {
+	path, err := sd.Save()
+	if err != nil {
 		return "", fmt.Errorf("save spec: %w", err)
 	}
 	return path, nil
@@ -248,7 +248,8 @@ func (a *App) AddSpecEndpoint(specPath, method, path, summary string) error {
 		return err
 	}
 	sd.AddEndpoint(method, path, summary)
-	return sd.Save()
+	_, err = sd.Save()
+	return err
 }
 
 func (a *App) GetSpecEndpoints(specPath string) ([]openapi.EndpointSummary, error) {
@@ -265,7 +266,8 @@ func (a *App) RemoveSpecEndpoint(specPath, method, path string) error {
 		return err
 	}
 	sd.RemoveEndpoint(method, path)
-	return sd.Save()
+	_, err = sd.Save()
+	return err
 }
 
 func (a *App) GetPlugins() []plugin.RegisteredPlugin {

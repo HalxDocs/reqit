@@ -61,7 +61,7 @@ func Invoke(ctx context.Context, req GRPCRequest) *GRPCResponse {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50MB limit
 	duration := time.Since(start).Milliseconds()
 
 	headers := make(map[string]string)
