@@ -22,7 +22,7 @@ export function SpecEditor() {
 
   useEffect(() => {
     if (!specPath) return;
-    GetSpecEndpoints(specPath).then(setEndpoints).catch(() => setEndpoints([]));
+    GetSpecEndpoints(specPath).then((eps) => setEndpoints(eps ?? [])).catch(() => setEndpoints([]));
   }, [specPath]);
 
   const createSpec = useCallback(async () => {
@@ -51,7 +51,7 @@ export function SpecEditor() {
     try {
       await AddSpecEndpoint(specPath, method.toUpperCase(), path, summary);
       const eps = await GetSpecEndpoints(specPath);
-      setEndpoints(eps);
+      setEndpoints(eps ?? []);
       toast.success(`Added ${method.toUpperCase()} ${path}`);
     } catch (e) {
       toast.error(String(e));
@@ -63,14 +63,14 @@ export function SpecEditor() {
     if (!confirm(`Remove ${method} ${path}?`)) return;
     try {
       await RemoveSpecEndpoint(specPath, method, path);
-      setEndpoints(await GetSpecEndpoints(specPath));
+      setEndpoints((await GetSpecEndpoints(specPath)) ?? []);
       toast.success(`Removed ${method} ${path}`);
     } catch (e) {
       toast.error(String(e));
     }
   }, [specPath]);
 
-  const grouped = endpoints.reduce<Record<string, Endpoint[]>>((acc, ep) => {
+  const grouped = (endpoints ?? []).reduce<Record<string, Endpoint[]>>((acc, ep) => {
     (acc[ep.path] ??= []).push(ep);
     return acc;
   }, {});

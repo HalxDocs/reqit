@@ -172,12 +172,12 @@ export function TestSuitePanel({
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               placeholder="Suite name…"
-              className="h-[28px] flex-1 px-2 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
+              className="h-[32px] flex-1 px-2 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan"
             />
             <select
               value={newCollID}
               onChange={(e) => setNewCollID(e.target.value)}
-              className="h-[28px] px-1 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
+              className="h-[32px] px-1 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan"
             >
               <option value="">All</option>
               {collections.map((c) => (
@@ -187,9 +187,9 @@ export function TestSuitePanel({
             <button
               type="button"
               onClick={handleCreate}
-              className="flex items-center justify-center w-[28px] h-[28px] bg-cyan hover:bg-cyan-hover text-white rounded transition-colors"
+              className="flex items-center justify-center w-[32px] h-[32px] bg-cyan hover:bg-cyan-hover text-white rounded transition-colors"
             >
-              <Plus size={12} />
+              <Plus size={14} />
             </button>
           </div>
           <div className="flex flex-col gap-1 overflow-y-auto max-h-[320px]">
@@ -205,9 +205,9 @@ export function TestSuitePanel({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
-                  className="text-subtext hover:text-danger transition-colors"
+                  className="text-subtext hover:text-danger transition-colors p-1"
                 >
-                  <Trash2 size={10} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             ))}
@@ -223,12 +223,12 @@ export function TestSuitePanel({
                   type="text"
                   value={suite.name}
                   onChange={(e) => setSelected({ ...suite, name: e.target.value } as models.TestSuite)}
-                  className="h-[28px] flex-1 px-2 bg-surface border border-border rounded text-12 text-text font-semibold outline-none focus:border-cyan"
+                  className="h-[32px] flex-1 px-2 bg-surface border border-border rounded text-12 text-text font-semibold outline-none focus:border-cyan"
                 />
                   <button
                     type="button"
                     onClick={handleUpdate}
-                    className="h-[28px] px-3 bg-cyan hover:bg-cyan-hover text-white text-11 font-bold rounded transition-colors"
+                    className="h-[32px] px-4 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded transition-colors"
                   >
                     Save
                   </button>
@@ -236,9 +236,9 @@ export function TestSuitePanel({
                     type="button"
                     onClick={handleRun}
                     disabled={running}
-                    className="h-[28px] px-3 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-11 font-bold rounded transition-colors"
+                    className="h-[32px] px-4 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-12 font-bold rounded transition-colors"
                   >
-                    <Play size={11} />
+                    <Play size={12} />
                     {running ? "Running…" : "Run"}
                   </button>
                 </div>
@@ -281,9 +281,9 @@ export function TestSuitePanel({
               <button
                 type="button"
                 onClick={handleAddGroup}
-                className="flex items-center gap-1 text-11 text-cyan hover:text-cyan-hover transition-colors"
+                className="flex items-center gap-1.5 h-[32px] px-3 text-12 text-cyan hover:text-cyan-hover hover:bg-cyan/10 rounded transition-colors"
               >
-                <Plus size={12} />
+                <Plus size={13} />
                 Add group
               </button>
             </>
@@ -329,25 +329,25 @@ function GroupEditor({
           type="text"
           value={group.name}
           onChange={(e) => onChange({ ...group, name: e.target.value } as models.TestGroup)}
-          className="h-[24px] flex-1 px-2 bg-transparent border border-transparent hover:border-border rounded text-12 text-text outline-none focus:border-cyan"
+          className="h-[28px] flex-1 px-2 bg-transparent border border-transparent hover:border-border rounded text-12 text-text outline-none focus:border-cyan"
         />
         <select
           value={group.requestId}
           onChange={(e) => onChange({ ...group, requestId: e.target.value } as models.TestGroup)}
-          className="h-[24px] max-w-[160px] px-1 bg-surface border border-border rounded text-11 text-text outline-none focus:border-cyan"
+          className="h-[28px] max-w-[160px] px-1 bg-surface border border-border rounded text-12 text-text outline-none focus:border-cyan"
         >
           <option value="">Select request…</option>
           {allRequests.map((r) => (
             <option key={r.id} value={r.id}>{r.collName} / {r.name}</option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={() => onDelete(group.id)}
-          className="text-subtext hover:text-danger transition-colors"
-        >
-          <Trash2 size={10} />
-        </button>
+          <button
+            type="button"
+            onClick={() => onDelete(group.id)}
+            className="text-subtext hover:text-danger transition-colors p-1"
+          >
+            <Trash2 size={12} />
+          </button>
       </div>
       {expanded && (
         <div className="pl-5">
