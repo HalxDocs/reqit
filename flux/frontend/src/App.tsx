@@ -17,6 +17,7 @@ import { ImportPostmanModal } from "@/shared/components/ImportPostmanModal";
 import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
 import { WelcomeModal } from "@/app/components/WelcomeModal";
+import { WhatsNewModal } from "@/app/components/WhatsNewModal";
 import { MilestoneBanner } from "@/app/components/MilestoneBanner";
 import { DocsContentViewer } from "@/features/docs/components/DocsContentViewer";
 import { SpecEditor } from "@/features/spec/components/SpecEditor";
@@ -60,6 +61,7 @@ import { useUndoRedo } from "@/shared/lib/useUndoRedo";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { registerCommands } from "@/shared/lib/commands";
 import { useThemeStore } from "@/shared/lib/useTheme";
+import { GetVersion } from "../wailsjs/go/main/App";
 import "./App.css";
 
 type Screen = "loading" | "home" | "app";
@@ -186,6 +188,9 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
 
   const commandsInited = useRef(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const whatsNewModalOpen = useUIStore((s) => s.whatsNewModalOpen);
+  const closeWhatsNewModal = useUIStore((s) => s.closeWhatsNewModal);
   useEffect(() => {
     if (commandsInited.current) return;
     commandsInited.current = true;
@@ -307,6 +312,17 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   useKeyboardShortcuts();
   useTabSync();
 
+  // Auto-show What's New on version change
+  useEffect(() => {
+    GetVersion().then((v) => {
+      const seen = localStorage.getItem("flux:seen-version");
+      if (seen !== v && v !== "v0.0.0-dev") {
+        setWhatsNewOpen(true);
+      }
+    }).catch(() => {});
+  }, []);
+
+
   return (
     <div className="h-screen w-screen flex bg-bg text-text">
       <a
@@ -419,6 +435,14 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           collection={runnerColl}
         />
       )}
+      <WhatsNewModal
+        open={whatsNewOpen || whatsNewModalOpen}
+        onClose={() => {
+          setWhatsNewOpen(false);
+          closeWhatsNewModal();
+          GetVersion().then((v) => localStorage.setItem("flux:seen-version", v)).catch(() => {});
+        }}
+      />
       <ToastHost />
     </div>
   );

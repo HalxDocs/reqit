@@ -101,6 +101,10 @@ type UIStore = {
   envCompareModalOpen: boolean;
   openEnvCompareModal: () => void;
   closeEnvCompareModal: () => void;
+
+  whatsNewModalOpen: boolean;
+  openWhatsNewModal: () => void;
+  closeWhatsNewModal: () => void;
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -230,4 +234,11 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ envCompareModalOpen: true });
   },
   closeEnvCompareModal: () => set({ envCompareModalOpen: false }),
+
+  whatsNewModalOpen: false,
+  openWhatsNewModal: () => {
+    if (get().whatsNewModalOpen) return;
+    set({ whatsNewModalOpen: true });
+  },
+  closeWhatsNewModal: () => set({ whatsNewModalOpen: false }),
 }));

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck, Sparkles } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { useGitStore } from "@/features/git/stores/useGitStore";
@@ -75,6 +75,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openTestSuites = useUIStore((s) => s.openTestSuitesModal);
   const openTeam = useUIStore((s) => s.openTeamModal);
   const openDevProfile = useUIStore((s) => s.openDevProfileModal);
+  const openWhatsNew = useUIStore((s) => s.openWhatsNewModal);
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
   const profile = useProfileStore((s) => s.profile);
@@ -327,6 +328,19 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
           </div>
           <span className="text-12 text-subtext group-hover:text-text transition-colors">Dev Profile</span>
           <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">Public URL</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={openWhatsNew}
+          className="w-full h-[36px] px-3 flex items-center gap-2 hover:bg-cardHover transition-colors text-left group"
+          title="What's New — see what's changed in this release"
+        >
+          <div className="w-[22px] h-[22px] rounded-full bg-amber-500/15 flex items-center justify-center text-amber-400 shrink-0">
+            <Sparkles size={11} />
+          </div>
+          <span className="text-12 text-subtext group-hover:text-text transition-colors">What's New</span>
+          <span className="ml-auto text-10 text-subtext/50 group-hover:text-subtext transition-colors">v1.1.0</span>
         </button>
 
         <button
