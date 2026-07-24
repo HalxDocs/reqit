@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Sidebar } from "@/app/layout/Sidebar";
 import { TabBar } from "@/features/tabs/components/TabBar";
 import { UrlBar } from "@/features/request/components/UrlBar";
@@ -52,7 +52,7 @@ import { useTabSync } from "@/features/collections/hooks/useTabSync";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
-import { useUIStore } from "@/app/stores/useUIStore";
+import { useUIStore, type WorkspaceView } from "@/app/stores/useUIStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
@@ -62,6 +62,7 @@ import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore
 import { registerCommands } from "@/shared/lib/commands";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetVersion } from "../wailsjs/go/main/App";
+import type { NavTarget } from "@/app/data/releaseNotes";
 import "./App.css";
 
 type Screen = "loading" | "home" | "app";
@@ -158,6 +159,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const runnerCollID = useUIStore((s) => s.runnerCollID);
   const closeRunner = useUIStore((s) => s.closeRunner);
   const view = useUIStore((s) => s.view);
+  const setView = useUIStore((s) => s.setView);
   const collections = useCollectionStore((s) => s.collections);
   const runnerColl = runnerCollID ? collections.find((c) => c.id === runnerCollID) : null;
   const openSaveModal = useUIStore((s) => s.openSaveModal);
@@ -167,6 +169,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const devProfileOpen = useUIStore((s) => s.devProfileModalOpen);
   const closeDevProfile = useUIStore((s) => s.closeDevProfileModal);
   const openCodeGen = useUIStore((s) => s.openCodeGenModal);
+  const openTeam = useUIStore((s) => s.openTeamModal);
+  const openDevProfile = useUIStore((s) => s.openDevProfileModal);
   const loadTestOpen = useUIStore((s) => s.loadTestModalOpen);
   const closeLoadTest = useUIStore((s) => s.closeLoadTestModal);
   const testSuitesOpen = useUIStore((s) => s.testSuitesModalOpen);
@@ -186,6 +190,42 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const responseBodyView = useUIStore((s) => s.responseBodyView);
   const setResponseBodyView = useUIStore((s) => s.setResponseBodyView);
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+  const openWhatsNew = useUIStore((s) => s.openWhatsNewModal);
+  const closeWhatsNew = useUIStore((s) => s.closeWhatsNewModal);
+
+  const handleNavTarget = useCallback((target: NavTarget) => {
+    if (target.startsWith("view:")) {
+      setView(target.replace("view:", "") as WorkspaceView);
+    } else if (target.startsWith("modal:")) {
+      const modal = target.replace("modal:", "");
+      switch (modal) {
+        case "settings": openSettings(); break;
+        case "shortcuts": openShortcutsModal(); break;
+        case "env": openEnvModal(); break;
+        case "import": openImport(); break;
+        case "codegen": openCodeGen(); break;
+        case "team": openTeam(); break;
+        case "devprofile": openDevProfile(); break;
+        case "pastecurl": openPasteCurl(); break;
+        case "save": openSaveModal(); break;
+        case "runner": {
+          const colls = useCollectionStore.getState().collections;
+          if (colls.length > 0) useUIStore.getState().openRunner(colls[0].id);
+          break;
+        }
+        case "envcompare": {
+          const { openEnvCompareModal } = useUIStore.getState();
+          openEnvCompareModal();
+          break;
+        }
+        case "testsuites": {
+          const { openTestSuitesModal } = useUIStore.getState();
+          openTestSuitesModal();
+          break;
+        }
+      }
+    }
+  }, [setView, openSettings, openShortcutsModal, openEnvModal, openImport, openCodeGen, openTeam, openDevProfile, openPasteCurl, openSaveModal]);
 
   const commandsInited = useRef(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
@@ -442,6 +482,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           closeWhatsNewModal();
           GetVersion().then((v) => localStorage.setItem("flux:seen-version", v)).catch(() => {});
         }}
+        onNavigate={handleNavTarget}
       />
       <ToastHost />
     </div>

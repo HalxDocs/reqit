@@ -1,141 +1,182 @@
+export type NavTarget =
+  | "view:http"
+  | "view:socket"
+  | "view:sse"
+  | "view:scheduler"
+  | "view:graphql"
+  | "view:grpc"
+  | "view:spec"
+  | "view:docs"
+  | "view:pr"
+  | "view:interceptor"
+  | "view:integrations"
+  | "view:security"
+  | "view:migration"
+  | "view:agentlens"
+  | "view:growth"
+  | "view:plugins"
+  | "view:loadtest"
+  | "view:mockpanel"
+  | "modal:settings"
+  | "modal:shortcuts"
+  | "modal:env"
+  | "modal:import"
+  | "modal:codegen"
+  | "modal:team"
+  | "modal:devprofile"
+  | "modal:pastecurl"
+  | "modal:save"
+  | "modal:runner"
+  | "modal:envcompare"
+  | "modal:testsuites";
+
+export interface FeatureItem {
+  label: string;
+  nav: NavTarget;
+}
+
+export interface FeatureCategory {
+  category: string;
+  items: FeatureItem[];
+}
+
+export const allFeatures: FeatureCategory[] = [
+  {
+    category: "Protocols",
+    items: [
+      { label: "HTTP/HTTPS request execution with full auth support (Basic, Bearer, OAuth2, Digest, API Key)", nav: "view:http" },
+      { label: "WebSocket client with real-time message search and event callbacks", nav: "view:socket" },
+      { label: "Socket.IO client — connect, emit, and listen to events", nav: "view:socket" },
+      { label: "Server-Sent Events viewer", nav: "view:sse" },
+      { label: "gRPC unary and server-streaming invocation via gRPC-Web", nav: "view:grpc" },
+      { label: "GraphQL query execution and schema introspection", nav: "view:graphql" },
+      { label: "MQTT client — publish and subscribe over HTTP bridge", nav: "view:http" },
+      { label: "SOAP envelope builder (1.1 and 1.2)", nav: "view:http" },
+    ],
+  },
+  {
+    category: "Collections & Environments",
+    items: [
+      { label: "Collection CRUD with folder nesting (slash-delimited names)", nav: "view:http" },
+      { label: "Tab pinning — keep important requests from closing", nav: "view:http" },
+      { label: "Request notes — attach context to every call", nav: "view:http" },
+      { label: "Environment variables with named environments and quick-switch", nav: "modal:env" },
+      { label: "Environment comparison — side-by-side diff of any two environments", nav: "modal:envcompare" },
+      { label: "Auto-save — unsaved changes don't vanish", nav: "view:http" },
+      { label: "Collection search and filtering", nav: "view:http" },
+      { label: "Collection-level variables editor", nav: "view:http" },
+    ],
+  },
+  {
+    category: "Request Builder",
+    items: [
+      { label: "URL parameters editor with key-value pairs", nav: "view:http" },
+      { label: "Headers editor with autocomplete", nav: "view:http" },
+      { label: "Request body — raw, form-data, multipart, binary, GraphQL", nav: "view:http" },
+      { label: "Authentication configuration — Basic, Bearer, OAuth2, API Key, Digest", nav: "view:http" },
+      { label: "Pre-request and post-request JavaScript scripts (Goja runtime)", nav: "view:http" },
+      { label: "Faker variables — {{$randomInt}}, {{$randomEmail}}, {{$randomUUID}}, etc.", nav: "view:http" },
+      { label: "cURL command import and export", nav: "modal:pastecurl" },
+      { label: "Code generation — JavaScript, Python, Go, cURL, and more", nav: "modal:codegen" },
+      { label: "OAuth2 authorization code flow with PKCE", nav: "view:http" },
+      { label: "JWT decoder — inspect header and claims", nav: "view:http" },
+    ],
+  },
+  {
+    category: "Response Viewer",
+    items: [
+      { label: "Response body — pretty-print, raw, hex, collapsible JSON tree view", nav: "view:http" },
+      { label: "Response headers viewer", nav: "view:http" },
+      { label: "Response cookies viewer", nav: "view:http" },
+      { label: "Response status bar — status code, timing, size", nav: "view:http" },
+      { label: "Response body search with match navigation", nav: "view:http" },
+      { label: "Security warnings for suspicious responses", nav: "view:http" },
+      { label: "Performance charts — timing SVG chart with avg, P95, max over time", nav: "view:http" },
+      { label: "Request timeline visualization", nav: "view:http" },
+      { label: "Diff snapshots — compare responses between runs", nav: "view:http" },
+      { label: "Contract validation badge — OpenAPI spec compliance", nav: "view:http" },
+      { label: "Copy headers to clipboard — one click", nav: "view:http" },
+    ],
+  },
+  {
+    category: "Runner & Testing",
+    items: [
+      { label: "Collection runner — execute all requests in sequence or parallel", nav: "modal:runner" },
+      { label: "Data-driven runner — feed CSV/JSON rows, iterate per row", nav: "modal:runner" },
+      { label: "Response assertions — status, timing, body, JSONPath, header, regex, custom JS", nav: "modal:testsuites" },
+      { label: "Test suite builder — nested groups of assertions", nav: "modal:testsuites" },
+      { label: "Load testing — configurable virtual users and duration", nav: "view:loadtest" },
+      { label: "Scheduled runs — cron-based collection execution", nav: "view:scheduler" },
+      { label: "JSON and HTML test report generation", nav: "view:http" },
+    ],
+  },
+  {
+    category: "Import & Export",
+    items: [
+      { label: "OpenAPI 3.0 import/export — convert specs to collections and back", nav: "modal:import" },
+      { label: "Postman v2.0/v2.1 import/export with secret scanning", nav: "modal:import" },
+      { label: "Insomnia import/export", nav: "modal:import" },
+      { label: "Hoppscotch import/export", nav: "modal:import" },
+      { label: "HAR import — drag in browser archives, get collections back", nav: "modal:import" },
+      { label: "cURL command import", nav: "modal:pastecurl" },
+      { label: "Markdown and HTML API documentation export", nav: "view:http" },
+      { label: "SwaggerHub and Stoplight registry push/pull", nav: "view:integrations" },
+    ],
+  },
+  {
+    category: "Collaboration",
+    items: [
+      { label: "Native Git integration — commit, push, pull, branches, merge, stash, diff, conflict resolution", nav: "view:pr" },
+      { label: "WebSocket-based real-time collaboration sync", nav: "view:pr" },
+      { label: "Inline commentary — threaded discussions on requests", nav: "view:pr" },
+      { label: "Role-based access control (Viewer, Editor, Admin)", nav: "view:security" },
+      { label: "Team invites via Git ref branches", nav: "modal:team" },
+      { label: "Developer profile for public web sharing", nav: "modal:devprofile" },
+    ],
+  },
+  {
+    category: "Mock Server",
+    items: [
+      { label: "In-memory mock HTTP server with dynamic route registry", nav: "view:mockpanel" },
+      { label: "Condition-based response rules (header, query, method, path matching)", nav: "view:mockpanel" },
+      { label: "Traffic recording — capture real requests and replay as mocks", nav: "view:mockpanel" },
+      { label: "Stateful mock behavior — per-route/session counters", nav: "view:mockpanel" },
+    ],
+  },
+  {
+    category: "Developer Tools",
+    items: [
+      { label: "OpenAPI spec designer — programmatic spec construction and editing", nav: "view:spec" },
+      { label: "Schema drift detection — compare OpenAPI snapshots", nav: "view:spec" },
+      { label: "Agent Lens — analyze collections for AI agent readiness", nav: "view:agentlens" },
+      { label: "Browser traffic interceptor — local HTTP MITM proxy with Chrome extension", nav: "view:interceptor" },
+      { label: "Keyboard shortcut remapping — click any shortcut, press your key", nav: "modal:shortcuts" },
+      { label: "Command palette (Ctrl+K)", nav: "view:http" },
+      { label: "AI-powered response diagnosis and assertion generation", nav: "view:http" },
+      { label: "Plugin system — auth providers, visualizers, codegen, hooks", nav: "view:plugins" },
+      { label: "Air-gapped mode for security-sensitive environments", nav: "view:security" },
+    ],
+  },
+  {
+    category: "Security & Compliance",
+    items: [
+      { label: "AES-256-GCM encryption with Argon2 key derivation", nav: "view:security" },
+      { label: "Secrets vault — 1Password CLI and local encrypted file providers", nav: "view:security" },
+      { label: "Enterprise SSO — SAML 2.0 and OIDC provider management", nav: "view:security" },
+      { label: "Data masking engine with configurable regex rules", nav: "view:security" },
+      { label: "Audit trail — all operations logged and filterable", nav: "view:security" },
+      { label: "Role-based access control (RBAC)", nav: "view:security" },
+      { label: "Path traversal and URL safety validation", nav: "view:security" },
+    ],
+  },
+];
+
 export interface ReleaseNote {
   version: string;
   date: string;
   title: string;
   highlights: { category?: string; items: string[] }[];
 }
-
-export const allFeatures: { category: string; items: string[] }[] = [
-  {
-    category: "Protocols",
-    items: [
-      "HTTP/HTTPS request execution with full auth support (Basic, Bearer, OAuth2, Digest, API Key)",
-      "WebSocket client with real-time message search and event callbacks",
-      "Socket.IO client — connect, emit, and listen to events",
-      "Server-Sent Events viewer",
-      "gRPC unary and server-streaming invocation via gRPC-Web",
-      "GraphQL query execution and schema introspection",
-      "MQTT client — publish and subscribe over HTTP bridge",
-      "SOAP envelope builder (1.1 and 1.2)",
-    ],
-  },
-  {
-    category: "Collections & Environments",
-    items: [
-      "Collection CRUD with folder nesting (slash-delimited names)",
-      "Tab pinning — keep important requests from closing",
-      "Request notes — attach context to every call",
-      "Environment variables with named environments and quick-switch",
-      "Environment comparison — side-by-side diff of any two environments",
-      "Auto-save — unsaved changes don't vanish",
-      "Collection search and filtering",
-      "Collection-level variables editor",
-    ],
-  },
-  {
-    category: "Request Builder",
-    items: [
-      "URL parameters editor with key-value pairs",
-      "Headers editor with autocomplete",
-      "Request body — raw, form-data, multipart, binary, GraphQL",
-      "Authentication configuration — Basic, Bearer, OAuth2, API Key, Digest",
-      "Pre-request and post-request JavaScript scripts (Goja runtime)",
-      "Faker variables — {{$randomInt}}, {{$randomEmail}}, {{$randomUUID}}, etc.",
-      "cURL command import and export",
-      "Code generation — JavaScript, Python, Go, cURL, and more",
-      "OAuth2 authorization code flow with PKCE",
-      "JWT decoder — inspect header and claims",
-    ],
-  },
-  {
-    category: "Response Viewer",
-    items: [
-      "Response body — pretty-print, raw, hex, collapsible JSON tree view",
-      "Response headers viewer",
-      "Response cookies viewer",
-      "Response status bar — status code, timing, size",
-      "Response body search with match navigation",
-      "Security warnings for suspicious responses",
-      "Performance charts — timing SVG chart with avg, P95, max over time",
-      "Request timeline visualization",
-      "Diff snapshots — compare responses between runs",
-      "Contract validation badge — OpenAPI spec compliance",
-      "Copy headers to clipboard — one click",
-    ],
-  },
-  {
-    category: "Runner & Testing",
-    items: [
-      "Collection runner — execute all requests in sequence or parallel",
-      "Data-driven runner — feed CSV/JSON rows, iterate per row",
-      "Response assertions — status, timing, body, JSONPath, header, regex, custom JS",
-      "Test suite builder — nested groups of assertions",
-      "Load testing — configurable virtual users and duration",
-      "Scheduled runs — cron-based collection execution",
-      "JSON and HTML test report generation",
-    ],
-  },
-  {
-    category: "Import & Export",
-    items: [
-      "OpenAPI 3.0 import/export — convert specs to collections and back",
-      "Postman v2.0/v2.1 import/export with secret scanning",
-      "Insomnia import/export",
-      "Hoppscotch import/export",
-      "HAR import — drag in browser archives, get collections back",
-      "cURL command import",
-      "Markdown and HTML API documentation export",
-      "SwaggerHub and Stoplight registry push/pull",
-    ],
-  },
-  {
-    category: "Collaboration",
-    items: [
-      "Native Git integration — commit, push, pull, branches, merge, stash, diff, conflict resolution",
-      "WebSocket-based real-time collaboration sync",
-      "Inline commentary — threaded discussions on requests",
-      "Role-based access control (Viewer, Editor, Admin)",
-      "Team invites via Git ref branches",
-      "Developer profile for public web sharing",
-    ],
-  },
-  {
-    category: "Mock Server",
-    items: [
-      "In-memory mock HTTP server with dynamic route registry",
-      "Condition-based response rules (header, query, method, path matching)",
-      "Traffic recording — capture real requests and replay as mocks",
-      "Stateful mock behavior — per-route/session counters",
-    ],
-  },
-  {
-    category: "Developer Tools",
-    items: [
-      "OpenAPI spec designer — programmatic spec construction and editing",
-      "Schema drift detection — compare OpenAPI snapshots",
-      "Agent Lens — analyze collections for AI agent readiness",
-      "Browser traffic interceptor — local HTTP MITM proxy with Chrome extension",
-      "Keyboard shortcut remapping — click any shortcut, press your key",
-      "Command palette (Ctrl+K)",
-      "AI-powered response diagnosis and assertion generation",
-      "Plugin system — auth providers, visualizers, codegen, hooks",
-      "Air-gapped mode for security-sensitive environments",
-    ],
-  },
-  {
-    category: "Security & Compliance",
-    items: [
-      "AES-256-GCM encryption with Argon2 key derivation",
-      "Secrets vault — 1Password CLI and local encrypted file providers",
-      "Enterprise SSO — SAML 2.0 and OIDC provider management",
-      "Data masking engine with configurable regex rules",
-      "Audit trail — all operations logged and filterable",
-      "Role-based access control (RBAC)",
-      "Path traversal and URL safety validation",
-      "Opt-in telemetry (zero by default)",
-    ],
-  },
-];
 
 export const releaseHistory: ReleaseNote[] = [
   {
@@ -150,6 +191,7 @@ export const releaseHistory: ReleaseNote[] = [
           "Windows NSIS installer fallback when app is in Program Files",
           "Comprehensive README documenting every file in the codebase",
           "GitHub Actions release workflow with proper SHA256 checksums",
+          "What's New modal with auto-show on version change and navigable feature catalog",
         ],
       },
       {

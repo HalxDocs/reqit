@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { GetVersion } from "../../../wailsjs/go/main/App";
-import { releaseHistory, allFeatures } from "@/app/data/releaseNotes";
-import { Sparkles, List, ChevronDown, ChevronRight } from "lucide-react";
+import { releaseHistory, allFeatures, type NavTarget } from "@/app/data/releaseNotes";
+import { Sparkles, List, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 
 type Tab = "whatsnew" | "features";
 
-export function WhatsNewModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function WhatsNewModal({
+  open,
+  onClose,
+  onNavigate,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onNavigate: (target: NavTarget) => void;
+}) {
   const [tab, setTab] = useState<Tab>("whatsnew");
   const [currentVersion, setCurrentVersion] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -25,9 +33,14 @@ export function WhatsNewModal({ open, onClose }: { open: boolean; onClose: () =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const goTo = (target: NavTarget) => {
+    onNavigate(target);
+    onClose();
+  };
+
   return (
     <Modal open={open} onClose={onClose} title="">
-      <div className="w-[680px] max-w-full">
+      <div className="w-[720px] max-w-full">
         <div className="flex gap-0 border-b border-border mb-4">
           <button
             type="button"
@@ -132,14 +145,20 @@ export function WhatsNewModal({ open, onClose }: { open: boolean; onClose: () =>
                 <h3 className="text-12 font-semibold text-cyan uppercase tracking-wider mb-2 border-b border-border pb-1">
                   {group.category}
                 </h3>
-                <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="grid grid-cols-1 gap-y-1">
                   {group.items.map((item, i) => (
-                    <li key={i} className="text-13 text-text flex items-start gap-2">
-                      <span className="text-green-500 shrink-0 mt-0.5">✓</span>
-                      {item}
-                    </li>
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => goTo(item.nav)}
+                      className="flex items-start gap-2 text-13 text-text hover:text-cyan hover:bg-cyan/5 px-2 py-1 -mx-2 rounded-lg transition-colors text-left group"
+                    >
+                      <span className="text-green-500 shrink-0 mt-0.5 group-hover:text-cyan transition-colors">✓</span>
+                      <span className="flex-1 leading-snug">{item.label}</span>
+                      <ExternalLink size={11} className="text-subtext/30 group-hover:text-cyan/50 shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-all" />
+                    </button>
                   ))}
-                </ul>
+                </div>
               </div>
             ))}
           </div>
