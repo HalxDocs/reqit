@@ -16,6 +16,7 @@ interface CollectionMenuProps {
   onLinkSpec: () => void;
   onUnlinkSpec: () => void;
   onVariables: () => void;
+  onScripts: () => void;
   onDelete: () => void;
   onRun?: () => void;
 }
@@ -23,7 +24,7 @@ interface CollectionMenuProps {
 export function CollectionMenu({
   hasSpec, specPath, onRename, onExport, onExportOpenAPI,
   onPreviewOpenAPI, onExportMarkdown, onExportHTML, onLinkSpec, onUnlinkSpec,
-  onVariables, onDelete, onRun,
+  onVariables, onScripts, onDelete, onRun,
 }: CollectionMenuProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -46,6 +47,7 @@ export function CollectionMenu({
             {onExportHTML && <Button variant="menu-item" onClick={() => { close(); onExportHTML(); }}><Globe size={12} />Export HTML Docs</Button>}
             {onRun && <Button variant="menu-item" onClick={() => { close(); onRun(); }}>Run</Button>}
             <Button variant="menu-item" onClick={() => { close(); onVariables(); }}><Code2 size={12} />Variables</Button>
+            <Button variant="menu-item" onClick={() => { close(); onScripts(); }}><Code2 size={12} />Scripts</Button>
             <div className="border-t border-border my-1" />
             {hasSpec ? (
               <>

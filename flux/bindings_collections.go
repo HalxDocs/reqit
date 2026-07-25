@@ -286,6 +286,17 @@ func (a *App) SetEnvVar(key, value string) error {
 	return errors.New("active environment not found")
 }
 
+func (a *App) UpdateCollectionScripts(collID, preScript, postScript string) error {
+	if a.collections == nil {
+		return errors.New("no active workspace")
+	}
+	if err := a.collections.SetCollectionScripts(collID, preScript, postScript); err != nil {
+		return err
+	}
+	go a.autoSync("update collection scripts " + collID)
+	return nil
+}
+
 func (a *App) SetCollectionVariables(collID string, vars []models.EnvVar) error {
 	if a.collections == nil {
 		return errors.New("no active workspace")

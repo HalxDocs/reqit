@@ -13,6 +13,7 @@ import { CollectionMenu } from "./CollectionMenu";
 import { MarkdownExportModal } from "./MarkdownExportModal";
 import { HTMLExportModal } from "./HTMLExportModal";
 import { VariablesEditorModal } from "./VariablesEditorModal";
+import { CollectionScriptsModal } from "./CollectionScriptsModal";
 import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
@@ -87,6 +88,7 @@ export function CollectionsTree() {
   const [mdExportColl, setMdExportColl] = useState<models.Collection | null>(null);
   const [varsEditorColl, setVarsEditorColl] = useState<models.Collection | null>(null);
   const [varsEditorDraft, setVarsEditorDraft] = useState<models.EnvVar[]>([]);
+  const [scriptsEditorCollID, setScriptsEditorCollID] = useState<string | null>(null);
   const [mdOpts, setMdOpts] = useState<main.ExportMarkdownOpts>({
     includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true,
   });
@@ -525,6 +527,7 @@ export function CollectionsTree() {
                       onUnlinkSpec={() => handleUnlinkSpec(c.id, c.spec ?? "")}
                       onRun={row.requests.length > 0 ? () => openRunner(c.id) : undefined}
                       onVariables={() => { setVarsEditorDraft(c.variables ?? []); setVarsEditorColl(c); }}
+                      onScripts={() => setScriptsEditorCollID(c.id)}
                       onDelete={async () => { if (!confirm(`Delete "${c.name}"?`)) return; try { await deleteCollection(c.id); toast.success(`Deleted "${c.name}"`); } catch { toast.error(`Failed`); } }} />
                   </div>
                 );
@@ -627,6 +630,12 @@ export function CollectionsTree() {
         draft={varsEditorDraft}
         setDraft={setVarsEditorDraft}
         onSave={updateCollectionVariables}
+      />
+
+      <CollectionScriptsModal
+        open={!!scriptsEditorCollID}
+        collectionID={scriptsEditorCollID}
+        onClose={() => setScriptsEditorCollID(null)}
       />
     </div>
   );

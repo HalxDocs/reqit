@@ -38,10 +38,12 @@ export function useSendRequest() {
     const warnings = runSecurityChecks(requestState);
     setSecurityWarnings(warnings);
 
-    // Resolve spec path and collection vars from the loaded request's collection.
+    // Resolve spec path, collection vars, and collection scripts from the loaded request's collection.
     const loadedID = useUIStore.getState().loadedRequestID;
     let specPath: string | undefined;
     let collVars: Map<string, string> | undefined;
+    let collPreScript = "";
+    let collPostScript = "";
     if (loadedID) {
       const colls = useCollectionStore.getState().collections;
       for (const col of colls) {
@@ -53,6 +55,8 @@ export function useSendRequest() {
               if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
             }
           }
+          collPreScript = col.preScript ?? "";
+          collPostScript = col.postScript ?? "";
           break;
         }
       }
@@ -71,6 +75,9 @@ export function useSendRequest() {
     setLoading(true);
     try {
       const payload = buildPayload(requestState, collVars);
+      // Merge collection-level scripts (prepend so they run first)
+      if (collPreScript) payload.preScript = collPreScript + "\n\n" + (payload.preScript ?? "");
+      if (collPostScript) payload.postScript = collPostScript + "\n\n" + (payload.postScript ?? "");
       if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
       const result = (await SendRequest(payload as never)) as ResponseResult;
       setResponse(result);

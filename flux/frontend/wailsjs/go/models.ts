@@ -894,6 +894,8 @@ export namespace models {
 	    spec?: string;
 	    public?: boolean;
 	    variables?: EnvVar[];
+	    preScript?: string;
+	    postScript?: string;
 	    requests: SavedRequest[];
 	
 	    static createFrom(source: any = {}) {
@@ -908,6 +910,8 @@ export namespace models {
 	        this.spec = source["spec"];
 	        this.public = source["public"];
 	        this.variables = this.convertValues(source["variables"], EnvVar);
+	        this.preScript = source["preScript"];
+	        this.postScript = source["postScript"];
 	        this.requests = this.convertValues(source["requests"], SavedRequest);
 	    }
 	

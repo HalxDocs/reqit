@@ -129,6 +129,8 @@ type Collection struct {
 	SpecPath    string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
 	Public      bool           `json:"public,omitempty"`
 	Variables   []EnvVar       `json:"variables,omitempty"` // collection-scoped variables
+	PreScript   string         `json:"preScript,omitempty"` // JS pre-request script run before each request
+	PostScript  string         `json:"postScript,omitempty"` // JS post-response script run after each request
 	Requests    []SavedRequest `json:"requests"`
 }
 

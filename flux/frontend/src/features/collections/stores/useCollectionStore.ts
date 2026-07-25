@@ -49,6 +49,7 @@ type CollectionStore = {
   reorderRequest: (collID: string, reqID: string, newIndex: number) => Promise<void>;
   moveRequest: (reqID: string, targetCollID: string) => Promise<void>;
   updateCollectionVariables: (collID: string, variables: models.EnvVar[]) => Promise<void>;
+  updateCollectionScripts: (collID: string, preScript: string, postScript: string) => Promise<void>;
 };
 
 const COLL_EVENT = "collections:changed";
@@ -192,6 +193,12 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
 
   updateCollectionVariables: async (collID, variables) => {
     await SetCollectionVariables(collID, variables);
+    await get().load();
+  },
+
+  updateCollectionScripts: async (collID, preScript, postScript) => {
+    const { UpdateCollectionScripts } = await import("../../../../wailsjs/go/main/App");
+    await UpdateCollectionScripts(collID, preScript, postScript);
     await get().load();
   },
 

@@ -870,6 +870,10 @@ export function UnlockCollection(arg1) {
   return window['go']['main']['App']['UnlockCollection'](arg1);
 }
 
+export function UpdateCollectionScripts(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateCollectionScripts'](arg1, arg2, arg3);
+}
+
 export function UpdateEnvironment(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateEnvironment'](arg1, arg2, arg3);
 }

@@ -452,6 +452,8 @@ export function ToggleSSOProvider(arg1:string):Promise<void>;
 
 export function UnlockCollection(arg1:string):Promise<void>;
 
+export function UpdateCollectionScripts(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function UpdateEnvironment(arg1:string,arg2:string,arg3:Array<models.EnvVar>):Promise<void>;
 
 export function UpdateHistoryEntry(arg1:string,arg2:Record<string, any>):Promise<void>;
