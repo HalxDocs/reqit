@@ -521,6 +521,7 @@ export function CollectionsTree() {
                       }}
                       onExportOpenAPI={async () => { try { const s = await ExportOpenAPI(c.id); downloadText(s, `${safeFilename(c.name)}.openapi.json`); toast.success(`OpenAPI exported for "${c.name}"`); } catch (e) { toast.error(String(e)); } }}
                       onPreviewOpenAPI={async () => { try { await PreviewOpenAPI(c.id); toast.success(`API docs opened for "${c.name}"`); } catch (e) { toast.error(String(e)); } }}
+                      onViewOpenAPI={() => { useUIStore.getState().openOpenAPI(c.id); }}
                       onExportMarkdown={() => { setMdOpts({ includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true }); setMdExportColl(c); }}
                       onExportHTML={() => { setHtmlOpts({ includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true, darkMode: true }); setHtmlExportColl(c); }}
                       onLinkSpec={() => handleLinkSpec(c.id)}

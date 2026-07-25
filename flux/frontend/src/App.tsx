@@ -25,6 +25,7 @@ import { IntegrationsPanel } from "@/features/integrations/components/Integratio
 import { InterceptorPanel } from "@/features/interceptor/components/InterceptorPanel";
 import { PRPreviewPanel } from "@/features/pr/components/PRPreviewPanel";
 import { MigrationPanel } from "@/features/migration/components/MigrationPanel";
+import { OpenAPIRenderer } from "@/features/openapi/components/OpenAPIRenderer";
 import { SecurityPanel } from "@/features/security/components/SecurityPanel";
 import { GrowthPanel } from "@/features/growth/components/GrowthPanel";
 import { GraphQLPanel } from "@/features/graphql/components/GraphQLPanel";
@@ -406,6 +407,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         <SchedulerPanel />
       ) : view === "docs" ? (
         <DocsContentViewer />
+      ) : view === "openapi" ? (
+        <OpenAPIRenderer />
       ) : view === "spec" ? (
         <SpecEditor />
       ) : view === "integrations" ? (

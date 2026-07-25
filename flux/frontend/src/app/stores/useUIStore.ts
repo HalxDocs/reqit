@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "performance";
 
-export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel";
+export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel";
 
 export type PanelLayout = "horizontal" | "vertical";
 
@@ -74,6 +74,9 @@ type UIStore = {
   runnerCollID: string | null;
   openRunner: (collID: string) => void;
   closeRunner: () => void;
+  openapiCollID: string | null;
+  openOpenAPI: (collID: string) => void;
+  closeOpenAPI: () => void;
 
   responseSearch: string;
   setResponseSearch: (q: string) => void;
@@ -195,6 +198,10 @@ export const useUIStore = create<UIStore>((set, get) => ({
   runnerCollID: null,
   openRunner: (runnerCollID) => set({ runnerCollID }),
   closeRunner: () => set({ runnerCollID: null }),
+
+  openapiCollID: null,
+  openOpenAPI: (openapiCollID) => set({ openapiCollID, view: "openapi" }),
+  closeOpenAPI: () => set({ openapiCollID: null, view: "http" }),
 
   responseSearch: "",
   setResponseSearch: (responseSearch) => set({ responseSearch, searchMatchIndex: 0 }),

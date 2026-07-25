@@ -11,6 +11,7 @@ interface CollectionMenuProps {
   onExport: () => void;
   onExportOpenAPI?: () => void;
   onPreviewOpenAPI?: () => void;
+  onViewOpenAPI?: () => void;
   onExportMarkdown?: () => void;
   onExportHTML?: () => void;
   onLinkSpec: () => void;
@@ -23,7 +24,7 @@ interface CollectionMenuProps {
 
 export function CollectionMenu({
   hasSpec, specPath, onRename, onExport, onExportOpenAPI,
-  onPreviewOpenAPI, onExportMarkdown, onExportHTML, onLinkSpec, onUnlinkSpec,
+  onPreviewOpenAPI, onViewOpenAPI, onExportMarkdown, onExportHTML, onLinkSpec, onUnlinkSpec,
   onVariables, onScripts, onDelete, onRun,
 }: CollectionMenuProps) {
   const [open, setOpen] = useState(false);
@@ -42,7 +43,8 @@ export function CollectionMenu({
             <Button variant="menu-item" onClick={() => { close(); onRename(); }}>Rename</Button>
             <Button variant="menu-item" onClick={() => { close(); onExport(); }}><Download size={12} />Export as JSON</Button>
             {onExportOpenAPI && <Button variant="menu-item" onClick={() => { close(); onExportOpenAPI(); }}><FileCode2 size={12} />Export OpenAPI</Button>}
-            {onPreviewOpenAPI && <Button variant="menu-item" onClick={() => { close(); onPreviewOpenAPI(); }}><Eye size={12} />Preview API Docs</Button>}
+            {onPreviewOpenAPI && <Button variant="menu-item" onClick={() => { close(); onPreviewOpenAPI(); }}><Eye size={12} />Preview in Browser</Button>}
+            {onViewOpenAPI && <Button variant="menu-item" onClick={() => { close(); onViewOpenAPI(); }}><FileCode2 size={12} />View in App</Button>}
             {onExportMarkdown && <Button variant="menu-item" onClick={() => { close(); onExportMarkdown(); }}><Download size={12} />Export Markdown</Button>}
             {onExportHTML && <Button variant="menu-item" onClick={() => { close(); onExportHTML(); }}><Globe size={12} />Export HTML Docs</Button>}
             {onRun && <Button variant="menu-item" onClick={() => { close(); onRun(); }}>Run</Button>}
