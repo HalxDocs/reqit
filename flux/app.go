@@ -34,7 +34,9 @@ import (
 	"flux/internal/openapi"
 	"flux/internal/plugin"
 	"flux/internal/profile"
+	proxypkg "flux/internal/proxy"
 	"flux/internal/rbac"
+	reqpkg "flux/internal/requester"
 	"flux/internal/sso"
 	"flux/internal/storage"
 	schedpkg "flux/internal/scheduler"
@@ -79,6 +81,7 @@ type App struct {
 	growth       *growth.Store
 	ai           *aipkg.Settings
 	devProfile   *profile.DevProfileStore
+	proxyCfg     *proxypkg.Store
 
 	mu       sync.Mutex
 	inflight context.CancelFunc
@@ -111,6 +114,12 @@ func (a *App) startup(ctx context.Context) {
 	// Init air-gap config.
 	if dataDir, err := a.AppDataDir(); err == nil {
 		a.airgap = profile.NewAirGap(dataDir)
+	}
+
+	// Init proxy config.
+	if dataDir, err := a.AppDataDir(); err == nil {
+		a.proxyCfg = proxypkg.NewStore(dataDir)
+		reqpkg.SetGlobalProxy(a.proxyCfg.Get())
 	}
 
 	// Init telemetry (opt-in, defaults to off).
@@ -773,6 +782,29 @@ func (a *App) GetTelemetryPreview() string {
 		return ""
 	}
 	return a.telemetry.Preview()
+}
+
+// --- Proxy ---
+
+func (a *App) GetProxyConfig() (string, error) {
+	if a.proxyCfg == nil {
+		return proxypkg.MarshalConfig(proxypkg.Config{})
+	}
+	return proxypkg.MarshalConfig(a.proxyCfg.Get())
+}
+
+func (a *App) SetProxyConfig(cfgJSON string) error {
+	cfg, err := proxypkg.UnmarshalConfig(cfgJSON)
+	if err != nil {
+		return err
+	}
+	if a.proxyCfg != nil {
+		if err := a.proxyCfg.Set(cfg); err != nil {
+			return err
+		}
+	}
+	reqpkg.SetGlobalProxy(cfg)
+	return nil
 }
 
 func (a *App) GetTelemetryEvents(limit int) []telemetry.Event {

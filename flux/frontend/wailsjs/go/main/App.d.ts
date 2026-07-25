@@ -214,6 +214,8 @@ export function GetPlugins():Promise<Array<plugin.RegisteredPlugin>>;
 
 export function GetProfile():Promise<profile.Profile>;
 
+export function GetProxyConfig():Promise<string>;
+
 export function GetPublicProfile():Promise<profile.PublicProfile>;
 
 export function GetRecipe(arg1:string):Promise<string>;
@@ -421,6 +423,8 @@ export function SetDiscordURL(arg1:string):Promise<void>;
 export function SetEncryptionPassphrase(arg1:string):Promise<void>;
 
 export function SetEnvVar(arg1:string,arg2:string):Promise<void>;
+
+export function SetProxyConfig(arg1:string):Promise<void>;
 
 export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
 

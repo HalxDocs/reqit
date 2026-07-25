@@ -6,6 +6,7 @@ import { useThemeStore } from "@/shared/lib/useTheme";
 import { getCommands, setUserKeys, resetKeys, getActiveKeys } from "@/shared/lib/commands";
 import { GetVersion } from "../../../wailsjs/go/main/App";
 import { AISettingsPanel } from "@/features/ai/components/AISettingsPanel";
+import { useProxyStore } from "@/app/stores/useProxyStore";
 
 export function SettingsModal() {
   const open = useUIStore((s) => s.settingsModalOpen);
@@ -16,17 +17,37 @@ export function SettingsModal() {
   const [version, setVersion] = useState("");
   useEffect(() => { GetVersion().then(setVersion).catch(() => {}); }, []);
 
+  const proxyConfig = useProxyStore((s) => s.config);
+  const proxyLoad = useProxyStore((s) => s.load);
+  const proxySave = useProxyStore((s) => s.save);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [proxyURL, setProxyURL] = useState("");
+  const [proxyUser, setProxyUser] = useState("");
+  const [proxyPass, setProxyPass] = useState("");
+  const proxyEnabled = useProxyStore((s) => s.config.enabled);
+  const [proxyBusy, setProxyBusy] = useState(false);
+  const [proxySaved, setProxySaved] = useState(false);
 
   useEffect(() => {
-    if (!open || !profile) return;
-    setName(profile.name ?? "");
-    setEmail(profile.email ?? "");
+    if (!open) return;
+    proxyLoad();
+    if (profile) {
+      setName(profile.name ?? "");
+      setEmail(profile.email ?? "");
+    }
     setSaved(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, profile]);
+
+  useEffect(() => {
+    setProxyURL(proxyConfig.url);
+    setProxyUser(proxyConfig.username);
+    setProxyPass(proxyConfig.password);
+  }, [proxyConfig]);
 
   const handleSave = async () => {
     setBusy(true);
@@ -81,6 +102,81 @@ export function SettingsModal() {
 
         <Section title="AI — Response Intelligence">
           <AISettingsPanel />
+        </Section>
+
+        <Section title="Proxy">
+          <label className="flex items-center gap-2 text-12 text-text">
+            <input
+              type="checkbox"
+              checked={proxyEnabled}
+              onChange={(e) => {
+                const newCfg = { ...proxyConfig, enabled: e.target.checked };
+                useProxyStore.setState({ config: newCfg });
+              }}
+              className="accent-cyan"
+            />
+            Enable outbound HTTP proxy
+          </label>
+          <Field label="Proxy URL">
+            <input
+              type="text"
+              value={proxyURL}
+              onChange={(e) => {
+                setProxyURL(e.target.value);
+                useProxyStore.setState({ config: { ...useProxyStore.getState().config, url: e.target.value } });
+              }}
+              placeholder="http://proxy.example.com:8080"
+              spellCheck={false}
+              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none w-full focus:border-cyan focus:ring-2 focus:ring-cyan"
+            />
+          </Field>
+          <Field label="Username (optional)">
+            <input
+              type="text"
+              value={proxyUser}
+              onChange={(e) => {
+                setProxyUser(e.target.value);
+                useProxyStore.setState({ config: { ...useProxyStore.getState().config, username: e.target.value } });
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none w-full focus:border-cyan focus:ring-2 focus:ring-cyan"
+            />
+          </Field>
+          <Field label="Password (optional)">
+            <input
+              type="password"
+              value={proxyPass}
+              onChange={(e) => {
+                setProxyPass(e.target.value);
+                useProxyStore.setState({ config: { ...useProxyStore.getState().config, password: e.target.value } });
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              className="h-[32px] px-3 bg-surface border border-border rounded-md text-12 text-text outline-none w-full focus:border-cyan focus:ring-2 focus:ring-cyan"
+            />
+          </Field>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={async () => {
+                setProxyBusy(true);
+                try {
+                  const cfg = useProxyStore.getState().config;
+                  await proxySave(cfg);
+                  setProxySaved(true);
+                  setTimeout(() => setProxySaved(false), 1500);
+                } finally {
+                  setProxyBusy(false);
+                }
+              }}
+              disabled={proxyBusy}
+              className="h-[28px] px-3 bg-cyan hover:bg-cyan-hover text-white text-12 font-bold rounded-md disabled:opacity-60 transition-all"
+            >
+              {proxyBusy ? "Saving…" : "Save proxy"}
+            </button>
+            {proxySaved && <span className="text-11 text-teal">Saved</span>}
+          </div>
         </Section>
 
         <Section title="Shortcuts">

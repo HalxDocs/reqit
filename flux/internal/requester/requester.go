@@ -16,18 +16,44 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"flux/internal/models"
+	"flux/internal/proxy"
 	"flux/internal/updater"
 )
 
 const defaultTimeout = 30 * time.Second
 
-var sharedTransport = &http.Transport{
-	MaxIdleConns:        100,
-	MaxIdleConnsPerHost: 10,
-	IdleConnTimeout:     90 * time.Second,
+var (
+	sharedTransport = &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	}
+	proxyMu sync.Mutex
+)
+
+// SetGlobalProxy configures the shared HTTP transport to route through the
+// given proxy. An empty or disabled config restores default behaviour
+// (http.ProxyFromEnvironment).
+func SetGlobalProxy(cfg proxy.Config) {
+	proxyMu.Lock()
+	defer proxyMu.Unlock()
+	if !cfg.Enabled || cfg.URL == "" {
+		sharedTransport.Proxy = nil
+		return
+	}
+	u, err := url.Parse(cfg.URL)
+	if err != nil {
+		sharedTransport.Proxy = nil
+		return
+	}
+	if cfg.Username != "" {
+		u.User = url.UserPassword(cfg.Username, cfg.Password)
+	}
+	sharedTransport.Proxy = http.ProxyURL(u)
 }
 
 var httpClient = &http.Client{Transport: sharedTransport}

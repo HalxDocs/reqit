@@ -394,6 +394,10 @@ export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
 }
 
+export function GetProxyConfig() {
+  return window['go']['main']['App']['GetProxyConfig']();
+}
+
 export function GetPublicProfile() {
   return window['go']['main']['App']['GetPublicProfile']();
 }
@@ -808,6 +812,10 @@ export function SetEncryptionPassphrase(arg1) {
 
 export function SetEnvVar(arg1, arg2) {
   return window['go']['main']['App']['SetEnvVar'](arg1, arg2);
+}
+
+export function SetProxyConfig(arg1) {
+  return window['go']['main']['App']['SetProxyConfig'](arg1);
 }
 
 export function SetRouteOverride(arg1, arg2, arg3) {
