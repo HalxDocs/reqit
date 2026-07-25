@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { BookmarkPlus, Search, X, Camera, ChevronUp, ChevronDown } from "lucide-react";
+import { BookmarkPlus, Search, X, Camera, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useUIStore, type ResponseTab } from "@/app/stores/useUIStore";
@@ -18,7 +18,7 @@ import { SecurityWarnings } from "@/features/response/components/SecurityWarning
 import { PartyModeToggle, PartyModeEffects } from "@/features/response/components/PartyMode";
 import { PerformanceChart } from "@/features/response/components/PerformanceChart";
 import { useDiffStore } from "@/features/response/stores/useDiffStore";
-import { SaveCapturedResponse } from "../../../../wailsjs/go/main/App";
+import { SaveCapturedResponse, SaveTextResponse } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
 import { Trash2 } from "lucide-react";
 import { DiffSnapshots } from "@/features/response/components/DiffSnapshots";
@@ -232,6 +232,25 @@ export function ResponsePane() {
               >
                 <BookmarkPlus size={11} />
                 {saving ? "Saving…" : "Save for Mock"}
+              </button>
+            )}
+            {response && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const ext = "json";
+                    const filename = `response.${ext}`;
+                    await SaveTextResponse(response.body, filename);
+                  } catch (e) {
+                    toast("error", String(e));
+                  }
+                }}
+                className="flex items-center gap-1 text-11 text-subtext hover:text-text transition-colors"
+                title="Save response body to file"
+              >
+                <Download size={11} />
+                Save to File
               </button>
             )}
           </div>

@@ -398,6 +398,8 @@ export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
 
 export function SaveSchemaSnapshot(arg1:string):Promise<void>;
 
+export function SaveTextResponse(arg1:string,arg2:string):Promise<void>;
+
 export function SaveUpstashConfig(arg1:string,arg2:string):Promise<void>;
 
 export function SendNotification(arg1:string,arg2:string):Promise<void>;

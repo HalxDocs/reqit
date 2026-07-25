@@ -762,6 +762,10 @@ export function SaveSchemaSnapshot(arg1) {
   return window['go']['main']['App']['SaveSchemaSnapshot'](arg1);
 }
 
+export function SaveTextResponse(arg1, arg2) {
+  return window['go']['main']['App']['SaveTextResponse'](arg1, arg2);
+}
+
 export function SaveUpstashConfig(arg1, arg2) {
   return window['go']['main']['App']['SaveUpstashConfig'](arg1, arg2);
 }

@@ -318,6 +318,28 @@ func (a *App) DownloadBinaryResponse(data []byte, filename string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// SaveTextResponse opens a native "Save As" dialog and writes the text body.
+func (a *App) SaveTextResponse(body string, filename string) error {
+	if a.ctx == nil {
+		return errors.New("app context not ready")
+	}
+	const maxSize = 50 << 20
+	if len(body) > maxSize {
+		return fmt.Errorf("response too large (%d bytes, max %d)", len(body), maxSize)
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save Response",
+		DefaultFilename: filename,
+	})
+	if err != nil {
+		return err
+	}
+	if path == "" {
+		return nil
+	}
+	return os.WriteFile(path, []byte(body), 0644)
+}
+
 // --- Native dialogs ---
 
 func (a *App) PickFile(title string, filter string) (string, error) {
