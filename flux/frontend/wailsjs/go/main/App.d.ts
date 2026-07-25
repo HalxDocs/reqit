@@ -112,6 +112,8 @@ export function ExportCollectionHTML(arg1:string,arg2:main.ExportHTMLDocsOpts):P
 
 export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;
 
+export function ExportEnvironmentJSON(arg1:string):Promise<void>;
+
 export function ExportExtension(arg1:string):Promise<void>;
 
 export function ExportHoppscotch(arg1:string):Promise<string>;
@@ -271,6 +273,8 @@ export function GraphQLExecute(arg1:string):Promise<string>;
 export function GraphQLIntrospect(arg1:string,arg2:string):Promise<string>;
 
 export function HasEncryptionKey():Promise<boolean>;
+
+export function ImportEnvironmentFile():Promise<string>;
 
 export function ImportHAR(arg1:string,arg2:string):Promise<number>;
 

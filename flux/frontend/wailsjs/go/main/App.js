@@ -190,6 +190,10 @@ export function ExportCollectionMarkdown(arg1, arg2) {
   return window['go']['main']['App']['ExportCollectionMarkdown'](arg1, arg2);
 }
 
+export function ExportEnvironmentJSON(arg1) {
+  return window['go']['main']['App']['ExportEnvironmentJSON'](arg1);
+}
+
 export function ExportExtension(arg1) {
   return window['go']['main']['App']['ExportExtension'](arg1);
 }
@@ -508,6 +512,10 @@ export function GraphQLIntrospect(arg1, arg2) {
 
 export function HasEncryptionKey() {
   return window['go']['main']['App']['HasEncryptionKey']();
+}
+
+export function ImportEnvironmentFile() {
+  return window['go']['main']['App']['ImportEnvironmentFile']();
 }
 
 export function ImportHAR(arg1, arg2) {

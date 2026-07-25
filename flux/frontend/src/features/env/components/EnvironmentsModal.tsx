@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Download, Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -105,6 +105,26 @@ export function EnvironmentsModal() {
     }
   };
 
+  const handleExport = async (envID: string) => {
+    const { ExportEnvironmentJSON } = await import("../../../../wailsjs/go/main/App");
+    try {
+      await ExportEnvironmentJSON(envID);
+      toast.success("Environment exported");
+    } catch (err) {
+      toast.error(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const handleImport = async () => {
+    const { ImportEnvironmentFile } = await import("../../../../wailsjs/go/main/App");
+    try {
+      const name = await ImportEnvironmentFile();
+      if (name) toast.success(`Imported "${name}"`);
+    } catch (err) {
+      toast.error(`Import failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
   const handleDelete = async () => {
     if (!draft) return;
     if (!confirm(`Delete environment "${draft.name}"?`)) return;
@@ -127,10 +147,19 @@ export function EnvironmentsModal() {
             type="button"
             onClick={handleCreate}
             disabled={busy}
-            className="flex items-center gap-2 h-[28px] px-2 mb-2 text-12 text-subtext hover:text-cyan transition-colors"
+            className="flex items-center gap-2 h-[28px] px-2 mb-1 text-12 text-subtext hover:text-cyan transition-colors"
           >
             {busy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             <span>New</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleImport}
+            className="flex items-center gap-2 h-[28px] px-2 mb-2 text-12 text-subtext hover:text-cyan transition-colors"
+            title="Import environment from file"
+          >
+            <Upload size={12} />
+            <span>Import</span>
           </button>
           <div className="flex flex-col">
             {environments.length === 0 && (
@@ -139,19 +168,28 @@ export function EnvironmentsModal() {
               </div>
             )}
             {environments.map((env) => (
-              <button
-                key={env.id}
-                type="button"
-                onClick={() => setSelectedID(env.id)}
-                className={cn(
-                  "text-left px-2 py-1.5 rounded-sm text-12 transition-colors truncate",
-                  env.id === selectedID
-                    ? "bg-cyan/15 text-cyan"
-                    : "text-text hover:bg-cardHover",
-                )}
-              >
-                {env.name}
-              </button>
+              <div key={env.id} className="group flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setSelectedID(env.id)}
+                  className={cn(
+                    "flex-1 text-left px-2 py-1.5 rounded-sm text-12 transition-colors truncate",
+                    env.id === selectedID
+                      ? "bg-cyan/15 text-cyan"
+                      : "text-text hover:bg-cardHover",
+                  )}
+                >
+                  {env.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleExport(env.id); }}
+                  className="opacity-0 group-hover:opacity-100 px-1 text-subtext hover:text-cyan transition-all"
+                  title={`Export ${env.name}`}
+                >
+                  <Download size={10} />
+                </button>
+              </div>
             ))}
           </div>
         </aside>

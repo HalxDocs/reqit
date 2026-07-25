@@ -216,6 +216,83 @@ func (a *App) ImportPostmanEnvironment(jsonData, envName string) (string, error)
 	return name, nil
 }
 
+// ExportEnvironmentJSON serialises an environment to JSON and writes it to a file
+// via a native save dialog.
+func (a *App) ExportEnvironmentJSON(envID string) error {
+	if a.environments == nil {
+		return errors.New("no active workspace")
+	}
+	snap, err := a.environments.Get()
+	if err != nil {
+		return err
+	}
+	var env *models.Environment
+	for _, e := range snap.Environments {
+		if e.ID == envID {
+			env = &e
+			break
+		}
+	}
+	if env == nil {
+		return errors.New("environment not found")
+	}
+	data, err := json.MarshalIndent(env, "", "  ")
+	if err != nil {
+		return err
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Export Environment",
+		DefaultFilename: env.Name + ".env.json",
+		Filters:         []runtime.FileFilter{{DisplayName: "Environment JSON", Pattern: "*.env.json;*.json"}},
+	})
+	if err != nil {
+		return err
+	}
+	if path == "" {
+		return nil
+	}
+	return os.WriteFile(path, data, 0644)
+}
+
+// ImportEnvironmentFile opens a native file picker, reads an environment JSON file,
+// and creates a new environment from it.
+func (a *App) ImportEnvironmentFile() (string, error) {
+	if a.environments == nil {
+		return "", errors.New("no active workspace")
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:   "Import Environment",
+		Filters: []runtime.FileFilter{{DisplayName: "Environment JSON", Pattern: "*.env.json;*.json"}},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	var env models.Environment
+	if err := json.Unmarshal(data, &env); err != nil {
+		return "", fmt.Errorf("invalid environment file: %w", err)
+	}
+	name := env.Name
+	if name == "" {
+		name = "Imported Environment"
+	}
+	created, err := a.environments.Create(name)
+	if err != nil {
+		return "", err
+	}
+	if err := a.environments.Update(created.ID, created.Name, env.Vars); err != nil {
+		return "", err
+	}
+	runtime.EventsEmit(a.ctx, "environments:changed")
+	return name, nil
+}
+
 // ExportPostman exports collections to Postman v2.1 format.
 func (a *App) ExportPostman(collID string) (string, error) {
 	if a.collections == nil {
