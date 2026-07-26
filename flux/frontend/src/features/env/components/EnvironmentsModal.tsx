@@ -9,6 +9,7 @@ import { uid } from "@/shared/lib/id";
 import type { KeyValue } from "@/features/request/types/request";
 import type { models } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 
 interface DraftEnv {
   id: string;
@@ -84,6 +85,9 @@ export function EnvironmentsModal() {
     try {
       const env = await create("New environment");
       setSelectedID(env.id);
+      // Auto-activate the new environment so variables resolve immediately
+      const { setActive } = useEnvStore.getState();
+      await setActive(env.id);
     } catch (err) {
       toast.error(`Failed to create: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -127,7 +131,7 @@ export function EnvironmentsModal() {
 
   const handleDelete = async () => {
     if (!draft) return;
-    if (!confirm(`Delete environment "${draft.name}"?`)) return;
+    if (!(await showConfirm({ title: "Delete environment", message: `Delete environment "${draft.name}"?`, variant: "danger" }))) return;
     setBusy(true);
     try {
       await remove(draft.id);
