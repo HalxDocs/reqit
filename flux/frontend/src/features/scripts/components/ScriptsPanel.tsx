@@ -6,6 +6,7 @@ import { ArrowRightLeft, Plus, Trash2 } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
+import { ScriptSnippetGallery } from "@/features/scripts/components/ScriptSnippetGallery";
 
 export function ScriptsPanel() {
   const preSetVars = useRequestStore((s) => s.preSetVars);
@@ -62,6 +63,7 @@ export function ScriptsPanel() {
           <span className="text-11 text-subtext font-semibold uppercase tracking-wider">
             Pre-request Script (JavaScript)
           </span>
+          <ScriptSnippetGallery scope="pre" onInsert={(code) => setPreScript(preScript + "\n" + code)} />
         </div>
         <div className="px-4 pb-2" style={{ height: 140 }}>
           <CodeMirror
@@ -89,6 +91,7 @@ export function ScriptsPanel() {
           <span className="text-11 text-subtext font-semibold uppercase tracking-wider">
             Post-response Script (JavaScript)
           </span>
+          <ScriptSnippetGallery scope="post" onInsert={(code) => setPostScript(postScript + "\n" + code)} />
         </div>
         <div className="px-4 pb-2" style={{ height: 140 }}>
           <CodeMirror
