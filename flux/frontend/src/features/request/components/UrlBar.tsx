@@ -1,4 +1,4 @@
-import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock } from "lucide-react";
+import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
@@ -168,6 +168,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 
       <div className="flex items-center gap-1.5">
         <EnvQuickSwitch />
+        <QuickEnvEditor />
         <TimeoutControl />
 
         <button
@@ -421,6 +422,92 @@ function EnvQuickSwitch() {
                 {env.name}
               </button>
             ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function QuickEnvEditor() {
+  const environments = useEnvStore((s) => s.environments);
+  const activeID = useEnvStore((s) => s.activeID);
+  const update = useEnvStore((s) => s.update);
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<{ key: string; value: string; enabled: boolean }[]>([]);
+
+  const active = environments.find((e) => e.id === activeID);
+  const toast = useToastStore((s) => s.push);
+
+  useEffect(() => {
+    if (open && active) {
+      setDraft(active.vars.map((v) => ({ key: v.key, value: v.value, enabled: v.enabled !== false })));
+    }
+  }, [open, active]);
+
+  const handleSave = async () => {
+    if (!active) return;
+    try {
+      await update(active.id, active.name, draft.map((v) => ({ key: v.key, value: v.value, enabled: v.enabled })));
+      toast("success", "Environment variables updated");
+      setOpen(false);
+    } catch (e) {
+      toast("error", String(e));
+    }
+  };
+
+  if (!active) return null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-[34px] w-[34px] flex items-center justify-center bg-bg border border-border hover:border-cyan/50 rounded-lg text-subtext hover:text-text transition-all"
+        title="Edit environment variables"
+      >
+        <Pencil size={12} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full right-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-xl p-3 min-w-[280px] max-h-[300px] overflow-y-auto">
+            <div className="text-11 font-semibold text-text mb-2 flex items-center justify-between">
+              <span>Variables: {active.name}</span>
+              <button type="button" onClick={() => setDraft([...draft, { key: "", value: "", enabled: true }])} className="text-cyan hover:text-cyan-hover text-11">
+                + Add
+              </button>
+            </div>
+            <div className="flex flex-col gap-1.5 mb-2">
+              {draft.map((v, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={v.key}
+                    onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], key: e.target.value }; setDraft(d); }}
+                    placeholder="Key"
+                    className="flex-1 min-w-0 h-[26px] px-2 bg-bg border border-border rounded text-11 font-mono text-text outline-none focus:border-cyan"
+                  />
+                  <input
+                    type="text"
+                    value={v.value}
+                    onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], value: e.target.value }; setDraft(d); }}
+                    placeholder="Value"
+                    className="flex-1 min-w-0 h-[26px] px-2 bg-bg border border-border rounded text-11 font-mono text-text outline-none focus:border-cyan"
+                  />
+                  <button type="button" onClick={() => setDraft(draft.filter((_, j) => j !== i))} className="text-subtext hover:text-danger text-11">
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="w-full h-[28px] bg-cyan hover:bg-cyan-hover text-white text-11 font-bold rounded-md transition-all"
+            >
+              Save Variables
+            </button>
           </div>
         </>
       )}

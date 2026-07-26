@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal } from "@/shared/components/Modal";
-import { RunLoadTest } from "../../../../wailsjs/go/main/App";
+import { RunLoadTest, SendNotification } from "../../../../wailsjs/go/main/App";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import type { models } from "../../../../wailsjs/go/models";
@@ -46,6 +46,10 @@ export function LoadTestPanel({
 
       const res = await RunLoadTest(config);
       setResult(res);
+      void SendNotification(
+        "Load test complete",
+        `${vus} VUs · ${durationSec}s · ${res.totalReqs} requests (p95: ${res.p95TimingMs}ms)`,
+      );
     } catch (e) {
       toast.error(String(e));
     } finally {

@@ -8,6 +8,7 @@ import {
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { AssertionEditor } from "@/features/assertions/components/AssertionEditor";
 import { FileText, Download, Table } from "lucide-react";
+import { SendNotification } from "../../../../wailsjs/go/main/App";
 import { models } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
 
@@ -91,6 +92,12 @@ export function RunnerModal({ open, onClose, collection }: Props) {
       }
       const res = await RunCollectionWithConfig(config as never);
       setResult(res);
+      const total = res.total ?? 0;
+      const passed = res.passed ?? 0;
+      void SendNotification(
+        "Collection run complete",
+        `${passed}/${total} passed (${res.durationMs}ms)`,
+      );
     } catch (e) {
       toast.error(String(e));
     } finally {

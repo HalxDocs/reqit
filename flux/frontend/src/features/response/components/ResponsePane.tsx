@@ -20,8 +20,10 @@ import { PerformanceChart } from "@/features/response/components/PerformanceChar
 import { useDiffStore } from "@/features/response/stores/useDiffStore";
 import { SaveCapturedResponse, SaveTextResponse } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
-import { Trash2 } from "lucide-react";
+import { Trash2, ClipboardCopy } from "lucide-react";
 import { DiffSnapshots } from "@/features/response/components/DiffSnapshots";
+import { buildPayload } from "@/features/request/lib/buildPayload";
+import { toCurlShort } from "@/shared/lib/codegen";
 
 export function ResponsePane() {
   const send = useSendRequest();
@@ -232,6 +234,27 @@ export function ResponsePane() {
               >
                 <BookmarkPlus size={11} />
                 {saving ? "Saving…" : "Save for Mock"}
+              </button>
+            )}
+            {response && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const s = useRequestStore.getState();
+                    const p = buildPayload(s);
+                    const curl = toCurlShort(p);
+                    await navigator.clipboard.writeText(curl);
+                    toast("success", "cURL copied to clipboard");
+                  } catch (e) {
+                    toast("error", String(e));
+                  }
+                }}
+                className="flex items-center gap-1 text-11 text-subtext hover:text-text transition-colors"
+                title="Copy request as cURL command"
+              >
+                <ClipboardCopy size={11} />
+                Copy cURL
               </button>
             )}
             {response && (
