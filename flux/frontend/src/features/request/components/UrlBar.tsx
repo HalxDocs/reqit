@@ -1,5 +1,5 @@
 import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
@@ -13,6 +13,8 @@ import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { useToastStore } from "@/app/stores/useToastStore";
 import { useEndpointCache } from "@/features/request/stores/useEndpointCache";
 import { cn } from "@/shared/lib/cn";
+import { useUrlAutocomplete } from "@/features/request/hooks/useUrlAutocomplete";
+import { MethodBadge } from "@/shared/components/MethodBadge";
 import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
 
@@ -126,6 +128,10 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 
   const displayed = url + buildQueryString(params);
 
+  const [acIndex, setAcIndex] = useState(-1);
+  const suggestions = useUrlAutocomplete(url);
+  const acRef = useRef<HTMLDivElement>(null);
+
   const handleChange = (val: string) => {
     const { base, query } = splitUrl(val);
     setUrl(base);
@@ -133,6 +139,13 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       const parsed = parseQueryString(query);
       replaceParams(parsed.length ? parsed : [emptyRow()]);
     }
+    setAcIndex(-1);
+  };
+
+  const selectSuggestion = (s: { url: string; method: string }) => {
+    setUrl(s.url);
+    setMethod(s.method as any);
+    setAcIndex(-1);
   };
 
   return (
@@ -159,11 +172,34 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
               e.stopPropagation();
               if (!isLoading) onSend?.();
             }
+            if (suggestions.length > 0) {
+              if (e.key === "ArrowDown") { e.preventDefault(); setAcIndex((i) => Math.min(i + 1, suggestions.length - 1)); return; }
+              if (e.key === "ArrowUp") { e.preventDefault(); setAcIndex((i) => Math.max(i - 1, -1)); return; }
+              if (e.key === "Enter" && acIndex >= 0) { e.preventDefault(); selectSuggestion(suggestions[acIndex]); return; }
+              if (e.key === "Escape") { setAcIndex(-1); return; }
+            }
           }}
           spellCheck={false}
           autoComplete="off"
           className="relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border border-border rounded-lg focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
         />
+        {suggestions.length > 0 && (
+          <div ref={acRef} className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-card border border-border rounded-xl shadow-xl py-1 max-h-[280px] overflow-y-auto">
+            {suggestions.map((s, i) => (
+              <button
+                key={`${s.method} ${s.url}`}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
+                onMouseEnter={() => setAcIndex(i)}
+                className={`flex items-center gap-2 w-full px-3 py-1.5 text-left transition-colors ${i === acIndex ? "bg-cardHover" : ""}`}
+              >
+                <MethodBadge method={s.method as any} className="shrink-0" />
+                <span className="text-12 text-text font-mono truncate">{s.url}</span>
+                <span className="text-10 text-subtext shrink-0">{s.source === "history" ? "History" : "Saved"}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5">
