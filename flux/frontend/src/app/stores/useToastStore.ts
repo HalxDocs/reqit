@@ -1,3 +1,4 @@
+import { sanitizeError } from "@/shared/lib/sanitizeError";
 import { create } from "zustand";
 
 export type ToastKind = "info" | "success" | "error";
@@ -30,5 +31,5 @@ export const useToastStore = create<ToastStore>((set) => ({
 export const toast = {
   info: (msg: string) => useToastStore.getState().push("info", msg),
   success: (msg: string) => useToastStore.getState().push("success", msg),
-  error: (msg: string) => useToastStore.getState().push("error", msg),
+  error: (msg: string) => useToastStore.getState().push("error", sanitizeError(msg)),
 };
