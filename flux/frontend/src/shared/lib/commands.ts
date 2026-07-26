@@ -107,7 +107,13 @@ export function getActiveKeys(id: string): string[] {
   return cmd.userKeys || cmd.defaultKeys;
 }
 
+const INPUT_TAGS = new Set(["input", "textarea", "select"]);
+
 export function handleKeyEvent(e: KeyboardEvent): boolean {
+  // Never intercept typing in input/textarea/select elements (unless meta/ctrl held)
+  const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+  if (tag && INPUT_TAGS.has(tag) && !e.metaKey && !e.ctrlKey) return false;
+
   const parts: string[] = [];
   if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
   if (e.altKey) parts.push("alt");

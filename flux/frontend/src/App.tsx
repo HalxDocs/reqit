@@ -8,6 +8,7 @@ import { RequestPanel } from "@/app/layout/RequestPanel";
 import { ResponsePane } from "@/features/response/components/ResponsePane";
 import { CommandPalette } from "@/shared/components/CommandPalette";
 import { ShortcutsModal } from "@/shared/components/ShortcutsModal";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { VariableAutocomplete } from "@/shared/components/VariableAutocomplete";
 import { Splitter } from "@/shared/components/Splitter";
 import { SaveRequestModal } from "@/features/collections/components/SaveRequestModal";
@@ -330,8 +331,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         if (count > 0) setSearchMatchIndex(searchMatchIndex <= 0 ? count - 1 : searchMatchIndex - 1);
       }},
 
-      { id: "sidebar.moveUp", label: "Move Up", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowup", "k"], action: () => dispatchShortcut("sidebar.moveUp") },
-      { id: "sidebar.moveDown", label: "Move Down", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowdown", "j"], action: () => dispatchShortcut("sidebar.moveDown") },
+      { id: "sidebar.moveUp", label: "Move Up", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowup"], action: () => dispatchShortcut("sidebar.moveUp") },
+      { id: "sidebar.moveDown", label: "Move Down", category: "Sidebar", scope: "sidebar", defaultKeys: ["arrowdown"], action: () => dispatchShortcut("sidebar.moveDown") },
       { id: "sidebar.open", label: "Open / Enter", category: "Sidebar", scope: "sidebar", defaultKeys: ["enter"], action: () => dispatchShortcut("sidebar.open") },
       { id: "sidebar.rename", label: "Rename", category: "Sidebar", scope: "sidebar", defaultKeys: ["f2", "enter"], action: () => dispatchShortcut("sidebar.rename") },
       { id: "sidebar.delete", label: "Delete", category: "Sidebar", scope: "sidebar", defaultKeys: ["delete", "backspace"], action: () => dispatchShortcut("sidebar.delete") },
@@ -488,6 +489,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         onNavigate={handleNavTarget}
       />
       <ToastHost />
+      <ConfirmModal />
     </div>
   );
 }
