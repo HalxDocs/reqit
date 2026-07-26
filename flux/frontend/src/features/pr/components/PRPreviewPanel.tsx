@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { Button } from "@/shared/components/Button";
 import {
   GetGitStatus, GitStash, GitPopStash, GetGitStashList,
@@ -38,19 +39,19 @@ export function PRPreviewPanel() {
   };
 
   const handleStash = async () => {
-    if (!confirm("Stash current changes?")) return;
+    if (!(await showConfirm({ title: "Stash", message: "Stash current changes?" }))) return;
     try { await GitStash(); } catch (e) { toast.error(`Stash failed: ${e}`); }
     refresh();
   };
   const handlePop = async () => {
-    if (!confirm("Pop latest stash? This may cause conflicts.")) return;
+    if (!(await showConfirm({ title: "Pop stash", message: "Pop latest stash? This may cause conflicts." }))) return;
     try { await GitPopStash(); } catch (e) { toast.error(`Pop failed: ${e}`); }
     refresh();
   };
 
   const handleMerge = async () => {
     if (!targetBranch) return;
-    if (!confirm(`Merge ${targetBranch} into current branch?`)) return;
+    if (!(await showConfirm({ title: "Merge branch", message: `Merge ${targetBranch} into current branch?` }))) return;
     try { await GitMergeBranch(targetBranch); } catch (e) { toast.error(`Merge failed: ${e}`); }
     refresh();
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
@@ -84,13 +85,13 @@ export function PRPreviewPanel() {
   };
 
   const handleResolveOurs = async (path: string) => {
-    if (!confirm(`Use OURS version for ${path}?`)) return;
+    if (!(await showConfirm({ title: "Resolve conflict", message: `Use OURS version for ${path}?` }))) return;
     try { await GitResolveConflictOurs(path); } catch (e) { toast.error(`Resolve failed: ${e}`); }
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };
 
   const handleResolveTheirs = async (path: string) => {
-    if (!confirm(`Use THEIRS version for ${path}?`)) return;
+    if (!(await showConfirm({ title: "Resolve conflict", message: `Use THEIRS version for ${path}?` }))) return;
     try { await GitResolveConflictTheirs(path); } catch (e) { toast.error(`Resolve failed: ${e}`); }
     try { setConflictFiles(await GetGitConflictFiles() || []); } catch {}
   };

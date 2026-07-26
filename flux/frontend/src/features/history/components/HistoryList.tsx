@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Filter, Heart, Loader2, Search, Star, Trash2, X } from "lucide-react";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
@@ -290,7 +291,7 @@ export function HistoryList() {
           <button
             type="button"
             onClick={async () => {
-              if (entries.length && confirm("Clear all history?")) {
+              if (entries.length && (await showConfirm({ title: "Clear history", message: "Clear all history?", variant: "danger" }))) {
                 setClearing(true);
                 try { await clear(); } catch (err) {
                   toast.error(`Failed to clear: ${err instanceof Error ? err.message : String(err)}`);

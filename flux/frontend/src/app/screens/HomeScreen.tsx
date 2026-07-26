@@ -30,6 +30,7 @@ import {
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
 import { BookOpen, Trash2 } from "lucide-react";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { BlogPage } from "@/features/blog/components/BlogPanel";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
@@ -447,7 +448,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
   const handleDelete = useCallback(async (id: string) => {
     const ws = workspaceList.find((w) => w.id === id);
     if (!ws) return;
-    if (!confirm(`Delete workspace "${ws.name}"? The folder on disk will not be removed.`)) return;
+    if (!(await showConfirm({ title: "Delete workspace", message: `Delete workspace "${ws.name}"? The folder on disk will not be removed.`, variant: "danger" }))) return;
     try {
       await removeWs(id);
     } catch (e) {

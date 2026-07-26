@@ -15,6 +15,7 @@ import {
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { models } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 
 export function TestSuitePanel({
   open,
@@ -53,7 +54,7 @@ export function TestSuitePanel({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete test suite?")) return;
+    if (!(await showConfirm({ title: "Delete test suite", message: "Delete test suite?", variant: "danger" }))) return;
     try {
       await DeleteTestSuite(id);
       if (selected?.id === id) setSelected(null);
@@ -101,7 +102,7 @@ export function TestSuitePanel({
 
   const handleDeleteGroup = async (groupID: string) => {
     if (!selected) return;
-    if (!confirm("Delete this test group?")) return;
+    if (!(await showConfirm({ title: "Delete test group", message: "Delete this test group?", variant: "danger" }))) return;
     try {
       await DeleteTestGroup(selected.id, groupID);
       await load();

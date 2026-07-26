@@ -3,6 +3,7 @@ import { FileCode2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/Button";
 import { IconButton } from "@/shared/components/IconButton";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { cn } from "@/shared/lib/cn";
 import { CreateSpec, AddSpecEndpoint, GetSpecEndpoints, RemoveSpecEndpoint } from "../../../../wailsjs/go/main/App";
 
@@ -60,7 +61,7 @@ export function SpecEditor() {
 
   const removeEndpoint = useCallback(async (method: string, path: string) => {
     if (!specPath) return;
-    if (!confirm(`Remove ${method} ${path}?`)) return;
+    if (!(await showConfirm({ title: "Remove endpoint", message: `Remove ${method} ${path}?`, variant: "danger" }))) return;
     try {
       await RemoveSpecEndpoint(specPath, method, path);
       setEndpoints((await GetSpecEndpoints(specPath)) ?? []);

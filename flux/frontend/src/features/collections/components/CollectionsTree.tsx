@@ -17,6 +17,7 @@ import { CollectionScriptsModal } from "./CollectionScriptsModal";
 import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { buildFolderTree, countNodes, type TreeNode, type FolderNode, type RequestNode } from "@/features/collections/lib/folderTree";
 import {
   ExportCollectionMarkdown,
@@ -271,7 +272,7 @@ export function CollectionsTree() {
 
   const handleBatchDelete = async () => {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} request${selected.size > 1 ? "s" : ""}?`)) return;
+    if (!(await showConfirm({ title: "Delete requests", message: `Delete ${selected.size} request${selected.size > 1 ? "s" : ""}?`, variant: "danger" }))) return;
     await deleteRequests(Array.from(selected));
     setSelected(new Set());
     setSelecting(false);
@@ -529,7 +530,7 @@ export function CollectionsTree() {
                       onRun={row.requests.length > 0 ? () => openRunner(c.id) : undefined}
                       onVariables={() => { setVarsEditorDraft(c.variables ?? []); setVarsEditorColl(c); }}
                       onScripts={() => setScriptsEditorCollID(c.id)}
-                      onDelete={async () => { if (!confirm(`Delete "${c.name}"?`)) return; try { await deleteCollection(c.id); toast.success(`Deleted "${c.name}"`); } catch { toast.error(`Failed`); } }} />
+                      onDelete={async () => { if (!(await showConfirm({ title: "Delete collection", message: `Delete "${c.name}"?`, variant: "danger" }))) return; try { await deleteCollection(c.id); toast.success(`Deleted "${c.name}"`); } catch { toast.error(`Failed`); } }} />
                   </div>
                 );
               }
@@ -590,7 +591,7 @@ export function CollectionsTree() {
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Rename"><Pencil size={12} /></button>
                     <button type="button" onClick={(e) => { e.stopPropagation(); duplicateRequest(req.id).catch((err) => { toast.error(`Failed to duplicate: ${err instanceof Error ? err.message : String(err)}`); }); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-text transition-all shrink-0" title="Duplicate"><Copy size={12} /></button>
-                    <button type="button" data-shortcut="sidebar.delete" onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${req.name}"?`)) deleteRequest(req.id); }}
+                    <button type="button" data-shortcut="sidebar.delete" onClick={async (e) => { e.stopPropagation(); if (await showConfirm({ title: "Delete request", message: `Delete "${req.name}"?`, variant: "danger" })) deleteRequest(req.id); }}
                       className="opacity-0 group-hover:opacity-100 text-subtext hover:text-danger transition-all shrink-0" title="Delete"><Trash2 size={12} /></button>
                   </div>
                 );

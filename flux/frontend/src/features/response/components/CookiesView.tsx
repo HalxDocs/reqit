@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Cookie, Trash2, RefreshCw } from "lucide-react";
 import { GetCookies, ClearCookiesForDomain, ClearAllCookies } from "../../../../wailsjs/go/main/App";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 
 interface CookieInfo {
   domain: string;
@@ -34,14 +35,14 @@ export function CookiesView({ currentDomain }: Props) {
   useEffect(() => { void load(); }, []);
 
   const clearDomain = async (domain: string) => {
-    if (!confirm(`Clear all cookies for ${domain}?`)) return;
+    if (!(await showConfirm({ title: "Clear cookies", message: `Clear all cookies for ${domain}?`, variant: "danger" }))) return;
     await ClearCookiesForDomain(domain);
     toast("success", `Cleared cookies for ${domain}`);
     void load();
   };
 
   const clearAll = async () => {
-    if (!confirm("Clear all cookies?")) return;
+    if (!(await showConfirm({ title: "Clear all cookies", message: "Clear all cookies?", variant: "danger" }))) return;
     await ClearAllCookies();
     toast("success", "All cookies cleared");
     void load();

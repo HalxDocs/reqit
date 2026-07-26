@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { Button } from "@/shared/components/Button";
@@ -100,7 +101,7 @@ export function SchedulerPanel() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this schedule?")) return;
+    if (!(await showConfirm({ title: "Delete schedule", message: "Delete this schedule?", variant: "danger" }))) return;
     try {
       await DeleteSchedule(id);
       if (historyScheduleID === id) { setHistoryScheduleID(null); setHistory([]); }
