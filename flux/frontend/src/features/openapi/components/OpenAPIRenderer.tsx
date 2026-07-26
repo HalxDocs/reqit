@@ -40,7 +40,25 @@ export function OpenAPIRenderer() {
     setLoading(true);
     ExportOpenAPI(openapiCollID)
       .then((raw: string) => {
-        try { setSpec(JSON.parse(raw)); } catch { toast.error("Failed to parse OpenAPI spec"); }
+        try {
+          const parsed = JSON.parse(raw);
+          setSpec(parsed);
+          // Expand all tags by default so the full API is visible
+          if (parsed?.paths) {
+            const tags = new Set<string>();
+            for (const [, methods] of Object.entries(parsed.paths)) {
+              if (!methods) continue;
+              for (const method of ["get", "post", "put", "patch", "delete", "options", "head"]) {
+                const ep = (methods as Record<string, any>)[method];
+                if (ep) {
+                  const tag = (ep.tags?.[0]) ?? "default";
+                  tags.add(tag);
+                }
+              }
+            }
+            setExpandedPaths(new Set(tags));
+          }
+        } catch { toast.error("Failed to parse OpenAPI spec"); }
       })
       .catch((e: any) => toast.error(String(e)))
       .finally(() => setLoading(false));
@@ -51,9 +69,13 @@ export function OpenAPIRenderer() {
     const eps: Endpoint[] = [];
     for (const [path, methods] of Object.entries(spec.paths)) {
       if (!methods) continue;
+      // Include path-level parameters
+      const pathParams = methods.parameters ?? [];
       for (const method of ["get", "post", "put", "patch", "delete", "options", "head"]) {
-        if (methods[method]) {
-          eps.push({ path, method: method.toUpperCase(), ...methods[method] });
+        const ep = (methods as Record<string, any>)[method];
+        if (ep) {
+          const mergedParams = [...(pathParams), ...(ep.parameters ?? [])];
+          eps.push({ path, method: method.toUpperCase(), ...ep, parameters: mergedParams });
         }
       }
     }
@@ -88,7 +110,7 @@ export function OpenAPIRenderer() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-bg">
+    <div className="h-full flex flex-col bg-bg min-h-0">
       <header className="flex items-center gap-3 px-4 h-[48px] border-b border-border shrink-0">
         <button
           type="button"
@@ -131,7 +153,7 @@ export function OpenAPIRenderer() {
       )}
 
       {!loading && spec && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {spec.info?.description && (
             <div className="px-4 py-3 text-12 text-subtext border-b border-border whitespace-pre-wrap">
               {spec.info.description}
@@ -155,7 +177,7 @@ export function OpenAPIRenderer() {
               {expandedPaths.has(tag) && eps.map((ep, i) => (
                 <div key={`${ep.method}-${ep.path}-${i}`} className="px-4 py-2 hover:bg-cardHover transition-colors border-t border-border/50">
                   <div className="flex items-center gap-3">
-                    <MethodBadge method={ep.method as any} size="sm" />
+                    <MethodBadge method={ep.method as any} />
                     <code className="text-12 text-text font-mono">{ep.path}</code>
                     {ep.summary && (
                       <span className="text-11 text-subtext truncate">{ep.summary}</span>
