@@ -74,6 +74,8 @@ const pickRequestState = (): RequestState => {
     authToken: s.authToken,
     authUser: s.authUser,
     authPass: s.authPass,
+    authUsername: s.authUsername ?? "",
+    authPassword: s.authPassword ?? "",
     authKeyName: s.authKeyName,
     authKeyValue: s.authKeyValue,
     authKeyIn: s.authKeyIn,
@@ -88,6 +90,15 @@ const pickRequestState = (): RequestState => {
     postScript: s.postScript,
     notes: s.notes,
     timeout: s.timeout ?? 0,
+    grpcService: s.grpcService ?? "",
+    grpcMethod: s.grpcMethod ?? "",
+    grpcBody: s.grpcBody ?? "",
+    soapAction: s.soapAction ?? "",
+    soapVersion: s.soapVersion ?? "1.1",
+    soapBody: s.soapBody ?? "",
+    mqttTopic: s.mqttTopic ?? "",
+    mqttPayload: s.mqttPayload ?? "",
+    mqttQoS: s.mqttQoS ?? 0,
   };
 };
 
