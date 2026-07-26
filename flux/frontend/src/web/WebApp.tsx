@@ -325,17 +325,6 @@ function DevProfileCard({ name, username, bio, skills, avatarColor }: { name: st
 function HomePage({ goToDocs, stars }: { goToDocs: () => void; stars: number | null }) {
   return (
     <>
-      {/* 300 downloads milestone */}
-      <section className="flex justify-center">
-        <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-cyan/10 via-teal/10 to-cyan/10 border border-cyan/20 rounded-xl text-center">
-          <span className="text-20">🎉</span>
-          <div className="flex flex-col items-start">
-            <span className="text-13 font-bold text-text">300+ Downloads</span>
-            <span className="text-11 text-subtext">and growing — thank you for being part of the journey</span>
-          </div>
-        </div>
-      </section>
-
       {/* Hero */}
       <section className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-5 flex-1">

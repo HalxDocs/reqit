@@ -19,7 +19,6 @@ import { CodeGenModal } from "@/features/request/components/CodeGenModal";
 import { SettingsModal } from "@/app/components/SettingsModal";
 import { WelcomeModal } from "@/app/components/WelcomeModal";
 import { WhatsNewModal } from "@/app/components/WhatsNewModal";
-import { MilestoneBanner } from "@/app/components/MilestoneBanner";
 import { DocsContentViewer } from "@/features/docs/components/DocsContentViewer";
 import { SpecEditor } from "@/features/spec/components/SpecEditor";
 import { IntegrationsPanel } from "@/features/integrations/components/IntegrationsPanel";
@@ -140,7 +139,6 @@ export default function App() {
     return (
       <>
         <HomeScreen onEnter={enterApp} />
-        <MilestoneBanner />
         <ToastHost />
       </>
     );
@@ -464,7 +462,6 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       <CodeGenModal />
       <SettingsModal />
       <WelcomeModal />
-      <MilestoneBanner />
       <PasteCurlModal />
       <TeamModal />
       <DevProfileModal open={devProfileOpen} onClose={closeDevProfile} />
