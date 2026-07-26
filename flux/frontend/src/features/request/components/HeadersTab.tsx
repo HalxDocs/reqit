@@ -1,5 +1,6 @@
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
+import { HeaderPresetButtons } from "@/features/presets/components/PresetManager";
 
 const COMMON_HEADERS = [
   "Accept",
@@ -24,6 +25,9 @@ export function HeadersTab() {
 
   return (
     <div>
+      <div className="flex items-center justify-end mb-2 px-2">
+        <HeaderPresetButtons />
+      </div>
       <KeyValueEditor
         rows={headers}
         onAdd={addHeader}

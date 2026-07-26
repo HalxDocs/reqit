@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Shield, Upload, X } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
 import { OAuth2Flow } from "./OAuth2Flow";
+import { AuthPresetButtons } from "@/features/presets/components/PresetManager";
 import type { ApiKeyIn, AuthType } from "@/features/request/types/request";
 
 const TYPES: { id: AuthType; label: string }[] = [
@@ -46,6 +47,7 @@ export function AuthTab() {
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-2 px-3 py-3 border-b border-border flex-wrap">
+        <AuthPresetButtons />
         {TYPES.map((t) => (
           <button
             key={t.id}
