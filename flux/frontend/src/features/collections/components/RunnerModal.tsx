@@ -8,6 +8,7 @@ import {
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { AssertionEditor } from "@/features/assertions/components/AssertionEditor";
 import { FileText, Download, Table } from "lucide-react";
+import { RequestChainingGraph } from "@/features/collections/components/RequestChainingGraph";
 import { SendNotification, PickFile, ReadFileText } from "../../../../wailsjs/go/main/App";
 import { models } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
@@ -127,6 +128,9 @@ export function RunnerModal({ open, onClose, collection }: Props) {
 
   return (
     <Modal open={open} onClose={onClose} title={`Run: ${collection.name}`}>
+      <div className="flex items-center justify-end px-1 -mt-2 mb-1">
+        <RequestChainingGraph collectionID={collection.id} />
+      </div>
       <div className="flex flex-col gap-4 min-w-[580px] max-w-[700px]">
         {/* Summary */}
         {result && (

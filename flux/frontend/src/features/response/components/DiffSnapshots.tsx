@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GitCompare, Trash2 } from "lucide-react";
+import { GitCompare, Trash2, Columns2, List } from "lucide-react";
 import { useDiffStore, type ResponseSnapshot } from "@/features/response/stores/useDiffStore";
 import { cn } from "@/shared/lib/cn";
 
@@ -41,6 +41,7 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
   const removeSnapshot = useDiffStore((s) => s.removeSnapshot);
   const existing = snapshots[snapshotKey];
   const [open, setOpen] = useState(false);
+  const [sideBySide, setSideBySide] = useState(false);
 
   if (!response || !existing) return null;
 
@@ -77,25 +78,76 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
             <span className="text-teal">+{adds}</span>
             <span className="text-danger">-{rems}</span>
             <span className="text-subtext/50">{existing.statusCode} → {response.statusCode}</span>
+            <div className="flex-1" />
+            <button
+              type="button"
+              onClick={() => setSideBySide(!sideBySide)}
+              className="flex items-center gap-1 text-10 text-subtext hover:text-text transition-colors"
+              title={sideBySide ? "Unified view" : "Side-by-side view"}
+            >
+              {sideBySide ? <List size={11} /> : <Columns2 size={11} />}
+              {sideBySide ? "Unified" : "Side-by-side"}
+            </button>
           </div>
-          <div className="bg-card border border-border rounded-md overflow-hidden font-mono text-12 leading-relaxed max-h-[400px] overflow-y-auto">
-            {diffs.map((d, i) => (
-              <div key={i} className={cn(
-                "flex items-stretch border-b border-border/30 last:border-b-0",
-                d.type === "added" && "bg-teal/5",
-                d.type === "removed" && "bg-danger/5",
-              )}>
-                <span className={cn(
-                  "w-[28px] shrink-0 text-right pr-2 py-[1px] text-10 select-none border-r border-border/30",
-                  d.type === "added" ? "text-teal border-teal/20" : d.type === "removed" ? "text-danger border-danger/20" : "text-subtext/30",
-                )}>{d.type === "added" ? "+" : d.type === "removed" ? "-" : " "}</span>
-                <span className={cn(
-                  "px-2 py-[1px] whitespace-pre-wrap break-all flex-1",
-                  d.type === "added" ? "text-teal" : d.type === "removed" ? "text-danger" : "text-text",
-                )}>{d.line || " "}</span>
+
+          {sideBySide ? (
+            <div className="flex gap-2 font-mono text-12 leading-relaxed max-h-[400px] overflow-y-auto">
+              <div className="flex-1 border border-border rounded-md overflow-hidden bg-card">
+                <div className="text-10 text-subtext px-2 py-1 bg-surface border-b border-border">Snapshot</div>
+                <div className="max-h-[380px] overflow-y-auto">
+                  {oldLines.map((line, i) => {
+                    const diff = diffs.find((d, di) => {
+                      let idx = 0;
+                      for (let k = 0; k < di; k++) { if (diffs[k].type !== "same") idx++; }
+                      return idx === i && d.type === "removed";
+                    });
+                    return (
+                      <div key={i} className={cn("px-2 py-[1px] whitespace-pre-wrap break-all", diff ? "bg-danger/10 text-danger" : "text-text")}>
+                        {line || " "}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
-          </div>
+              <div className="flex-1 border border-border rounded-md overflow-hidden bg-card">
+                <div className="text-10 text-subtext px-2 py-1 bg-surface border-b border-border">Current</div>
+                <div className="max-h-[380px] overflow-y-auto">
+                  {newLines.map((line, i) => {
+                    const diff = diffs.find((d, di) => {
+                      let idx = 0;
+                      for (let k = 0; k < di; k++) { if (diffs[k].type !== "same") idx++; }
+                      return idx === i && d.type === "added";
+                    });
+                    return (
+                      <div key={i} className={cn("px-2 py-[1px] whitespace-pre-wrap break-all", diff ? "bg-teal/10 text-teal" : "text-text")}>
+                        {line || " "}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-md overflow-hidden font-mono text-12 leading-relaxed max-h-[400px] overflow-y-auto">
+              {diffs.map((d, i) => (
+                <div key={i} className={cn(
+                  "flex items-stretch border-b border-border/30 last:border-b-0",
+                  d.type === "added" && "bg-teal/5",
+                  d.type === "removed" && "bg-danger/5",
+                )}>
+                  <span className={cn(
+                    "w-[28px] shrink-0 text-right pr-2 py-[1px] text-10 select-none border-r border-border/30",
+                    d.type === "added" ? "text-teal border-teal/20" : d.type === "removed" ? "text-danger border-danger/20" : "text-subtext/30",
+                  )}>{d.type === "added" ? "+" : d.type === "removed" ? "-" : " "}</span>
+                  <span className={cn(
+                    "px-2 py-[1px] whitespace-pre-wrap break-all flex-1",
+                    d.type === "added" ? "text-teal" : d.type === "removed" ? "text-danger" : "text-text",
+                  )}>{d.line || " "}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <button type="button" onClick={() => { removeSnapshot(snapshotKey); setOpen(false); }}
             className="mt-2 flex items-center gap-1 text-11 text-subtext/30 hover:text-danger transition-colors">
             <Trash2 size={10} /> Clear snapshot

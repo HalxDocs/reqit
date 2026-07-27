@@ -8,6 +8,8 @@ import { CollectionsTree } from "@/features/collections/components/CollectionsTr
 import { HistoryList } from "@/features/history/components/HistoryList";
 import { EnvSwitcher } from "@/features/env/components/EnvSwitcher";
 import { SearchBar } from "@/features/collections/components/SearchBar";
+import { WorkspaceTemplatePicker } from "@/features/workspace/components/WorkspaceTemplatePicker";
+import { SessionManager } from "@/features/workspace/components/SessionManager";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -111,6 +113,10 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
 
       <div className="px-3 py-2 border-b border-border flex flex-col gap-2">
         <EnvSwitcher />
+        <div className="flex items-center gap-2 -mb-1">
+          <WorkspaceTemplatePicker />
+          <SessionManager />
+        </div>
         <SearchBar />
       </div>
 
