@@ -72,7 +72,7 @@ export function BulkEditModal({ open, onClose, requestIDs }: Props) {
 
   return (
     <Modal open={open} onClose={onClose} title={`Bulk Edit (${requestIDs.length} requests)`}>
-      <div className="flex flex-col gap-4 min-w-[420px]">
+      <div className="flex flex-col gap-4 w-[420px] max-w-full">
         {/* Method */}
         <div className="flex flex-col gap-1">
           <label className="text-10 text-subtext uppercase tracking-wider">Change Method</label>
@@ -113,7 +113,7 @@ export function BulkEditModal({ open, onClose, requestIDs }: Props) {
         {/* Add header */}
         <div className="flex flex-col gap-1">
           <label className="text-10 text-subtext uppercase tracking-wider">Add Header</label>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
               type="text"
               value={addHeaderKey}
@@ -142,7 +142,7 @@ export function BulkEditModal({ open, onClose, requestIDs }: Props) {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}

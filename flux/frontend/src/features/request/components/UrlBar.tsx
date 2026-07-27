@@ -129,8 +129,16 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const displayed = url + buildQueryString(params);
 
   const [acIndex, setAcIndex] = useState(-1);
+  const [acOpen, setAcOpen] = useState(false);
   const suggestions = useUrlAutocomplete(url);
   const acRef = useRef<HTMLDivElement>(null);
+
+  // Show dropdown when suggestions exist and user has typed
+  useEffect(() => {
+    if (suggestions.length > 0 && url.length >= 2) {
+      setAcOpen(true);
+    }
+  }, [suggestions, url]);
 
   const handleChange = (val: string) => {
     const { base, query } = splitUrl(val);
@@ -140,13 +148,30 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       replaceParams(parsed.length ? parsed : [emptyRow()]);
     }
     setAcIndex(-1);
+    setAcOpen(true);
   };
 
   const selectSuggestion = (s: { url: string; method: string }) => {
     setUrl(s.url);
     setMethod(s.method as any);
     setAcIndex(-1);
+    setAcOpen(false);
   };
+
+  // Close on outside click
+  useEffect(() => {
+    if (!acOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (acRef.current && !acRef.current.contains(e.target as Node)) {
+        const input = document.getElementById("flux-url-bar");
+        if (input && !input.contains(e.target as Node)) {
+          setAcOpen(false);
+        }
+      }
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [acOpen]);
 
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-surface">
@@ -172,18 +197,18 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
               e.stopPropagation();
               if (!isLoading) onSend?.();
             }
-            if (suggestions.length > 0) {
+            if (acOpen && suggestions.length > 0) {
               if (e.key === "ArrowDown") { e.preventDefault(); setAcIndex((i) => Math.min(i + 1, suggestions.length - 1)); return; }
               if (e.key === "ArrowUp") { e.preventDefault(); setAcIndex((i) => Math.max(i - 1, -1)); return; }
               if (e.key === "Enter" && acIndex >= 0) { e.preventDefault(); selectSuggestion(suggestions[acIndex]); return; }
-              if (e.key === "Escape") { setAcIndex(-1); return; }
+              if (e.key === "Escape") { setAcOpen(false); setAcIndex(-1); return; }
             }
           }}
           spellCheck={false}
           autoComplete="off"
           className="relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border border-border rounded-lg focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
         />
-        {suggestions.length > 0 && (
+        {acOpen && suggestions.length > 0 && (
           <div ref={acRef} className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-card border border-border rounded-xl shadow-xl py-1 max-h-[280px] overflow-y-auto">
             {suggestions.map((s, i) => (
               <button
