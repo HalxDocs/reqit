@@ -8,7 +8,7 @@ import {
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { AssertionEditor } from "@/features/assertions/components/AssertionEditor";
 import { FileText, Download, Table } from "lucide-react";
-import { SendNotification } from "../../../../wailsjs/go/main/App";
+import { SendNotification, PickFile, ReadFileText } from "../../../../wailsjs/go/main/App";
 import { models } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
 
@@ -189,6 +189,26 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                 }`}
               >
                 JSON
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const path = await PickFile("Select data file", "*.csv;*.json");
+                    if (!path) return;
+                    const content = await ReadFileText(path);
+                    if (path.endsWith(".csv")) setDataType("csv");
+                    else if (path.endsWith(".json")) setDataType("json");
+                    setDataText(content);
+                  } catch (e) {
+                    toast.error(String(e));
+                  }
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 text-11 text-subtext hover:text-text border border-border rounded transition-colors"
+                title="Import data file (CSV/JSON)"
+              >
+                <Download size={11} />
+                Import File
               </button>
               {dataRows.length > 0 && (
                 <span className="text-11 text-teal ml-2">{dataRows.length} rows detected — will run {dataRows.length} iterations</span>
