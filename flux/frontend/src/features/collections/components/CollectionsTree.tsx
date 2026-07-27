@@ -18,6 +18,7 @@ import { cn } from "@/shared/lib/cn";
 import { downloadText, safeFilename } from "@/shared/lib/download";
 import { toast } from "@/app/stores/useToastStore";
 import { showConfirm } from "@/shared/components/ConfirmModal";
+import { BulkEditModal } from "@/features/collections/components/BulkEditModal";
 import { buildFolderTree, countNodes, type TreeNode, type FolderNode, type RequestNode } from "@/features/collections/lib/folderTree";
 import {
   ExportCollectionMarkdown,
@@ -86,6 +87,7 @@ export function CollectionsTree() {
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moveTargetOpen, setMoveTargetOpen] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [mdExportColl, setMdExportColl] = useState<models.Collection | null>(null);
   const [varsEditorColl, setVarsEditorColl] = useState<models.Collection | null>(null);
   const [varsEditorDraft, setVarsEditorDraft] = useState<models.EnvVar[]>([]);
@@ -464,6 +466,10 @@ export function CollectionsTree() {
                 </>
               )}
             </div>
+            <button type="button" onClick={() => setBulkEditOpen(true)}
+              className="h-[24px] px-2 text-11 text-text hover:bg-cardHover rounded transition-colors border border-border">
+              Bulk Edit
+            </button>
             <button type="button" onClick={handleBatchDelete}
               className="h-[24px] px-2 text-11 text-danger hover:bg-danger/10 rounded transition-colors border border-danger/30">
               Delete
@@ -638,6 +644,12 @@ export function CollectionsTree() {
         open={!!scriptsEditorCollID}
         collectionID={scriptsEditorCollID}
         onClose={() => setScriptsEditorCollID(null)}
+      />
+
+      <BulkEditModal
+        open={bulkEditOpen}
+        onClose={() => setBulkEditOpen(false)}
+        requestIDs={Array.from(selected)}
       />
     </div>
   );
