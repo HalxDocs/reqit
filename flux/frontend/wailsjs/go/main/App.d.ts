@@ -180,6 +180,8 @@ export function GetCapturedRequests():Promise<Array<interceptor.CapturedRequest>
 
 export function GetCollections():Promise<Array<models.Collection>>;
 
+export function GetCollectionsSummary():Promise<Array<models.Collection>>;
+
 export function GetCommunityConfig():Promise<string>;
 
 export function GetCookies():Promise<Array<cookies.CookieInfo>>;
@@ -225,6 +227,8 @@ export function GetRecipe(arg1:string):Promise<string>;
 export function GetRecipeCategories():Promise<Array<string>>;
 
 export function GetRecipes():Promise<string>;
+
+export function GetRequestDetail(arg1:string):Promise<models.SavedRequest>;
 
 export function GetSSOProviders():Promise<string>;
 

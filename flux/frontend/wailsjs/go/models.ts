@@ -491,7 +491,7 @@ export namespace main {
 	export class AISettingsResult {
 	    enabled: boolean;
 	    provider: string;
-	    apiKey: string;
+	    hasApiKey: boolean;
 	    baseUrl: string;
 	    model: string;
 	
@@ -503,7 +503,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.enabled = source["enabled"];
 	        this.provider = source["provider"];
-	        this.apiKey = source["apiKey"];
+	        this.hasApiKey = source["hasApiKey"];
 	        this.baseUrl = source["baseUrl"];
 	        this.model = source["model"];
 	    }

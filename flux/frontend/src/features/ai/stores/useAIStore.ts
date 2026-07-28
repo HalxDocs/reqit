@@ -5,7 +5,7 @@ import type { models } from "../../../../wailsjs/go/models";
 type AIStore = {
   enabled: boolean;
   provider: string;
-  apiKey: string;
+  hasApiKey: boolean;
   baseUrl: string;
   model: string;
   loaded: boolean;
@@ -18,7 +18,7 @@ type AIStore = {
 export const useAIStore = create<AIStore>((set, get) => ({
   enabled: false,
   provider: "openai",
-  apiKey: "",
+  hasApiKey: false,
   baseUrl: "",
   model: "",
   loaded: false,
@@ -29,7 +29,7 @@ export const useAIStore = create<AIStore>((set, get) => ({
       set({
         enabled: s.enabled,
         provider: s.provider || "openai",
-        apiKey: s.apiKey || "",
+        hasApiKey: s.hasApiKey,
         baseUrl: s.baseUrl || "",
         model: s.model || "",
         loaded: true,
@@ -41,7 +41,7 @@ export const useAIStore = create<AIStore>((set, get) => ({
 
   save: async (provider, apiKey, baseUrl, model) => {
     await SaveAISettings(provider, apiKey, baseUrl, model);
-    set({ enabled: true, provider, apiKey, baseUrl, model });
+    set({ enabled: true, provider, hasApiKey: !!apiKey, baseUrl, model });
   },
 
   diagnose: async (payload, response) => {

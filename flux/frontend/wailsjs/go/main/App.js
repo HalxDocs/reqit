@@ -326,6 +326,10 @@ export function GetCollections() {
   return window['go']['main']['App']['GetCollections']();
 }
 
+export function GetCollectionsSummary() {
+  return window['go']['main']['App']['GetCollectionsSummary']();
+}
+
 export function GetCommunityConfig() {
   return window['go']['main']['App']['GetCommunityConfig']();
 }
@@ -416,6 +420,10 @@ export function GetRecipeCategories() {
 
 export function GetRecipes() {
   return window['go']['main']['App']['GetRecipes']();
+}
+
+export function GetRequestDetail(arg1) {
+  return window['go']['main']['App']['GetRequestDetail'](arg1);
 }
 
 export function GetSSOProviders() {

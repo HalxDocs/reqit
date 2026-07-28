@@ -49,9 +49,9 @@ const MODELS: Record<string, { id: string; label: string; desc: string }[]> = {
 };
 
 export function AISettingsPanel() {
-  const { enabled, provider, apiKey, baseUrl, model, load, save } = useAIStore();
+  const { enabled, provider, hasApiKey, baseUrl, model, load, save } = useAIStore();
   const [localProvider, setLocalProvider] = useState(provider);
-  const [localApiKey, setLocalApiKey] = useState(apiKey);
+  const [localApiKey, setLocalApiKey] = useState("");
   const [localBaseUrl, setLocalBaseUrl] = useState(baseUrl);
   const [localModel, setLocalModel] = useState(model);
   const [busy, setBusy] = useState(false);
@@ -60,10 +60,9 @@ export function AISettingsPanel() {
   useEffect(() => { load(); }, []);
   useEffect(() => {
     setLocalProvider(provider);
-    setLocalApiKey(apiKey);
     setLocalBaseUrl(baseUrl);
     setLocalModel(model);
-  }, [provider, apiKey, baseUrl, model]);
+  }, [provider, baseUrl, model]);
 
   const p = PROVIDERS.find((x) => x.id === localProvider) || PROVIDERS[0];
 
@@ -160,7 +159,7 @@ export function AISettingsPanel() {
           {busy ? "Saving…" : "Save AI settings"}
         </button>
         {saved && <span className="text-11 text-teal">Saved</span>}
-        {enabled && <span className="text-11 text-teal">✓ Configured</span>}
+        {hasApiKey && <span className="text-11 text-teal">✓ API key set</span>}
       </div>
 
       <p className="text-10 text-subtext/50 mt-1 leading-relaxed">
