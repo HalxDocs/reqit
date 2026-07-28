@@ -23,7 +23,7 @@ import (
 // CurrentVersion is the running version. Override at build time:
 //
 //	wails build -ldflags "-X 'flux/internal/updater.CurrentVersion=v1.1.0'"
-var CurrentVersion = "v0.0.0-dev"
+var CurrentVersion = "v1.2.0"
 
 var (
 	manifestURL = "https://github.com/HalxDocs/reqit/releases/latest/download/latest.json"
