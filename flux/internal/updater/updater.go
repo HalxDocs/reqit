@@ -103,7 +103,7 @@ func (u *Updater) downloadWithChecksum(ctx context.Context, asset PlatformAsset)
 	}
 
 	sum := sha256.Sum256(data)
-	if hex.EncodeToString(sum[:]) != asset.SHA256 {
+	if !strings.EqualFold(hex.EncodeToString(sum[:]), asset.SHA256) {
 		return nil, fmt.Errorf("checksum mismatch — update aborted")
 	}
 
