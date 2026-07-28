@@ -77,15 +77,12 @@ export function AssistantBot({ onNavigate }: { onNavigate: (target: NavTarget) =
   }, [pos]);
 
   useEffect(() => {
-    if (!dragRef.current.dragging) return;
     const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!dragRef.current.dragging) return;
       e.preventDefault();
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - dragRef.current.startX;
-      const dy = clientY - dragRef.current.startY;
-      setPos({ left: dragRef.current.left + dx, top: dragRef.current.top + dy });
+      setPos({ left: dragRef.current.left + clientX - dragRef.current.startX, top: dragRef.current.top + clientY - dragRef.current.startY });
     };
     const handleUp = () => {
       dragRef.current.dragging = false;
@@ -100,7 +97,7 @@ export function AssistantBot({ onNavigate }: { onNavigate: (target: NavTarget) =
       window.removeEventListener("touchmove", handleMove);
       window.removeEventListener("touchend", handleUp);
     };
-  }, [pos]);
+  }, []);
 
   const handleSend = () => {
     const q = input.trim();
