@@ -11,6 +11,9 @@ import {
 } from "../../../../wailsjs/go/main/App";
 import type { workspaces } from "../../../../wailsjs/go/models";
 import { toast } from "@/app/stores/useToastStore";
+import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
+import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
 
 type WorkspaceStore = {
   workspaces: workspaces.Info[];
@@ -58,6 +61,11 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   switch: async (id) => {
     await SwitchWorkspace(id);
     await get().load();
+    await Promise.all([
+      useCollectionStore.getState().load(),
+      useHistoryStore.getState().load(),
+      useEnvStore.getState().load(),
+    ]);
   },
 
   rename: async (id, name) => {

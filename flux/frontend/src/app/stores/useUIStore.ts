@@ -108,6 +108,9 @@ type UIStore = {
   whatsNewModalOpen: boolean;
   openWhatsNewModal: () => void;
   closeWhatsNewModal: () => void;
+
+  pendingGraphQL: { url: string; query: string; variables: string; headers: string } | null;
+  setPendingGraphQL: (v: { url: string; query: string; variables: string; headers: string } | null) => void;
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -248,4 +251,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ whatsNewModalOpen: true });
   },
   closeWhatsNewModal: () => set({ whatsNewModalOpen: false }),
+
+  pendingGraphQL: null,
+  setPendingGraphQL: (pendingGraphQL) => set({ pendingGraphQL }),
 }));

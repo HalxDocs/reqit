@@ -22,11 +22,17 @@ interface SubMessage {
 
 export function GraphQLPanel() {
   const setView = useUIStore((s) => s.setView);
+  const pending = useUIStore((s) => s.pendingGraphQL);
+  const clearPending = useUIStore((s) => s.setPendingGraphQL);
   const [tab, setTab] = useState<SubTab>("query");
-  const [url, setUrl] = useState("https://");
-  const [query, setQuery] = useState("# GraphQL query\n{\n  __typename\n}");
-  const [variables, setVariables] = useState("{\n  \n}");
-  const [headersText, setHeadersText] = useState("{}");
+  const [url, setUrl] = useState(pending?.url ?? "https://");
+  const [query, setQuery] = useState(pending?.query ?? "# GraphQL query\n{\n  __typename\n}");
+  const [variables, setVariables] = useState(pending?.variables ?? "{\n  \n}");
+  const [headersText, setHeadersText] = useState(pending?.headers ?? "{}");
+
+  useEffect(() => {
+    if (pending) clearPending(null);
+  }, []);
   const [response, setResponse] = useState<GQLResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

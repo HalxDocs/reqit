@@ -309,8 +309,19 @@ export function CollectionsTree() {
   };
 
   const loadRequest = (req: models.SavedRequest) => {
-    newTab({ title: req.name, savedRequestID: req.id, request: decodePayload(req.payload, { preSetVars: req.preSetVars as unknown as PreSetVar[], extractRules: req.extractRules as unknown as ExtractRule[] }), response: null, dirty: false });
+    const decoded = decodePayload(req.payload, { preSetVars: req.preSetVars as unknown as PreSetVar[], extractRules: req.extractRules as unknown as ExtractRule[] });
+    newTab({ title: req.name, savedRequestID: req.id, request: decoded, response: null, dirty: false });
     setLoadedRequestID(req.id);
+    if (decoded.bodyType === "graphql" && decoded.graphqlQuery) {
+      const { setView, setPendingGraphQL } = useUIStore.getState();
+      setView("graphql");
+      setPendingGraphQL({
+        url: decoded.url,
+        query: decoded.graphqlQuery,
+        variables: decoded.graphqlVariables || "{}",
+        headers: JSON.stringify(decoded.headers.reduce((acc: Record<string, string>, h: any) => { if (h.key) acc[h.key] = h.value; return acc; }, {}), null, 2),
+      });
+    }
   };
 
   const handleDragStart = useCallback((e: React.DragEvent) => {
