@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Bot, X, Send, Sparkles, ExternalLink, MessageSquare } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Bot, X, Send, Sparkles, ExternalLink, MessageSquare, GripHorizontal } from "lucide-react";
 import { allFeatures, type NavTarget } from "@/app/data/releaseNotes";
 
 interface Message {
@@ -57,9 +57,50 @@ export function AssistantBot({ onNavigate }: { onNavigate: (target: NavTarget) =
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Dragging state
+  const dragRef = useRef<{ startX: number; startY: number; left: number; top: number; dragging: boolean }>({
+    startX: 0, startY: 0, left: -1, top: -1, dragging: false,
+  });
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (open) listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const currentLeft = pos?.left ?? window.innerWidth - 72;
+    const currentTop = pos?.top ?? window.innerHeight - 72;
+    dragRef.current = { startX: clientX, startY: clientY, left: currentLeft, top: currentTop, dragging: true };
+  }, [pos]);
+
+  useEffect(() => {
+    if (!dragRef.current.dragging) return;
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!dragRef.current.dragging) return;
+      e.preventDefault();
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const dx = clientX - dragRef.current.startX;
+      const dy = clientY - dragRef.current.startY;
+      setPos({ left: dragRef.current.left + dx, top: dragRef.current.top + dy });
+    };
+    const handleUp = () => {
+      dragRef.current.dragging = false;
+    };
+    window.addEventListener("mousemove", handleMove, { passive: false });
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleUp);
+    };
+  }, [pos]);
 
   const handleSend = () => {
     const q = input.trim();
@@ -88,25 +129,41 @@ export function AssistantBot({ onNavigate }: { onNavigate: (target: NavTarget) =
     setOpen(false);
   };
 
+  const left = pos?.left ?? window.innerWidth - 72;
+  const top = pos?.top ?? window.innerHeight - 72;
+
   return (
     <>
-      {/* Floating button */}
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-5 right-5 z-50 w-[48px] h-[48px] rounded-full bg-cyan hover:bg-cyan-hover text-white shadow-lg shadow-cyan/30 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-        title="Ask reqit assistant"
+      {/* Floating button — draggable */}
+      <div
+        className="fixed z-50 select-none"
+        style={{ left, top }}
       >
-        {open ? <X size={20} /> : <Bot size={20} />}
-      </button>
+        <button
+          type="button"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleMouseDown}
+          onClick={() => { if (!dragRef.current.dragging) setOpen(!open); }}
+          className="w-[52px] h-[52px] rounded-full bg-cyan hover:bg-cyan-hover text-white shadow-lg shadow-cyan/30 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-grab active:cursor-grabbing relative group"
+          title="Drag to move — click to open chat"
+        >
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-cyan animate-pulse" />
+          {open ? <X size={20} /> : <Bot size={22} className="animate-bot-idle" />}
+          <GripHorizontal size={14} className="absolute -bottom-1 opacity-0 group-hover:opacity-60 transition-opacity text-white/60" />
+        </button>
+      </div>
 
-      {/* Chat panel */}
+      {/* Chat panel — follows button */}
       {open && (
-        <div className="fixed bottom-[72px] right-5 z-50 w-[360px] max-w-[calc(100vw-40px)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col animate-[fade-in_0.15s_ease-out]">
+        <div
+          ref={panelRef}
+          className="fixed z-50 w-[360px] max-w-[calc(100vw-40px)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col animate-[fade-in_0.15s_ease-out]"
+          style={{ left: Math.min(left + 58, window.innerWidth - 380), top: Math.max(10, top - 440) }}
+        >
           {/* Header */}
           <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border shrink-0">
             <div className="w-[30px] h-[30px] rounded-full bg-cyan/10 flex items-center justify-center">
-              <Bot size={15} className="text-cyan" />
+              <Bot size={15} className="text-cyan animate-bot-idle" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-12 font-semibold text-text">reqit Assistant</div>

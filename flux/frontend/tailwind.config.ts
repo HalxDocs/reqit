@@ -71,6 +71,20 @@ const config: Config = {
       ringColor: {
         DEFAULT: 'var(--color-cyan)',
       },
+      keyframes: {
+        'bot-idle': {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '50%': { transform: 'translateY(-2px) scale(1.04)' },
+        },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'bot-idle': 'bot-idle 2.5s ease-in-out infinite',
+        'fade-in': 'fade-in 0.15s ease-out',
+      },
     },
   },
   plugins: [],
