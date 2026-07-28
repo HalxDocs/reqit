@@ -15,17 +15,32 @@ const TEMPLATES: Template[] = [
   {
     id: "rest-api",
     name: "RESTful API",
-    description: "Standard REST API collection with CRUD endpoints",
+    description: "Real JSONPlaceholder CRUD endpoints",
     collections: [
       {
-        name: "Users API",
-        description: "User management endpoints",
+        name: "JSONPlaceholder",
+        description: "Free fake REST API for testing (by typicode)",
         requests: [
-          { name: "List Users", method: "GET", url: "https://api.example.com/users" },
-          { name: "Get User", method: "GET", url: "https://api.example.com/users/{{userId}}" },
-          { name: "Create User", method: "POST", url: "https://api.example.com/users" },
-          { name: "Update User", method: "PUT", url: "https://api.example.com/users/{{userId}}" },
-          { name: "Delete User", method: "DELETE", url: "https://api.example.com/users/{{userId}}" },
+          { name: "List Posts", method: "GET", url: "https://jsonplaceholder.typicode.com/posts" },
+          { name: "Get Post", method: "GET", url: "https://jsonplaceholder.typicode.com/posts/1" },
+          { name: "Create Post", method: "POST", url: "https://jsonplaceholder.typicode.com/posts" },
+          { name: "List Comments", method: "GET", url: "https://jsonplaceholder.typicode.com/posts/1/comments" },
+          { name: "List Users", method: "GET", url: "https://jsonplaceholder.typicode.com/users" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "websocket-demo",
+    name: "WebSocket Live Demo",
+    description: "Pre-configured WebSocket echo + real-time feed",
+    collections: [
+      {
+        name: "WebSocket Playground",
+        description: "Connect to free echo servers and real streams",
+        requests: [
+          { name: "Echo Server", method: "GET", url: "wss://echo.websocket.org" },
+          { name: "Real-time Feed", method: "GET", url: "wss://ws.postman-echo.com/raw" },
         ],
       },
     ],
@@ -33,46 +48,73 @@ const TEMPLATES: Template[] = [
   {
     id: "graphql",
     name: "GraphQL API",
-    description: "GraphQL queries and mutations collection",
+    description: "Real public GraphQL endpoints",
     collections: [
       {
         name: "GraphQL Playground",
-        description: "GraphQL endpoint with sample queries",
+        description: "Public GraphQL APIs for testing",
         requests: [
-          { name: "Get Users", method: "POST", url: "https://api.example.com/graphql" },
-          { name: "Create Record", method: "POST", url: "https://api.example.com/graphql" },
+          { name: "GitHub GraphQL", method: "POST", url: "https://api.github.com/graphql" },
+          { name: "Countries API", method: "POST", url: "https://countries.trevorblades.com/graphql" },
+          { name: "Rick & Morty API", method: "POST", url: "https://rickandmortyapi.com/graphql" },
         ],
       },
     ],
   },
   {
     id: "auth-flow",
-    name: "OAuth2 Auth Flow",
-    description: "Collection demonstrating OAuth2 authentication flow",
+    name: "OAuth2 & Auth Flow",
+    description: "Real authentication endpoint patterns",
     collections: [
       {
         name: "Authentication",
-        description: "OAuth2 token acquisition and API access",
+        description: "Auth0 and real OAuth2 flows",
         requests: [
-          { name: "Get Access Token", method: "POST", url: "https://auth.example.com/oauth/token" },
-          { name: "Get Me", method: "GET", url: "https://api.example.com/me" },
-          { name: "Refresh Token", method: "POST", url: "https://auth.example.com/oauth/token" },
+          { name: "Auth0 Token", method: "POST", url: "https://dev-xxx.us.auth0.com/oauth/token" },
+          { name: "GitHub User", method: "GET", url: "https://api.github.com/user" },
+          { name: "JWT Decode Test", method: "GET", url: "https://httpbin.org/bearer" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "httpbin",
+    name: "HTTPBin Playground",
+    description: "Every HTTP method and feature, live",
+    collections: [
+      {
+        name: "HTTPBin",
+        description: "Request/response inspection service (by kong)",
+        requests: [
+          { name: "GET", method: "GET", url: "https://httpbin.org/get" },
+          { name: "POST JSON", method: "POST", url: "https://httpbin.org/post" },
+          { name: "PUT", method: "PUT", url: "https://httpbin.org/put" },
+          { name: "PATCH", method: "PATCH", url: "https://httpbin.org/patch" },
+          { name: "DELETE", method: "DELETE", url: "https://httpbin.org/delete" },
+          { name: "Status 200", method: "GET", url: "https://httpbin.org/status/200" },
+          { name: "Status 404", method: "GET", url: "https://httpbin.org/status/404" },
+          { name: "Delay 2s", method: "GET", url: "https://httpbin.org/delay/2" },
+          { name: "Stream 10 lines", method: "GET", url: "https://httpbin.org/stream/10" },
+          { name: "Image PNG", method: "GET", url: "https://httpbin.org/image/png" },
+          { name: "Basic Auth", method: "GET", url: "https://httpbin.org/basic-auth/user/pass" },
+          { name: "Bearer Auth", method: "GET", url: "https://httpbin.org/bearer" },
+          { name: "Cookies", method: "GET", url: "https://httpbin.org/cookies" },
+          { name: "Response Headers", method: "GET", url: "https://httpbin.org/response-headers?key=val" },
         ],
       },
     ],
   },
   {
     id: "webhook",
-    name: "Webhook Receiver",
-    description: "Collection for testing webhook endpoints",
+    name: "Webhook & SSE Demo",
+    description: "SSE streams and webhook test endpoints",
     collections: [
       {
-        name: "Webhooks",
-        description: "Webhook event simulations",
+        name: "Real-time Streams",
+        description: "Server-Sent Events and webhook simulators",
         requests: [
-          { name: "Send Ping Event", method: "POST", url: "https://hooks.example.com/ping" },
-          { name: "Send Created Event", method: "POST", url: "https://hooks.example.com/created" },
-          { name: "Send Deleted Event", method: "POST", url: "https://hooks.example.com/deleted" },
+          { name: "Coinbase SSE Feed", method: "GET", url: "https://ws-feed.exchange.coinbase.com" },
+          { name: "Webhook Test", method: "POST", url: "https://webhook.site/token" },
         ],
       },
     ],

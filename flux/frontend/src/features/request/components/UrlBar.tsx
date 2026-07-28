@@ -14,6 +14,7 @@ import { useToastStore } from "@/app/stores/useToastStore";
 import { useEndpointCache } from "@/features/request/stores/useEndpointCache";
 import { cn } from "@/shared/lib/cn";
 import { useUrlAutocomplete } from "@/features/request/hooks/useUrlAutocomplete";
+import { BrowserOpenURL } from "../../../../wailsjs/runtime/runtime";
 import { MethodBadge } from "@/shared/components/MethodBadge";
 import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
@@ -260,6 +261,16 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           aria-label="Fork request"
         >
           <Copy size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { if (url) { BrowserOpenURL(url.startsWith("http") ? url : `https://${url}`); } }}
+          title="Open URL in browser"
+          className="h-[34px] w-[34px] flex items-center justify-center bg-bg border border-border hover:border-cyan/50 rounded-lg text-subtext hover:text-text transition-all"
+          aria-label="Open in browser"
+        >
+          <Globe size={14} />
         </button>
 
         <div className="w-px h-[24px] bg-border mx-0.5" />

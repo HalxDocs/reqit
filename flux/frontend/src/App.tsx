@@ -45,6 +45,8 @@ import { SchedulerPanel } from "@/features/scheduler/components/SchedulerPanel";
 import { PluginManager } from "@/features/plugins/components/PluginManager";
 import { ToastHost } from "@/shared/components/ToastHost";
 import { UpdateBanner } from "@/shared/components/UpdateBanner";
+import { ReleasePopup } from "@/shared/components/ReleasePopup";
+import { AssistantBot } from "@/shared/components/AssistantBot";
 import { HomeScreen } from "@/app/screens/HomeScreen";
 import { useSendRequest } from "@/features/request/hooks/useSendRequest";
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
@@ -485,6 +487,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         }}
         onNavigate={handleNavTarget}
       />
+      <ReleasePopup onWhatsNew={openWhatsNew} />
+      <AssistantBot onNavigate={handleNavTarget} />
       <ToastHost />
       <ConfirmModal />
     </div>

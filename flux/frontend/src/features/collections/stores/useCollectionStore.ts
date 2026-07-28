@@ -101,6 +101,7 @@ export const useCollectionStore = create<CollectionStore>((set, get) => {
 
   createCollection: async (name) => {
     const c = await CreateCollection(name);
+    await ReorderCollection(c.id, 0);
     await get().load();
     return c;
   },

@@ -31,15 +31,15 @@ function NavItem({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full h-[30px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
+        "w-full h-[32px] px-3 flex items-center gap-2.5 rounded-lg text-12 transition-all",
         active
           ? "bg-cyan/10 text-cyan font-semibold"
           : "text-subtext hover:text-text hover:bg-cardHover",
       )}
     >
       {icon}
-      <span>{label}</span>
-      {active && <span className="ml-auto text-10 text-cyan/60">active</span>}
+      <span className="truncate">{label}</span>
+      {active && <span className="ml-auto text-10 text-cyan/60 shrink-0">active</span>}
     </button>
   );
 }
@@ -55,16 +55,16 @@ function CollapsibleSection({
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   return (
-    <div>
+    <div className="px-0.5">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full h-[26px] px-3 flex items-center gap-1.5 text-11 font-semibold uppercase tracking-wider text-subtext/60 hover:text-subtext transition-colors"
+        className="w-full h-[30px] px-3 flex items-center gap-1.5 text-11 font-semibold uppercase tracking-wider text-subtext/60 hover:text-subtext transition-colors"
       >
         {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
         <span>{label}</span>
       </button>
-      {open && <div className="flex flex-col gap-px mt-0.5 mb-1">{children}</div>}
+      {open && <div className="flex flex-col gap-px mt-0.5 mb-1.5">{children}</div>}
     </div>
   );
 }
@@ -97,23 +97,23 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   }, []);
 
   return (
-    <aside data-scope="sidebar" className={cn("w-[240px] shrink-0 h-full bg-surface border-r border-border flex flex-col", sidebarCollapsed && "hidden")}>
+    <aside data-scope="sidebar" className={cn("w-[260px] lg:w-[280px] shrink-0 h-full bg-surface border-r border-border flex flex-col", sidebarCollapsed && "hidden")}>
       <button
         type="button"
         onClick={onGoHome}
-        className="h-[48px] px-4 flex items-center gap-2 border-b border-border hover:bg-cardHover transition-colors text-left group"
+        className="h-[52px] px-4 flex items-center gap-3 border-b border-border hover:bg-cardHover transition-colors text-left group"
         title="All workspaces"
       >
-        <img src={reqitLogo} alt="reqit" className="h-[28px] w-auto object-contain shrink-0" />
-        <span className="flex-1 text-12 font-semibold text-text truncate min-w-0">
+        <img src={reqitLogo} alt="reqit" className="h-[30px] w-auto object-contain shrink-0" />
+        <span className="flex-1 text-13 font-semibold text-text truncate min-w-0">
           {activeWs?.name ?? "Workspace"}
         </span>
-        <ChevronDown size={12} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
+        <ChevronDown size={14} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
       </button>
 
-      <div className="px-3 py-2 border-b border-border flex flex-col gap-2">
+      <div className="px-3 py-3 border-b border-border flex flex-col gap-2.5">
         <EnvSwitcher />
-        <div className="flex items-center gap-2 -mb-1">
+        <div className="flex items-center gap-3">
           <WorkspaceTemplatePicker />
           <SessionManager />
         </div>
@@ -121,7 +121,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
       </div>
 
       {/* ===== COLLECTIONS + HISTORY (PRIME REAL ESTATE) ===== */}
-      <nav className="flex-1 min-h-0 flex flex-col overflow-y-auto">
+      <nav className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden">
         <Section
           icon={<Folder size={12} />}
           label="Collections"
@@ -397,8 +397,8 @@ function Section({
   className?: string;
 }) {
   return (
-    <div className={`pb-2 ${className ?? ""}`.trim()}>
-      <div className="px-3 py-1.5 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
+    <div className={`pb-1 ${className ?? ""}`.trim()}>
+      <div className="px-3 py-2 flex items-center justify-between text-subtext text-11 font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-2">
           {icon}
           <span>{label}</span>
