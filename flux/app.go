@@ -226,9 +226,6 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func (a *App) CheckForUpdates() *updater.UpdateManifest {
-	if strings.HasPrefix(updater.CurrentVersion, "v0.0.0") {
-		return nil
-	}
 	m, err := (&updater.Updater{CurrentVersion: updater.CurrentVersion}).FetchManifest(a.ctx)
 	if err != nil {
 		return nil
