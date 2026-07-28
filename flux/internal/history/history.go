@@ -1,6 +1,3 @@
-// Package history persists the last N request/response pairs to a JSON file
-// in the Flux app data dir. Phase 1 caps at 50 entries; older entries are
-// dropped on append.
 package history
 
 import (
@@ -49,7 +46,6 @@ func (s *Store) save() error {
 	return storage.SaveTo(s.dir, fileName, wrapper{Entries: s.entries})
 }
 
-// Append prepends a new entry and trims to the most recent Cap entries.
 func (s *Store) Append(payload models.RequestPayload, response models.ResponseResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -127,3 +123,5 @@ func (s *Store) Clear() error {
 	s.loaded = true
 	return s.save()
 }
+
+func (s *Store) Flush() {}

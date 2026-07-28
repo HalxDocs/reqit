@@ -196,22 +196,23 @@ func runConcurrent(ctx context.Context, reqs []models.RunnerRequest, assertionsM
 			defer func() { <-sem }()
 			defer func() {
 				if r := recover(); r != nil {
-					mu.Lock()
 					(*results)[idx] = models.RequestRunResult{
 						RequestID:   req.ID,
 						RequestName: req.Name,
 						Error:       fmt.Sprintf("panic: %v", r),
 					}
+					mu.Lock()
 					*failed++
 					mu.Unlock()
 				}
 			}()
 
-			env := make(map[string]string)
-			res := executeRequestWithRetries(ctx, req, assertionsMap, env)
+			// In the concurrent (no-script) path, env is always empty because
+			// there are no PreSetVars/ExtractRules — pass nil to skip allocation.
+			res := executeRequestWithRetries(ctx, req, assertionsMap, nil)
 
-			mu.Lock()
 			(*results)[idx] = res
+			mu.Lock()
 			if res.Skipped {
 				*skipped++
 			} else if res.Passed {
@@ -356,6 +357,10 @@ func singleResult(req models.RunnerRequest, resp models.ResponseResult, assertio
 }
 
 func resolvePayload(p models.RequestPayload, env map[string]string) models.RequestPayload {
+	p.ValidateURL = true
+	if !hasVars(p.URL, p.Body, p.AuthValue, p.Headers, p.Params, p.BodyForm) {
+		return p
+	}
 	p.URL = resolve(p.URL, env)
 	for i := range p.Headers {
 		if p.Headers[i].Enabled {
@@ -377,14 +382,47 @@ func resolvePayload(p models.RequestPayload, env map[string]string) models.Reque
 	return p
 }
 
+// hasVars returns true if any of the fields contain a {{...}} pattern.
+// This is a cheap check that avoids regex overhead for the common case
+// where no variable substitution is needed.
+func hasVars(url, body, authValue string, headers, params, form []models.Header) bool {
+	if strings.Contains(url, "{{") {
+		return true
+	}
+	if strings.Contains(body, "{{") {
+		return true
+	}
+	if strings.Contains(authValue, "{{") {
+		return true
+	}
+	for _, h := range headers {
+		if h.Enabled && strings.Contains(h.Value, "{{") {
+			return true
+		}
+	}
+	for _, p := range params {
+		if p.Enabled && strings.Contains(p.Value, "{{") {
+			return true
+		}
+	}
+	for _, f := range form {
+		if f.Enabled && strings.Contains(f.Value, "{{") {
+			return true
+		}
+	}
+	return false
+}
+
 func resolve(s string, env map[string]string) string {
+	if !strings.Contains(s, "{{") {
+		return s
+	}
 	return varPattern.ReplaceAllStringFunc(s, func(match string) string {
 		name := match[2 : len(match)-2]
 		name = strings.TrimSpace(name)
 		if v, ok := env[name]; ok {
 			return v
 		}
-		// Faker variables: {{faker.name}}, {{faker.email}}, {{faker.uuid}}, etc.
 		if strings.HasPrefix(name, "faker.") {
 			return resolveFaker(name[6:])
 		}

@@ -108,7 +108,10 @@ func TestSanitizeExecArg(t *testing.T) {
 		{"newline", "item\n--flag", true},
 		{"carriage return", "item\r--flag", true},
 		{"null byte", "item\x00--flag", true},
-		{"double dash", "item --injected", true},
+		{"double dash in middle", "item--injected", false},
+		{"short flag injection", "-oEvilPlugin=1", true},
+		{"single dash value", "-x", true},
+		{"dash prefix", "--injected", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -13,11 +13,11 @@ import (
 // --- AI ---
 
 type AISettingsResult struct {
-	Enabled  bool   `json:"enabled"`
-	Provider string `json:"provider"`
-	APIKey   string `json:"apiKey"`
-	BaseURL  string `json:"baseUrl"`
-	Model    string `json:"model"`
+	Enabled      bool   `json:"enabled"`
+	Provider     string `json:"provider"`
+	HasAPIKey    bool   `json:"hasApiKey"`
+	BaseURL      string `json:"baseUrl"`
+	Model        string `json:"model"`
 }
 
 func (a *App) GetAISettings() AISettingsResult {
@@ -26,11 +26,11 @@ func (a *App) GetAISettings() AISettingsResult {
 	}
 	cfg := a.ai.Get()
 	return AISettingsResult{
-		Enabled:  a.ai.IsConfigured(),
-		Provider: string(cfg.Provider),
-		APIKey:   cfg.APIKey,
-		BaseURL:  cfg.BaseURL,
-		Model:    cfg.Model,
+		Enabled:   a.ai.IsConfigured(),
+		Provider:  string(cfg.Provider),
+		HasAPIKey: cfg.APIKey != "",
+		BaseURL:   cfg.BaseURL,
+		Model:     cfg.Model,
 	}
 }
 

@@ -93,12 +93,13 @@ func Import(path string) (*ImportResult, error) {
 
 func buildRequest(doc *openapi3.T, method, path string, op *openapi3.Operation) models.SavedRequest {
 	payload := models.RequestPayload{
-		Method:   strings.ToUpper(method),
-		URL:      path,
-		Headers:  []models.Header{},
-		Params:   []models.Header{},
-		BodyType: "none",
-		Body:     "",
+		Method:      strings.ToUpper(method),
+		URL:         path,
+		Headers:     []models.Header{},
+		Params:      []models.Header{},
+		BodyType:    "none",
+		Body:        "",
+		ValidateURL: true,
 	}
 
 	if op.Parameters != nil {

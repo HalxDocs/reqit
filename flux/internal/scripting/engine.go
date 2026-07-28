@@ -18,6 +18,11 @@ import (
 
 const scriptTimeout = 10 * time.Second
 
+// vmPool reduces the cost of creating goja runtimes for pre/post scripts.
+var vmPool = sync.Pool{
+	New: func() any { return goja.New() },
+}
+
 // runScriptWithTimeout executes a goja script with a timeout to prevent infinite loops.
 func runScriptWithTimeout(vm *goja.Runtime, script string) (goja.Value, error) {
 	done := make(chan struct{})
@@ -358,7 +363,7 @@ func RunPreScript(script string, payload *models.RequestPayload) (vars map[strin
 		return nil, nil, 0, 0, nil
 	}
 
-	vm := goja.New()
+	vm := vmPool.Get().(*goja.Runtime)
 	varsStore := &VarStore{store: make(map[string]string)}
 
 	reqObj := vm.NewObject()
@@ -426,6 +431,7 @@ func RunPreScript(script string, payload *models.RequestPayload) (vars map[strin
 		}
 	}
 
+	vmPool.Put(vm)
 	return varsStore.store, varsStore.logs, varsStore.pass, varsStore.fail, nil
 }
 
@@ -435,7 +441,7 @@ func RunPostScript(script string, payload *models.RequestPayload, result *models
 		return nil, nil, 0, 0, nil
 	}
 
-	vm := goja.New()
+	vm := vmPool.Get().(*goja.Runtime)
 	varsStore := &VarStore{store: make(map[string]string)}
 
 	respObj := vm.NewObject()
@@ -495,9 +501,11 @@ func RunPostScript(script string, payload *models.RequestPayload, result *models
 	exposeReqNamespace(vm, varsStore, reqObj, respObj)
 
 	if _, runErr := runScriptWithTimeout(vm, script); runErr != nil {
+		vmPool.Put(vm)
 		return nil, nil, 0, 0, fmt.Errorf("post-script error: %w", runErr)
 	}
 
+	vmPool.Put(vm)
 	return varsStore.store, varsStore.logs, varsStore.pass, varsStore.fail, nil
 }
 

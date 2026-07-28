@@ -773,6 +773,7 @@ export namespace models {
 	    clientCert?: string;
 	    clientKey?: string;
 	    timeout?: number;
+	    validateUrl?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new RequestPayload(source);
@@ -803,6 +804,7 @@ export namespace models {
 	        this.clientCert = source["clientCert"];
 	        this.clientKey = source["clientKey"];
 	        this.timeout = source["timeout"];
+	        this.validateUrl = source["validateUrl"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -71,7 +71,7 @@ func (a *App) ConfigureVault(cfgJSON string) error {
 }
 
 func (a *App) GetVaultConfig() string {
-	data, _ := vault.MarshalConfig(a.vaultCfg)
+	data, _ := vault.MarshalConfigView(a.vaultCfg)
 	return data
 }
 

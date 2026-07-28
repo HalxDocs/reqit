@@ -287,14 +287,15 @@ func parseRequest(raw json.RawMessage) (models.RequestPayload, error) {
 		}
 	}
 	payload := models.RequestPayload{
-		Method:   method,
-		URL:      urlStr,
-		Headers:  headers,
-		Params:   params,
-		BodyType: bodyType,
-		Body:     body,
-		BodyForm: bodyForm,
-		AuthType: "none",
+		Method:      method,
+		URL:         urlStr,
+		Headers:     headers,
+		Params:      params,
+		BodyType:    bodyType,
+		Body:        body,
+		BodyForm:    bodyForm,
+		AuthType:    "none",
+		ValidateURL: true,
 	}
 	parseAuth(rr.Auth, &payload)
 	return payload, nil

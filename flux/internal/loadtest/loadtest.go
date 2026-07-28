@@ -17,10 +17,9 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 	start := time.Now()
 
 	var (
-		mu      sync.Mutex
-		samples []models.LoadTestSample
-		wg      sync.WaitGroup
-		stopCh  = make(chan struct{})
+		wg       sync.WaitGroup
+		stopCh   = make(chan struct{})
+		sampleCh = make(chan models.LoadTestSample, 10000)
 	)
 
 	vus := config.VUs
@@ -51,18 +50,28 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 		rampInterval = float64(rampUp) / float64(vus)
 	}
 
+	// Pre-build replacer(s) once so each VU goroutine shares the same
+	// compiled replacement table instead of building it per-iteration.
+	envVars := config.Env
+	var sharedReplacer *strings.Replacer
+	if len(envVars) > 0 {
+		pairs := make([]string, 0, len(envVars)*2)
+		for k, v := range envVars {
+			pairs = append(pairs, "{{"+k+"}}", v)
+		}
+		sharedReplacer = strings.NewReplacer(pairs...)
+	}
+
 	for vu := 0; vu < vus; vu++ {
 		wg.Add(1)
 		go func(vuID int) {
 			defer wg.Done()
 			defer func() {
 				if r := recover(); r != nil {
-					mu.Lock()
-					samples = append(samples, models.LoadTestSample{
+					sampleCh <- models.LoadTestSample{
 						TimestampMs: time.Since(start).Milliseconds(),
 						Error:       true,
-					})
-					mu.Unlock()
+					}
 				}
 			}()
 
@@ -84,23 +93,21 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 				}
 
 				payload := config.Request
-				payload.URL = resolveVars(payload.URL, config.Env)
-				payload.Body = resolveVars(payload.Body, config.Env)
-				payload.AuthValue = resolveVars(payload.AuthValue, config.Env)
+				if hasVars(payload) && sharedReplacer != nil {
+					payload.URL = doReplace(payload.URL, sharedReplacer)
+					payload.Body = doReplace(payload.Body, sharedReplacer)
+					payload.AuthValue = doReplace(payload.AuthValue, sharedReplacer)
+				}
 
 				result := requester.Execute(context.Background(), payload, jar)
 
-				sample := models.LoadTestSample{
+				sampleCh <- models.LoadTestSample{
 					TimestampMs: time.Since(start).Milliseconds(),
 					StatusCode:  result.StatusCode,
 					TimingMs:    result.TimingMs,
 					SizeBytes:   result.SizeBytes,
 					Error:       result.Error != "",
 				}
-
-				mu.Lock()
-				samples = append(samples, sample)
-				mu.Unlock()
 
 				iterCount++
 
@@ -116,6 +123,12 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 	}
 
 	wg.Wait()
+	close(sampleCh)
+
+	samples := make([]models.LoadTestSample, 0, cap(sampleCh))
+	for s := range sampleCh {
+		samples = append(samples, s)
+	}
 
 	elapsed := time.Since(start).Milliseconds()
 	passed := 0
@@ -149,7 +162,7 @@ func computePercentiles(samples []models.LoadTestSample) (avg, p50, p95, p99 flo
 		return 0, 0, 0, 0
 	}
 
-	sum := int64(0)
+	var sum int64
 	for _, s := range samples {
 		sum += s.TimingMs
 	}
@@ -168,13 +181,15 @@ func computePercentiles(samples []models.LoadTestSample) (avg, p50, p95, p99 flo
 	return
 }
 
-func resolveVars(s string, env map[string]string) string {
-	if env == nil {
+func hasVars(p models.RequestPayload) bool {
+	return strings.Contains(p.URL, "{{") ||
+		strings.Contains(p.Body, "{{") ||
+		strings.Contains(p.AuthValue, "{{")
+}
+
+func doReplace(s string, r *strings.Replacer) string {
+	if !strings.Contains(s, "{{") {
 		return s
 	}
-	for k, v := range env {
-		pattern := "{{" + k + "}}"
-		s = strings.ReplaceAll(s, pattern, v)
-	}
-	return s
+	return r.Replace(s)
 }

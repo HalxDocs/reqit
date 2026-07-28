@@ -22,6 +22,17 @@ func (a *App) GetCollections() ([]models.Collection, error) {
 	return a.collections.GetAll()
 }
 
+// GetCollectionsSummary returns only metadata per request (no payload bodies
+// or saved responses) for fast sidebar listing.  The frontend should call this
+// instead of GetCollections for the tree view, then call GetRequestDetail when
+// a request is actually opened.
+func (a *App) GetCollectionsSummary() ([]models.Collection, error) {
+	if a.collections == nil {
+		return []models.Collection{}, nil
+	}
+	return a.collections.GetAllSummary()
+}
+
 func (a *App) CreateCollection(name string) (models.Collection, error) {
 	if a.collections == nil {
 		return models.Collection{}, errors.New("no active workspace")
@@ -34,6 +45,16 @@ func (a *App) CreateCollection(name string) (models.Collection, error) {
 		go a.autoSync("create collection " + name)
 	}
 	return c, err
+}
+
+// GetRequestDetail returns the full request payload and metadata for a single
+// saved request.  The frontend should call this when a user opens a request
+// (after listing it via GetCollectionsSummary).
+func (a *App) GetRequestDetail(reqID string) (*models.SavedRequest, error) {
+	if a.collections == nil {
+		return nil, errors.New("no active workspace")
+	}
+	return a.collections.GetRequestDetail(reqID)
 }
 
 func (a *App) RenameCollection(id, name string) error {

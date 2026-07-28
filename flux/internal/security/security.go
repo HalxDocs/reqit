@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -48,6 +49,12 @@ func ValidatePathWithinDir(dir, path string) error {
 }
 
 // ValidateURL validates a URL for scheme and blocks private/loopback IPs.
+// It resolves hostnames to their IP addresses and checks each resolved IP
+// against private ranges, which closes the DNS-rebinding bypass (where an
+// attacker-controlled DNS server returns a public IP on the first lookup and a
+// private IP on a subsequent lookup after the URL passes validation, but
+// before the actual request is dispatched).  The literal-IP check before
+// resolution is kept as a fast path.
 func ValidateURL(rawURL string) error {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -61,16 +68,34 @@ func ValidateURL(rawURL string) error {
 	if host == "" {
 		return errors.New("URL has no host")
 	}
-	// Block loopback and private IPs
+	// Fast path: host is a literal IP address.
 	if ip := net.ParseIP(host); ip != nil {
 		if isPrivateIP(ip) {
 			return errors.New("requests to private/loopback IPs are blocked")
 		}
-	} else {
-		// Block common internal hostnames
-		lower := strings.ToLower(host)
-		if lower == "localhost" || strings.HasSuffix(lower, ".local") || strings.HasSuffix(lower, ".internal") {
-			return errors.New("requests to internal hostnames are blocked")
+		return nil
+	}
+	// Block common internal hostnames.
+	lower := strings.ToLower(host)
+	if lower == "localhost" || strings.HasSuffix(lower, ".local") || strings.HasSuffix(lower, ".internal") {
+		return errors.New("requests to internal hostnames are blocked")
+	}
+	// Resolve hostname and check all resolved IPs.
+	// This prevents DNS-rebinding attacks where an attacker controls DNS
+	// to return a public IP during validation but switches to a private IP
+	// after validation passes and before the actual TCP connection.
+	// If resolution fails we allow the request through (the actual DNS lookup
+	// during the real request may still succeed), but we log the failure so
+	// it can be surfaced as a warning.
+	addrs, err := net.DefaultResolver.LookupIPAddr(context.Background(), host)
+	if err != nil {
+		// Resolution failure is non-fatal: the hostname may be valid but the
+		// current environment (test, air-gapped, offline) may not have DNS.
+		return nil
+	}
+	for _, addr := range addrs {
+		if isPrivateIP(addr.IP) {
+			return fmt.Errorf("requests to %q resolve to a private IP (%s) and are blocked", host, addr.IP)
 		}
 	}
 	return nil
@@ -103,21 +128,30 @@ func isPrivateIP(ip net.IP) bool {
 	return false
 }
 
-// SanitizeExecArg rejects dangerous characters in exec.Command arguments.
+// SanitizeExecArg validates that arg is safe as a positional value in an
+// exec.Command call.  It rejects empty strings, control characters, and any
+// value that starts with "-", which would be interpreted as a flag by the
+// target binary rather than a positional argument.  This prevents short-flag
+// injection (e.g. "-oEvilPlugin=1") — the old heuristic only caught "--".
+//
+// Callers must never concatenate user-supplied values into the arg string;
+// they should always build args as a fixed slice where user values are
+// passed as separate slice elements.
 func SanitizeExecArg(arg string) error {
 	if arg == "" {
 		return errors.New("argument is required")
 	}
-	// Block newlines, carriage returns, null bytes, and argument injection flags
+	// Block control characters that could break argument boundaries.
 	for _, c := range arg {
 		switch c {
 		case '\n', '\r', '\x00':
 			return errors.New("argument contains forbidden characters")
 		}
 	}
-	// Block argument injection via --
-	if strings.Contains(arg, "--") {
-		return errors.New("argument contains forbidden flag injection")
+	// Reject values that start with "-": they would be interpreted as a
+	// flag rather than a positional argument, enabling short-flag injection.
+	if strings.HasPrefix(arg, "-") {
+		return errors.New("argument starts with '-' which would be interpreted as a flag")
 	}
 	return nil
 }

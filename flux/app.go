@@ -211,6 +211,9 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.interceptor != nil {
 		_ = a.interceptor.Stop()
 	}
+	if a.collections != nil {
+		a.collections.Flush()
+	}
 	if a.audit != nil {
 		_ = a.audit.Close()
 	}

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 
 	"flux/internal/models"
 	"flux/internal/proxy"
+	"flux/internal/security"
 	"flux/internal/updater"
 )
 
@@ -87,6 +89,12 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	finalURL, err := buildURL(payload.URL, payload.Params)
 	if err != nil {
 		return errResult(err, time.Since(start))
+	}
+
+	if payload.ValidateURL {
+		if err := security.ValidateURL(finalURL); err != nil {
+			return errResult(fmt.Errorf("SSRF validation blocked request: %w", err), time.Since(start))
+		}
 	}
 
 	body, contentType, err := buildBody(payload)
@@ -163,12 +171,14 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 
 	headers := flattenHeaders(resp.Header)
 	bodyIsBase64 := isBinaryContentType(resp.Header.Get("Content-Type"))
+	sizeBytes := int64(len(respBody))
 	var bodyStr string
 	if bodyIsBase64 {
 		bodyStr = base64.StdEncoding.EncodeToString(respBody)
 	} else {
 		bodyStr = string(respBody)
 	}
+	respBody = nil
 
 	var setCookies []models.CookieSummary
 	if resp.Request != nil && resp.Request.URL != nil {
@@ -224,7 +234,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		BodyIsBase64: bodyIsBase64,
 		TimingMs:     timing.Milliseconds(),
 		Timing:       timingBreakdown,
-		SizeBytes:    int64(len(respBody)),
+		SizeBytes:    sizeBytes,
 		Cookies:      setCookies,
 		Error:        "",
 	}

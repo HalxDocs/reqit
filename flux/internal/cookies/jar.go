@@ -19,11 +19,9 @@ type stored struct {
 	Secure   bool      `json:"secure"`
 }
 
-// Store is a persistent, workspace-scoped cookie jar.
-// It implements http.CookieJar so the HTTP client uses it transparently.
 type Store struct {
 	mu   sync.Mutex
-	data map[string][]stored // hostname → cookies
+	data map[string][]stored
 	file string
 }
 
@@ -36,10 +34,8 @@ func New(workspaceDir string) *Store {
 	return s
 }
 
-// SetCookies merges incoming cookies for the URL's host and persists.
 func (s *Store) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	host := u.Hostname()
 	existing := s.data[host]
 	for _, c := range cookies {
@@ -63,7 +59,6 @@ func (s *Store) SetCookies(u *url.URL, cookies []*http.Cookie) {
 			existing = append(existing, sc)
 		}
 	}
-	// Prune expired.
 	now := time.Now()
 	valid := existing[:0]
 	for _, c := range existing {
@@ -72,10 +67,10 @@ func (s *Store) SetCookies(u *url.URL, cookies []*http.Cookie) {
 		}
 	}
 	s.data[host] = valid
-	s.save()
+	s.mu.Unlock()
+	go func() { _ = s.save() }()
 }
 
-// Cookies returns stored cookies for the URL's host, skipping expired ones.
 func (s *Store) Cookies(u *url.URL) []*http.Cookie {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -90,7 +85,6 @@ func (s *Store) Cookies(u *url.URL) []*http.Cookie {
 	return out
 }
 
-// CookieInfo is the frontend-safe view of a stored cookie.
 type CookieInfo struct {
 	Domain   string `json:"domain"`
 	Name     string `json:"name"`
@@ -100,7 +94,6 @@ type CookieInfo struct {
 	Secure   bool   `json:"secure"`
 }
 
-// GetAll returns every stored cookie across all domains.
 func (s *Store) GetAll() []CookieInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -120,7 +113,6 @@ func (s *Store) GetAll() []CookieInfo {
 	return out
 }
 
-// GetForDomain returns stored cookies for a specific hostname.
 func (s *Store) GetForDomain(domain string) []CookieInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -138,23 +130,27 @@ func (s *Store) GetForDomain(domain string) []CookieInfo {
 	return out
 }
 
-// ClearDomain removes all cookies for a hostname.
 func (s *Store) ClearDomain(domain string) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	delete(s.data, domain)
-	s.save()
+	s.mu.Unlock()
+	go func() { _ = s.save() }()
 }
 
-// ClearAll wipes every stored cookie.
 func (s *Store) ClearAll() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.data = make(map[string][]stored)
-	s.save()
+	s.mu.Unlock()
+	go func() { _ = s.save() }()
 }
 
+func (s *Store) Flush() {}
+
+func (s *Store) Stop() {}
+
 func (s *Store) save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	b, err := json.MarshalIndent(s.data, "", "  ")
 	if err != nil {
 		return err

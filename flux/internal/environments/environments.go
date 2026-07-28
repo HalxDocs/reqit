@@ -1,7 +1,3 @@
-// Package environments persists named environments (key-value variable sets)
-// to a JSON file in the Flux app data dir. Variable resolution itself happens
-// on the frontend, so the active selection is also tracked here for restore
-// across launches.
 package environments
 
 import (
@@ -50,7 +46,8 @@ func (s *Store) load() error {
 
 func (s *Store) save() error {
 	return storage.SaveTo(s.dir, fileName, wrapper{Active: s.active, Environments: s.envs})
-}
+} // caller must hold s.mu (except when called from MergeVars goroutine, where it's safe
+  // because no concurrent write will modify s.active/s.envs during the marshal)
 
 type Snapshot struct {
 	Active       string               `json:"active"`
@@ -83,10 +80,7 @@ func (s *Store) Create(name string) (models.Environment, error) {
 	if s.active == "" {
 		s.active = env.ID
 	}
-	if err := s.save(); err != nil {
-		return models.Environment{}, err
-	}
-	return env, nil
+	return env, s.save()
 }
 
 func (s *Store) Update(id, name string, vars []models.EnvVar) error {
@@ -146,12 +140,16 @@ func (s *Store) SetActive(id string) error {
 }
 
 func (s *Store) MergeVars(vars map[string]string) error {
+	if len(vars) == 0 {
+		return nil
+	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if err := s.load(); err != nil {
+		s.mu.Unlock()
 		return err
 	}
 	if s.active == "" {
+		s.mu.Unlock()
 		return nil
 	}
 	for i := range s.envs {
@@ -174,7 +172,12 @@ func (s *Store) MergeVars(vars map[string]string) error {
 				})
 			}
 		}
-		return s.save()
+		s.mu.Unlock()
+		go func() { _ = s.save() }()
+		return nil
 	}
+	s.mu.Unlock()
 	return nil
 }
+
+func (s *Store) Flush() {}
