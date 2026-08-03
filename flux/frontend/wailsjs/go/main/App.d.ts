@@ -17,6 +17,7 @@ import {scheduler} from '../models';
 import {openapi} from '../models';
 import {telemetry} from '../models';
 import {mqtt} from '../models';
+import {oauth2} from '../models';
 
 export function AddMaskingRule(arg1:string,arg2:string,arg3:string):Promise<void>;
 
@@ -324,11 +325,15 @@ export function MaskText(arg1:string):Promise<string>;
 
 export function MoveRequest(arg1:string,arg2:string):Promise<void>;
 
-export function OAuth2AuthorizeURL(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:boolean):Promise<string>;
+export function OAuth2Authorize(arg1:oauth2.OAuth2Config):Promise<main.OAuth2AuthorizeResult>;
 
-export function OAuth2Exchange(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
+export function OAuth2Cancel():Promise<void>;
 
-export function OAuth2Refresh(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean):Promise<models.OAuth2TokenResponse>;
+export function OAuth2PollDevice(arg1:string):Promise<main.OAuth2DevicePoll>;
+
+export function OAuth2Refresh(arg1:oauth2.OAuth2Config,arg2:string):Promise<models.OAuth2TokenResponse>;
+
+export function OAuth2StartDevice(arg1:oauth2.OAuth2Config):Promise<main.OAuth2DeviceStart>;
 
 export function OpenWorkspaceFromFolder(arg1:string):Promise<workspaces.Info>;
 

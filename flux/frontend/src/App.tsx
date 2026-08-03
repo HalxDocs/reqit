@@ -65,6 +65,7 @@ import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore
 import { registerCommands } from "@/shared/lib/commands";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetVersion } from "../wailsjs/go/main/App";
+import { WindowFullscreen, WindowUnfullscreen, WindowIsFullscreen } from "../wailsjs/runtime/runtime";
 import type { NavTarget } from "@/app/data/releaseNotes";
 import "./App.css";
 
@@ -364,6 +365,19 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
     }).catch(() => {});
   }, []);
 
+  // F11 fullscreen toggle
+  useEffect(() => {
+    const handler = async (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        const isFull = await WindowIsFullscreen();
+        if (isFull) WindowUnfullscreen();
+        else WindowFullscreen();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <div className="h-screen w-screen flex bg-bg text-text">

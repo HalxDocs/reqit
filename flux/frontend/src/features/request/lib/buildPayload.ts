@@ -51,6 +51,9 @@ export function buildPayload(s: RequestState, extraVars?: Map<string, string>): 
   if (s.authType === "oauth2" && s.oauth2Config) {
     authValue = JSON.stringify({
       accessToken: s.oauth2Config.accessToken,
+      refreshToken: s.oauth2Config.refreshToken,
+      expiresAt: s.oauth2Config.expiresAt,
+      deviceUrl: s.oauth2Config.deviceUrl,
       tokenType: "Bearer",
     });
   }
@@ -91,7 +94,13 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
   if (s.authType === "digest" || s.authType === "ntlm") authValue = `${s.authUsername}:${s.authPassword}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;
   if (s.authType === "oauth2" && s.oauth2Config) {
-    authValue = JSON.stringify({ accessToken: s.oauth2Config.accessToken, tokenType: "Bearer" });
+    authValue = JSON.stringify({
+      accessToken: s.oauth2Config.accessToken,
+      refreshToken: s.oauth2Config.refreshToken,
+      expiresAt: s.oauth2Config.expiresAt,
+      deviceUrl: s.oauth2Config.deviceUrl,
+      tokenType: "Bearer",
+    });
   }
 
   return {

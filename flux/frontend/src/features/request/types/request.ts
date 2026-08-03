@@ -122,6 +122,7 @@ export interface MockOverride {
 export interface OAuth2Config {
   authUrl: string;
   tokenUrl: string;
+  deviceUrl: string;
   clientId: string;
   clientSecret: string;
   scopes: string;

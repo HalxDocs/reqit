@@ -43,6 +43,7 @@ type RequestPayload struct {
 type OAuth2Config struct {
 	AuthURL      string `json:"authUrl"`
 	TokenURL     string `json:"tokenUrl"`
+	DeviceURL    string `json:"deviceUrl"`
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
 	Scopes       string `json:"scopes"`

@@ -614,16 +614,24 @@ export function MoveRequest(arg1, arg2) {
   return window['go']['main']['App']['MoveRequest'](arg1, arg2);
 }
 
-export function OAuth2AuthorizeURL(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-  return window['go']['main']['App']['OAuth2AuthorizeURL'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+export function OAuth2Authorize(arg1) {
+  return window['go']['main']['App']['OAuth2Authorize'](arg1);
 }
 
-export function OAuth2Exchange(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-  return window['go']['main']['App']['OAuth2Exchange'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+export function OAuth2Cancel() {
+  return window['go']['main']['App']['OAuth2Cancel']();
 }
 
-export function OAuth2Refresh(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-  return window['go']['main']['App']['OAuth2Refresh'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+export function OAuth2PollDevice(arg1) {
+  return window['go']['main']['App']['OAuth2PollDevice'](arg1);
+}
+
+export function OAuth2Refresh(arg1, arg2) {
+  return window['go']['main']['App']['OAuth2Refresh'](arg1, arg2);
+}
+
+export function OAuth2StartDevice(arg1) {
+  return window['go']['main']['App']['OAuth2StartDevice'](arg1);
 }
 
 export function OpenWorkspaceFromFolder(arg1) {

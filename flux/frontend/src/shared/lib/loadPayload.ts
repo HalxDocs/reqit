@@ -103,6 +103,7 @@ export function decodePayload(
         oauth2Config = {
           authUrl: "",
           tokenUrl: "",
+          deviceUrl: parsed.deviceUrl || "",
           clientId: "",
           clientSecret: "",
           scopes: "",

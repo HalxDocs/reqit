@@ -19,10 +19,10 @@ const GITHUB_URL = "https://github.com/HalxDocs/reqit";
 const RELEASES_URL = "https://github.com/HalxDocs/reqit/releases/latest";
 const PORTFOLIO_URL = "https://halxdocs.com";
 const DL_BASE = "https://github.com/HalxDocs/reqit/releases/latest/download";
-const DOWNLOAD_URLS: Record<string, string> = {
-  windows: `${DL_BASE}/reqit-windows-amd64.exe`,
-  mac: `${DL_BASE}/reqit-macos-universal.zip`,
-  linux: `${DL_BASE}/reqit-linux-amd64`,
+const ASSET_NAMES: Record<string, string> = {
+  windows: "reqit-windows-amd64.exe",
+  mac: "reqit-macos-universal.zip",
+  linux: "reqit-linux-amd64",
 };
 
 function getOS(): "windows" | "mac" | "linux" | "other" {
@@ -40,10 +40,30 @@ const OS_LABEL: Record<string, string> = {
   other: "Download for Desktop",
 };
 
+// Normalizes an asset filename so hyphen/underscore differences between the
+// release workflow and the actual uploads don't break the download link.
+function normalizeAssetName(n: string) {
+  return n.toLowerCase().replace(/[-_]/g, "");
+}
+
 function download() {
   const os = getOS();
-  const url = DOWNLOAD_URLS[os] ?? RELEASES_URL;
-  window.open(url, "_blank", "noopener,noreferrer");
+  const name = ASSET_NAMES[os];
+  if (!name) {
+    window.open(RELEASES_URL, "_blank", "noopener,noreferrer");
+    return;
+  }
+  // Resolve the real asset URL from the GitHub API so the download works even
+  // if the latest release path or naming differs. Falls back to /latest/download/.
+  fetch(`https://api.github.com/repos/HalxDocs/reqit/releases/latest`, {
+    headers: { Accept: "application/vnd.github.v3+json" },
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then((data: { assets?: { name: string; browser_download_url: string }[] } | null) => {
+      const match = data?.assets?.find((a) => normalizeAssetName(a.name) === normalizeAssetName(name));
+      window.open(match?.browser_download_url ?? `${DL_BASE}/${name}`, "_blank", "noopener,noreferrer");
+    });
 }
 
 function open(url: string) {

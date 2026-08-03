@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,6 +93,8 @@ type App struct {
 	mqttClient     *mqtt.Client
 	oauthState     *oauth2.State
 	oauthMu        sync.Mutex
+	oauthServer    *http.Server
+	oauthListeners []net.Listener
 	schedulerStor  *schedpkg.Store
 	schedulerExec  *schedpkg.Executor
 	autoSyncOn     bool
@@ -222,6 +226,9 @@ func (a *App) shutdown(ctx context.Context) {
 	}
 	if a.mockServer != nil {
 		_ = a.mockServer.Stop()
+	}
+	if a.oauthServer != nil {
+		_ = a.oauthServer.Close()
 	}
 }
 
@@ -562,77 +569,7 @@ func (a *App) GetSchedulerHistory(scheduleID string, limit int) string {
 }
 
 // --- OAuth2 ---
-
-func (a *App) OAuth2AuthorizeURL(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI string, usePKCE bool) (string, string, error) {
-	o := oauth2.New(oauth2.OAuth2Config{
-		AuthURL:      authURL,
-		TokenURL:     tokenURL,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       scopes,
-		RedirectURI:  redirectURI,
-		UsePKCE:      usePKCE,
-	})
-	url, state, err := o.AuthorizeURL()
-	if err != nil {
-		return "", "", err
-	}
-	a.oauthMu.Lock()
-	a.oauthState = o
-	a.oauthMu.Unlock()
-	return url, state, nil
-}
-
-func (a *App) OAuth2Exchange(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI, code string, usePKCE bool) (*models.OAuth2TokenResponse, error) {
-	a.oauthMu.Lock()
-	o := a.oauthState
-	a.oauthMu.Unlock()
-	if o == nil {
-		o = oauth2.New(oauth2.OAuth2Config{
-			AuthURL:      authURL,
-			TokenURL:     tokenURL,
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			Scopes:       scopes,
-			RedirectURI:  redirectURI,
-			UsePKCE:      usePKCE,
-		})
-	}
-	token, err := o.Exchange(context.Background(), code)
-	if err != nil {
-		return nil, err
-	}
-	return &models.OAuth2TokenResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		TokenType:    token.TokenType,
-		ExpiresIn:    token.ExpiresIn,
-		ExpiresAt:    token.ExpiresAt,
-	}, nil
-}
-
-func (a *App) OAuth2Refresh(authURL, tokenURL, clientID, clientSecret, scopes, redirectURI, refreshToken string, usePKCE bool) (*models.OAuth2TokenResponse, error) {
-	o := oauth2.New(oauth2.OAuth2Config{
-		AuthURL:      authURL,
-		TokenURL:     tokenURL,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       scopes,
-		RedirectURI:  redirectURI,
-		UsePKCE:      usePKCE,
-	})
-	token, err := o.Refresh(context.Background(), refreshToken)
-	if err != nil {
-		return nil, err
-	}
-	return &models.OAuth2TokenResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		TokenType:    token.TokenType,
-		ExpiresIn:    token.ExpiresIn,
-		ExpiresAt:    token.ExpiresAt,
-	}, nil
-}
+// OAuth2 flows live in bindings_oauth2.go (loopback callback + device grant).
 
 // --- JWT ---
 

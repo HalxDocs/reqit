@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Moon, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Maximize2, Minimize2, Moon, PanelLeft, PanelLeftClose, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck, Sparkles } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { useGitStore } from "@/features/git/stores/useGitStore";
@@ -14,6 +14,7 @@ import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { GetGitStatus } from "../../../wailsjs/go/main/App";
+import { WindowFullscreen, WindowUnfullscreen, WindowIsFullscreen } from "../../../wailsjs/runtime/runtime";
 
 function NavItem({
   icon,
@@ -91,25 +92,60 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const theme = useThemeStore((s) => s.resolved);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    WindowIsFullscreen().then(setFullscreen).catch(() => {});
+  }, []);
+  const toggleFullscreen = useCallback(async () => {
+    const isFull = await WindowIsFullscreen();
+    if (isFull) { WindowUnfullscreen(); setFullscreen(false); }
+    else { WindowFullscreen(); setFullscreen(true); }
+  }, []);
   useEffect(() => {
     useGitStore.getState().startPolling();
     return () => useGitStore.getState().stopPolling();
   }, []);
 
+  if (sidebarCollapsed) {
+    return (
+      <aside className="w-[22px] shrink-0 h-full bg-surface border-r border-border flex flex-col items-center pt-3">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="w-[18px] h-[18px] flex items-center justify-center text-subtext hover:text-text rounded hover:bg-cardHover transition-colors"
+          title="Expand sidebar (Ctrl+B)"
+        >
+          <PanelLeft size={11} />
+        </button>
+      </aside>
+    );
+  }
+
   return (
-    <aside data-scope="sidebar" className={cn("w-[260px] lg:w-[280px] shrink-0 h-full bg-surface border-r border-border flex flex-col", sidebarCollapsed && "hidden")}>
-      <button
-        type="button"
-        onClick={onGoHome}
-        className="h-[52px] px-4 flex items-center gap-3 border-b border-border hover:bg-cardHover transition-colors text-left group"
-        title="All workspaces"
-      >
-        <img src={reqitLogo} alt="reqit" className="h-[30px] w-auto object-contain shrink-0" />
-        <span className="flex-1 text-13 font-semibold text-text truncate min-w-0">
-          {activeWs?.name ?? "Workspace"}
-        </span>
-        <ChevronDown size={14} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
-      </button>
+    <aside data-scope="sidebar" className="w-[260px] lg:w-[280px] shrink-0 h-full bg-surface border-r border-border flex flex-col">
+      <div className="h-[52px] px-4 flex items-center gap-1 border-b border-border">
+        <button
+          type="button"
+          onClick={onGoHome}
+          className="flex items-center gap-3 flex-1 min-w-0 hover:bg-cardHover transition-colors text-left group py-2 rounded"
+          title="All workspaces"
+        >
+          <img src={reqitLogo} alt="reqit" className="h-[30px] w-auto object-contain shrink-0" />
+          <span className="flex-1 text-13 font-semibold text-text truncate min-w-0">
+            {activeWs?.name ?? "Workspace"}
+          </span>
+          <ChevronDown size={14} className="text-subtext shrink-0 group-hover:text-text transition-colors" />
+        </button>
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="w-[26px] h-[26px] flex items-center justify-center rounded-md text-subtext hover:text-text hover:bg-cardHover transition-colors shrink-0"
+          title="Collapse sidebar (Ctrl+B)"
+        >
+          <PanelLeftClose size={14} />
+        </button>
+      </div>
 
       <div className="px-3 py-3 border-b border-border flex flex-col gap-2.5">
         <EnvSwitcher />
@@ -375,6 +411,15 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+          </button>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="flex items-center justify-center w-[20px] h-[20px] text-subtext hover:text-text transition-colors shrink-0 mr-0.5"
+            aria-label="Toggle fullscreen"
+            title="Toggle fullscreen (F11)"
+          >
+            {fullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
           </button>
           <Settings size={12} className="text-subtext shrink-0" />
         </button>
