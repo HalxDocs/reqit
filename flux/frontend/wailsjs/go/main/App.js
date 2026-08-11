@@ -182,6 +182,50 @@ export function EmitSocketIOEvent(arg1, arg2) {
   return window['go']['main']['App']['EmitSocketIOEvent'](arg1, arg2);
 }
 
+export function EventInspectorClear() {
+  return window['go']['main']['App']['EventInspectorClear']();
+}
+
+export function EventInspectorDelete(arg1) {
+  return window['go']['main']['App']['EventInspectorDelete'](arg1);
+}
+
+export function EventInspectorDeleteSecret() {
+  return window['go']['main']['App']['EventInspectorDeleteSecret']();
+}
+
+export function EventInspectorGetEvent(arg1) {
+  return window['go']['main']['App']['EventInspectorGetEvent'](arg1);
+}
+
+export function EventInspectorGetEvents() {
+  return window['go']['main']['App']['EventInspectorGetEvents']();
+}
+
+export function EventInspectorHasSecret() {
+  return window['go']['main']['App']['EventInspectorHasSecret']();
+}
+
+export function EventInspectorReplay(arg1, arg2, arg3) {
+  return window['go']['main']['App']['EventInspectorReplay'](arg1, arg2, arg3);
+}
+
+export function EventInspectorSetSecret(arg1) {
+  return window['go']['main']['App']['EventInspectorSetSecret'](arg1);
+}
+
+export function EventInspectorStart() {
+  return window['go']['main']['App']['EventInspectorStart']();
+}
+
+export function EventInspectorStatus() {
+  return window['go']['main']['App']['EventInspectorStatus']();
+}
+
+export function EventInspectorStop() {
+  return window['go']['main']['App']['EventInspectorStop']();
+}
+
 export function ExportCollectionHTML(arg1, arg2) {
   return window['go']['main']['App']['ExportCollectionHTML'](arg1, arg2);
 }

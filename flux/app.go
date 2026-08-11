@@ -22,6 +22,7 @@ import (
 	cookiestore "flux/internal/cookies"
 	"flux/internal/crypto"
 	"flux/internal/environments"
+	"flux/internal/eventinspector"
 	gitpkg "flux/internal/git"
 	"flux/internal/growth"
 	"flux/internal/history"
@@ -99,6 +100,9 @@ type App struct {
 	schedulerExec  *schedpkg.Executor
 	autoSyncOn     bool
 	autoSyncMu     sync.Mutex
+	eventInspector *eventinspector.Store
+	eventSecret    *eventinspector.SecretStore
+	eventListener  *eventinspector.Listener
 }
 
 func NewApp() *App {
@@ -230,6 +234,9 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.oauthServer != nil {
 		_ = a.oauthServer.Close()
 	}
+	if a.eventListener != nil {
+		_ = a.eventListener.Stop()
+	}
 }
 
 func (a *App) CheckForUpdates() *updater.UpdateManifest {
@@ -345,6 +352,17 @@ func (a *App) mountWorkspace(dir string) {
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
 	a.testSuites = testbuilder.NewStore(dir)
+
+	// Event Inspector: workspace-scoped event store + shared secret/listener.
+	a.eventInspector = eventinspector.NewStore(dir)
+	a.eventSecret = eventinspector.NewSecretStore()
+	if a.eventListener != nil {
+		a.eventListener.Stop()
+	}
+	a.eventListener = eventinspector.NewListener(a.eventInspector, a.eventSecret)
+	a.eventListener.OnCapture(func(rec models.EventRecord) {
+		runtime.EventsEmit(a.ctx, "eventinspector:changed", rec)
+	})
 
 	// Init AI settings for this workspace.
 	a.ai = aipkg.NewSettings(dir)

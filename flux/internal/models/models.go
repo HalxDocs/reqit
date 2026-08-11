@@ -389,3 +389,48 @@ type SocketIOConnectRequest struct {
 	Cookies string            `json:"cookies"`
 	Headers map[string]string `json:"headers"`
 }
+
+// EventRecord is a captured webhook event stored by the Event Inspector.
+type EventRecord struct {
+	ID              string            `json:"id"`
+	ReceivedAt      string            `json:"receivedAt"`
+	Method          string            `json:"method"`
+	SourceURL       string            `json:"sourceUrl,omitempty"`
+	Headers         map[string]string `json:"headers,omitempty"`
+	Body            string            `json:"body"`
+	ContentType     string            `json:"contentType,omitempty"`
+	Provider        string            `json:"provider,omitempty"`
+	ProviderEventID string            `json:"providerEventId,omitempty"`
+	EventType       string            `json:"eventType,omitempty"`
+	VerifyStatus    string            `json:"verifyStatus"` // "verified" | "unverified" | "duplicate"
+	VerifyError     string            `json:"verifyError,omitempty"`
+	ReplayCount     int               `json:"replayCount"`
+	Replays         []EventReplay     `json:"replays,omitempty"`
+}
+
+// EventReplay records a single replay attempt of a captured event.
+type EventReplay struct {
+	ID        string `json:"id"`
+	Timestamp string `json:"timestamp"`
+	TargetURL string `json:"targetUrl"`
+	Status    int    `json:"status"`
+	Error     string `json:"error,omitempty"`
+}
+
+// VerifyResult is the outcome of running a captured event through the
+// signature/dedupe pipeline.
+type VerifyResult struct {
+	Status          string `json:"status"` // "verified" | "unverified" | "duplicate"
+	Provider        string `json:"provider,omitempty"`
+	ProviderEventID string `json:"providerEventId,omitempty"`
+	EventType       string `json:"eventType,omitempty"`
+	Error           string `json:"error,omitempty"`
+}
+
+// EventInspectorStatus reports the capture listener state to the UI.
+type EventInspectorStatus struct {
+	Running   bool `json:"running"`
+	Port      int  `json:"port"`
+	Count     int  `json:"count"`
+	HasSecret bool `json:"hasSecret"`
+}

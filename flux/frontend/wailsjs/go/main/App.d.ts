@@ -109,6 +109,28 @@ export function DownloadBinaryResponse(arg1:Array<number>,arg2:string):Promise<v
 
 export function EmitSocketIOEvent(arg1:string,arg2:any):Promise<void>;
 
+export function EventInspectorClear():Promise<void>;
+
+export function EventInspectorDelete(arg1:string):Promise<void>;
+
+export function EventInspectorDeleteSecret():Promise<void>;
+
+export function EventInspectorGetEvent(arg1:string):Promise<models.EventRecord>;
+
+export function EventInspectorGetEvents():Promise<Array<models.EventRecord>>;
+
+export function EventInspectorHasSecret():Promise<boolean>;
+
+export function EventInspectorReplay(arg1:string,arg2:string,arg3:boolean):Promise<models.ResponseResult>;
+
+export function EventInspectorSetSecret(arg1:string):Promise<void>;
+
+export function EventInspectorStart():Promise<number>;
+
+export function EventInspectorStatus():Promise<models.EventInspectorStatus>;
+
+export function EventInspectorStop():Promise<void>;
+
 export function ExportCollectionHTML(arg1:string,arg2:main.ExportHTMLDocsOpts):Promise<string>;
 
 export function ExportCollectionMarkdown(arg1:string,arg2:main.ExportMarkdownOpts):Promise<string>;

@@ -1,8 +1,9 @@
 module flux
 
-go 1.25
+go 1.25.1
 
 require (
+	github.com/HalxDocs/onceo-core v0.0.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/dop251/goja v0.0.0-20260607120635-348e6bea910d
 	github.com/fsnotify/fsnotify v1.10.1
@@ -75,5 +76,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/HalxDocs/onceo-core v0.0.0 => C:\Users\USER\Desktop\onceo-core
 
 // replace github.com/wailsapp/wails/v2 v2.12.0 => C:\Users\USER\go\pkg\mod

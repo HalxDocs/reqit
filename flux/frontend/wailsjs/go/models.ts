@@ -1142,6 +1142,101 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class EventInspectorStatus {
+	    running: boolean;
+	    port: number;
+	    count: number;
+	    hasSecret: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EventInspectorStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.running = source["running"];
+	        this.port = source["port"];
+	        this.count = source["count"];
+	        this.hasSecret = source["hasSecret"];
+	    }
+	}
+	export class EventReplay {
+	    id: string;
+	    timestamp: string;
+	    targetUrl: string;
+	    status: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EventReplay(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.timestamp = source["timestamp"];
+	        this.targetUrl = source["targetUrl"];
+	        this.status = source["status"];
+	        this.error = source["error"];
+	    }
+	}
+	export class EventRecord {
+	    id: string;
+	    receivedAt: string;
+	    method: string;
+	    sourceUrl?: string;
+	    headers?: Record<string, string>;
+	    body: string;
+	    contentType?: string;
+	    provider?: string;
+	    providerEventId?: string;
+	    eventType?: string;
+	    verifyStatus: string;
+	    verifyError?: string;
+	    replayCount: number;
+	    replays?: EventReplay[];
+	
+	    static createFrom(source: any = {}) {
+	        return new EventRecord(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.receivedAt = source["receivedAt"];
+	        this.method = source["method"];
+	        this.sourceUrl = source["sourceUrl"];
+	        this.headers = source["headers"];
+	        this.body = source["body"];
+	        this.contentType = source["contentType"];
+	        this.provider = source["provider"];
+	        this.providerEventId = source["providerEventId"];
+	        this.eventType = source["eventType"];
+	        this.verifyStatus = source["verifyStatus"];
+	        this.verifyError = source["verifyError"];
+	        this.replayCount = source["replayCount"];
+	        this.replays = this.convertValues(source["replays"], EventReplay);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	
 	export class GRPCResponse {
 	    statusCode: number;

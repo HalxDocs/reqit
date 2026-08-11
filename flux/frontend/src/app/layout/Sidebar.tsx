@@ -228,6 +228,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             onClick={() => setView(view === "sse" ? "http" : "sse")}
           />
           <NavItem
+            icon={<Zap size={13} />}
+            label="Event Inspector"
+            active={view === "eventinspector"}
+            onClick={() => setView(view === "eventinspector" ? "http" : "eventinspector")}
+          />
+          <NavItem
             icon={<Clock size={13} />}
             label="Scheduler"
             active={view === "scheduler"}

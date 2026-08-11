@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "performance";
 
-export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel";
+export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel" | "eventinspector";
 
 export type PanelLayout = "horizontal" | "vertical";
 
