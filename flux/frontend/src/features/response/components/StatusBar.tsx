@@ -9,6 +9,7 @@ export function StatusBar() {
   const response = useResponseStore((s) => s.response);
   const isLoading = useResponseStore((s) => s.isLoading);
   const startedAt = useResponseStore((s) => s.startedAt);
+  const streaming = useResponseStore((s) => s.streaming);
 
   const [elapsed, setElapsed] = useState(0);
   const [capture, setCapture] = useState<{ value: string; x: number; y: number } | null>(null);
@@ -26,8 +27,13 @@ export function StatusBar() {
   if (isLoading) {
     return (
       <div className="h-[40px] px-4 border-b border-border flex items-center gap-4 text-12">
-        <span className="text-cyan font-bold">Sending…</span>
+        <span className={cn("font-bold", streaming ? "text-green" : "text-cyan")}>
+          {streaming ? "● Streaming live…" : "Sending…"}
+        </span>
         <span className="text-subtext font-mono">{formatTiming(elapsed)}</span>
+        {streaming && (
+          <span className="text-subtext font-mono">{formatSize(response?.sizeBytes ?? 0)}</span>
+        )}
       </div>
     );
   }

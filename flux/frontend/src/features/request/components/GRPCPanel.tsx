@@ -16,6 +16,7 @@ export default function GRPCPanel() {
   const setGrpcMethod = useRequestStore((s) => s.setGrpcMethod);
   const setGrpcBody = useRequestStore((s) => s.setGrpcBody);
   const url = useRequestStore((s) => s.url);
+  const headers = useRequestStore((s) => s.headers);
 
   const [sending, setSending] = useState(false);
   const [response, setResponse] = useState<GRPCResponse | null>(null);
@@ -27,21 +28,25 @@ export default function GRPCPanel() {
     setError("");
     setResponse(null);
     try {
-      const res = await GRPCInvoke(url, grpcService ?? "", grpcMethod ?? "", grpcBody ?? "", {});
+      const headerObj: Record<string, string> = {};
+      for (const h of headers ?? []) {
+        if (h.enabled && h.key.trim()) headerObj[h.key.trim()] = h.value;
+      }
+      const res = await GRPCInvoke(url, grpcService ?? "", grpcMethod ?? "", grpcBody ?? "", headerObj, {});
       setResponse(res);
     } catch (e) {
       setError(String(e));
     } finally {
       setSending(false);
     }
-  }, [url, grpcService, grpcMethod, grpcBody]);
+  }, [url, grpcService, grpcMethod, grpcBody, headers]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <span className="inline-flex items-center gap-1 h-[22px] px-2 bg-cyan/10 text-cyan text-[10px] font-semibold uppercase tracking-wider rounded-sm">
           <Radio size={10} />
-          gRPC-web
+          gRPC
         </span>
       </div>
 
@@ -101,7 +106,7 @@ export default function GRPCPanel() {
         <div className="border-t border-border">
           <div className="flex items-center gap-3 px-3 py-2 bg-card/50 border-b border-border text-11">
             <span className="text-subtext">Status:</span>
-            <span className="font-mono font-semibold text-text">{response.statusCode}</span>
+            <span className="font-mono font-semibold text-text">{response.grpcStatus || response.statusCode || "OK"}</span>
             <span className="text-subtext">Duration:</span>
             <span className="font-mono text-text">{response.durationMs}ms</span>
             {response.error && (
@@ -111,6 +116,18 @@ export default function GRPCPanel() {
           <pre className="max-h-[200px] overflow-auto p-3 text-12 text-text font-mono whitespace-pre-wrap break-all">
             {response.body || "(empty response)"}
           </pre>
+          {response.trailers && Object.keys(response.trailers).length > 0 && (
+            <div className="px-3 py-2 border-t border-border">
+              <details>
+                <summary className="text-11 text-subtext cursor-pointer hover:text-text">Trailers</summary>
+                <div className="mt-1 space-y-0.5">
+                  {Object.entries(response.trailers).map(([k, v]) => (
+                    <div key={k} className="text-11 text-subtext"><span className="text-text">{k}</span>: {v}</div>
+                  ))}
+                </div>
+              </details>
+            </div>
+          )}
         </div>
       )}
     </div>

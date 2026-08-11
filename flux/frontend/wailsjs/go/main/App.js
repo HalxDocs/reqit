@@ -66,6 +66,10 @@ export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
 
+export function ClearSocketSessions() {
+  return window['go']['main']['App']['ClearSocketSessions']();
+}
+
 export function CommitAndPush(arg1) {
   return window['go']['main']['App']['CommitAndPush'](arg1);
 }
@@ -78,8 +82,8 @@ export function ConfigureVault(arg1) {
   return window['go']['main']['App']['ConfigureVault'](arg1);
 }
 
-export function ConnectSocket(arg1, arg2) {
-  return window['go']['main']['App']['ConnectSocket'](arg1, arg2);
+export function ConnectSocket(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['ConnectSocket'](arg1, arg2, arg3, arg4);
 }
 
 export function ConnectSocketIO(arg1) {
@@ -144,6 +148,10 @@ export function DeleteSavedRequests(arg1) {
 
 export function DeleteSchedule(arg1) {
   return window['go']['main']['App']['DeleteSchedule'](arg1);
+}
+
+export function DeleteSocketSession(arg1) {
+  return window['go']['main']['App']['DeleteSocketSession'](arg1);
 }
 
 export function DeleteTestGroup(arg1, arg2) {
@@ -278,12 +286,40 @@ export function FetchSpecFromURL(arg1) {
   return window['go']['main']['App']['FetchSpecFromURL'](arg1);
 }
 
-export function GRPCInvoke(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['main']['App']['GRPCInvoke'](arg1, arg2, arg3, arg4, arg5);
+export function GRPCInvoke(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['GRPCInvoke'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
-export function GRPCStreamInvoke(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['main']['App']['GRPCStreamInvoke'](arg1, arg2, arg3, arg4, arg5);
+export function GRPCListMethods(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GRPCListMethods'](arg1, arg2, arg3, arg4);
+}
+
+export function GRPCListProtoServices(arg1) {
+  return window['go']['main']['App']['GRPCListProtoServices'](arg1);
+}
+
+export function GRPCListServices(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GRPCListServices'](arg1, arg2, arg3);
+}
+
+export function GRPCStreamCancel(arg1) {
+  return window['go']['main']['App']['GRPCStreamCancel'](arg1);
+}
+
+export function GRPCStreamCloseSend(arg1) {
+  return window['go']['main']['App']['GRPCStreamCloseSend'](arg1);
+}
+
+export function GRPCStreamInvoke(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['GRPCStreamInvoke'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
+export function GRPCStreamOpen(arg1) {
+  return window['go']['main']['App']['GRPCStreamOpen'](arg1);
+}
+
+export function GRPCStreamSendMessage(arg1, arg2) {
+  return window['go']['main']['App']['GRPCStreamSendMessage'](arg1, arg2);
 }
 
 export function GenerateAssertions(arg1, arg2) {
@@ -484,6 +520,10 @@ export function GetSchedules() {
 
 export function GetSocketIOState() {
   return window['go']['main']['App']['GetSocketIOState']();
+}
+
+export function GetSocketSessions() {
+  return window['go']['main']['App']['GetSocketSessions']();
 }
 
 export function GetSocketState() {
@@ -830,6 +870,10 @@ export function SaveSchemaSnapshot(arg1) {
   return window['go']['main']['App']['SaveSchemaSnapshot'](arg1);
 }
 
+export function SaveSocketSession(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveSocketSession'](arg1, arg2, arg3);
+}
+
 export function SaveTextResponse(arg1, arg2) {
   return window['go']['main']['App']['SaveTextResponse'](arg1, arg2);
 }
@@ -844,6 +888,14 @@ export function SendNotification(arg1, arg2) {
 
 export function SendRequest(arg1) {
   return window['go']['main']['App']['SendRequest'](arg1);
+}
+
+export function SendRequestStream(arg1, arg2) {
+  return window['go']['main']['App']['SendRequestStream'](arg1, arg2);
+}
+
+export function SendSocketBinary(arg1) {
+  return window['go']['main']['App']['SendSocketBinary'](arg1);
 }
 
 export function SendSocketIOMessage(arg1) {
@@ -892,6 +944,10 @@ export function SetProxyConfig(arg1) {
 
 export function SetRouteOverride(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetRouteOverride'](arg1, arg2, arg3);
+}
+
+export function SetSocketAutoReconnect(arg1) {
+  return window['go']['main']['App']['SetSocketAutoReconnect'](arg1);
 }
 
 export function SetTelemetryEnabled(arg1) {
@@ -964,6 +1020,10 @@ export function UpdateSchedule(arg1, arg2, arg3, arg4) {
 
 export function UpdateScriptRules(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateScriptRules'](arg1, arg2, arg3);
+}
+
+export function UpdateSocketSessionMessages(arg1, arg2) {
+  return window['go']['main']['App']['UpdateSocketSessionMessages'](arg1, arg2);
 }
 
 export function UpdateTestGroup(arg1, arg2) {

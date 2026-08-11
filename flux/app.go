@@ -24,6 +24,7 @@ import (
 	"flux/internal/environments"
 	"flux/internal/eventinspector"
 	gitpkg "flux/internal/git"
+	"flux/internal/grpc"
 	"flux/internal/growth"
 	"flux/internal/history"
 	"flux/internal/interceptor"
@@ -45,6 +46,7 @@ import (
 	schedpkg "flux/internal/scheduler"
 	"flux/internal/sock"
 	"flux/internal/socketio"
+	"flux/internal/sockhistory"
 	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
 	traypkg "flux/internal/tray"
@@ -89,9 +91,12 @@ type App struct {
 	mu       sync.Mutex
 	inflight context.CancelFunc
 
-	sock       *sock.Socket
-	sockio     *socketio.Client
-	mqttClient     *mqtt.Client
+	sock          *sock.Socket
+	sockio        *socketio.Client
+	sockHistory   *sockhistory.Store
+	socketSessID  string // active raw WS/SSE session id
+	sockioSessID  string // active Socket.IO session id
+	mqttClient    *mqtt.Client
 	oauthState     *oauth2.State
 	oauthMu        sync.Mutex
 	oauthServer    *http.Server
@@ -212,6 +217,11 @@ func (a *App) startup(ctx context.Context) {
 	})
 	a.sockio.OnStatus(func(status string) {
 		runtime.EventsEmit(a.ctx, "socket:status", status)
+	})
+
+	// Wire gRPC streaming session callbacks.
+	grpc.SetSessionEventCallback(func(ev models.GRPCStreamEvent) {
+		runtime.EventsEmit(a.ctx, "grpc:session", ev)
 	})
 }
 
@@ -348,6 +358,7 @@ func (a *App) mountWorkspace(dir string) {
 
 	a.collections = collections.NewStore(dir)
 	a.history = history.NewStore(dir)
+	a.sockHistory = sockhistory.NewStore(dir)
 	a.environments = environments.NewStore(dir)
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
@@ -500,6 +511,7 @@ func (a *App) DeleteWorkspace(id string) error {
 	} else {
 		a.collections = collections.NewStore("")
 		a.history = history.NewStore("")
+		a.sockHistory = sockhistory.NewStore("")
 		a.environments = environments.NewStore("")
 	}
 	return nil

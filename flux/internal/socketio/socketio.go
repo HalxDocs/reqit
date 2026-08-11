@@ -16,7 +16,7 @@ import (
 	"flux/internal/models"
 )
 
-const maxMessages = 500
+const maxMessages = 1000
 
 // Client implements the Engine.IO v4 protocol (polling → WebSocket upgrade)
 // and the Socket.IO v4 protocol on top.

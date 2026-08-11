@@ -26,6 +26,7 @@ type RequestPayload struct {
 	// Protocol-specific
 	GRPCService string `json:"grpcService,omitempty"`
 	GRPCMethod  string `json:"grpcMethod,omitempty"`
+	GRPCBody    string `json:"grpcBody,omitempty"`
 	MQTTTopic   string `json:"mqttTopic,omitempty"`
 	SOAPAction  string `json:"soapAction,omitempty"`
 	SOAPVersion string `json:"soapVersion,omitempty"` // "1.1" | "1.2"
@@ -98,6 +99,14 @@ type ResponseResult struct {
 	Error         string            `json:"error"`
 	Cookies       []CookieSummary   `json:"cookies"`
 	Validation    *ValidationResult `json:"validation,omitempty"`
+}
+
+// SSEEvent is a single parsed Server-Sent Event streamed to the frontend while
+// an HTTP request that returns text/event-stream is running.
+type SSEEvent struct {
+	Event string `json:"event"`
+	ID    string `json:"id"`
+	Data  string `json:"data"`
 }
 
 type SavedResponse struct {
@@ -364,6 +373,61 @@ type GRPCResponse struct {
 	Error      string            `json:"error,omitempty"`
 	DurationMs int64             `json:"durationMs"`
 	Headers    map[string]string `json:"headers"`
+	Trailers   map[string]string `json:"trailers"`
+	GrpcCode   int               `json:"grpcCode,omitempty"`
+	GrpcStatus string            `json:"grpcStatus,omitempty"`
+}
+
+// GRPCProtoMethod describes a single RPC method discovered from a local .proto file.
+type GRPCProtoMethod struct {
+	Name            string `json:"name"`
+	RequestType     string `json:"requestType"`
+	ResponseType    string `json:"responseType"`
+	ClientStreaming bool   `json:"clientStreaming"`
+	ServerStreaming bool   `json:"serverStreaming"`
+	ExampleJSON     string `json:"exampleJson"`
+}
+
+// GRPCProtoService describes one service discovered from a local .proto file.
+type GRPCProtoService struct {
+	FullyQualifiedName string            `json:"fullyQualifiedName"`
+	Methods            []GRPCProtoMethod `json:"methods"`
+}
+
+// GRPCStreamRequest carries the parameters used to open a long-lived gRPC stream session.
+type GRPCStreamRequest struct {
+	URL        string            `json:"url"`
+	Service    string            `json:"service"`
+	Method     string            `json:"method"`
+	Body       string            `json:"body,omitempty"`
+	Headers    map[string]string `json:"headers"`
+	ProtoFile  string            `json:"protoFile,omitempty"`
+	AutoClose  bool              `json:"autoClose"` // close send after the first message (server-streaming)
+	CACert     string            `json:"caCert,omitempty"`
+	ClientCert string            `json:"clientCert,omitempty"`
+	ClientKey  string            `json:"clientKey,omitempty"`
+}
+
+// GRPCTLSConfig carries optional TLS material (custom CA and/or mTLS client
+// certificate) for gRPC dials. All values are PEM-encoded strings.
+type GRPCTLSConfig struct {
+	CACert     string `json:"caCert,omitempty"`
+	ClientCert string `json:"clientCert,omitempty"`
+	ClientKey  string `json:"clientKey,omitempty"`
+}
+
+// GRPCStreamEvent is pushed to the frontend while a gRPC stream session is running.
+type GRPCStreamEvent struct {
+	SessionID  string            `json:"sessionId"`
+	Type       string            `json:"type"` // "connected" | "frame" | "done" | "error"
+	FrameNum   int               `json:"frameNum,omitempty"`
+	Data       string            `json:"data,omitempty"`
+	Message    string            `json:"message,omitempty"`
+	DurationMs int64             `json:"durationMs,omitempty"`
+	GrpcCode   int               `json:"grpcCode,omitempty"`
+	GrpcStatus string            `json:"grpcStatus,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Trailers   map[string]string `json:"trailers,omitempty"`
 }
 
 // --- WebSocket / SSE / Socket.IO ---
@@ -372,6 +436,7 @@ type SocketMessage struct {
 	Timestamp int64  `json:"timestamp"`
 	Direction string `json:"direction"` // "sent" | "received"
 	Body      string `json:"body"`
+	Type      string `json:"type,omitempty"` // "text" | "binary"
 	EventType string `json:"eventType,omitempty"`
 	EventID   string `json:"eventId,omitempty"`
 	Retry     int    `json:"retry,omitempty"`
@@ -384,6 +449,17 @@ type SocketState struct {
 	Messages []SocketMessage `json:"messages"`
 }
 
+// SocketSession is a persisted WebSocket/SSE/Socket.IO session for revisiting
+// past connections and their message logs.
+type SocketSession struct {
+	ID        string          `json:"id"`
+	URL       string          `json:"url"`
+	Protocol  string          `json:"protocol"` // "ws" | "sse" | "socketio"
+	Headers   map[string]string `json:"headers,omitempty"`
+	CreatedAt string          `json:"createdAt"`
+	Messages  []SocketMessage `json:"messages"`
+}
+
 type SocketIOConnectRequest struct {
 	URL     string            `json:"url"`
 	Cookies string            `json:"cookies"`
@@ -391,6 +467,7 @@ type SocketIOConnectRequest struct {
 }
 
 // EventRecord is a captured webhook event stored by the Event Inspector.
+// VerifyStatus is one of: "verified" | "unverified" | "duplicate".
 type EventRecord struct {
 	ID              string            `json:"id"`
 	ReceivedAt      string            `json:"receivedAt"`
@@ -400,9 +477,9 @@ type EventRecord struct {
 	Body            string            `json:"body"`
 	ContentType     string            `json:"contentType,omitempty"`
 	Provider        string            `json:"provider,omitempty"`
-	ProviderEventID string            `json:"providerEventId,omitempty"`
+	ProviderEventID string            `json:"providerEventId,omitempty"` // svix-id
 	EventType       string            `json:"eventType,omitempty"`
-	VerifyStatus    string            `json:"verifyStatus"` // "verified" | "unverified" | "duplicate"
+	VerifyStatus    string            `json:"verifyStatus"`
 	VerifyError     string            `json:"verifyError,omitempty"`
 	ReplayCount     int               `json:"replayCount"`
 	Replays         []EventReplay     `json:"replays,omitempty"`
@@ -418,7 +495,7 @@ type EventReplay struct {
 }
 
 // VerifyResult is the outcome of running a captured event through the
-// signature/dedupe pipeline.
+// signature-verification and dedupe pipeline.
 type VerifyResult struct {
 	Status          string `json:"status"` // "verified" | "unverified" | "duplicate"
 	Provider        string `json:"provider,omitempty"`
@@ -429,8 +506,8 @@ type VerifyResult struct {
 
 // EventInspectorStatus reports the capture listener state to the UI.
 type EventInspectorStatus struct {
-	Running   bool `json:"running"`
-	Port      int  `json:"port"`
-	Count     int  `json:"count"`
+	Running bool   `json:"running"`
+	Port    int    `json:"port"`
+	Count   int    `json:"count"`
 	HasSecret bool `json:"hasSecret"`
 }

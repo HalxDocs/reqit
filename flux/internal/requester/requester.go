@@ -1,6 +1,7 @@
 package requester
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -442,5 +443,159 @@ func errResult(err error, elapsed time.Duration) models.ResponseResult {
 		TimingMs:   elapsed.Milliseconds(),
 		SizeBytes:  0,
 		Error:      err.Error(),
+	}
+}
+
+// ExecuteStream sends an HTTP request and, when the response is a
+// text/event-stream, parses each SSE event and invokes onEvent live while the
+// connection stays open. Non-SSE responses behave exactly like Execute. The
+// request must be cancelled through ctx (the socket-style stream is open-ended).
+func ExecuteStream(ctx context.Context, payload models.RequestPayload, jar http.CookieJar, onEvent func(models.SSEEvent)) models.ResponseResult {
+	tr := transportForPayload(payload)
+	client := httpClient
+	if jar != nil || tr != sharedTransport {
+		client = &http.Client{Jar: jar, Transport: tr}
+	}
+	start := time.Now()
+
+	finalURL, err := buildURL(payload.URL, payload.Params)
+	if err != nil {
+		return errResult(err, time.Since(start))
+	}
+	if payload.ValidateURL {
+		if err := security.ValidateURL(finalURL); err != nil {
+			return errResult(fmt.Errorf("SSRF validation blocked request: %w", err), time.Since(start))
+		}
+	}
+	body, contentType, err := buildBody(payload)
+	if err != nil {
+		return errResult(err, time.Since(start))
+	}
+
+	method := strings.ToUpper(strings.TrimSpace(payload.Method))
+	if method == "" {
+		method = http.MethodGet
+	}
+
+	// No global timeout: SSE streams are long-lived and cancelled via ctx.
+	req, err := http.NewRequestWithContext(ctx, method, finalURL, body)
+	if err != nil {
+		return errResult(err, time.Since(start))
+	}
+	req.Header.Set("User-Agent", "reqit/"+updater.CurrentVersion)
+	applyHeaders(req, payload.Headers)
+	if contentType != "" && req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+	applyAuth(req, payload.AuthType, payload.AuthValue)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return errResult(errors.New("request canceled"), time.Since(start))
+		}
+		return errResult(err, time.Since(start))
+	}
+	defer resp.Body.Close()
+
+	headers := flattenHeaders(resp.Header)
+
+	ct := strings.ToLower(resp.Header.Get("Content-Type"))
+	if !strings.Contains(ct, "text/event-stream") && !strings.Contains(ct, "application/octet-stream") {
+		// Not a stream — read fully (same as Execute).
+		respBody, readErr := io.ReadAll(io.LimitReader(resp.Body, 50*1024*1024))
+		timing := time.Since(start)
+		if readErr != nil {
+			return errResult(readErr, timing)
+		}
+		bodyIsBase64 := isBinaryContentType(resp.Header.Get("Content-Type"))
+		var bodyStr string
+		if bodyIsBase64 {
+			bodyStr = base64.StdEncoding.EncodeToString(respBody)
+		} else {
+			bodyStr = string(respBody)
+		}
+		return models.ResponseResult{
+			Status:       resp.Status,
+			StatusCode:   resp.StatusCode,
+			Headers:      headers,
+			Body:         bodyStr,
+			BodyIsBase64: bodyIsBase64,
+			TimingMs:     timing.Milliseconds(),
+			SizeBytes:    int64(len(respBody)),
+			Error:        "",
+		}
+	}
+
+	// Stream: parse SSE events line-by-line.
+	var accumulated strings.Builder
+	streamSSE(ctx, resp.Body, onEvent, &accumulated)
+	return models.ResponseResult{
+		Status:     resp.Status,
+		StatusCode: resp.StatusCode,
+		Headers:    headers,
+		Body:       accumulated.String(),
+		TimingMs:   time.Since(start).Milliseconds(),
+		SizeBytes:  int64(accumulated.Len()),
+		Error:      "",
+	}
+}
+
+// streamSSE reads an SSE body, invoking onEvent for each complete event and
+// appending the raw payload to accumulated (used for the final body preview).
+func streamSSE(ctx context.Context, body io.Reader, onEvent func(models.SSEEvent), accumulated *strings.Builder) {
+	reader := bufio.NewReaderSize(body, 1<<20)
+	var dataLines strings.Builder
+	currentEvent := ""
+	currentID := ""
+
+	flush := func() {
+		if dataLines.Len() == 0 {
+			return
+		}
+		payloadText := strings.TrimSpace(dataLines.String())
+		accumulated.WriteString(payloadText)
+		accumulated.WriteString("\n")
+		if onEvent != nil {
+			onEvent(models.SSEEvent{
+				Event: currentEvent,
+				ID:    currentID,
+				Data:  payloadText,
+			})
+		}
+		dataLines.Reset()
+		currentEvent = ""
+		currentID = ""
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			flush()
+			return
+		default:
+		}
+
+		line, readErr := reader.ReadString('\n')
+		line = strings.TrimRight(line, "\r\n")
+
+		switch {
+		case strings.HasPrefix(line, "data: "):
+			dataLines.WriteString(strings.TrimPrefix(line, "data: "))
+			dataLines.WriteString("\n")
+		case strings.HasPrefix(line, "event: "):
+			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event: "))
+		case strings.HasPrefix(line, "id: "):
+			currentID = strings.TrimSpace(strings.TrimPrefix(line, "id: "))
+		case strings.HasPrefix(line, "retry: "):
+			// informational; ignored for the body
+		case line == "":
+			flush()
+		}
+
+		if readErr != nil {
+			flush()
+			return
+		}
 	}
 }

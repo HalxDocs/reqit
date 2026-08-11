@@ -51,13 +51,15 @@ export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
+export function ClearSocketSessions():Promise<void>;
+
 export function CommitAndPush(arg1:string):Promise<void>;
 
 export function ComputeDevStats():Promise<profile.DevStats>;
 
 export function ConfigureVault(arg1:string):Promise<void>;
 
-export function ConnectSocket(arg1:string,arg2:string):Promise<void>;
+export function ConnectSocket(arg1:string,arg2:string,arg3:Record<string, string>,arg4:models.GRPCTLSConfig):Promise<void>;
 
 export function ConnectSocketIO(arg1:models.SocketIOConnectRequest):Promise<void>;
 
@@ -90,6 +92,8 @@ export function DeleteSavedRequest(arg1:string):Promise<void>;
 export function DeleteSavedRequests(arg1:Array<string>):Promise<void>;
 
 export function DeleteSchedule(arg1:string):Promise<void>;
+
+export function DeleteSocketSession(arg1:string):Promise<void>;
 
 export function DeleteTestGroup(arg1:string,arg2:string):Promise<void>;
 
@@ -157,9 +161,23 @@ export function ExportReportAsJSON(arg1:models.CollectionRunResult):Promise<stri
 
 export function FetchSpecFromURL(arg1:string):Promise<string>;
 
-export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<models.GRPCResponse>;
+export function GRPCInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>,arg6:models.GRPCTLSConfig):Promise<models.GRPCResponse>;
 
-export function GRPCStreamInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>):Promise<string>;
+export function GRPCListMethods(arg1:string,arg2:string,arg3:Record<string, string>,arg4:models.GRPCTLSConfig):Promise<Array<string>>;
+
+export function GRPCListProtoServices(arg1:string):Promise<Array<models.GRPCProtoService>>;
+
+export function GRPCListServices(arg1:string,arg2:Record<string, string>,arg3:models.GRPCTLSConfig):Promise<Array<string>>;
+
+export function GRPCStreamCancel(arg1:string):Promise<void>;
+
+export function GRPCStreamCloseSend(arg1:string):Promise<void>;
+
+export function GRPCStreamInvoke(arg1:string,arg2:string,arg3:string,arg4:string,arg5:Record<string, string>,arg6:models.GRPCTLSConfig):Promise<string>;
+
+export function GRPCStreamOpen(arg1:models.GRPCStreamRequest):Promise<string>;
+
+export function GRPCStreamSendMessage(arg1:string,arg2:string):Promise<void>;
 
 export function GenerateAssertions(arg1:models.RequestPayload,arg2:models.ResponseResult):Promise<string>;
 
@@ -260,6 +278,8 @@ export function GetSchedulerHistory(arg1:string,arg2:number):Promise<string>;
 export function GetSchedules():Promise<Array<scheduler.ScheduledRun>>;
 
 export function GetSocketIOState():Promise<models.SocketState>;
+
+export function GetSocketSessions():Promise<Array<models.SocketSession>>;
 
 export function GetSocketState():Promise<models.SocketState>;
 
@@ -433,6 +453,8 @@ export function SaveResponseToRequest(arg1:string,arg2:string):Promise<void>;
 
 export function SaveSchemaSnapshot(arg1:string):Promise<void>;
 
+export function SaveSocketSession(arg1:string,arg2:string,arg3:Record<string, string>):Promise<models.SocketSession>;
+
 export function SaveTextResponse(arg1:string,arg2:string):Promise<void>;
 
 export function SaveUpstashConfig(arg1:string,arg2:string):Promise<void>;
@@ -440,6 +462,10 @@ export function SaveUpstashConfig(arg1:string,arg2:string):Promise<void>;
 export function SendNotification(arg1:string,arg2:string):Promise<void>;
 
 export function SendRequest(arg1:models.RequestPayload):Promise<models.ResponseResult>;
+
+export function SendRequestStream(arg1:string,arg2:models.RequestPayload):Promise<void>;
+
+export function SendSocketBinary(arg1:string):Promise<void>;
 
 export function SendSocketIOMessage(arg1:string):Promise<void>;
 
@@ -464,6 +490,8 @@ export function SetEnvVar(arg1:string,arg2:string):Promise<void>;
 export function SetProxyConfig(arg1:string):Promise<void>;
 
 export function SetRouteOverride(arg1:string,arg2:string,arg3:models.MockOverride):Promise<void>;
+
+export function SetSocketAutoReconnect(arg1:boolean):Promise<void>;
 
 export function SetTelemetryEnabled(arg1:boolean):Promise<void>;
 
@@ -500,6 +528,8 @@ export function UpdateSavedRequest(arg1:string,arg2:string,arg3:models.RequestPa
 export function UpdateSchedule(arg1:string,arg2:any,arg3:any,arg4:any):Promise<void>;
 
 export function UpdateScriptRules(arg1:string,arg2:Array<models.PreSetVar>,arg3:Array<models.ExtractRule>):Promise<void>;
+
+export function UpdateSocketSessionMessages(arg1:string,arg2:Array<models.SocketMessage>):Promise<void>;
 
 export function UpdateTestGroup(arg1:string,arg2:models.TestGroup):Promise<void>;
 

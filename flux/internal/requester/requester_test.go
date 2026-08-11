@@ -6,10 +6,62 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"flux/internal/models"
 )
+
+func TestExecuteStreamSSE(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		events := []string{
+			"event: ping\ndata: {\"n\":1}\n\n",
+			"data: hello\n\n",
+			"data: bye\nid: 42\n\n",
+		}
+		for _, e := range events {
+			_, _ = w.Write([]byte(e))
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var got []models.SSEEvent
+	result := ExecuteStream(ctx, models.RequestPayload{Method: "GET", URL: server.URL}, nil, func(ev models.SSEEvent) {
+		got = append(got, ev)
+	})
+
+	if result.Error != "" {
+		t.Fatalf("unexpected error: %s", result.Error)
+	}
+	if result.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", result.StatusCode)
+	}
+	if len(got) != 3 {
+		t.Fatalf("expected 3 SSE events, got %d (%+v)", len(got), got)
+	}
+	if got[0].Event != "ping" || !strings.Contains(got[0].Data, "{\"n\":1}") {
+		t.Errorf("unexpected first event: %+v", got[0])
+	}
+	if got[2].ID != "42" {
+		t.Errorf("expected id 42 on last event, got %q", got[2].ID)
+	}
+	if !strings.Contains(result.Body, "hello") {
+		t.Errorf("expected body to accumulate events, got %q", result.Body)
+	}
+}
 
 func TestExecuteGet(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

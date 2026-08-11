@@ -839,6 +839,7 @@ export namespace models {
 	    notes?: string;
 	    grpcService?: string;
 	    grpcMethod?: string;
+	    grpcBody?: string;
 	    mqttTopic?: string;
 	    soapAction?: string;
 	    soapVersion?: string;
@@ -870,6 +871,7 @@ export namespace models {
 	        this.notes = source["notes"];
 	        this.grpcService = source["grpcService"];
 	        this.grpcMethod = source["grpcMethod"];
+	        this.grpcBody = source["grpcBody"];
 	        this.mqttTopic = source["mqttTopic"];
 	        this.soapAction = source["soapAction"];
 	        this.soapVersion = source["soapVersion"];
@@ -1238,12 +1240,69 @@ export namespace models {
 	}
 	
 	
+	export class GRPCProtoMethod {
+	    name: string;
+	    requestType: string;
+	    responseType: string;
+	    clientStreaming: boolean;
+	    serverStreaming: boolean;
+	    exampleJson: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GRPCProtoMethod(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.requestType = source["requestType"];
+	        this.responseType = source["responseType"];
+	        this.clientStreaming = source["clientStreaming"];
+	        this.serverStreaming = source["serverStreaming"];
+	        this.exampleJson = source["exampleJson"];
+	    }
+	}
+	export class GRPCProtoService {
+	    fullyQualifiedName: string;
+	    methods: GRPCProtoMethod[];
+	
+	    static createFrom(source: any = {}) {
+	        return new GRPCProtoService(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fullyQualifiedName = source["fullyQualifiedName"];
+	        this.methods = this.convertValues(source["methods"], GRPCProtoMethod);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class GRPCResponse {
 	    statusCode: number;
 	    body: string;
 	    error?: string;
 	    durationMs: number;
 	    headers: Record<string, string>;
+	    trailers: Record<string, string>;
+	    grpcCode?: number;
+	    grpcStatus?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new GRPCResponse(source);
@@ -1256,6 +1315,55 @@ export namespace models {
 	        this.error = source["error"];
 	        this.durationMs = source["durationMs"];
 	        this.headers = source["headers"];
+	        this.trailers = source["trailers"];
+	        this.grpcCode = source["grpcCode"];
+	        this.grpcStatus = source["grpcStatus"];
+	    }
+	}
+	export class GRPCStreamRequest {
+	    url: string;
+	    service: string;
+	    method: string;
+	    body?: string;
+	    headers: Record<string, string>;
+	    protoFile?: string;
+	    autoClose: boolean;
+	    caCert?: string;
+	    clientCert?: string;
+	    clientKey?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GRPCStreamRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.service = source["service"];
+	        this.method = source["method"];
+	        this.body = source["body"];
+	        this.headers = source["headers"];
+	        this.protoFile = source["protoFile"];
+	        this.autoClose = source["autoClose"];
+	        this.caCert = source["caCert"];
+	        this.clientCert = source["clientCert"];
+	        this.clientKey = source["clientKey"];
+	    }
+	}
+	export class GRPCTLSConfig {
+	    caCert?: string;
+	    clientCert?: string;
+	    clientKey?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GRPCTLSConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.caCert = source["caCert"];
+	        this.clientCert = source["clientCert"];
+	        this.clientKey = source["clientKey"];
 	    }
 	}
 	
@@ -1694,6 +1802,7 @@ export namespace models {
 	    timestamp: number;
 	    direction: string;
 	    body: string;
+	    type?: string;
 	    eventType?: string;
 	    eventId?: string;
 	    retry?: number;
@@ -1707,10 +1816,51 @@ export namespace models {
 	        this.timestamp = source["timestamp"];
 	        this.direction = source["direction"];
 	        this.body = source["body"];
+	        this.type = source["type"];
 	        this.eventType = source["eventType"];
 	        this.eventId = source["eventId"];
 	        this.retry = source["retry"];
 	    }
+	}
+	export class SocketSession {
+	    id: string;
+	    url: string;
+	    protocol: string;
+	    headers?: Record<string, string>;
+	    createdAt: string;
+	    messages: SocketMessage[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SocketSession(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.url = source["url"];
+	        this.protocol = source["protocol"];
+	        this.headers = source["headers"];
+	        this.createdAt = source["createdAt"];
+	        this.messages = this.convertValues(source["messages"], SocketMessage);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class SocketState {
 	    status: string;

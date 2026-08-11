@@ -1,7 +1,8 @@
 import { useCallback } from "react";
-import { SendRequest, SetEnvVar, UpdateSavedRequest } from "../../../../wailsjs/go/main/App";
+import { SendRequestStream, SetEnvVar, UpdateSavedRequest } from "../../../../wailsjs/go/main/App";
+import { EventsOn, EventsOff } from "../../../../wailsjs/runtime/runtime";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
-import { useResponseStore } from "@/features/request/stores/useResponseStore";
+import { useResponseStore, type SSEStreamEvent } from "@/features/request/stores/useResponseStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
@@ -12,10 +13,19 @@ import { runSecurityChecks } from "@/features/request/lib/securityCheck";
 import { setEndpointCache } from "@/features/request/stores/useEndpointCache";
 import type { ResponseResult } from "@/features/request/types/request";
 
+function makeSessionID(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `sse_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
 export function useSendRequest() {
   const setResponse = useResponseStore((s) => s.setResponse);
   const setLoading = useResponseStore((s) => s.setLoading);
   const setSecurityWarnings = useResponseStore((s) => s.setSecurityWarnings);
+  const appendStreamEvent = useResponseStore((s) => s.appendStreamEvent);
+  const setStreaming = useResponseStore((s) => s.setStreaming);
   const refreshHistory = useHistoryStore((s) => s.load);
 
   return useCallback(async () => {
@@ -73,13 +83,32 @@ export function useSendRequest() {
     }
 
     setLoading(true);
+    const sessionID = makeSessionID();
+
     try {
-      const payload = buildPayload(requestState, collVars);
-      // Merge collection-level scripts (prepend so they run first)
-      if (collPreScript) payload.preScript = collPreScript + "\n\n" + (payload.preScript ?? "");
-      if (collPostScript) payload.postScript = collPostScript + "\n\n" + (payload.postScript ?? "");
-      if (specPath) (payload as typeof payload & { specPath: string }).specPath = specPath;
-      const result = (await SendRequest(payload as never)) as ResponseResult;
+      // Stream through SendRequestStream so SSE responses are shown live while
+      // non-stream responses arrive atomically via the sse:done event.
+      const result = await new Promise<ResponseResult>((resolve, reject) => {
+        const onEvent = (payload: { sessionId: string; event: SSEStreamEvent }) => {
+          if (payload?.sessionId !== sessionID) return;
+          appendStreamEvent(payload.event);
+          setStreaming(true);
+        };
+        const onDone = (payload: { sessionId: string; result: ResponseResult }) => {
+          if (payload?.sessionId !== sessionID) return;
+          EventsOff("sse:event");
+          EventsOff("sse:done");
+          resolve(payload.result);
+        };
+        EventsOn("sse:event", onEvent);
+        EventsOn("sse:done", onDone);
+        SendRequestStream(sessionID, payloadForSend() as never).catch((err: unknown) => {
+          EventsOff("sse:event");
+          EventsOff("sse:done");
+          reject(err);
+        });
+      });
+
       setResponse(result);
 
       // Auto-save request back to collection if it's a saved request
@@ -143,7 +172,35 @@ export function useSendRequest() {
         cookies: [],
       });
     } finally {
+      EventsOff("sse:event");
+      EventsOff("sse:done");
       refreshHistory().catch(() => undefined);
     }
-  }, [setLoading, setResponse, setSecurityWarnings, refreshHistory]);
+  }, [setLoading, setResponse, setSecurityWarnings, appendStreamEvent, setStreaming, refreshHistory]);
+}
+
+// payloadForSend builds the payload at send time from the current request state.
+function payloadForSend(): unknown {
+  const requestState = useRequestStore.getState();
+  const loadedID = useUIStore.getState().loadedRequestID;
+  let collVars: Map<string, string> | undefined;
+  if (loadedID) {
+    const colls = useCollectionStore.getState().collections;
+    for (const col of colls) {
+      if (col.requests.some((r) => r.id === loadedID)) {
+        if (col.variables?.length) {
+          collVars = new Map();
+          for (const v of col.variables) {
+            if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
+          }
+        }
+        const payload = buildPayload(requestState, collVars);
+        if (col.preScript) payload.preScript = col.preScript + "\n\n" + (payload.preScript ?? "");
+        if (col.postScript) payload.postScript = col.postScript + "\n\n" + (payload.postScript ?? "");
+        if (col.spec) (payload as typeof payload & { specPath: string }).specPath = col.spec;
+        return payload;
+      }
+    }
+  }
+  return buildPayload(requestState, collVars);
 }

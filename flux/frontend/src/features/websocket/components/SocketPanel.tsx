@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import { ArrowLeft, Send, Terminal, Plus, X, Search } from "lucide-react";
+import { ArrowLeft, Send, Terminal, Plus, X, Search, History, Trash2, RotateCcw } from "lucide-react";
 import { useSocketStore } from "@/features/websocket/stores/useSocketStore";
+import { useSocketHistoryStore } from "@/features/websocket/stores/useSocketHistoryStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
 
@@ -19,14 +21,24 @@ export function SocketPanel() {
   const send = useSocketStore((s) => s.send);
   const emitEvent = useSocketStore((s) => s.emitEvent);
   const refresh = useSocketStore((s) => s.refresh);
+  const resolveVars = useEnvStore((s) => s.resolve);
   const setView = useUIStore((s) => s.setView);
+  const sessions = useSocketHistoryStore((s) => s.sessions);
+  const loadHistory = useSocketHistoryStore((s) => s.load);
+  const removeSession = useSocketHistoryStore((s) => s.remove);
+
+  const [showHistory, setShowHistory] = useState(false);
 
   const [url, setUrl] = useState("");
   const [proto, setProto] = useState<"ws" | "sse" | "socketio">("ws");
   const [inputMsg, setInputMsg] = useState("");
+  const [sendBinary, setSendBinary] = useState(false);
   const [eventName, setEventName] = useState("message");
   const [cookies, setCookies] = useState("");
   const [headers, setHeaders] = useState<Array<{ key: string; value: string }>>([{ key: "", value: "" }]);
+  const [caCert, setCaCert] = useState("");
+  const [clientCert, setClientCert] = useState("");
+  const [clientKey, setClientKey] = useState("");
   const [msgSearch, setMsgSearch] = useState("");
   const logEnd = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +55,7 @@ export function SocketPanel() {
   }, [messages, msgSearch]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   const logContainer = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -56,7 +69,7 @@ export function SocketPanel() {
 
   const isConnected = status === "connected";
   const isBusy = status === "connecting";
-  const canSend = isConnected;
+  const canSend = isConnected && proto !== "sse";
   const isSocketIO = proto === "socketio";
 
   const handleConnect = async () => {
@@ -65,18 +78,23 @@ export function SocketPanel() {
     } else {
       const headerObj: Record<string, string> = {};
       for (const h of headers) {
-        if (h.key.trim()) headerObj[h.key.trim()] = h.value;
+        if (h.key.trim()) headerObj[resolveVars(h.key.trim())] = resolveVars(h.value);
       }
-      await connect(url, proto, { cookies, headers: headerObj });
+      const tls = {
+        caCert: caCert || undefined,
+        clientCert: clientCert || undefined,
+        clientKey: clientKey || undefined,
+      };
+      await connect(resolveVars(url.trim()), proto, { cookies: resolveVars(cookies), headers: headerObj, tls });
     }
   };
 
   const handleSend = async () => {
     if (!inputMsg.trim() || !canSend) return;
     if (isSocketIO && eventName.trim()) {
-      await emitEvent(eventName.trim(), inputMsg.trim());
+      await emitEvent(resolveVars(eventName.trim()), resolveVars(inputMsg.trim()));
     } else {
-      await send(inputMsg.trim());
+      await send(resolveVars(inputMsg.trim()), sendBinary);
     }
     setInputMsg("");
   };
@@ -89,7 +107,7 @@ export function SocketPanel() {
     setHeaders(next);
   };
 
-  const showHeaders = proto === "socketio";
+  const showHeaders = proto === "socketio" || proto === "ws";
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full bg-bg">
@@ -149,6 +167,21 @@ export function SocketPanel() {
         </div>
 
         <div className="flex items-center gap-2 ml-2">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className={cn(
+              "h-[24px] px-2 flex items-center gap-1 text-11 rounded-sm transition-colors",
+              showHistory ? "bg-card text-text" : "text-subtext hover:text-text",
+            )}
+            title="Session history"
+          >
+            <History size={12} />
+            History
+            {sessions.length > 0 && (
+              <span className="text-10 text-subtext/70">({sessions.length})</span>
+            )}
+          </button>
           <div className={cn(
             "w-2 h-2 rounded-full",
             isConnected ? "bg-teal" : isBusy ? "bg-amber animate-pulse" : "bg-subtext/30",
@@ -156,6 +189,57 @@ export function SocketPanel() {
           <span className="text-11 text-subtext capitalize">{status}</span>
         </div>
       </div>
+
+      {/* Session history */}
+      {showHistory && (
+        <div className="border-b border-border bg-surface max-h-[200px] overflow-y-auto">
+          {sessions.length === 0 ? (
+            <div className="px-4 py-3 text-12 text-subtext/70">No saved sessions yet. Connect to a socket to record one.</div>
+          ) : (
+            sessions.map((s) => (
+              <div key={s.id} className="px-4 py-2 flex items-center gap-3 border-b border-border/40 last:border-b-0">
+                <span className="text-10 uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-cyan/10 text-cyan font-semibold shrink-0">
+                  {s.protocol}
+                </span>
+                <span className="flex-1 min-w-0 font-mono text-11 text-text truncate" title={s.url}>
+                  {s.url}
+                </span>
+                <span className="text-10 text-subtext/60 shrink-0">
+                  {s.messages?.length ?? 0} msgs
+                </span>
+                <span className="text-10 text-subtext/60 shrink-0">
+                  {new Date(s.createdAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUrl(s.url);
+                    setProto(s.protocol as "ws" | "sse" | "socketio");
+                    if (s.headers) {
+                      const next = Object.entries(s.headers).map(([key, value]) => ({ key, value }));
+                      setHeaders(next.length ? next : [{ key: "", value: "" }]);
+                    }
+                    setShowHistory(false);
+                  }}
+                  className="h-[22px] px-2 flex items-center gap-1 text-10 text-subtext hover:text-cyan rounded-sm transition-colors shrink-0"
+                  title="Load session"
+                >
+                  <RotateCcw size={11} />
+                  Load
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeSession(s.id)}
+                  className="h-[22px] px-1.5 text-subtext hover:text-red rounded-sm transition-colors shrink-0"
+                  title="Delete session"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Cookie & Header inputs for Socket.IO */}
       {showHeaders && (
@@ -213,6 +297,35 @@ export function SocketPanel() {
               </div>
             ))}
           </div>
+          <details className="group mt-1">
+            <summary className="text-11 text-subtext cursor-pointer hover:text-text transition-colors select-none ml-[60px]">TLS / mTLS (PEM)</summary>
+            <div className="ml-[60px] mt-1 flex flex-col gap-1">
+              <input
+                type="text"
+                value={caCert}
+                onChange={(e) => setCaCert(e.target.value)}
+                placeholder="CA certificate (PEM)"
+                spellCheck={false}
+                className="h-[22px] px-2 bg-bg border border-border rounded-sm text-11 text-text font-mono outline-none focus:border-cyan"
+              />
+              <input
+                type="text"
+                value={clientCert}
+                onChange={(e) => setClientCert(e.target.value)}
+                placeholder="Client certificate (PEM)"
+                spellCheck={false}
+                className="h-[22px] px-2 bg-bg border border-border rounded-sm text-11 text-text font-mono outline-none focus:border-cyan"
+              />
+              <input
+                type="text"
+                value={clientKey}
+                onChange={(e) => setClientKey(e.target.value)}
+                placeholder="Client private key (PEM)"
+                spellCheck={false}
+                className="h-[22px] px-2 bg-bg border border-border rounded-sm text-11 text-text font-mono outline-none focus:border-cyan"
+              />
+            </div>
+          </details>
         </div>
       )}
 
@@ -258,6 +371,9 @@ export function SocketPanel() {
             <span className="text-10 text-subtext/60 mr-2">
               {msg.direction === "sent" ? "▶" : "◀"}
             </span>
+            {msg.type === "binary" && (
+              <span className="text-[9px] uppercase tracking-wider text-amber-400/80 mr-1.5 border border-amber-400/30 rounded px-1 py-px">bin</span>
+            )}
             <span className="whitespace-pre-wrap break-all">{msg.body}</span>
           </div>
         ))}
@@ -277,6 +393,12 @@ export function SocketPanel() {
               className="w-[120px] h-[28px] px-2 bg-bg border border-border rounded-sm text-11 text-text font-mono outline-none focus:border-cyan"
             />
           )}
+          {proto === "ws" && (
+            <label className="flex items-center gap-1 text-10 text-subtext cursor-pointer hover:text-text transition-colors shrink-0" title="Send payload as a base64-encoded binary frame">
+              <input type="checkbox" checked={sendBinary} onChange={(e) => setSendBinary(e.target.checked)} className="accent-cyan w-[10px] h-[10px]" />
+              Binary
+            </label>
+          )}
           <input
             ref={inputRef}
             type="text"
@@ -285,7 +407,7 @@ export function SocketPanel() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSend();
             }}
-            placeholder={isSocketIO ? "Event payload…" : "Type a message…"}
+            placeholder={isSocketIO ? "Event payload…" : sendBinary ? "Base64 payload…" : "Type a message…"}
             spellCheck={false}
             className="flex-1 h-[28px] px-2 bg-bg border border-border rounded-sm text-12 text-text font-mono outline-none focus:border-cyan"
           />

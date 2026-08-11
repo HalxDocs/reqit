@@ -48,7 +48,7 @@ export function SSEViewer() {
   const handleConnect = async () => {
     if (!inputURL.trim()) return;
     try {
-      await connect(inputURL.trim(), "sse");
+      await connect(inputURL.trim(), "sse", { autoReconnect });
       toast.success("SSE connected");
     } catch (e) {
       toast.error("SSE connection failed: " + String(e));
@@ -133,6 +133,10 @@ export function SSEViewer() {
           <span className="text-subtext" title="Last-Event-ID will be sent on reconnect">ID: {lastEventID.slice(0, 20)}</span>
         )}
         <div className="ml-auto flex items-center gap-2">
+          <label className="flex items-center gap-1 cursor-pointer text-subtext hover:text-text transition-colors" title="Reconnect automatically with Last-Event-ID when the stream drops">
+            <input type="checkbox" checked={autoReconnect} onChange={(e) => setAutoReconnect(e.target.checked)} className="accent-cyan w-[10px] h-[10px]" />
+            Reconnect
+          </label>
           <label className="flex items-center gap-1 cursor-pointer text-subtext hover:text-text transition-colors">
             <input type="checkbox" checked={autoScroll} onChange={(e) => setAutoScroll(e.target.checked)} className="accent-cyan w-[10px] h-[10px]" />
             Scroll

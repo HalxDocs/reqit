@@ -179,6 +179,9 @@ export interface GRPCResponse {
   error?: string;
   durationMs: number;
   headers: Record<string, string>;
+  trailers?: Record<string, string>;
+  grpcCode?: number;
+  grpcStatus?: string;
 }
 
 export interface TimingBreakdown {
