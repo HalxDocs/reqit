@@ -706,6 +706,26 @@ export function OAuth2Cancel() {
   return window['go']['main']['App']['OAuth2Cancel']();
 }
 
+export function OAuth2DiagnoseLoopback() {
+  return window['go']['main']['App']['OAuth2DiagnoseLoopback']();
+}
+
+export function OAuth2Discover(arg1) {
+  return window['go']['main']['App']['OAuth2Discover'](arg1);
+}
+
+export function OAuth2ManualAuthorize(arg1) {
+  return window['go']['main']['App']['OAuth2ManualAuthorize'](arg1);
+}
+
+export function OAuth2ManualComplete(arg1) {
+  return window['go']['main']['App']['OAuth2ManualComplete'](arg1);
+}
+
+export function OAuth2OpenBrowser(arg1) {
+  return window['go']['main']['App']['OAuth2OpenBrowser'](arg1);
+}
+
 export function OAuth2PollDevice(arg1) {
   return window['go']['main']['App']['OAuth2PollDevice'](arg1);
 }

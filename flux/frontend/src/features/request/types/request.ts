@@ -120,6 +120,8 @@ export interface MockOverride {
 }
 
 export interface OAuth2Config {
+  /** Issuer URL used for discovery autofill ({issuer}/.well-known/openid-configuration). */
+  issuer?: string;
   authUrl: string;
   tokenUrl: string;
   deviceUrl: string;
@@ -128,9 +130,15 @@ export interface OAuth2Config {
   scopes: string;
   redirectUri: string;
   usePkce: boolean;
+  /** Keychain reference for live tokens — the only thing persisted to disk. */
+  tokenRef?: string;
   accessToken?: string;
   refreshToken?: string;
+  /** Unix epoch in milliseconds (JS-compatible with Date.now()) — never seconds. */
   expiresAt?: number;
+  /** Callback timeout in seconds (overrides engine default). Providers
+   *  with MFA pages need longer windows. Zero = engine default (5 min). */
+  flowTimeoutSec?: number;
 }
 
 export interface OAuth2TokenResponse {

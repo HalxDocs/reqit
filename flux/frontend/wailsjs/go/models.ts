@@ -612,6 +612,7 @@ export namespace main {
 	    authorizeUrl: string;
 	    redirectUri: string;
 	    state: string;
+	    note?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new OAuth2AuthorizeResult(source);
@@ -622,6 +623,7 @@ export namespace main {
 	        this.authorizeUrl = source["authorizeUrl"];
 	        this.redirectUri = source["redirectUri"];
 	        this.state = source["state"];
+	        this.note = source["note"];
 	    }
 	}
 	export class OAuth2DevicePoll {
@@ -678,6 +680,42 @@ export namespace main {
 	        this.verificationUriComplete = source["verificationUriComplete"];
 	        this.expiresIn = source["expiresIn"];
 	        this.interval = source["interval"];
+	    }
+	}
+	export class OAuth2DiscoveryResult {
+	    issuer: string;
+	    authorizationEndpoint: string;
+	    tokenEndpoint: string;
+	    deviceAuthorizationEndpoint?: string;
+	    codeChallengeMethods?: string[];
+	    scopesSupported?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new OAuth2DiscoveryResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.issuer = source["issuer"];
+	        this.authorizationEndpoint = source["authorizationEndpoint"];
+	        this.tokenEndpoint = source["tokenEndpoint"];
+	        this.deviceAuthorizationEndpoint = source["deviceAuthorizationEndpoint"];
+	        this.codeChallengeMethods = source["codeChallengeMethods"];
+	        this.scopesSupported = source["scopesSupported"];
+	    }
+	}
+	export class OAuth2ManualAuthorizeResult {
+	    authorizeUrl: string;
+	    state: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OAuth2ManualAuthorizeResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.authorizeUrl = source["authorizeUrl"];
+	        this.state = source["state"];
 	    }
 	}
 	export class RegistryPushResult {
@@ -2002,9 +2040,7 @@ export namespace mqtt {
 
 }
 
-export namespace oauth2 {
-	
-	export class OAuth2Config {
+export namespace oauth2 {	export class OAuth2Config {
 	    authUrl: string;
 	    tokenUrl: string;
 	    deviceUrl: string;
@@ -2013,11 +2049,12 @@ export namespace oauth2 {
 	    scopes: string;
 	    redirectUri: string;
 	    usePkce: boolean;
-	
+	    flowTimeoutSec?: number;
+
 	    static createFrom(source: any = {}) {
 	        return new OAuth2Config(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.authUrl = source["authUrl"];
@@ -2028,6 +2065,7 @@ export namespace oauth2 {
 	        this.scopes = source["scopes"];
 	        this.redirectUri = source["redirectUri"];
 	        this.usePkce = source["usePkce"];
+	        this.flowTimeoutSec = source["flowTimeoutSec"];
 	    }
 	}
 

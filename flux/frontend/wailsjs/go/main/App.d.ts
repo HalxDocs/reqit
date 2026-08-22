@@ -371,6 +371,16 @@ export function OAuth2Authorize(arg1:oauth2.OAuth2Config):Promise<main.OAuth2Aut
 
 export function OAuth2Cancel():Promise<void>;
 
+export function OAuth2DiagnoseLoopback():Promise<string>;
+
+export function OAuth2Discover(arg1:string):Promise<main.OAuth2DiscoveryResult>;
+
+export function OAuth2ManualAuthorize(arg1:oauth2.OAuth2Config):Promise<main.OAuth2ManualAuthorizeResult>;
+
+export function OAuth2ManualComplete(arg1:string):Promise<models.OAuth2TokenResponse>;
+
+export function OAuth2OpenBrowser(arg1:string):Promise<void>;
+
 export function OAuth2PollDevice(arg1:string):Promise<main.OAuth2DevicePoll>;
 
 export function OAuth2Refresh(arg1:oauth2.OAuth2Config,arg2:string):Promise<models.OAuth2TokenResponse>;

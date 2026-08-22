@@ -1,19 +1,64 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, RefreshCw, Check, X, Shield, Loader2, Copy, MonitorSmartphone } from "lucide-react";
+import { ExternalLink, RefreshCw, Check, X, Shield, Loader2, Copy, MonitorSmartphone, ClipboardPaste, Wrench } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
+import { normalizeExpiry, secondsUntil } from "@/shared/lib/expiry";
 import {
   OAuth2Authorize,
   OAuth2Cancel,
+  OAuth2ManualAuthorize,
+  OAuth2ManualComplete,
+  OAuth2OpenBrowser,
+  OAuth2DiagnoseLoopback,
   OAuth2StartDevice,
   OAuth2PollDevice,
   OAuth2Refresh,
 } from "../../../../wailsjs/go/main/App";
-import { BrowserOpenURL, EventsOn } from "../../../../wailsjs/runtime/runtime";
+import { EventsOn } from "../../../../wailsjs/runtime/runtime";
+import { OAuth2DiscoveryField, type OAuth2DiscoveryMeta } from "./OAuth2DiscoveryField";
 import type { OAuth2Config, OAuth2TokenResponse } from "@/features/request/types/request";
 
+// Fixed loopback callback used by providers that require an exact
+// pre-registered redirect URI (GitHub, Slack, Spotify, GitLab). Everything
+// else defaults to an empty redirect URI so the engine auto-assigns an
+// ephemeral loopback port per RFC 8252 §7.3.
 const REDIRECT = "http://127.0.0.1:7317/callback";
-const FLOW_TIMEOUT_MS = 120000;
+// If the browser launcher succeeded but the app window never lost focus (the
+// browser never took over), assume it silently didn't open and auto-switch to
+// the paste-back fallback after this grace period.
+const NO_OPEN_GRACE_MS = 15_000;
+
+// Provider-aware callback timeouts. MFA-heavy providers need longer windows
+// because the user may need to approve a push notification, enter a TOTP
+// code, or select a passkey. Fast providers (GitHub, GitLab) use shorter
+// timeouts so stale tabs fail fast.
+const TIMEOUT_MFA_MS = 10 * 60 * 1000;  // Google, Entra ID, Okta, Auth0
+const TIMEOUT_DEFAULT_MS = 5 * 60 * 1000; // everything else
+const TIMEOUT_FAST_MS = 3 * 60 * 1000;  // GitHub, GitLab (no MFA redirect)
+
+// Provider patterns that typically show MFA/consent screens.
+const MFA_PROVIDER_PATTERNS = [
+  /googleapis\.com/i,
+  /microsoftonline\.com/i,
+  /entra\.microsoft\.com/i,
+  /login\.microsoftonline\.com/i,
+  /okta\.com/i,
+  /auth0\.com/i,
+];
+
+// Fast providers that never show MFA pages during the OAuth redirect.
+const FAST_PROVIDER_PATTERNS = [
+  /github\.com/i,
+  /gitlab\.com/i,
+];
+
+/** Select the callback timeout for the current provider. */
+function providerTimeoutMs(authUrl: string, tokenUrl: string): number {
+  const combined = authUrl + tokenUrl;
+  if (FAST_PROVIDER_PATTERNS.some((p) => p.test(combined))) return TIMEOUT_FAST_MS;
+  if (MFA_PROVIDER_PATTERNS.some((p) => p.test(combined))) return TIMEOUT_MFA_MS;
+  return TIMEOUT_DEFAULT_MS;
+}
 
 interface OAuth2DeviceStart {
   deviceCode: string;
@@ -57,6 +102,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function redirectPort(uri: string): string {
+  if (!uri) return "auto";
   try {
     const p = new URL(uri).port;
     return p || "?";
@@ -72,8 +118,21 @@ export function OAuth2Flow() {
   const setAuthType = useRequestStore((s) => s.setAuthType);
 
   const [grantType, setGrantType] = useState<GrantType>("auth_code");
-  const [flow, setFlow] = useState<"idle" | "waiting" | "polling" | "error">("idle");
+  const [flow, setFlow] = useState<"idle" | "waiting" | "polling" | "manual" | "error">("idle");
   const [device, setDevice] = useState<OAuth2DeviceStart | null>(null);
+  const [manualUrl, setManualUrl] = useState("");
+  const [pastedUrl, setPastedUrl] = useState("");
+  // The exact authorize URL from the backend — "Re-open browser" must reuse
+  // it (it carries the state + PKCE params), never rebuild a bare URL.
+  const [authUrlState, setAuthUrlState] = useState("");
+  // Set when the backend fell back from a busy fixed loopback port to an
+  // auto-assigned one — the provider's registered redirect URI may need updating.
+  const [portNote, setPortNote] = useState("");
+  const [diagBusy, setDiagBusy] = useState(false);
+  const [diagFindings, setDiagFindings] = useState<Array<{severity: string; label: string; detail: string}>>([]);
+  // Request id of the in-flight loopback diagnostics check; results with a
+  // mismatched id are stale (a newer check superseded them).
+  const diagReqRef = useRef<string | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [tokenType, setTokenType] = useState("");
@@ -81,15 +140,23 @@ export function OAuth2Flow() {
   const onCompleteRef = useRef<((p: any) => void) | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Browser-never-opened detection: the no-open watchdog timer, its blur
+  // listener, and the flow token used to invalidate stale callbacks.
+  const noOpenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blurHandlerRef = useRef<(() => void) | null>(null);
+  const flowTokenRef = useRef(0);
+  const browserBlurredRef = useRef(false);
 
   const cfg: OAuth2Config = oauth2Config ?? {
     authUrl: "", tokenUrl: "", deviceUrl: "", clientId: "", clientSecret: "",
-    scopes: "", redirectUri: REDIRECT, usePkce: false,
+    scopes: "", redirectUri: "", usePkce: false,
   };
-  const redirectUri = cfg.redirectUri || REDIRECT;
+  // "" means the engine auto-assigns an ephemeral loopback port (RFC 8252 §7.3).
+  const redirectUri = cfg.redirectUri ?? "";
+  const effectiveRedirect = redirectUri || REDIRECT;
 
   const updateCfg = useCallback((patch: Partial<OAuth2Config>) => {
-    setOAuth2Config({ ...(oauth2Config ?? cfg), ...patch, redirectUri: patch.redirectUri ?? cfg.redirectUri ?? REDIRECT });
+    setOAuth2Config({ ...(oauth2Config ?? cfg), ...patch, redirectUri: patch.redirectUri ?? cfg.redirectUri ?? "" });
   }, [oauth2Config, setOAuth2Config]);
 
   // Listen for the callback server's completion event emitted from Go.
@@ -100,33 +167,62 @@ export function OAuth2Flow() {
     return () => { try { off(); } catch {} };
   }, []);
 
+  // The diagnostics binding returns immediately and delivers the outcome on
+  // "oauth2:diagnostics" (the check runs on a Go goroutine, so the main
+  // thread never blocks for the up-to-12s wait).
+  useEffect(() => {
+    const off = EventsOn("oauth2:diagnostics", (p: any) => {
+      if (diagReqRef.current == null || p?.id !== diagReqRef.current) return; // stale result
+      diagReqRef.current = null;
+      setDiagBusy(false);
+      setDiagFindings(p?.findings ?? []);
+      setMessage(p?.success
+        ? "Loopback OK — " + (p?.detail || "the browser reached the loopback listener.")
+        : "Loopback check failed — " + (p?.detail || "the browser never connected back."));
+    });
+    return () => { try { off(); } catch {} };
+  }, []);
+
   const clearTimers = useCallback(() => {
     if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    if (noOpenTimerRef.current) { clearTimeout(noOpenTimerRef.current); noOpenTimerRef.current = null; }
+    if (blurHandlerRef.current) { window.removeEventListener("blur", blurHandlerRef.current); blurHandlerRef.current = null; }
   }, []);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
 
   const applyToken = useCallback((token: OAuth2TokenResponse) => {
+    clearTimers();
+    onCompleteRef.current = null;
     setTokenType(token.tokenType || "Bearer");
     setOAuth2Config({
       ...cfg,
       accessToken: token.accessToken,
       refreshToken: token.refreshToken,
-      expiresAt: token.expiresAt,
+      // Go emits ms; normalize guards against any seconds value slipping in.
+      expiresAt: normalizeExpiry(token.expiresAt),
     });
     setAuthType("oauth2");
     setFlow("idle");
     setMessage("");
-  }, [cfg, setOAuth2Config, setAuthType]);
+    setManualUrl("");
+    setPastedUrl("");
+  }, [cfg, setOAuth2Config, setAuthType, clearTimers]);
 
   const resetFlow = useCallback(() => {
     clearTimers();
+    flowTokenRef.current += 1; // invalidate any pending no-open watchdog
     onCompleteRef.current = null;
     setFlow("idle");
     setMessage("");
     setLoading(false);
     setDevice(null);
+    setManualUrl("");
+    setPastedUrl("");
+    setAuthUrlState("");
+    setPortNote("");
+    setDiagFindings([]);
   }, [clearTimers]);
 
   const handleAuthorize = async () => {
@@ -145,9 +241,24 @@ export function OAuth2Flow() {
       }
     };
 
+    // Select a provider-aware callback timeout. MFA providers (Google,
+    // Entra) need 10 minutes; fast providers (GitHub) get 3; default 5.
+    const timeoutMs = providerTimeoutMs(cfg.authUrl, cfg.tokenUrl);
+    const timeoutSec = Math.ceil(timeoutMs / 1000);
+
     try {
-      const result = await OAuth2Authorize(oauth2Config ?? cfg);
-      BrowserOpenURL(result.authorizeUrl);
+      // Pass the timeout to the backend so the engine's context deadline
+      // matches the frontend's UI timer — no mismatch.
+      const cfgWithTimeout = { ...(oauth2Config ?? cfg), flowTimeoutSec: timeoutSec };
+      const result = await OAuth2Authorize(cfgWithTimeout);
+      setAuthUrlState(result.authorizeUrl);
+      setPortNote(result.note ?? "");
+      const openErr = await openInBrowser(result.authorizeUrl);
+      if (openErr) {
+        await fallbackToManual(result.authorizeUrl, "Your browser couldn't be opened automatically.");
+        return;
+      }
+      armNoOpenWatchdog(result.authorizeUrl);
     } catch (e) {
       setFlow("error");
       setMessage(String(e));
@@ -156,16 +267,163 @@ export function OAuth2Flow() {
       return;
     }
 
+    const timeoutMin = Math.round(timeoutMs / 60_000);
     timeoutRef.current = setTimeout(() => {
       setFlow("error");
-      setMessage("No callback received. Make sure the redirect URI registered in your app matches " + redirectUri);
+      setMessage(
+        `No callback received within ${timeoutMin} minutes — the authorization flow has ended. Click \u201cGet New Access Token\u201d to retry.` +
+        (redirectUri ? ` Make sure the redirect URI registered in your app matches ${effectiveRedirect} exactly.` : ""),
+      );
       onCompleteRef.current = null;
-    }, FLOW_TIMEOUT_MS);
+    }, timeoutMs);
+  };
+
+  const writeClipboard = (text: string) => {
+    try { navigator.clipboard?.writeText(text).catch(() => {}); } catch {}
+  };
+
+  // Opens url via the engine-backed binding so a launcher failure is
+  // observable (the Wails runtime BrowserOpenURL is fire-and-forget).
+  // Returns null on success, else the launcher error text.
+  const openInBrowser = async (url: string): Promise<string | null> => {
+    try {
+      await OAuth2OpenBrowser(url);
+      return null;
+    } catch (e) {
+      return String(e);
+    }
+  };
+
+  // Auto-fallback when the browser couldn't be opened (or never visibly
+  // opened). With a fixed redirect URI we switch to the paste-back manual
+  // flow (no listener needed) and pre-copy the authorize URL; with an
+  // ephemeral redirect the loopback listener is still live, so we keep
+  // waiting and hand the user the URL to open themselves.
+  const fallbackToManual = async (url: string, reason: string) => {
+    setLoading(false);
+    if (!redirectUri) {
+      writeClipboard(url);
+      setMessage(reason + " The authorize URL has been copied to your clipboard — open it in your browser yourself. The local callback is still listening, so sign-in will complete normally.");
+      return;
+    }
+    // Stop the loopback flow so the manual flow can start (the engine allows
+    // one in-flight flow at a time), then prepare the paste-back flow.
+    try { await OAuth2Cancel(); } catch {}
+    clearTimers();
+    flowTokenRef.current += 1;
+    try {
+      const result = await OAuth2ManualAuthorize(oauth2Config ?? cfg);
+      writeClipboard(result.authorizeUrl);
+      setManualUrl(result.authorizeUrl);
+      setPastedUrl("");
+      setFlow("manual");
+      setMessage(reason + " Switched to manual authorization — the authorize URL has been copied to your clipboard. Open it in your browser, then paste the redirect URL back here.");
+    } catch (e) {
+      setFlow("error");
+      setMessage(String(e));
+    }
+  };
+
+  // Watchdog for the "browser launcher reported success but no tab actually
+  // opened" case: if the app window never loses focus (the browser never
+  // took over) and no callback arrives within the grace period, auto-switch
+  // to the paste-back fallback.
+  const armNoOpenWatchdog = (url: string) => {
+    const token = ++flowTokenRef.current;
+    browserBlurredRef.current = false;
+    const onBlur = () => { browserBlurredRef.current = true; };
+    blurHandlerRef.current = onBlur;
+    window.addEventListener("blur", onBlur);
+    noOpenTimerRef.current = setTimeout(() => {
+      window.removeEventListener("blur", onBlur);
+      blurHandlerRef.current = null;
+      noOpenTimerRef.current = null;
+      if (flowTokenRef.current !== token) return; // flow moved on
+      if (browserBlurredRef.current) return;      // browser took focus — it's open
+      if (onCompleteRef.current == null) return;  // no longer waiting
+      void fallbackToManual(url, "Your browser didn't seem to open.");
+    }, NO_OPEN_GRACE_MS);
+  };
+
+  // One-click browser-to-loopback connectivity check: the engine binds a
+  // test listener on 127.0.0.1:0, opens it in the default browser, and
+  // reports whether the browser reached it — the exact path an OAuth
+  // callback takes. Use it when "This site can't be reached" shows up. The
+  // binding returns immediately; the result arrives on oauth2:diagnostics.
+  const runDiagnostics = async () => {
+    setDiagBusy(true);
+    setMessage("Running loopback diagnostics — a test page will open in your browser…");
+    try {
+      diagReqRef.current = await OAuth2DiagnoseLoopback();
+    } catch (e) {
+      diagReqRef.current = null;
+      setDiagBusy(false);
+      setMessage("Loopback diagnostics failed: " + String(e));
+    }
   };
 
   const handleCancel = async () => {
     try { await OAuth2Cancel(); } catch {}
     resetFlow();
+  };
+
+  // Paste-back fallback (RedirectManual): no loopback listener — the user
+  // opens the authorize URL in any browser and pastes the redirect URL back.
+  // The engine validates state and exchanges the code with PKCE, exactly like
+  // the loopback path.
+  const handleManualAuthorize = async () => {
+    clearTimers();
+    setMessage("");
+    // Manual paste-back needs a concrete redirect URI — with no loopback
+    // listener, an empty one would produce an authorize URL the provider
+    // rejects (missing redirect_uri).
+    if (!redirectUri) {
+      setFlow("error");
+      setMessage("Manual authorization needs a fixed redirect URI. Set the Redirect URI field (e.g. " + REDIRECT + ") and register it in your provider's callback settings, then try again.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await OAuth2ManualAuthorize(oauth2Config ?? cfg);
+      setManualUrl(result.authorizeUrl);
+      setPastedUrl("");
+      setFlow("manual");
+      const openErr = await openInBrowser(result.authorizeUrl);
+      if (openErr) {
+        setMessage("The browser couldn't be opened automatically — the authorize URL is shown above; open it manually and paste the redirect URL back.");
+      }
+    } catch (e) {
+      setFlow("error");
+      setMessage(String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recovery path for a browser that can't reach the local callback (e.g.
+  // "This site can't be reached"): cancel the loopback flow and switch to the
+  // paste-back fallback, which needs no local listener.
+  const switchToManual = async () => {
+    try { await OAuth2Cancel(); } catch {}
+    clearTimers();
+    await handleManualAuthorize();
+  };
+
+  const handleManualComplete = async () => {
+    const pasted = pastedUrl.trim();
+    if (!pasted) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const token = await OAuth2ManualComplete(pasted);
+      applyToken(token);
+    } catch (e) {
+      // Stay in the manual view so the user can fix/paste again — surface the
+      // provider's error verbatim.
+      setMessage(String(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleStartDevice = async () => {
@@ -262,18 +520,38 @@ export function OAuth2Flow() {
     setTimeout(() => setMessage((m) => (m === "Copied to clipboard." ? "" : m)), 1500);
   };
 
+  // Providers that require an exact pre-registered redirect URI (GitHub,
+  // Slack, Spotify, GitLab) pin the fixed loopback port; the rest default to
+  // an auto-assigned ephemeral port unless the user configures one.
+  const REQUIRES_FIXED_REDIRECT = new Set(["github", "slack", "spotify", "gitlab"]);
   const applyPreset = (p: Preset) => {
     updateCfg({
+      issuer: "",
       authUrl: p.authUrl,
       tokenUrl: p.tokenUrl,
       deviceUrl: p.deviceUrl,
       scopes: p.scopes,
-      redirectUri: redirectUri,
+      redirectUri: redirectUri || (REQUIRES_FIXED_REDIRECT.has(p.key) ? REDIRECT : ""),
     });
   };
 
+  // Discovery autofill (guided setup): fill the endpoints + scopes from one
+  // issuer URL. The redirect URI is deliberately left untouched — it must be
+  // registered exactly as configured. PKCE (S256) is always re-asserted; the
+  // engine enforces it regardless of the legacy checkbox.
+  const handleDiscovered = useCallback((meta: OAuth2DiscoveryMeta) => {
+    updateCfg({
+      issuer: meta.issuer,
+      authUrl: meta.authorizationEndpoint,
+      tokenUrl: meta.tokenEndpoint,
+      deviceUrl: meta.deviceAuthorizationEndpoint || cfg.deviceUrl,
+      scopes: (meta.scopesSupported ?? []).join(" "),
+      usePkce: true,
+    });
+  }, [updateCfg, cfg.deviceUrl]);
+
   const hasToken = !!cfg.accessToken;
-  const expiresIn = cfg.expiresAt ? Math.max(0, Math.floor((cfg.expiresAt - Date.now()) / 1000)) : 0;
+  const expiresIn = secondsUntil(cfg.expiresAt);
   const isGithub = cfg.tokenUrl.includes("github.com");
 
   return (
@@ -327,6 +605,11 @@ export function OAuth2Flow() {
 
       {/* Config fields */}
       <div className="p-4 grid grid-cols-2 gap-3 border-b border-border">
+        <OAuth2DiscoveryField
+          issuer={cfg.issuer ?? ""}
+          onIssuerChange={(issuer) => updateCfg({ issuer })}
+          onDiscovered={handleDiscovered}
+        />
         <Field label="Auth URL">
           <input type="text" value={cfg.authUrl} onChange={(e) => updateCfg({ authUrl: e.target.value })}
             placeholder="https://provider.com/oauth/authorize" className={inputClass} />
@@ -367,8 +650,11 @@ export function OAuth2Flow() {
             <span className="text-12 text-text font-medium">Use PKCE (S256)</span>
           </label>
           <p className="text-11 text-subtext mt-1.5 leading-relaxed">
-            Register <code className="text-cyan bg-surface px-1 rounded">{redirectUri}</code> exactly in your provider&apos;s
-            callback URL settings — matching is strict.
+            {redirectUri ? (
+              <>Register <code className="text-cyan bg-surface px-1 rounded">{effectiveRedirect}</code> exactly in your provider&apos;s callback URL settings — matching is strict.</>
+            ) : (
+              <>Leave the redirect URI empty and reqit auto-assigns a loopback port (RFC 8252) — most providers accept any loopback port. If your provider requires an exact registered callback, set <code className="text-cyan bg-surface px-1 rounded">{REDIRECT}</code> and register it.</>
+            )}
           </p>
         </div>
       )}
@@ -385,15 +671,84 @@ export function OAuth2Flow() {
       {/* Action area */}
       <div className="px-4 py-3 border-b border-border flex flex-col gap-2.5">
         {flow === "idle" && (
-          <button
-            type="button"
-            onClick={grantType === "auth_code" ? handleAuthorize : handleStartDevice}
-            disabled={loading || !cfg.authUrl || !cfg.tokenUrl || !cfg.clientId}
-            className="h-[36px] px-6 bg-success hover:opacity-90 active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all disabled:opacity-50 self-start"
-          >
-            <ExternalLink size={14} />
-            <span>{loading ? "Starting…" : grantType === "auth_code" ? "Get New Access Token" : "Start Device Authorization"}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={grantType === "auth_code" ? handleAuthorize : handleStartDevice}
+              disabled={loading || !cfg.authUrl || !cfg.tokenUrl || !cfg.clientId}
+              className="h-[36px] px-6 bg-success hover:opacity-90 active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all disabled:opacity-50"
+            >
+              <ExternalLink size={14} />
+              <span>{loading ? "Starting…" : grantType === "auth_code" ? "Get New Access Token" : "Start Device Authorization"}</span>
+            </button>
+            {grantType === "auth_code" && (
+              <button
+                type="button"
+                onClick={handleManualAuthorize}
+                disabled={loading || !cfg.authUrl || !cfg.clientId}
+                className="h-[36px] px-4 bg-card border border-border hover:border-cyan rounded-md text-12 font-semibold text-text flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                title="Use when your browser can't reach the local callback (paste the redirect URL back)"
+              >
+                <ClipboardPaste size={13} className="text-cyan" />
+                <span>Authorize Manually</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {flow === "manual" && manualUrl && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-12 text-text">
+              <ClipboardPaste size={14} className="text-cyan" />
+              <span>Authorize in your browser, then paste the redirect URL back here.</span>
+            </div>
+            <div className="rounded-md bg-surface border border-border p-2 font-mono text-11 text-subtext break-all max-h-[76px] overflow-y-auto">
+              {manualUrl}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { void openInBrowser(manualUrl).then((err) => { if (err) setMessage("Couldn't open the browser: " + err); }); }}
+                className="h-[30px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+              >
+                <ExternalLink size={12} /> Re-open in browser
+              </button>
+              <button
+                type="button"
+                onClick={() => copy(manualUrl)}
+                className="h-[30px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+              >
+                <Copy size={12} /> Copy URL
+              </button>
+            </div>
+            <textarea
+              value={pastedUrl}
+              onChange={(e) => setPastedUrl(e.target.value)}
+              rows={3}
+              placeholder="Paste the redirect URL from your browser's address bar — it starts with your redirect URI and ends with code=…&state=…"
+              className="px-3 py-2 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors resize-y"
+            />
+            {message && (
+              <p className="text-12 text-danger bg-danger/5 border border-danger/20 rounded-md px-3 py-2 break-all">{message}</p>
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleManualComplete}
+                disabled={loading || !pastedUrl.trim()}
+                className="h-[34px] px-4 bg-cyan hover:bg-cyan-hover rounded-md text-12 font-semibold text-white flex items-center gap-2 transition-colors disabled:opacity-50"
+              >
+                <Check size={13} /> Complete Authorization
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="h-[34px] px-3 bg-card border border-border hover:border-danger rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+              >
+                <X size={12} /> Cancel
+              </button>
+            </div>
+          </div>
         )}
 
         {flow === "waiting" && (
@@ -402,13 +757,29 @@ export function OAuth2Flow() {
               <Loader2 size={14} className="animate-spin text-cyan" />
               <span>Waiting for authorization in your browser…</span>
             </div>
-            <div className="flex items-center gap-2">
+            {message && (
+              <p className="text-12 text-cyan bg-cyan/5 border border-cyan/20 rounded-md px-3 py-2 break-all">{message}</p>
+            )}
+            {portNote && (
+              <p className="text-12 text-amber-400 bg-amber-400/5 border border-amber-400/25 rounded-md px-3 py-2 leading-relaxed break-all">
+                {portNote}
+              </p>
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => BrowserOpenURL(cfg.authUrl + (cfg.authUrl.includes("?") ? "&" : "?") + "prompt=select_account")}
+                onClick={() => { if (authUrlState) { void openInBrowser(authUrlState).then((err) => { if (err) setMessage("Couldn't open the browser: " + err); }); } }}
                 className="h-[32px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+                title="Reopens the exact authorize URL (with state + PKCE params)"
               >
                 <ExternalLink size={12} /> Re-open browser
+              </button>
+              <button
+                type="button"
+                onClick={() => authUrlState && copy(authUrlState)}
+                className="h-[32px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+              >
+                <Copy size={12} /> Copy authorize URL
               </button>
               <button
                 type="button"
@@ -418,6 +789,40 @@ export function OAuth2Flow() {
                 <X size={12} /> Cancel
               </button>
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-11 text-subtext">Browser can&apos;t reach the local callback (&quot;This site can&apos;t be reached&quot;)?</span>
+              <button
+                type="button"
+                onClick={switchToManual}
+                className="h-[30px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors"
+              >
+                <ClipboardPaste size={12} /> Authorize Manually
+              </button>
+              <button
+                type="button"
+                onClick={runDiagnostics}
+                disabled={diagBusy}
+                className="h-[30px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                title="Verify browser → loopback connectivity with a one-click test"
+              >
+                <Wrench size={12} /> {diagBusy ? "Running…" : "Run loopback diagnostics"}
+              </button>
+            </div>
+            {diagFindings.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {diagFindings.map((f, i) => (
+                  <div key={i} className={cn(
+                    "text-11 px-3 py-2 rounded-md border break-all leading-relaxed",
+                    f.severity === "critical" ? "text-danger bg-danger/5 border-danger/20" :
+                    f.severity === "warning" ? "text-amber-400 bg-amber-400/5 border-amber-400/25" :
+                    "text-subtext bg-surface border-border",
+                  )}>
+                    <span className="font-semibold">{f.severity === "critical" ? "🔴" : f.severity === "warning" ? "⚠️" : "ℹ️"} {f.label}</span>
+                    <span className="block mt-0.5 text-subtext">{f.detail}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -440,7 +845,10 @@ export function OAuth2Flow() {
             </div>
             <button
               type="button"
-              onClick={() => BrowserOpenURL(device.verificationUriComplete || device.verificationUri)}
+              onClick={() => {
+                const u = device.verificationUriComplete || device.verificationUri;
+                if (u) { void openInBrowser(u).then((err) => { if (err) setMessage("Couldn't open the browser: " + err); }); }
+              }}
               className="h-[36px] px-4 bg-cyan hover:bg-cyan-hover rounded-md text-12 font-semibold text-white flex items-center gap-2 transition-colors self-start"
             >
               <MonitorSmartphone size={13} /> Open verification URL
@@ -455,7 +863,33 @@ export function OAuth2Flow() {
         )}
 
         {flow === "error" && (
-          <div className="text-12 text-danger bg-danger/5 border border-danger/20 rounded-md px-3 py-2">{message}</div>
+          <div className="flex flex-col gap-2">
+            <div className="text-12 text-danger bg-danger/5 border border-danger/20 rounded-md px-3 py-2 break-all">{message}</div>
+            {diagFindings.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {diagFindings.map((f, i) => (
+                  <div key={i} className={cn(
+                    "text-11 px-3 py-2 rounded-md border break-all leading-relaxed",
+                    f.severity === "critical" ? "text-danger bg-danger/5 border-danger/20" :
+                    f.severity === "warning" ? "text-amber-400 bg-amber-400/5 border-amber-400/25" :
+                    "text-subtext bg-surface border-border",
+                  )}>
+                    <span className="font-semibold">{f.severity === "critical" ? "🔴" : f.severity === "warning" ? "⚠️" : "ℹ️"} {f.label}</span>
+                    <span className="block mt-0.5 text-subtext">{f.detail}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={runDiagnostics}
+              disabled={diagBusy}
+              className="self-start h-[30px] px-3 bg-card border border-border hover:border-cyan rounded-md text-12 text-text flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              title="Verify browser → loopback connectivity with a one-click test"
+            >
+              <Wrench size={12} /> {diagBusy ? "Running…" : "Run loopback diagnostics"}
+            </button>
+          </div>
         )}
       </div>
 

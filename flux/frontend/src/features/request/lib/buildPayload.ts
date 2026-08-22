@@ -50,12 +50,23 @@ export function buildPayload(s: RequestState, extraVars?: Map<string, string>): 
   if (s.authType === "digest" || s.authType === "ntlm") authValue = `${resolve(s.authUsername ?? "")}:${resolve(s.authPassword ?? "")}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${resolve(s.authKeyName)}:${resolve(s.authKeyValue)}`;
   if (s.authType === "oauth2" && s.oauth2Config) {
+    // Secrets (accessToken/refreshToken) are transient here: the Go backend
+    // strips them and migrates them to the OS keychain before anything is
+    // written to a git-tracked file. tokenRef + config round-trip on disk.
+    // clientSecret is deliberately never included.
     authValue = JSON.stringify({
+      tokenRef: s.oauth2Config.tokenRef,
       accessToken: s.oauth2Config.accessToken,
       refreshToken: s.oauth2Config.refreshToken,
       expiresAt: s.oauth2Config.expiresAt,
-      deviceUrl: s.oauth2Config.deviceUrl,
       tokenType: "Bearer",
+      authUrl: s.oauth2Config.authUrl,
+      tokenUrl: s.oauth2Config.tokenUrl,
+      deviceUrl: s.oauth2Config.deviceUrl,
+      clientId: s.oauth2Config.clientId,
+      scopes: s.oauth2Config.scopes,
+      redirectUri: s.oauth2Config.redirectUri,
+      usePkce: s.oauth2Config.usePkce,
     });
   }
 
@@ -96,12 +107,21 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
   if (s.authType === "digest" || s.authType === "ntlm") authValue = `${s.authUsername}:${s.authPassword}`;
   if (s.authType === "apikey") authValue = `${s.authKeyIn}:${s.authKeyName}:${s.authKeyValue}`;
   if (s.authType === "oauth2" && s.oauth2Config) {
+    // Same transient shape as buildPayload — the Go backend migrates secrets
+    // to the keychain before persisting; only config + tokenRef reach disk.
     authValue = JSON.stringify({
+      tokenRef: s.oauth2Config.tokenRef,
       accessToken: s.oauth2Config.accessToken,
       refreshToken: s.oauth2Config.refreshToken,
       expiresAt: s.oauth2Config.expiresAt,
-      deviceUrl: s.oauth2Config.deviceUrl,
       tokenType: "Bearer",
+      authUrl: s.oauth2Config.authUrl,
+      tokenUrl: s.oauth2Config.tokenUrl,
+      deviceUrl: s.oauth2Config.deviceUrl,
+      clientId: s.oauth2Config.clientId,
+      scopes: s.oauth2Config.scopes,
+      redirectUri: s.oauth2Config.redirectUri,
+      usePkce: s.oauth2Config.usePkce,
     });
   }
 

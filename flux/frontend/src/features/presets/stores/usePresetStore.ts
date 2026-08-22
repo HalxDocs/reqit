@@ -35,6 +35,17 @@ interface PresetStore {
 let presetCounter = 0;
 const nextPresetId = () => `preset_${++presetCounter}_${Date.now().toString(36)}`;
 
+/**
+ * Presets are persisted to localStorage, so they must never carry live OAuth
+ * secrets. Access/refresh tokens and client secrets live in the OS keychain
+ * (referenced by tokenRef); a preset stores configuration only. Applying a
+ * preset fills the form — the user authorizes fresh.
+ */
+export function sanitizeOAuth2Config(cfg?: OAuth2Config): OAuth2Config | undefined {
+  if (!cfg) return undefined;
+  return { ...cfg, clientSecret: "", accessToken: undefined, refreshToken: undefined };
+}
+
 export const usePresetStore = create<PresetStore>()(
   persist(
     (set) => ({
@@ -66,7 +77,8 @@ export const usePresetStore = create<PresetStore>()(
               authKeyName: auth.authKeyName,
               authKeyValue: auth.authKeyValue,
               authKeyIn: auth.authKeyIn,
-              oauth2Config: auth.oauth2Config,
+              // Never persist live tokens/client secrets — config only.
+              oauth2Config: sanitizeOAuth2Config(auth.oauth2Config),
               authUsername: auth.authUsername,
               authPassword: auth.authPassword,
             },
@@ -76,6 +88,18 @@ export const usePresetStore = create<PresetStore>()(
       deleteAuthPreset: (id) =>
         set((s) => ({ authPresets: s.authPresets.filter((p) => p.id !== id) })),
     }),
-    { name: "reqit:presets" },
+    {
+      name: "reqit:presets",
+      // Sanitize anything already persisted by older builds (which stored the
+      // full oauth2Config incl. secrets) so the leak is removed on load too.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<PresetStore>;
+        const authPresets = (p.authPresets ?? []).map((preset) => ({
+          ...preset,
+          oauth2Config: sanitizeOAuth2Config(preset.oauth2Config),
+        }));
+        return { ...current, ...p, authPresets };
+      },
+    },
   ),
 );

@@ -10,6 +10,7 @@ import type {
   RequestState,
 } from "@/features/request/types/request";
 import { uid } from "@/shared/lib/id";
+import { normalizeExpiry } from "@/shared/lib/expiry";
 
 interface WireKV {
   key: string;
@@ -99,19 +100,23 @@ export function decodePayload(
   if (authType === "oauth2" && p.authValue) {
     try {
       const parsed = JSON.parse(p.authValue);
-      if (parsed.accessToken) {
+      // A token is present when the Go backend rehydrated it from the keychain
+      // for this session; tokenRef alone means the live token is in the
+      // keychain and gets rehydrated on the next load.
+      if (parsed.accessToken || parsed.tokenRef) {
         oauth2Config = {
-          authUrl: "",
-          tokenUrl: "",
+          authUrl: parsed.authUrl || "",
+          tokenUrl: parsed.tokenUrl || "",
           deviceUrl: parsed.deviceUrl || "",
-          clientId: "",
+          clientId: parsed.clientId || "",
           clientSecret: "",
-          scopes: "",
-          redirectUri: "",
-          usePkce: false,
+          scopes: parsed.scopes || "",
+          redirectUri: parsed.redirectUri || "",
+          usePkce: !!parsed.usePkce,
+          tokenRef: parsed.tokenRef || undefined,
           accessToken: parsed.accessToken,
           refreshToken: parsed.refreshToken || undefined,
-          expiresAt: parsed.expiresAt || undefined,
+          expiresAt: normalizeExpiry(parsed.expiresAt),
         };
       }
     } catch {}
