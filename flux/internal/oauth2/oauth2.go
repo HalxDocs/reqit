@@ -23,6 +23,11 @@ type OAuth2Config struct {
 	Scopes       string `json:"scopes"`
 	RedirectURI  string `json:"redirectUri"`
 	UsePKCE      bool   `json:"usePkce"`
+	// FlowTimeoutSec overrides the default callback timeout for interactive
+	// flows (authorization code, implicit). Providers that show MFA pages
+	// (Google, Entra ID) need a longer window; fast providers (GitHub) can
+	// use a shorter one. Zero uses the engine default (5 minutes).
+	FlowTimeoutSec int `json:"flowTimeoutSec,omitempty"`
 }
 
 type TokenResponse struct {
@@ -34,7 +39,11 @@ type TokenResponse struct {
 	Error        string `json:"error,omitempty"`
 	ErrorDescription string `json:"errorDescription,omitempty"`
 	ErrorURI     string `json:"errorUri,omitempty"`
-	ExpiresAt    int64  `json:"expiresAt"`
+	// ExpiresAt is the Unix epoch in MILLISECONDS (JS-compatible with
+	// Date.now()) — never seconds. Computed once from ExpiresIn at the engine
+	// boundary so the renderer's expiry math and future auto-refresh triggers
+	// never mix units.
+	ExpiresAt int64 `json:"expiresAt"`
 }
 
 type DeviceStart struct {
@@ -262,7 +271,7 @@ func (s *State) DevicePoll(ctx context.Context, deviceCode string) (*DevicePoll,
 			Scope:        raw.Scope,
 		}
 		if tr.ExpiresIn > 0 {
-			tr.ExpiresAt = time.Now().Unix() + int64(tr.ExpiresIn)
+			tr.ExpiresAt = time.Now().UnixMilli() + int64(tr.ExpiresIn)*1000
 		}
 		return &DevicePoll{Status: "success", Token: tr}, nil
 	}
@@ -328,7 +337,7 @@ func (s *State) doToken(ctx context.Context, data url.Values) (*TokenResponse, e
 		ErrorURI:         raw.ErrorURI,
 	}
 	if tr.ExpiresIn > 0 {
-		tr.ExpiresAt = time.Now().Unix() + int64(tr.ExpiresIn)
+		tr.ExpiresAt = time.Now().UnixMilli() + int64(tr.ExpiresIn)*1000
 	}
 	return tr, nil
 }

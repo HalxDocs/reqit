@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newTestConfig(auth, token string) OAuth2Config {
@@ -119,6 +120,30 @@ func TestExchangeRetriesWithoutRedirectURI(t *testing.T) {
 	}
 	if tr.AccessToken != "tok" {
 		t.Errorf("AccessToken = %q, want tok", tr.AccessToken)
+	}
+}
+
+// TestExpiryIsMilliseconds guards against the seconds-vs-ms regression: the
+// engine must emit JS-compatible ms epochs (Date.now() units) so the renderer's
+// expiry display and auto-refresh triggers never mix units.
+func TestExpiryIsMilliseconds(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"access_token":"tok","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer srv.Close()
+
+	s := New(newTestConfig(srv.URL+"/auth", srv.URL+"/token"))
+	tr, err := s.Exchange(context.Background(), "code")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tr.ExpiresAt < 1_000_000_000_000 {
+		t.Errorf("ExpiresAt = %d, expected milliseconds (>1e12)", tr.ExpiresAt)
+	}
+	nowMs := time.Now().UnixMilli()
+	delta := tr.ExpiresAt - nowMs
+	if delta < 3_500_000 || delta > 3_700_000 {
+		t.Errorf("ExpiresAt should be now+expires_in in ms, got delta %d ms", delta)
 	}
 }
 
@@ -273,6 +298,9 @@ func TestDeviceFlow(t *testing.T) {
 	}
 	if p2.Token == nil || p2.Token.AccessToken != "devtok" {
 		t.Errorf("poll token = %+v", p2.Token)
+	}
+	if p2.Token.ExpiresAt < 1_000_000_000_000 {
+		t.Errorf("device poll ExpiresAt = %d, expected milliseconds (>1e12)", p2.Token.ExpiresAt)
 	}
 }
 
