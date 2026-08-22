@@ -16,12 +16,14 @@ import (
 	"github.com/google/uuid"
 
 	"flux/internal/models"
+	"flux/internal/oauth2"
 	"flux/internal/storage"
 )
 
 type Store struct {
 	mu            sync.RWMutex
 	dir           string
+	workspaceKey  string // stable workspace identity for keyring keys
 	collections   []models.Collection
 	loaded        bool
 	requestIndex  map[string]*collReqRef // Fix 5: O(1) lookup by request ID
@@ -41,6 +43,7 @@ type collReqRef struct {
 func NewStore(dir string) *Store {
 	s := &Store{
 		dir:          dir,
+		workspaceKey: oauth2.WorkspaceKeyFromDir(dir),
 		requestIndex: make(map[string]*collReqRef),
 		dirty:        make(map[int]bool),
 		debounceCh:   make(chan struct{}, 1),
@@ -176,8 +179,52 @@ func (s *Store) load() error {
 
 	s.collections = cols
 	s.rebuildRequestIndex()
+	// Move any legacy inline OAuth tokens into the OS keychain and schedule a
+	// rewrite of the (git-tracked) collection files without secrets.
+	s.migrateOAuthSecrets()
 	s.loaded = true
 	return nil
+}
+
+// loadOnce performs the (potentially mutating) load under a write lock, then
+// releases it. Read paths use this so the migration pass never races readers.
+func (s *Store) loadOnce() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.load()
+}
+
+// migrateOAuthSecrets moves any legacy inline OAuth tokens found in stored
+// request payloads into the OS keychain and rewrites the collection file
+// without secrets immediately, so git-tracked files are scrubbed on first
+// load. Best-effort: if the keychain is unavailable the payload is left
+// untouched so no token is lost.
+// Caller must hold s.mu (write lock).
+func (s *Store) migrateOAuthSecrets() {
+	for i := range s.collections {
+		collChanged := false
+		for j := range s.collections[i].Requests {
+			p := &s.collections[i].Requests[j].Payload
+			if p.AuthType != "oauth2" || p.AuthValue == "" {
+				continue
+			}
+			clean, _, err := oauth2.MigrateAuthValue(p.AuthValue, s.workspaceKey)
+			if err != nil {
+				continue // keychain unavailable — preserve the token in place
+			}
+			if clean != p.AuthValue {
+				p.AuthValue = clean
+				collChanged = true
+			}
+		}
+		if collChanged {
+			// Synchronous write (still under the write lock) so the file is
+			// scrubbed before any reader or git sync can observe the secret.
+			if err := s.save(i); err != nil {
+				fmt.Fprintf(os.Stderr, "collections: failed to rewrite scrubbed collection %d: %v\n", i, err)
+			}
+		}
+	}
 }
 
 func (s *Store) loadCollectionFile(c *models.Collection) error {
@@ -204,9 +251,11 @@ func (s *Store) rebuildRequestIndex() {
 }
 
 // saveLocked persists a single collection to its file and updates index.json.
-// Caller must hold s.mu (at least write-lock).
+// Caller must hold s.mu (at least write-lock). Secrets are scrubbed from the
+// serialized copy so nothing sensitive is ever written to the git-tracked
+// collection file.
 func (s *Store) saveLocked(collIdx int) error {
-	c := s.collections[collIdx]
+	c := s.scrubbedForDisk(s.collections[collIdx])
 	collDir := storage.CollectionDir(s.dir)
 	if err := os.MkdirAll(collDir, 0o755); err != nil {
 		return err
@@ -223,6 +272,40 @@ func (s *Store) saveLocked(collIdx int) error {
 		return err
 	}
 	return s.saveIndexLocked()
+}
+
+// scrubbedForDisk returns a copy of the collection whose OAuth2 payloads have
+// been sanitized (tokens/client secrets moved to the OS keychain, or stripped)
+// so the on-disk, git-tracked JSON never contains live secrets. The in-memory
+// copy keeps tokens for the current session; disk and memory converge after a
+// restart (load migration) — bindings rehydrate tokens for the renderer.
+func (s *Store) scrubbedForDisk(c models.Collection) models.Collection {
+	out := c
+	out.Requests = make([]models.SavedRequest, len(c.Requests))
+	for i, r := range c.Requests {
+		out.Requests[i] = r
+		out.Requests[i].Payload = s.scrubPayload(r.Payload)
+	}
+	return out
+}
+
+func (s *Store) scrubPayload(p models.RequestPayload) models.RequestPayload {
+	if p.AuthType != "oauth2" || p.AuthValue == "" {
+		return p
+	}
+	clean, _, err := oauth2.MigrateAuthValue(p.AuthValue, s.workspaceKey)
+	if err != nil {
+		// Keychain unavailable — still never write secrets to disk. Strip the
+		// token from the file (raw-token forms are cleared entirely); it
+		// remains in the renderer session and the user can re-authorize (or
+		// fix their keyring).
+		p.AuthValue = oauth2.SanitizeAuthValueForExport(p.AuthValue)
+		return p
+	}
+	if clean != p.AuthValue {
+		p.AuthValue = clean
+	}
+	return p
 }
 
 // save persists a single collection to disk immediately (synchronous,
@@ -344,11 +427,11 @@ func (s *Store) mutateReq(reqID string, fn func(r *models.SavedRequest, collIdx,
 // GetRequestDetail returns the full SavedRequest for the given request ID,
 // or nil if not found.
 func (s *Store) GetRequestDetail(reqID string) (*models.SavedRequest, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if err := s.load(); err != nil {
+	if err := s.loadOnce(); err != nil {
 		return nil, err
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	ref, ok := s.requestIndex[reqID]
 	if !ok {
 		return nil, errors.New("request not found")
@@ -366,11 +449,11 @@ func (s *Store) GetRequestDetail(reqID string) (*models.SavedRequest, error) {
 }
 
 func (s *Store) GetAll() ([]models.Collection, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if err := s.load(); err != nil {
+	if err := s.loadOnce(); err != nil {
 		return nil, err
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	out := make([]models.Collection, len(s.collections))
 	copy(out, s.collections)
 	return out, nil
@@ -379,11 +462,11 @@ func (s *Store) GetAll() ([]models.Collection, error) {
 // GetAllSummary returns only metadata per request (no request bodies or
 // saved responses) for fast sidebar listing (Fix 9).
 func (s *Store) GetAllSummary() ([]models.Collection, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if err := s.load(); err != nil {
+	if err := s.loadOnce(); err != nil {
 		return nil, err
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	out := make([]models.Collection, len(s.collections))
 	for i := range s.collections {
 		out[i] = s.collections[i]

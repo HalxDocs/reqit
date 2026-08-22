@@ -21,6 +21,7 @@ import (
 	"flux/internal/hoppscotch"
 	"flux/internal/insomnia"
 	"flux/internal/models"
+	"flux/internal/oauth2"
 	"flux/internal/openapi"
 	"flux/internal/postman"
 	regpkg "flux/internal/registry"
@@ -50,6 +51,21 @@ type ExportHTMLDocsOpts struct {
 	DarkMode        bool   `json:"darkMode"`
 }
 
+// sanitizeExportedRequests returns a deep copy of requests with OAuth2
+// secrets stripped from AuthValue so exported files never carry live tokens
+// (the in-memory payloads may hold session tokens; those must not leave reqit
+// through Postman/Insomnia/Hoppscotch/OpenAPI/doc exports).
+func sanitizeExportedRequests(requests []models.SavedRequest) []models.SavedRequest {
+	out := make([]models.SavedRequest, len(requests))
+	for i, r := range requests {
+		out[i] = r
+		if r.Payload.AuthType == "oauth2" {
+			out[i].Payload.AuthValue = oauth2.SanitizeAuthValueForExport(r.Payload.AuthValue)
+		}
+	}
+	return out
+}
+
 func (a *App) ExportOpenAPI(collectionID string) (string, error) {
 	if a.collections == nil {
 		return "", fmt.Errorf("no active workspace")
@@ -60,6 +76,7 @@ func (a *App) ExportOpenAPI(collectionID string) (string, error) {
 	}
 	for _, c := range all {
 		if c.ID == collectionID {
+			c.Requests = sanitizeExportedRequests(c.Requests)
 			result, err := openapi.Export(c)
 			if err == nil && a.audit != nil {
 				_ = a.audit.Log("user", audit.ActionExport, "collection", collectionID, "", map[string]string{
@@ -87,6 +104,7 @@ func (a *App) PreviewOpenAPI(collectionID string) error {
 	}
 	for _, c := range all {
 		if c.ID == collectionID {
+			c.Requests = sanitizeExportedRequests(c.Requests)
 			htmlPath, hErr := openapi.ExportToHTML(c, dir)
 			if hErr != nil {
 				return hErr
@@ -114,6 +132,7 @@ func (a *App) ExportOpenAPIFiles(collectionID string) (map[string]string, error)
 	}
 	for _, c := range all {
 		if c.ID == collectionID {
+			c.Requests = sanitizeExportedRequests(c.Requests)
 			jsonPath, jErr := openapi.ExportToFile(c, dir)
 			if jErr != nil {
 				return nil, jErr
@@ -304,7 +323,7 @@ func (a *App) ExportPostman(collID string) (string, error) {
 	}
 	for _, c := range all {
 		if c.ID == collID {
-			data, err := postman.Export(c.Requests, c.Name, "")
+			data, err := postman.Export(sanitizeExportedRequests(c.Requests), c.Name, "")
 			if err != nil {
 				return "", err
 			}
@@ -352,7 +371,7 @@ func (a *App) ExportInsomnia(collID string) (string, error) {
 	}
 	for _, c := range all {
 		if c.ID == collID {
-			data, err := insomnia.Export(c.Requests, c.Name)
+			data, err := insomnia.Export(sanitizeExportedRequests(c.Requests), c.Name)
 			if err != nil {
 				return "", err
 			}
@@ -394,7 +413,7 @@ func (a *App) ExportHoppscotch(collID string) (string, error) {
 	}
 	for _, c := range all {
 		if c.ID == collID {
-			data, err := hoppscotch.Export(c.Requests, c.Name)
+			data, err := hoppscotch.Export(sanitizeExportedRequests(c.Requests), c.Name)
 			if err != nil {
 				return "", err
 			}
@@ -745,6 +764,7 @@ func (a *App) ExportCollectionMarkdown(colID string, opts ExportMarkdownOpts) (s
 	if col == nil {
 		return "", errors.New("collection not found")
 	}
+	col.Requests = sanitizeExportedRequests(col.Requests)
 	mo := markdown.ExportOptions{
 		IncludeHeaders:  opts.IncludeHeaders,
 		IncludeBody:     opts.IncludeBody,
@@ -794,6 +814,7 @@ func (a *App) ExportCollectionHTML(colID string, opts ExportHTMLDocsOpts) (strin
 	if col == nil {
 		return "", errors.New("collection not found")
 	}
+	col.Requests = sanitizeExportedRequests(col.Requests)
 	ho := htmldoc.ExportOptions{
 		IncludeHeaders:  opts.IncludeHeaders,
 		IncludeBody:     opts.IncludeBody,

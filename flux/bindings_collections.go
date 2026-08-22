@@ -11,6 +11,7 @@ import (
 	"flux/internal/environments"
 	"flux/internal/locks"
 	"flux/internal/models"
+	"flux/internal/oauth2"
 )
 
 // --- Collections ---
@@ -19,7 +20,30 @@ func (a *App) GetCollections() ([]models.Collection, error) {
 	if a.collections == nil {
 		return []models.Collection{}, nil
 	}
-	return a.collections.GetAll()
+	cols, err := a.collections.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	// Attach current OAuth tokens from the keychain for the renderer's session
+	// (disk stays secret-free; tokens are migrated there on save/load).
+	for i := range cols {
+		for j := range cols[i].Requests {
+			rehydrateOAuthToken(&cols[i].Requests[j].Payload)
+		}
+	}
+	return cols, nil
+}
+
+// rehydrateOAuthToken attaches the stored OAuth token (keychain) to a payload
+// being handed to the renderer, so the UI keeps working with in-memory tokens
+// while git-tracked files contain only config + tokenRef.
+func rehydrateOAuthToken(p *models.RequestPayload) {
+	if p == nil || p.AuthType != "oauth2" || p.AuthValue == "" {
+		return
+	}
+	if enriched, ok := oauth2.RehydrateAuthValue(p.AuthValue, oauth2.CurrentWorkspaceKey()); ok {
+		p.AuthValue = enriched
+	}
 }
 
 // GetCollectionsSummary returns only metadata per request (no payload bodies
@@ -54,7 +78,12 @@ func (a *App) GetRequestDetail(reqID string) (*models.SavedRequest, error) {
 	if a.collections == nil {
 		return nil, errors.New("no active workspace")
 	}
-	return a.collections.GetRequestDetail(reqID)
+	r, err := a.collections.GetRequestDetail(reqID)
+	if err != nil {
+		return nil, err
+	}
+	rehydrateOAuthToken(&r.Payload)
+	return r, nil
 }
 
 func (a *App) RenameCollection(id, name string) error {
@@ -188,7 +217,14 @@ func (a *App) GetHistory() ([]models.HistoryEntry, error) {
 	if a.history == nil {
 		return []models.HistoryEntry{}, nil
 	}
-	return a.history.GetAll()
+	entries, err := a.history.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	for i := range entries {
+		rehydrateOAuthToken(&entries[i].Payload)
+	}
+	return entries, nil
 }
 
 func (a *App) ClearHistory() error {

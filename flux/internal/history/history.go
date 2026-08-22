@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"flux/internal/models"
+	"flux/internal/oauth2"
 	"flux/internal/storage"
 )
 
@@ -18,13 +19,16 @@ type wrapper struct {
 }
 
 type Store struct {
-	mu      sync.Mutex
-	dir     string
-	entries []models.HistoryEntry
-	loaded  bool
+	mu           sync.Mutex
+	dir          string
+	workspaceKey string // stable workspace identity for keyring keys
+	entries      []models.HistoryEntry
+	loaded       bool
 }
 
-func NewStore(dir string) *Store { return &Store{dir: dir} }
+func NewStore(dir string) *Store {
+	return &Store{dir: dir, workspaceKey: oauth2.WorkspaceKeyFromDir(dir)}
+}
 
 func (s *Store) load() error {
 	if s.loaded {
@@ -38,12 +42,65 @@ func (s *Store) load() error {
 		w.Entries = []models.HistoryEntry{}
 	}
 	s.entries = w.Entries
+	// Move any legacy inline OAuth tokens into the OS keychain and rewrite the
+	// history file without secrets.
+	if s.migrateOAuthSecrets() {
+		_ = s.save()
+	}
 	s.loaded = true
 	return nil
 }
 
+// migrateOAuthSecrets moves legacy inline OAuth tokens out of history payloads
+// into the OS keychain. Best-effort: if the keychain is unavailable the entry
+// is left untouched so no token is lost. Returns true if anything changed.
+// Caller must hold s.mu.
+func (s *Store) migrateOAuthSecrets() bool {
+	changed := false
+	for i := range s.entries {
+		p := &s.entries[i].Payload
+		if p.AuthType != "oauth2" || p.AuthValue == "" {
+			continue
+		}
+		clean, _, err := oauth2.MigrateAuthValue(p.AuthValue, s.workspaceKey)
+		if err != nil {
+			continue // keychain unavailable — preserve the token in place
+		}
+		if clean != p.AuthValue {
+			p.AuthValue = clean
+			changed = true
+		}
+	}
+	return changed
+}
+
+// save persists history to disk, scrubbing any OAuth secrets from the serialized
+// copy so the (git-tracked) history file never contains live tokens.
+// Caller must hold s.mu.
 func (s *Store) save() error {
-	return storage.SaveTo(s.dir, fileName, wrapper{Entries: s.entries})
+	return storage.SaveTo(s.dir, fileName, wrapper{Entries: s.scrubbedEntries()})
+}
+
+// scrubbedEntries returns a copy of entries whose OAuth2 payloads have been
+// sanitized (tokens moved to the OS keychain, or stripped if the keychain is
+// unavailable). The in-memory entries keep tokens for the current session.
+func (s *Store) scrubbedEntries() []models.HistoryEntry {
+	out := make([]models.HistoryEntry, len(s.entries))
+	for i, e := range s.entries {
+		out[i] = e
+		if e.Payload.AuthType != "oauth2" || e.Payload.AuthValue == "" {
+			continue
+		}
+		clean, _, err := oauth2.MigrateAuthValue(e.Payload.AuthValue, s.workspaceKey)
+		if err != nil {
+			// Keychain unavailable — still never write secrets to the history
+			// file; raw-token forms are cleared entirely.
+			out[i].Payload.AuthValue = oauth2.SanitizeAuthValueForExport(e.Payload.AuthValue)
+			continue
+		}
+		out[i].Payload.AuthValue = clean
+	}
+	return out
 }
 
 func (s *Store) Append(payload models.RequestPayload, response models.ResponseResult) error {
