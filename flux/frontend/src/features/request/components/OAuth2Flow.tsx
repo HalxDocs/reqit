@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, RefreshCw, Check, X, Shield, Loader2, Copy, MonitorSmartphone, ClipboardPaste, Wrench } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
-import { normalizeExpiry, secondsUntil } from "@/shared/lib/expiry";
+import { formatExpiry, getExpiryState, normalizeExpiry } from "@/shared/lib/expiry";
 import {
   OAuth2Authorize,
   OAuth2Cancel,
@@ -136,6 +136,9 @@ export function OAuth2Flow() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [tokenType, setTokenType] = useState("");
+  // Ticks every second when a token with an expiry is present so the
+  // "Expires in ..." label stays live without needing a full re-render.
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   const onCompleteRef = useRef<((p: any) => void) | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,6 +194,16 @@ export function OAuth2Flow() {
   }, []);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
+
+  // Live tick for the expiry countdown — only runs while a token with an
+  // actual expiry exists, otherwise stays dormant (GitHub no-expiry tokens
+  // never tick).
+  useEffect(() => {
+    if (!cfg.accessToken) return;
+    if (getExpiryState(cfg.expiresAt) === "no_expiry") return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [cfg.accessToken, cfg.expiresAt]);
 
   const applyToken = useCallback((token: OAuth2TokenResponse) => {
     clearTimers();
@@ -551,8 +564,12 @@ export function OAuth2Flow() {
   }, [updateCfg, cfg.deviceUrl]);
 
   const hasToken = !!cfg.accessToken;
-  const expiresIn = secondsUntil(cfg.expiresAt);
+  const expiryState = getExpiryState(cfg.expiresAt, nowTick);
+  const expiryLabel = formatExpiry(cfg.expiresAt, nowTick);
   const isGithub = cfg.tokenUrl.includes("github.com");
+  const displayTokenType = tokenType
+    ? tokenType.charAt(0).toUpperCase() + tokenType.slice(1)
+    : "Bearer";
 
   return (
     <div className="flex flex-col max-h-[68vh] overflow-y-auto min-h-0">
@@ -897,11 +914,19 @@ export function OAuth2Flow() {
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
             <Check size={14} className="text-success" />
-            <span className="text-12 font-semibold text-text">Authenticated as {tokenType || "Bearer"}</span>
+            <span className="text-12 font-semibold text-text">Authenticated as {displayTokenType}</span>
           </div>
-          <div className="flex items-center gap-4 text-11 text-subtext mb-3">
-            {expiresIn > 0 ? <span>Expires in {expiresIn}s</span> : <span className="text-danger">No expiry / expired</span>}
-            {cfg.refreshToken && <span>Refresh token available</span>}
+          <div className="flex items-center gap-4 text-11 mb-3">
+            {expiryState === "no_expiry" ? (
+              <span className="text-subtext">No expiry{isGithub ? " \u2022 GitHub tokens do not expire" : ""}</span>
+            ) : expiryState === "expired" ? (
+              <span className="text-danger">Expired \u2014 refresh or get a new token</span>
+            ) : expiryState === "expiring_soon" ? (
+              <span className="text-amber-400">{expiryLabel}</span>
+            ) : (
+              <span className="text-subtext">{expiryLabel}</span>
+            )}
+            {cfg.refreshToken && <span className="text-subtext">Refresh token available</span>}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {cfg.refreshToken && (

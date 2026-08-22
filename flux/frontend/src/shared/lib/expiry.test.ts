@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MS_THRESHOLD, normalizeExpiry, secondsUntil } from "./expiry";
+import { MS_THRESHOLD, formatExpiry, getExpiryState, normalizeExpiry, secondsUntil } from "./expiry";
 
 describe("normalizeExpiry", () => {
   it("keeps millisecond values as-is", () => {
@@ -46,5 +46,62 @@ describe("secondsUntil", () => {
   it("defaults to the current time", () => {
     // A far-future expiry always yields a large positive countdown.
     expect(secondsUntil(Date.now() + 86_400_000)).toBeGreaterThan(0);
+  });
+});
+
+describe("getExpiryState", () => {
+  const now = 1_700_000_000_000;
+
+  it("returns no_expiry for undefined / zero expiry", () => {
+    expect(getExpiryState(undefined, now)).toBe("no_expiry");
+    expect(getExpiryState(0, now)).toBe("no_expiry");
+    expect(getExpiryState(normalizeExpiry(0), now)).toBe("no_expiry");
+  });
+
+  it("returns expired for past expiry", () => {
+    expect(getExpiryState(now - 10_000, now)).toBe("expired");
+    expect(getExpiryState(now, now)).toBe("expired");
+  });
+
+  it("returns expiring_soon within 60s", () => {
+    expect(getExpiryState(now + 30_000, now)).toBe("expiring_soon");
+    expect(getExpiryState(now + 59_000, now)).toBe("expiring_soon");
+  });
+
+  it("returns valid for distant expiry", () => {
+    expect(getExpiryState(now + 3_600_000, now)).toBe("valid");
+    expect(getExpiryState(now + 90_000, now)).toBe("valid");
+  });
+
+  it("treats GitHub-style no-expiry as no_expiry, not expired", () => {
+    // GitHub never sends expires_in → app stores no expiry → UI must not show red.
+    const githubToken: number | undefined = normalizeExpiry(undefined);
+    expect(getExpiryState(githubToken, now)).toBe("no_expiry");
+  });
+});
+
+describe("formatExpiry", () => {
+  const now = 1_700_000_000_000;
+
+  it("formats no-expiry as No expiry", () => {
+    expect(formatExpiry(undefined, now)).toBe("No expiry");
+    expect(formatExpiry(0, now)).toBe("No expiry");
+  });
+
+  it("formats expired as Expired", () => {
+    expect(formatExpiry(now - 1, now)).toBe("Expired");
+  });
+
+  it("formats short durations as seconds", () => {
+    expect(formatExpiry(now + 30_000, now)).toBe("Expires in 30s");
+  });
+
+  it("formats minute-range durations", () => {
+    expect(formatExpiry(now + 90_000, now)).toBe("Expires in 1m 30s");
+    expect(formatExpiry(now + 3_600_000, now)).toBe("Expires in 1h 00m");
+  });
+
+  it("formats hour-range durations", () => {
+    expect(formatExpiry(now + 3_700_000, now)).toBe("Expires in 1h 01m");
   });
 });
