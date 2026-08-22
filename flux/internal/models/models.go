@@ -42,6 +42,9 @@ type RequestPayload struct {
 
 // OAuth2Config stored as JSON in AuthValue when AuthType=="oauth2"
 type OAuth2Config struct {
+	// Issuer, when set, records the discovery source used to autofill the
+	// URLs ({issuer}/.well-known/openid-configuration).
+	Issuer       string `json:"issuer,omitempty"`
 	AuthURL      string `json:"authUrl"`
 	TokenURL     string `json:"tokenUrl"`
 	DeviceURL    string `json:"deviceUrl"`
@@ -52,7 +55,10 @@ type OAuth2Config struct {
 	UsePKCE      bool   `json:"usePkce"`
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
-	ExpiresAt    int64  `json:"expiresAt"`
+	// ExpiresAt is the Unix epoch in milliseconds (JS-compatible) — never
+	// seconds. Live tokens are migrated to the OS keychain on save/load; this
+	// field only survives as a transient, in-memory copy.
+	ExpiresAt int64 `json:"expiresAt"`
 }
 
 type CookieSummary struct {
@@ -351,8 +357,10 @@ type OAuth2TokenResponse struct {
 	RefreshToken string `json:"refreshToken"`
 	TokenType    string `json:"tokenType"`
 	ExpiresIn    int    `json:"expiresIn"`
-	ExpiresAt    int64  `json:"expiresAt"`
-	Error        string `json:"error,omitempty"`
+	// ExpiresAt is the Unix epoch in milliseconds (JS-compatible with
+	// Date.now()) — never seconds. Set by the engine from ExpiresIn.
+	ExpiresAt int64 `json:"expiresAt"`
+	Error     string `json:"error,omitempty"`
 }
 
 // --- JWT ---

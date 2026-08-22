@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"flux/internal/models"
+	"flux/internal/oauth2"
 	"flux/internal/proxy"
 	"flux/internal/security"
 	"flux/internal/updater"
@@ -398,17 +399,29 @@ func applyAuth(req *http.Request, authType, authValue string) {
 		}
 	case "oauth2":
 		if authValue != "" {
-			// authValue is JSON with access_token field
+			// authValue is JSON carrying the token (or a tokenRef into the OS
+			// keychain for secret-free, git-tracked payloads).
 			var cfg struct {
 				AccessToken string `json:"accessToken"`
 				TokenType   string `json:"tokenType"`
+				TokenRef    string `json:"tokenRef"`
+				TokenURL    string `json:"tokenUrl"`
 			}
-			if json.Unmarshal([]byte(authValue), &cfg) == nil && cfg.AccessToken != "" {
-				tokenType := cfg.TokenType
-				if tokenType == "" {
-					tokenType = "Bearer"
+			if json.Unmarshal([]byte(authValue), &cfg) == nil {
+				token, tokenType := cfg.AccessToken, cfg.TokenType
+				if token == "" && cfg.TokenRef != "" {
+					// Resolve from the keychain (scheduler/runner/replay paths
+					// that run from scrubbed payloads).
+					if t, tt, ok := oauth2.ResolveStoredToken(cfg.TokenRef, cfg.TokenURL); ok {
+						token, tokenType = t, tt
+					}
 				}
-				req.Header.Set("Authorization", tokenType+" "+cfg.AccessToken)
+				if token != "" {
+					if tokenType == "" {
+						tokenType = "Bearer"
+					}
+					req.Header.Set("Authorization", tokenType+" "+token)
+				}
 			}
 		}
 	}
