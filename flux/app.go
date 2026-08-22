@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,16 +14,16 @@ import (
 
 	"github.com/blang/semver/v4"
 
-	"flux/internal/audit"
 	aipkg "flux/internal/ai"
+	"flux/internal/audit"
 	"flux/internal/collections"
 	cookiestore "flux/internal/cookies"
 	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/eventinspector"
 	gitpkg "flux/internal/git"
-	"flux/internal/grpc"
 	"flux/internal/growth"
+	"flux/internal/grpc"
 	"flux/internal/history"
 	"flux/internal/interceptor"
 	"flux/internal/jwt"
@@ -41,12 +39,12 @@ import (
 	proxypkg "flux/internal/proxy"
 	"flux/internal/rbac"
 	reqpkg "flux/internal/requester"
-	"flux/internal/sso"
-	"flux/internal/storage"
 	schedpkg "flux/internal/scheduler"
 	"flux/internal/sock"
 	"flux/internal/socketio"
 	"flux/internal/sockhistory"
+	"flux/internal/sso"
+	"flux/internal/storage"
 	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
 	traypkg "flux/internal/tray"
@@ -54,7 +52,6 @@ import (
 	"flux/internal/vault"
 	"flux/internal/watcher"
 	"flux/internal/workspaces"
-
 )
 
 type App struct {
@@ -91,23 +88,22 @@ type App struct {
 	mu       sync.Mutex
 	inflight context.CancelFunc
 
-	sock          *sock.Socket
-	sockio        *socketio.Client
-	sockHistory   *sockhistory.Store
-	socketSessID  string // active raw WS/SSE session id
-	sockioSessID  string // active Socket.IO session id
-	mqttClient    *mqtt.Client
-	oauthState     *oauth2.State
-	oauthMu        sync.Mutex
-	oauthServer    *http.Server
-	oauthListeners []net.Listener
-	schedulerStor  *schedpkg.Store
-	schedulerExec  *schedpkg.Executor
-	autoSyncOn     bool
-	autoSyncMu     sync.Mutex
-	eventInspector *eventinspector.Store
-	eventSecret    *eventinspector.SecretStore
-	eventListener  *eventinspector.Listener
+	sock            *sock.Socket
+	sockio          *socketio.Client
+	sockHistory     *sockhistory.Store
+	socketSessID    string // active raw WS/SSE session id
+	sockioSessID    string // active Socket.IO session id
+	mqttClient      *mqtt.Client
+	oauthFlow       *oauthFlowState
+	oauthFlowCancel context.CancelFunc
+	oauthMu         sync.Mutex
+	schedulerStor   *schedpkg.Store
+	schedulerExec   *schedpkg.Executor
+	autoSyncOn      bool
+	autoSyncMu      sync.Mutex
+	eventInspector  *eventinspector.Store
+	eventSecret     *eventinspector.SecretStore
+	eventListener   *eventinspector.Listener
 }
 
 func NewApp() *App {
@@ -241,9 +237,7 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.mockServer != nil {
 		_ = a.mockServer.Stop()
 	}
-	if a.oauthServer != nil {
-		_ = a.oauthServer.Close()
-	}
+	a.cleanupOAuthFlow()
 	if a.eventListener != nil {
 		_ = a.eventListener.Stop()
 	}
@@ -350,6 +344,9 @@ func (a *App) RestartApp() error {
 // mountWorkspace reinitializes the scoped stores with a new data directory.
 // Called at startup and whenever the user switches workspaces.
 func (a *App) mountWorkspace(dir string) {
+	// Scope OAuth keyring entries to this workspace.
+	oauth2.SetWorkspaceKey(oauth2.WorkspaceKeyFromDir(dir))
+
 	// Ensure .reqit/ directory structure exists for Git-native storage.
 	_ = gitpkg.ReqitInit(dir)
 
@@ -712,7 +709,10 @@ func (a *App) ExportExtension(dir string) error {
 	if err := os.MkdirAll(iconsDir, 0755); err != nil {
 		return err
 	}
-	iconFiles := []struct{ name string; data []byte }{
+	iconFiles := []struct {
+		name string
+		data []byte
+	}{
 		{"icon16.png", interceptor.Icon16},
 		{"icon48.png", interceptor.Icon48},
 		{"icon128.png", interceptor.Icon128},
@@ -790,17 +790,6 @@ func (a *App) SendNotification(title, message string) {
 }
 
 // --- CLI Runner Script ---
-
-
-
-
-
-
-
-
-
-
-
 
 // ---------------------------------------------------------------------------
 // Growth & Community — Wails bindings
@@ -1073,4 +1062,3 @@ func (a *App) ComputeDevStats() profile.DevStats {
 }
 
 // Agent Lens (moved to bindings_ai.go)
-

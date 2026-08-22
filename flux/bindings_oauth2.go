@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -15,13 +14,25 @@ import (
 	"flux/internal/oauth2"
 )
 
-// DefaultOAuthPort is the loopback port used for the built-in callback server.
-// Register http://127.0.0.1:7317/callback in your OAuth app.
+// DefaultOAuthPort is the loopback port suggested for providers that require
+// a pre-registered exact redirect URI (e.g. GitHub, Slack, Spotify). The
+// engine binds an OS-assigned ephemeral port per RFC 8252 §7.3 whenever the
+// configured redirect URI is empty.
 const DefaultOAuthPort = 7317
 
 type OAuth2AuthorizeResult struct {
 	AuthorizeURL string `json:"authorizeUrl"`
 	RedirectURI  string `json:"redirectUri"`
+	State        string `json:"state"`
+	// Note is non-empty when the engine deviated from the configured
+	// redirect URI (e.g. a fixed loopback port that was in use fell back to
+	// an auto-assigned port) — the UI must surface it because the provider's
+	// registered redirect URI may need updating.
+	Note string `json:"note,omitempty"`
+}
+
+type OAuth2ManualAuthorizeResult struct {
+	AuthorizeURL string `json:"authorizeUrl"`
 	State        string `json:"state"`
 }
 
@@ -40,102 +51,206 @@ type OAuth2DevicePoll struct {
 	Message string                      `json:"message,omitempty"`
 }
 
-// OAuth2Authorize starts the loopback callback server, builds the authorize
-// URL for cfg.RedirectURI, and returns it. The frontend opens the URL in the
-// system browser; when the provider redirects back, the code is exchanged
-// automatically and the result is emitted as the "oauth2:complete" event.
+type OAuth2DiscoveryResult struct {
+	Issuer                      string   `json:"issuer"`
+	AuthorizationEndpoint       string   `json:"authorizationEndpoint"`
+	TokenEndpoint               string   `json:"tokenEndpoint"`
+	DeviceAuthorizationEndpoint string   `json:"deviceAuthorizationEndpoint,omitempty"`
+	CodeChallengeMethods        []string `json:"codeChallengeMethods,omitempty"`
+	ScopesSupported             []string `json:"scopesSupported,omitempty"`
+}
+
+// oauthFlowState tracks the single in-flight OAuth flow. The engine config
+// and (for confidential clients) the secret are kept so device polling and
+// refresh can reuse them without the renderer resending the secret.
+type oauthFlowState struct {
+	cfg    oauth2.OAuthConfig
+	secret string
+	flow   *oauth2.LoopbackFlow // non-nil for the interactive loopback flow
+	manual *oauth2.ManualFlow   // non-nil for the paste-back fallback flow
+}
+
+// OAuth2Authorize prepares the interactive authorization-code flow: the
+// engine binds an ephemeral (or configured) loopback listener, generates
+// state + PKCE (S256, always on), and builds the authorize URL. The frontend
+// opens the URL in the OS browser; when the provider redirects back, the
+// engine validates state, exchanges the code, and emits the result as the
+// "oauth2:complete" event.
 func (a *App) OAuth2Authorize(cfg oauth2.OAuth2Config) (*OAuth2AuthorizeResult, error) {
 	a.oauthMu.Lock()
-	defer a.oauthMu.Unlock()
-
-	if a.oauthServer != nil {
-		return nil, errors.New("an OAuth2 flow is already in progress — cancel it first")
+	if a.oauthFlow != nil {
+		a.oauthMu.Unlock()
+		return nil, oauth2.FlowInProgressError("authorize")
 	}
-	if cfg.RedirectURI == "" {
-		return nil, errors.New("redirect URI is required (e.g. http://127.0.0.1:7317/callback)")
+	a.oauthMu.Unlock()
+
+	nc := mapOAuthConfig(cfg, oauth2.GrantAuthorizationCode)
+	if nc.RedirectURI != "" && !isLoopbackRedirect(nc.RedirectURI) {
+		return nil, fmt.Errorf("oauth2: redirect URI %q is not a loopback address — use http://127.0.0.1:PORT/callback, or leave it empty for an OS-assigned ephemeral port", nc.RedirectURI)
 	}
 
-	u, err := url.Parse(cfg.RedirectURI)
+	flowOpts := oauth2.FlowOptions{ClientSecret: cfg.ClientSecret}
+	if cfg.FlowTimeoutSec > 0 {
+		flowOpts.Timeout = time.Duration(cfg.FlowTimeoutSec) * time.Second
+	}
+	f, redir, err := oauth2.PrepareLoopbackFlow(nc, flowOpts)
 	if err != nil {
-		return nil, fmt.Errorf("invalid redirect URI: %w", err)
-	}
-	host := u.Hostname()
-	port := u.Port()
-	if port == "" {
-		port = fmt.Sprintf("%d", DefaultOAuthPort)
-	}
-
-	// Listen on both IPv4 and IPv6 loopbacks so the redirect works whether the
-	// browser resolves localhost to 127.0.0.1 or ::1. Prefer the host requested
-	// in the redirect URI, then the other loopback, then any loopback.
-	candidates := []string{}
-	switch host {
-	case "localhost", "::1":
-		candidates = []string{"::1", "127.0.0.1"}
-	case "127.0.0.1", "":
-		candidates = []string{"127.0.0.1", "::1"}
-	default:
-		candidates = []string{host}
-	}
-
-	lns := make([]net.Listener, 0, 2)
-	var boundErr error
-	var boundOK bool
-	for _, h := range candidates {
-		ln, lerr := net.Listen("tcp", net.JoinHostPort(h, port))
-		if lerr != nil {
-			if boundErr == nil {
-				boundErr = lerr
-			}
-			continue
-		}
-		lns = append(lns, ln)
-		boundOK = true
-	}
-	if !boundOK {
-		return nil, fmt.Errorf("cannot start local callback server on port %s: %w — make sure this exact redirect URI is registered in your app: %s", port, boundErr, cfg.RedirectURI)
-	}
-
-	o := oauth2.New(cfg)
-	authURL, state, err := o.AuthorizeURL()
-	if err != nil {
-		for _, ln := range lns {
-			_ = ln.Close()
+		if errors.Is(err, oauth2.ErrPortBindFailed) {
+			// Port collisions are the #1 cause of "this site can't be
+			// reached" on the callback — the listener never bound. Tell the
+			// user exactly how to recover.
+			return nil, fmt.Errorf("%w — the loopback port is already in use by another process. Stop that process, change the Redirect URI to a free port, or clear it to use an auto-assigned port", err)
 		}
 		return nil, err
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", a.oauthCallbackHandler(o))
-	srv := &http.Server{Handler: mux}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.oauthMu.Lock()
+	a.oauthFlow = &oauthFlowState{cfg: nc, secret: cfg.ClientSecret, flow: f}
+	a.oauthFlowCancel = cancel
+	a.oauthMu.Unlock()
 
-	a.oauthState = o
-	a.oauthServer = srv
-	a.oauthListeners = lns
+	// Wait blocks until the callback arrives (engine timeout: 5 minutes).
+	// The listener is torn down before the goroutine exits, success or not.
+	go func() {
+		defer f.Close()
+		token, err := f.Wait(ctx)
 
-	for _, ln := range lns {
-		go func(l net.Listener) {
-			_ = srv.Serve(l)
-		}(ln)
-	}
+		a.oauthMu.Lock()
+		current := a.oauthFlow != nil && a.oauthFlow.flow == f
+		if current {
+			a.oauthFlow = nil
+			a.oauthFlowCancel = nil
+		}
+		a.oauthMu.Unlock()
+		if !current {
+			return // cancelled or superseded — no completion event
+		}
+		a.emitProgress(map[string]any{"stage": "complete"})
+		a.emitOAuthComplete(token, err)
+	}()
 
-	// Auto-cancel if the user never completes the flow so listeners don't
-	// linger on the port.
-	time.AfterFunc(5*time.Minute, func() {
-		a.stopOAuthServer()
-	})
-
+	a.emitProgress(map[string]any{"stage": "waiting_for_browser"})
 	return &OAuth2AuthorizeResult{
-		AuthorizeURL: authURL,
-		RedirectURI:  cfg.RedirectURI,
-		State:        state,
+		AuthorizeURL: redir.AuthorizeURL,
+		RedirectURI:  redir.RedirectURI,
+		State:        redir.State,
+		Note:         redir.Note,
 	}, nil
 }
 
-// OAuth2Cancel aborts any in-flight authorization flow and frees the callback
-// port.
+// OAuth2ManualAuthorize prepares the paste-back fallback (RedirectManual): no
+// loopback listener is bound — the authorize URL is returned for the user to
+// open (and copy) in any browser. Complete the flow by pasting the provider's
+// redirect URL back into OAuth2ManualComplete. State + PKCE (S256) are
+// enforced exactly as in the loopback path, so this is a safe fallback when a
+// local listener cannot bind or the provider rejects loopback redirect URIs.
+func (a *App) OAuth2ManualAuthorize(cfg oauth2.OAuth2Config) (*OAuth2ManualAuthorizeResult, error) {
+	a.oauthMu.Lock()
+	if a.oauthFlow != nil {
+		a.oauthMu.Unlock()
+		return nil, oauth2.FlowInProgressError("manual_authorize")
+	}
+	a.oauthMu.Unlock()
+
+	nc := mapOAuthConfig(cfg, oauth2.GrantAuthorizationCode)
+	mf, err := oauth2.NewManualFlow(nc)
+	if err != nil {
+		return nil, err
+	}
+	mf.WithClientSecret(cfg.ClientSecret)
+	authURL, err := mf.AuthorizeURL()
+	if err != nil {
+		return nil, err
+	}
+
+	a.oauthMu.Lock()
+	a.oauthFlow = &oauthFlowState{cfg: nc, secret: cfg.ClientSecret, manual: mf}
+	a.oauthMu.Unlock()
+
+	return &OAuth2ManualAuthorizeResult{
+		AuthorizeURL: authURL,
+		State:        mf.State(),
+	}, nil
+}
+
+// OAuth2ManualComplete completes the paste-back flow: it validates the pasted
+// redirect URL against the in-flight flow (state check, PKCE exchange) and
+// returns the token, or the provider's verbatim error.
+func (a *App) OAuth2ManualComplete(redirectURL string) (*models.OAuth2TokenResponse, error) {
+	a.oauthMu.Lock()
+	fs := a.oauthFlow
+	a.oauthMu.Unlock()
+	if fs == nil || fs.manual == nil {
+		return nil, errors.New("no manual OAuth flow in progress — start one with OAuth2ManualAuthorize")
+	}
+	token, err := fs.manual.Complete(context.Background(), redirectURL)
+	if err != nil {
+		return nil, err
+	}
+
+	a.oauthMu.Lock()
+	if a.oauthFlow == fs {
+		a.oauthFlow = nil
+	}
+	a.oauthMu.Unlock()
+	return toModelToken(token), nil
+}
+
+// OAuth2DiagnoseLoopback starts the one-click browser-to-loopback
+// connectivity check and returns immediately with a request id — the check
+// itself runs on a goroutine, so the main thread (and the rest of the app)
+// never blocks. The engine binds a test listener on 127.0.0.1:0, opens it in
+// the OS default browser, and waits up to 12s for the browser to reach it.
+// The outcome is delivered on the "oauth2:diagnostics" event with the
+// matching id: {id, url, success, detail}. This is the exact path an OAuth
+// callback takes, so it isolates "This site can't be reached"
+// (proxy/firewall/launcher problems) from OAuth configuration issues.
+func (a *App) OAuth2DiagnoseLoopback() (string, error) {
+	id := fmt.Sprintf("diag-%d", time.Now().UnixNano())
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		payload := map[string]interface{}{"id": id, "url": "", "success": false, "detail": "", "findings": []map[string]string{}}
+		res, err := oauth2.DiagnoseLoopback(ctx, 12*time.Second)
+		if err != nil {
+			payload["detail"] = "Loopback diagnostics failed: " + err.Error()
+		} else {
+			payload["url"] = res.URL
+			payload["success"] = res.Success
+			payload["detail"] = res.Detail
+			// Serialize findings as a list of {severity, label, detail} maps
+			// so the frontend can render them as a structured checklist.
+			findings := make([]map[string]string, 0, len(res.Findings))
+			for _, f := range res.Findings {
+				findings = append(findings, map[string]string{
+					"severity": f.Severity,
+					"label":    f.Label,
+					"detail":   f.Detail,
+				})
+			}
+			payload["findings"] = findings
+		}
+		runtime.EventsEmit(a.ctx, "oauth2:diagnostics", payload)
+	}()
+	return id, nil
+}
+
+// OAuth2OpenBrowser opens rawURL in the OS default browser via the engine's
+// launcher and returns an error when the launcher cannot be started. The
+// renderer uses this instead of the Wails runtime BrowserOpenURL (which is
+// fire-and-forget) so a failed launch is observable — the frontend can then
+// fall back to the paste-back flow with the authorize URL copied.
+func (a *App) OAuth2OpenBrowser(rawURL string) error {
+	if err := oauth2.OpenURL(rawURL); err != nil {
+		return err
+	}
+	return nil
+}
+
+// OAuth2Cancel aborts any in-flight flow and frees the loopback listener.
 func (a *App) OAuth2Cancel() error {
-	a.stopOAuthServer()
+	a.cleanupOAuthFlow()
 	return nil
 }
 
@@ -143,21 +258,14 @@ func (a *App) OAuth2Cancel() error {
 // for the given config. The user code + verification URI should be displayed so
 // the user can authorize on any device. GitHub supports this flow.
 func (a *App) OAuth2StartDevice(cfg oauth2.OAuth2Config) (*OAuth2DeviceStart, error) {
-	o := oauth2.New(cfg)
-	ds, err := o.DeviceStart(context.Background())
+	nc := mapOAuthConfig(cfg, oauth2.GrantDeviceCode)
+	ds, err := oauth2.StartDevice(context.Background(), nc, cfg.ClientSecret)
 	if err != nil {
 		return nil, err
 	}
-	if ds.Error != "" {
-		msg := ds.Error
-		if ds.ErrorDescription != "" {
-			msg += ": " + ds.ErrorDescription
-		}
-		return nil, errors.New(msg)
-	}
 
 	a.oauthMu.Lock()
-	a.oauthState = o
+	a.oauthFlow = &oauthFlowState{cfg: nc, secret: cfg.ClientSecret}
 	a.oauthMu.Unlock()
 
 	return &OAuth2DeviceStart{
@@ -175,163 +283,165 @@ func (a *App) OAuth2StartDevice(cfg oauth2.OAuth2Config) (*OAuth2DeviceStart, er
 // "expired"/"error" so the frontend can keep polling or surface an error.
 func (a *App) OAuth2PollDevice(deviceCode string) (*OAuth2DevicePoll, error) {
 	a.oauthMu.Lock()
-	o := a.oauthState
+	fs := a.oauthFlow
 	a.oauthMu.Unlock()
-	if o == nil {
-		return nil, errors.New("no device flow in progress")
+	if fs == nil || fs.cfg.GrantType != oauth2.GrantDeviceCode {
+		return nil, errors.New("no device flow in progress — start one first")
 	}
 
-	poll, err := o.DevicePoll(context.Background(), deviceCode)
+	poll, err := oauth2.PollDevice(context.Background(), fs.cfg, fs.secret, deviceCode)
 	if err != nil {
 		return nil, err
 	}
-	res := &OAuth2DevicePoll{Status: poll.Status, Message: poll.Message}
+	res := &OAuth2DevicePoll{Status: string(poll.Status)}
 	if poll.Token != nil {
-		res.Token = &models.OAuth2TokenResponse{
-			AccessToken:  poll.Token.AccessToken,
-			RefreshToken: poll.Token.RefreshToken,
-			TokenType:    poll.Token.TokenType,
-			ExpiresIn:    poll.Token.ExpiresIn,
-			ExpiresAt:    poll.Token.ExpiresAt,
-		}
+		res.Token = toModelToken(poll.Token)
+	}
+	if poll.Error != nil {
+		res.Message = poll.Error.Error()
 	}
 	return res, nil
+}
+
+// OAuth2Discover fetches {issuer}/.well-known/openid-configuration (RFC 8414 /
+// OIDC Discovery) so the OAuth form can autofill the authorize/token/device
+// endpoints and scopes from a single issuer URL (guided setup). Results are
+// cached in the engine for 5 minutes per issuer. The engine always defaults
+// PKCE to S256, so a missing code_challenge_methods_supported list (Entra) is
+// not treated as "PKCE unsupported" — see the Entra smoke.
+func (a *App) OAuth2Discover(issuer string) (*OAuth2DiscoveryResult, error) {
+	meta, err := oauth2.Discover(context.Background(), issuer)
+	if err != nil {
+		return nil, err
+	}
+	return &OAuth2DiscoveryResult{
+		Issuer:                      meta.Issuer,
+		AuthorizationEndpoint:       meta.AuthorizationEndpoint,
+		TokenEndpoint:               meta.TokenEndpoint,
+		DeviceAuthorizationEndpoint: meta.DeviceAuthorizationEndpoint,
+		CodeChallengeMethods:        meta.CodeChallengeMethods,
+		ScopesSupported:             meta.ScopesSupported,
+	}, nil
 }
 
 // OAuth2Refresh exchanges a refresh token for a fresh access token. Only
 // providers that actually issue refresh tokens (e.g. Google) support this;
 // GitHub OAuth apps never return refresh tokens.
 func (a *App) OAuth2Refresh(cfg oauth2.OAuth2Config, refreshToken string) (*models.OAuth2TokenResponse, error) {
-	o := oauth2.New(cfg)
-	token, err := o.Refresh(context.Background(), refreshToken)
+	nc := mapOAuthConfig(cfg, oauth2.GrantRefreshToken)
+	token, err := oauth2.Exchange(context.Background(), nc, oauth2.ExchangeOptions{
+		RefreshToken: refreshToken,
+		ClientSecret: cfg.ClientSecret,
+	})
 	if err != nil {
 		return nil, err
 	}
-	if token.Error != "" {
-		msg := token.Error
-		if token.ErrorDescription != "" {
-			msg += ": " + token.ErrorDescription
-		}
-		return nil, errors.New(msg)
+	return toModelToken(token), nil
+}
+
+// --- helpers ---------------------------------------------------------------
+
+// mapOAuthConfig converts the legacy (frontend-facing) OAuth2Config into the
+// new engine config. PKCE (S256) is always on — the legacy UsePKCE checkbox
+// can no longer disable it; only an explicit PKCENone on the new OAuthConfig
+// turns it off. A filled client secret marks the client Confidential so the
+// engine knows to send it (and only for confidential clients — never in a
+// PKCE public-client exchange).
+func mapOAuthConfig(c oauth2.OAuth2Config, grant oauth2.GrantType) oauth2.OAuthConfig {
+	nc := oauth2.OAuthConfig{
+		GrantType:   grant,
+		AuthURL:     c.AuthURL,
+		TokenURL:    c.TokenURL,
+		DeviceURL:   c.DeviceURL,
+		ClientID:    c.ClientID,
+		Scopes:      c.Scopes,
+		RedirectURI: c.RedirectURI,
+		PKCE:        oauth2.PKCES256,
 	}
+	if c.ClientSecret != "" {
+		nc.Confidential = true
+	}
+	return nc
+}
+
+// isLoopbackRedirect reports whether raw is an http:// loopback redirect URI
+// the engine's local listener can actually receive (RFC 8252 §7.3).
+func isLoopbackRedirect(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" {
+		return false
+	}
+	switch strings.ToLower(u.Hostname()) {
+	case "127.0.0.1", "localhost", "::1":
+		return true
+	}
+	return false
+}
+
+func toModelToken(t *oauth2.TokenResult) *models.OAuth2TokenResponse {
 	return &models.OAuth2TokenResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		TokenType:    token.TokenType,
-		ExpiresIn:    token.ExpiresIn,
-		ExpiresAt:    token.ExpiresAt,
-	}, nil
-}
-
-func (a *App) oauthCallbackHandler(o *oauth2.State) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query()
-
-		if !o.ValidateState(q.Get("state")) {
-			a.emitOAuthComplete(false, nil, "state_mismatch", "The state parameter did not match the flow request. Authorization was aborted for security.")
-			http.Error(w, "State mismatch — authorization aborted", http.StatusBadRequest)
-			a.stopOAuthServer()
-			return
-		}
-
-		if errParam := q.Get("error"); errParam != "" {
-			desc := q.Get("error_description")
-			a.emitOAuthComplete(false, nil, errParam, desc)
-			a.serveOAuthResultPage(w, "Authorization failed", errParam+": "+desc)
-			a.stopOAuthServer()
-			return
-		}
-
-		code := q.Get("code")
-		if code == "" {
-			a.emitOAuthComplete(false, nil, "missing_code", "No authorization code was returned by the provider.")
-			http.Error(w, "Missing authorization code", http.StatusBadRequest)
-			a.stopOAuthServer()
-			return
-		}
-
-		token, err := o.Exchange(r.Context(), code)
-		if err != nil {
-			a.emitOAuthComplete(false, nil, "exchange_failed", err.Error())
-			a.serveOAuthResultPage(w, "Token exchange failed", err.Error())
-			a.stopOAuthServer()
-			return
-		}
-		if token.Error != "" {
-			msg := token.Error
-			if token.ErrorDescription != "" {
-				msg += ": " + token.ErrorDescription
-			}
-			a.emitOAuthComplete(false, nil, token.Error, token.ErrorDescription)
-			a.serveOAuthResultPage(w, "Authorization failed", msg)
-			a.stopOAuthServer()
-			return
-		}
-
-		a.emitOAuthComplete(true, token, "", "")
-		a.serveOAuthResultPage(w, "Authorized", "You can close this tab and return to reqit.")
-		a.stopOAuthServer()
+		AccessToken:  t.AccessToken,
+		RefreshToken: t.RefreshToken,
+		TokenType:    t.TokenType,
+		ExpiresIn:    t.ExpiresIn,
+		// Milliseconds — the unit the renderer compares against Date.now().
+		ExpiresAt: t.ExpiresAtMs,
 	}
 }
 
-func (a *App) emitOAuthComplete(success bool, token *oauth2.TokenResponse, errCode, errDesc string) {
-	payload := map[string]interface{}{
-		"success": success,
-	}
+// emitOAuthComplete delivers the flow outcome on the "oauth2:complete" event,
+// preserving the wire shape the renderer already consumes: {success, token,
+// error, errorDescription}. Provider error/error_description text is surfaced
+// verbatim, never swallowed into a generic failure message.
+func (a *App) emitOAuthComplete(token *oauth2.TokenResult, err error) {
+	payload := map[string]interface{}{"success": err == nil && token != nil}
 	if token != nil {
-		payload["token"] = models.OAuth2TokenResponse{
-			AccessToken:  token.AccessToken,
-			RefreshToken: token.RefreshToken,
-			TokenType:    token.TokenType,
-			ExpiresIn:    token.ExpiresIn,
-			ExpiresAt:    token.ExpiresAt,
-		}
+		payload["token"] = toModelToken(token)
 	}
-	if errCode != "" {
-		payload["error"] = errCode
-		payload["errorDescription"] = errDesc
+	if err != nil {
+		payload["error"] = oauthErrorCode(err)
+		payload["errorDescription"] = err.Error()
 	}
 	runtime.EventsEmit(a.ctx, "oauth2:complete", payload)
 }
 
-func (a *App) serveOAuthResultPage(w http.ResponseWriter, title, message string) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	body := `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>` + title + `</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, 'Segoe UI', Inter, sans-serif; background: #0d0d0d; color: #e6e6e6; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-  .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 40px 48px; max-width: 420px; text-align: center; }
-  .dot { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 20px; background: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-  h1 { font-size: 18px; margin-bottom: 10px; }
-  p { font-size: 14px; color: #9ca3af; line-height: 1.5; }
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="dot">✓</div>
-  <h1>` + title + `</h1>
-  <p>` + message + `</p>
-</div>
-<script>setTimeout(function(){ try { window.close(); } catch(e) {} }, 3000);</script>
-</body>
-</html>`
-	_, _ = w.Write([]byte(body))
+// emitProgress sends a lifecycle stage on the "oauth2:progress" event
+// (waiting_for_browser, complete). Additive — the renderer only listens to
+// oauth2:complete today.
+func (a *App) emitProgress(payload map[string]any) {
+	runtime.EventsEmit(a.ctx, "oauth2:progress", payload)
 }
 
-func (a *App) stopOAuthServer() {
+// oauthErrorCode returns the provider's verbatim error code when one was
+// returned, else a stable local code the frontend can key off.
+func oauthErrorCode(err error) string {
+	var oe *oauth2.OAuthError
+	if errors.As(err, &oe) {
+		if code := oe.ProviderCode(); code != "" {
+			return code
+		}
+		if oe.Op != "" {
+			return oe.Op + "_failed"
+		}
+	}
+	return "authorization_failed"
+}
+
+// cleanupOAuthFlow aborts any in-flight flow and frees the loopback listener.
+func (a *App) cleanupOAuthFlow() {
 	a.oauthMu.Lock()
 	defer a.oauthMu.Unlock()
-	if a.oauthServer != nil {
-		_ = a.oauthServer.Close()
-		a.oauthServer = nil
+	if a.oauthFlowCancel != nil {
+		a.oauthFlowCancel()
+		a.oauthFlowCancel = nil
 	}
-	for _, ln := range a.oauthListeners {
-		_ = ln.Close()
+	if a.oauthFlow != nil {
+		if a.oauthFlow.flow != nil {
+			_ = a.oauthFlow.flow.Close()
+		}
+		a.oauthFlow = nil
 	}
-	a.oauthListeners = nil
-	a.oauthState = nil
 }
