@@ -355,6 +355,84 @@ func (a *App) OAuth2ClientCredentials(cfg oauth2.OAuth2Config) (*models.OAuth2To
 	return toModelToken(token), nil
 }
 
+// OAuth2Password performs the resource-owner password grant (RFC 6749
+// 4.3, deprecated by RFC 9700) entirely in Go. The UI must show a
+// persistent deprecation banner before allowing this flow.
+func (a *App) OAuth2Password(cfg oauth2.OAuth2Config, username, password string) (*models.OAuth2TokenResponse, error) {
+	nc := mapOAuthConfig(cfg, oauth2.GrantPassword)
+	token, err := oauth2.Exchange(context.Background(), nc, oauth2.ExchangeOptions{
+		Username:     username,
+		Password:     password,
+		Scope:        cfg.Scopes,
+		ClientSecret: cfg.ClientSecret,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toModelToken(token), nil
+}
+
+// OAuth2ImplicitAuthorize prepares the implicit grant (response_type=token,
+// RFC 6749 4.2, deprecated by RFC 9700). The token returns in the URL
+// fragment and is recovered via the loopback's fragment HTML+JS re-POST.
+// It is behind the same legacy gate as the password grant.
+func (a *App) OAuth2ImplicitAuthorize(cfg oauth2.OAuth2Config) (*OAuth2AuthorizeResult, error) {
+	a.oauthMu.Lock()
+	if a.oauthFlow != nil {
+		a.oauthMu.Unlock()
+		return nil, oauth2.FlowInProgressError("implicit_authorize")
+	}
+	a.oauthMu.Unlock()
+
+	nc := mapOAuthConfig(cfg, oauth2.GrantImplicit)
+	if nc.RedirectURI != "" && !isLoopbackRedirect(nc.RedirectURI) {
+		return nil, fmt.Errorf("oauth2: redirect URI %q is not a loopback address — use http://127.0.0.1:PORT/callback, or leave it empty for an OS-assigned ephemeral port", nc.RedirectURI)
+	}
+
+	flowOpts := oauth2.FlowOptions{ClientSecret: cfg.ClientSecret}
+	if cfg.FlowTimeoutSec > 0 {
+		flowOpts.Timeout = time.Duration(cfg.FlowTimeoutSec) * time.Second
+	}
+	f, redir, err := oauth2.PrepareLoopbackFlow(nc, flowOpts)
+	if err != nil {
+		if errors.Is(err, oauth2.ErrPortBindFailed) {
+			return nil, fmt.Errorf("%w — the loopback port is already in use by another process. Stop that process, change the Redirect URI to a free port, or clear it to use an auto-assigned port", err)
+		}
+		return nil, err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	a.oauthMu.Lock()
+	a.oauthFlow = &oauthFlowState{cfg: nc, secret: cfg.ClientSecret, flow: f}
+	a.oauthFlowCancel = cancel
+	a.oauthMu.Unlock()
+
+	go func() {
+		defer f.Close()
+		token, err := f.Wait(ctx)
+		a.oauthMu.Lock()
+		current := a.oauthFlow != nil && a.oauthFlow.flow == f
+		if current {
+			a.oauthFlow = nil
+			a.oauthFlowCancel = nil
+		}
+		a.oauthMu.Unlock()
+		if !current {
+			return
+		}
+		a.emitProgress(map[string]any{"stage": "complete"})
+		a.emitOAuthComplete(token, err)
+	}()
+
+	a.emitProgress(map[string]any{"stage": "waiting_for_browser"})
+	return &OAuth2AuthorizeResult{
+		AuthorizeURL: redir.AuthorizeURL,
+		RedirectURI:  redir.RedirectURI,
+		State:        redir.State,
+		Note:         redir.Note,
+	}, nil
+}
+
 // --- helpers ---------------------------------------------------------------
 
 // mapOAuthConfig converts the legacy (frontend-facing) OAuth2Config into the

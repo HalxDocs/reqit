@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, RefreshCw, Check, X, Shield, Loader2, Copy, MonitorSmartphone, ClipboardPaste, Wrench } from "lucide-react";
+import { ExternalLink, RefreshCw, Check, X, Shield, Loader2, Copy, MonitorSmartphone, ClipboardPaste, Wrench, AlertTriangle, KeyRound } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
 import { formatExpiry, getExpiryState, normalizeExpiry } from "@/shared/lib/expiry";
@@ -7,10 +7,12 @@ import {
   OAuth2Authorize,
   OAuth2Cancel,
   OAuth2ClientCredentials,
+  OAuth2ImplicitAuthorize,
   OAuth2ManualAuthorize,
   OAuth2ManualComplete,
   OAuth2OpenBrowser,
   OAuth2DiagnoseLoopback,
+  OAuth2Password,
   OAuth2StartDevice,
   OAuth2PollDevice,
   OAuth2Refresh,
@@ -70,7 +72,7 @@ interface OAuth2DeviceStart {
   interval: number;
 }
 
-type GrantType = "auth_code" | "device" | "client_credentials";
+type GrantType = "auth_code" | "device" | "client_credentials" | "password" | "implicit";
 
 interface Preset {
   key: string;
@@ -123,6 +125,9 @@ export function OAuth2Flow() {
   const setAuthType = useRequestStore((s) => s.setAuthType);
 
   const [grantType, setGrantType] = useState<GrantType>("auth_code");
+  const [showLegacy, setShowLegacy] = useState(false);
+  const [legacyUsername, setLegacyUsername] = useState("");
+  const [legacyPassword, setLegacyPassword] = useState("");
   const [flow, setFlow] = useState<"idle" | "waiting" | "polling" | "manual" | "error">("idle");
   const [device, setDevice] = useState<OAuth2DeviceStart | null>(null);
   const [manualUrl, setManualUrl] = useState("");
@@ -530,6 +535,67 @@ export function OAuth2Flow() {
     }
   };
 
+  const handlePassword = async () => {
+    if (!legacyUsername || !legacyPassword) {
+      setMessage("Username and password are required for this grant.");
+      return;
+    }
+    setMessage("");
+    setLoading(true);
+    setFlow("waiting");
+    try {
+      const token = await OAuth2Password(oauth2Config ?? cfg, legacyUsername, legacyPassword);
+      applyToken(token);
+    } catch (e) {
+      setFlow("error");
+      setMessage(String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImplicit = async () => {
+    clearTimers();
+    setMessage("");
+    setLoading(true);
+    setFlow("waiting");
+    onCompleteRef.current = (p: any) => {
+      if (p?.success && p?.token) {
+        applyToken(p.token);
+      } else {
+        clearTimers();
+        setFlow("error");
+        setMessage(p?.errorDescription || p?.error || "Authorization failed.");
+      }
+    };
+    const timeoutMs = providerTimeoutMs(cfg.authUrl, cfg.tokenUrl);
+    const timeoutSec = Math.ceil(timeoutMs / 1000);
+    try {
+      const cfgWithTimeout = { ...(oauth2Config ?? cfg), flowTimeoutSec: timeoutSec };
+      const result = await OAuth2ImplicitAuthorize(cfgWithTimeout);
+      setAuthUrlState(result.authorizeUrl);
+      setPortNote(result.note ?? "");
+      const openErr = await openInBrowser(result.authorizeUrl);
+      if (openErr) {
+        await fallbackToManual(result.authorizeUrl, "Your browser couldn't be opened automatically.");
+        return;
+      }
+      armNoOpenWatchdog(result.authorizeUrl);
+    } catch (e) {
+      setFlow("error");
+      setMessage(String(e));
+      setLoading(false);
+      onCompleteRef.current = null;
+      return;
+    }
+    const timeoutMin = Math.round(timeoutMs / 60_000);
+    timeoutRef.current = setTimeout(() => {
+      setFlow("error");
+      setMessage(`No callback received within ${timeoutMin} minutes — the authorization flow has ended.`);
+      onCompleteRef.current = null;
+    }, timeoutMs);
+  };
+
   const handleUseToken = () => {
     setAuthType("oauth2");
     setOAuth2Config(cfg);
@@ -626,6 +692,38 @@ export function OAuth2Flow() {
           <MonitorSmartphone size={13} /> Device Code
         </button>
       </div>
+
+      <div className="px-4 py-2 border-b border-border flex items-center gap-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={showLegacy} onChange={(e) => setShowLegacy(e.target.checked)} className="w-3.5 h-3.5 rounded border-border bg-surface text-cyan accent-cyan" />
+          <span className="text-11 text-subtext">Show legacy grants (password / implicit — deprecated)</span>
+        </label>
+      </div>
+
+      {showLegacy && (
+        <div className="p-4 grid grid-cols-2 gap-2 border-b border-border">
+          <button
+            type="button"
+            onClick={() => { setGrantType("password"); resetFlow(); }}
+            className={cn(
+              "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-1.5 transition-colors",
+              grantType === "password" ? "bg-amber-500 text-white" : "bg-card border border-border text-subtext hover:text-text",
+            )}
+          >
+            <KeyRound size={13} /> Password
+          </button>
+          <button
+            type="button"
+            onClick={() => { setGrantType("implicit"); resetFlow(); }}
+            className={cn(
+              "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-1.5 transition-colors",
+              grantType === "implicit" ? "bg-amber-500 text-white" : "bg-card border border-border text-subtext hover:text-text",
+            )}
+          >
+            <AlertTriangle size={13} /> Implicit
+          </button>
+        </div>
+      )}
 
       {/* Provider presets */}
       <div className="px-4 py-3 border-b border-border">
@@ -742,6 +840,35 @@ export function OAuth2Flow() {
         </div>
       )}
 
+      {grantType === "password" && (
+        <div className="px-4 py-3 border-b border-border bg-amber-500/10 border-amber-500/20">
+          <p className="text-11 text-amber-600 leading-relaxed flex items-start gap-2">
+            <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+            <span><span className="font-semibold">Deprecated:</span> Resource Owner Password Credentials is deprecated by RFC 9700 — it exposes the password to the client and must not be used for third-party APIs. Prefer Authorization Code + PKCE.</span>
+          </p>
+        </div>
+      )}
+
+      {grantType === "implicit" && (
+        <div className="px-4 py-3 border-b border-border bg-amber-500/10 border-amber-500/20">
+          <p className="text-11 text-amber-600 leading-relaxed flex items-start gap-2">
+            <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+            <span><span className="font-semibold">Deprecated:</span> Implicit grant is deprecated by RFC 9700 — the token is returned in the URL fragment and is less secure than Authorization Code + PKCE.</span>
+          </p>
+        </div>
+      )}
+
+      {grantType === "password" && (
+        <div className="p-4 grid grid-cols-2 gap-3 border-b border-border">
+          <Field label="Username">
+            <input type="text" value={legacyUsername} onChange={(e) => setLegacyUsername(e.target.value)} placeholder="username" className={inputClass} />
+          </Field>
+          <Field label="Password">
+            <input type="password" value={legacyPassword} onChange={(e) => setLegacyPassword(e.target.value)} placeholder="password" className={inputClass} />
+          </Field>
+        </div>
+      )}
+
       {/* Action area */}
       <div className="px-4 py-3 border-b border-border flex flex-col gap-2.5">
         {flow === "idle" && (
@@ -753,13 +880,24 @@ export function OAuth2Flow() {
                   ? handleAuthorize
                   : grantType === "client_credentials"
                     ? handleClientCredentials
-                    : handleStartDevice
+                    : grantType === "password"
+                      ? handlePassword
+                      : grantType === "implicit"
+                        ? handleImplicit
+                        : handleStartDevice
               }
               disabled={
                 loading ||
-                !cfg.tokenUrl ||
                 !cfg.clientId ||
-                (grantType !== "client_credentials" && !cfg.authUrl)
+                (grantType === "client_credentials"
+                  ? !cfg.tokenUrl
+                  : grantType === "password"
+                    ? !cfg.tokenUrl || !legacyUsername || !legacyPassword
+                    : grantType === "implicit"
+                      ? !cfg.authUrl
+                      : grantType === "device"
+                        ? !cfg.tokenUrl
+                        : !cfg.authUrl || !cfg.tokenUrl)
               }
               className="h-[36px] px-6 bg-success hover:opacity-90 active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all disabled:opacity-50"
             >
@@ -771,7 +909,11 @@ export function OAuth2Flow() {
                     ? "Get New Access Token"
                     : grantType === "client_credentials"
                       ? "Get Token"
-                      : "Start Device Authorization"}
+                      : grantType === "password"
+                        ? "Get Token (Password)"
+                        : grantType === "implicit"
+                          ? "Authorize (Implicit)"
+                          : "Start Device Authorization"}
               </span>
             </button>
             {grantType === "auth_code" && (
