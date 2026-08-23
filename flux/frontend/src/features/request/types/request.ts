@@ -130,6 +130,8 @@ export interface OAuth2Config {
   scopes: string;
   redirectUri: string;
   usePkce: boolean;
+  /** How a confidential client authenticates to the token endpoint. */
+  clientAuth?: "body" | "basic";
   /** Keychain reference for live tokens — the only thing persisted to disk. */
   tokenRef?: string;
   accessToken?: string;

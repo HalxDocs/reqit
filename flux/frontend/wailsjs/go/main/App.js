@@ -706,6 +706,10 @@ export function OAuth2Cancel() {
   return window['go']['main']['App']['OAuth2Cancel']();
 }
 
+export function OAuth2ClientCredentials(arg1) {
+  return window['go']['main']['App']['OAuth2ClientCredentials'](arg1);
+}
+
 export function OAuth2DiagnoseLoopback() {
   return window['go']['main']['App']['OAuth2DiagnoseLoopback']();
 }

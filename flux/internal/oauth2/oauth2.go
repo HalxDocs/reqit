@@ -23,6 +23,7 @@ type OAuth2Config struct {
 	Scopes       string `json:"scopes"`
 	RedirectURI  string `json:"redirectUri"`
 	UsePKCE      bool   `json:"usePkce"`
+	ClientAuth   string `json:"clientAuth,omitempty"` // "body" | "basic" for client_credentials (Hoppscotch parity)
 	// FlowTimeoutSec overrides the default callback timeout for interactive
 	// flows (authorization code, implicit). Providers that show MFA pages
 	// (Google, Entra ID) need a longer window; fast providers (GitHub) can

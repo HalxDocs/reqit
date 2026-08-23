@@ -371,6 +371,8 @@ export function OAuth2Authorize(arg1:oauth2.OAuth2Config):Promise<main.OAuth2Aut
 
 export function OAuth2Cancel():Promise<void>;
 
+export function OAuth2ClientCredentials(arg1:oauth2.OAuth2Config):Promise<models.OAuth2TokenResponse>;
+
 export function OAuth2DiagnoseLoopback():Promise<string>;
 
 export function OAuth2Discover(arg1:string):Promise<main.OAuth2DiscoveryResult>;

@@ -6,6 +6,7 @@ import { formatExpiry, getExpiryState, normalizeExpiry } from "@/shared/lib/expi
 import {
   OAuth2Authorize,
   OAuth2Cancel,
+  OAuth2ClientCredentials,
   OAuth2ManualAuthorize,
   OAuth2ManualComplete,
   OAuth2OpenBrowser,
@@ -69,7 +70,7 @@ interface OAuth2DeviceStart {
   interval: number;
 }
 
-type GrantType = "auth_code" | "device";
+type GrantType = "auth_code" | "device" | "client_credentials";
 
 interface Preset {
   key: string;
@@ -86,6 +87,10 @@ const PRESETS: Preset[] = [
   { key: "spotify", label: "Spotify", authUrl: "https://accounts.spotify.com/authorize", tokenUrl: "https://accounts.spotify.com/api/token", deviceUrl: "", scopes: "user-read-email" },
   { key: "slack", label: "Slack", authUrl: "https://slack.com/oauth/v2/authorize", tokenUrl: "https://slack.com/api/oauth.v2.access", deviceUrl: "", scopes: "chat:write" },
   { key: "gitlab", label: "GitLab", authUrl: "https://gitlab.com/oauth/authorize", tokenUrl: "https://gitlab.com/oauth/token", deviceUrl: "https://gitlab.com/oauth/device/code", scopes: "api read_user" },
+  { key: "entra", label: "Entra ID", authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize", tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token", deviceUrl: "", scopes: "openid profile email offline_access User.Read" },
+  { key: "auth0", label: "Auth0", authUrl: "https://YOUR_TENANT.auth0.com/authorize", tokenUrl: "https://YOUR_TENANT.auth0.com/oauth/token", deviceUrl: "https://YOUR_TENANT.auth0.com/oauth/device/code", scopes: "openid profile email" },
+  { key: "okta", label: "Okta", authUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/authorize", tokenUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/token", deviceUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/device/authorize", scopes: "openid profile email" },
+  { key: "keycloak", label: "Keycloak", authUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/auth", tokenUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/token", deviceUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/auth/device", scopes: "openid profile" },
   { key: "custom", label: "Custom", authUrl: "", tokenUrl: "", deviceUrl: "", scopes: "" },
 ];
 
@@ -510,6 +515,21 @@ export function OAuth2Flow() {
     }
   };
 
+  const handleClientCredentials = async () => {
+    setMessage("");
+    setLoading(true);
+    setFlow("waiting");
+    try {
+      const token = await OAuth2ClientCredentials(oauth2Config ?? cfg);
+      applyToken(token);
+    } catch (e) {
+      setFlow("error");
+      setMessage(String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUseToken = () => {
     setAuthType("oauth2");
     setOAuth2Config(cfg);
@@ -574,12 +594,12 @@ export function OAuth2Flow() {
   return (
     <div className="flex flex-col max-h-[68vh] overflow-y-auto min-h-0">
       {/* Grant type selector */}
-      <div className="p-4 grid grid-cols-2 gap-2 border-b border-border">
+      <div className="p-4 grid grid-cols-3 gap-2 border-b border-border">
         <button
           type="button"
           onClick={() => { setGrantType("auth_code"); resetFlow(); }}
           className={cn(
-            "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-2 transition-colors",
+            "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-1.5 transition-colors",
             grantType === "auth_code" ? "bg-cyan text-white" : "bg-card border border-border text-subtext hover:text-text",
           )}
         >
@@ -587,9 +607,19 @@ export function OAuth2Flow() {
         </button>
         <button
           type="button"
+          onClick={() => { setGrantType("client_credentials"); resetFlow(); }}
+          className={cn(
+            "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-1.5 transition-colors",
+            grantType === "client_credentials" ? "bg-cyan text-white" : "bg-card border border-border text-subtext hover:text-text",
+          )}
+        >
+          <Shield size={12} /> Client Credentials
+        </button>
+        <button
+          type="button"
           onClick={() => { setGrantType("device"); resetFlow(); }}
           className={cn(
-            "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-2 transition-colors",
+            "h-[34px] rounded-md text-12 font-medium flex items-center justify-center gap-1.5 transition-colors",
             grantType === "device" ? "bg-cyan text-white" : "bg-card border border-border text-subtext hover:text-text",
           )}
         >
@@ -653,11 +683,38 @@ export function OAuth2Flow() {
           <input type="text" value={cfg.scopes} onChange={(e) => updateCfg({ scopes: e.target.value })}
             placeholder="openid profile email" className={inputClass} />
         </Field>
-        <Field label={`Redirect URI (port ${redirectPort(redirectUri)})`}>
-          <input type="text" value={redirectUri} onChange={(e) => updateCfg({ redirectUri: e.target.value })}
-            placeholder={REDIRECT} className={inputClass} />
-        </Field>
+        {grantType !== "client_credentials" && (
+          <Field label={`Redirect URI (port ${redirectPort(redirectUri)})`}>
+            <input type="text" value={redirectUri} onChange={(e) => updateCfg({ redirectUri: e.target.value })}
+              placeholder={REDIRECT} className={inputClass} />
+          </Field>
+        )}
       </div>
+
+      {grantType === "client_credentials" && cfg.clientSecret && (
+        <div className="px-4 py-3 border-b border-border">
+          <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Client Authentication</label>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => updateCfg({ clientAuth: "body" })}
+              className={cn("h-[28px] px-3 rounded-md text-11 font-medium", (!cfg.clientAuth || cfg.clientAuth === "body") ? "bg-cyan text-white" : "bg-card border border-border text-subtext")}
+            >
+              Body (default)
+            </button>
+            <button
+              type="button"
+              onClick={() => updateCfg({ clientAuth: "basic" })}
+              className={cn("h-[28px] px-3 rounded-md text-11 font-medium", cfg.clientAuth === "basic" ? "bg-cyan text-white" : "bg-card border border-border text-subtext")}
+            >
+              Basic Auth header
+            </button>
+          </div>
+          <p className="text-11 text-subtext mt-1.5 leading-relaxed">
+            Some providers reject client_secret in the body — use Basic Auth header instead (Hoppscotch parity).
+          </p>
+        </div>
+      )}
 
       {grantType === "auth_code" && (
         <div className="px-4 py-3 border-b border-border">
@@ -691,12 +748,31 @@ export function OAuth2Flow() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={grantType === "auth_code" ? handleAuthorize : handleStartDevice}
-              disabled={loading || !cfg.authUrl || !cfg.tokenUrl || !cfg.clientId}
+              onClick={
+                grantType === "auth_code"
+                  ? handleAuthorize
+                  : grantType === "client_credentials"
+                    ? handleClientCredentials
+                    : handleStartDevice
+              }
+              disabled={
+                loading ||
+                !cfg.tokenUrl ||
+                !cfg.clientId ||
+                (grantType !== "client_credentials" && !cfg.authUrl)
+              }
               className="h-[36px] px-6 bg-success hover:opacity-90 active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all disabled:opacity-50"
             >
               <ExternalLink size={14} />
-              <span>{loading ? "Starting…" : grantType === "auth_code" ? "Get New Access Token" : "Start Device Authorization"}</span>
+              <span>
+                {loading
+                  ? "Starting…"
+                  : grantType === "auth_code"
+                    ? "Get New Access Token"
+                    : grantType === "client_credentials"
+                      ? "Get Token"
+                      : "Start Device Authorization"}
+              </span>
             </button>
             {grantType === "auth_code" && (
               <button

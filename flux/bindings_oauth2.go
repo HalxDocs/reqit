@@ -339,6 +339,22 @@ func (a *App) OAuth2Refresh(cfg oauth2.OAuth2Config, refreshToken string) (*mode
 	return toModelToken(token), nil
 }
 
+// OAuth2ClientCredentials performs the client_credentials grant entirely in Go
+// (no browser, no redirect). It respects ClientAuth ("body" vs "basic") so
+// providers that are strict about where client_id/secret appear work correctly
+// (Hoppscotch parity).
+func (a *App) OAuth2ClientCredentials(cfg oauth2.OAuth2Config) (*models.OAuth2TokenResponse, error) {
+	nc := mapOAuthConfig(cfg, oauth2.GrantClientCredentials)
+	token, err := oauth2.Exchange(context.Background(), nc, oauth2.ExchangeOptions{
+		Scope:        cfg.Scopes,
+		ClientSecret: cfg.ClientSecret,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toModelToken(token), nil
+}
+
 // --- helpers ---------------------------------------------------------------
 
 // mapOAuthConfig converts the legacy (frontend-facing) OAuth2Config into the
@@ -360,6 +376,11 @@ func mapOAuthConfig(c oauth2.OAuth2Config, grant oauth2.GrantType) oauth2.OAuthC
 	}
 	if c.ClientSecret != "" {
 		nc.Confidential = true
+	}
+	if c.ClientAuth == "basic" {
+		nc.ClientAuth = oauth2.ClientAuthBasic
+	} else if c.ClientAuth == "body" {
+		nc.ClientAuth = oauth2.ClientAuthBody
 	}
 	return nc
 }

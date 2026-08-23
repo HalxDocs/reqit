@@ -2040,7 +2040,9 @@ export namespace mqtt {
 
 }
 
-export namespace oauth2 {	export class OAuth2Config {
+export namespace oauth2 {
+	
+	export class OAuth2Config {
 	    authUrl: string;
 	    tokenUrl: string;
 	    deviceUrl: string;
@@ -2049,12 +2051,13 @@ export namespace oauth2 {	export class OAuth2Config {
 	    scopes: string;
 	    redirectUri: string;
 	    usePkce: boolean;
+	    clientAuth?: string;
 	    flowTimeoutSec?: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuth2Config(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.authUrl = source["authUrl"];
@@ -2065,6 +2068,7 @@ export namespace oauth2 {	export class OAuth2Config {
 	        this.scopes = source["scopes"];
 	        this.redirectUri = source["redirectUri"];
 	        this.usePkce = source["usePkce"];
+	        this.clientAuth = source["clientAuth"];
 	        this.flowTimeoutSec = source["flowTimeoutSec"];
 	    }
 	}
