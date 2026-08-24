@@ -1,0 +1,566 @@
+{
+  "id": "2522d6f1-188f-4900-be2b-4f0778da7550",
+  "name": "OpenCode MCP Demo (20 endpoints)",
+  "requests": [
+    {
+      "id": "d4108e32-2a0c-4a1c-9b5c-786ec39f5ed5",
+      "name": "01 GET httpbin echo",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/get",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "9cdf3143-0d53-4706-852d-82065cf5bdad",
+      "name": "02 POST httpbin echo",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "params": null,
+        "bodyType": "json",
+        "body": "{\"hello\":\"opencode\"}",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "ac4edf01-9e68-48a0-a7ee-f12ceca48792",
+      "name": "03 Bearer test",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/bearer",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "bearer",
+        "authValue": "demo-token",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "a2fe5fd3-29f9-4504-a9d1-fb207b7c691e",
+      "name": "04 Basic Auth",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/basic-auth/user/passwd",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "basic",
+        "authValue": "user:passwd",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "ce78ca94-4b74-4d25-a17a-5096366bdb3c",
+      "name": "05 Headers",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/headers",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "61e9ede8-4fed-4d00-959b-381531caaf07",
+      "name": "06 IP",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/ip",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "34ab56e8-caef-4d40-a27f-58bcb88a99f6",
+      "name": "07 Webhook catch-all",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "POST",
+        "url": "https://httpbin.org/anything",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "params": null,
+        "bodyType": "json",
+        "body": "{\"event\":\"test\"}",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "15bc13d2-7e0f-4184-a2a1-357de8af1b3b",
+      "name": "08 JSONPlaceholder GET",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "e1fe6c61-5ea3-448a-b74e-e6b953f736f8",
+      "name": "09 JSONPlaceholder POST",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "POST",
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "params": null,
+        "bodyType": "json",
+        "body": "{\"title\":\"reqit\",\"body\":\"mcp\",\"userId\":1}",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "9958b763-bfec-4fdf-83dd-ed40eb05acf5",
+      "name": "10 JSONPlaceholder PUT",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "PUT",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "params": null,
+        "bodyType": "json",
+        "body": "{\"id\":1,\"title\":\"updated\"}",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "74efc867-3850-470d-a570-3329db0eddb2",
+      "name": "11 JSONPlaceholder DELETE",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "DELETE",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "029d28ca-e782-4193-9aa1-bb5db693388b",
+      "name": "12 JSONPlaceholder Users",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/users",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "4de33240-c0d9-48fe-bbac-daafae7931f1",
+      "name": "13 GitHub user (OAuth2)",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://api.github.com/user",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "oauth2",
+        "authValue": "{\"authUrl\":\"https://github.com/login/oauth/authorize\",\"clientId\":\"demo-client\",\"redirectUri\":\"http://127.0.0.1:7317/callback\",\"scopes\":\"repo\",\"tokenUrl\":\"https://github.com/login/oauth/access_token\",\"usePkce\":true}",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "77239855-f785-4a6d-9d78-75f5b3c3e5b4",
+      "name": "14 GitHub repo",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/octocat/Hello-World",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "oauth2",
+        "authValue": "{\"authUrl\":\"https://github.com/login/oauth/authorize\",\"clientId\":\"demo-client\",\"redirectUri\":\"http://127.0.0.1:7317/callback\",\"scopes\":\"repo\",\"tokenUrl\":\"https://github.com/login/oauth/access_token\",\"usePkce\":true}",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "07ef146b-e23d-4d66-b064-a3ed85c175de",
+      "name": "15 Status 201",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "POST",
+        "url": "https://httpbin.org/status/201",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "ea8e2480-0f28-4078-9f8c-bfa5411f3172",
+      "name": "16 Delay 2s",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/delay/2",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "0b0b3e53-8bfc-4f78-96b6-bdb0182b465a",
+      "name": "17 Status 401",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/status/401",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "596ad29f-4ced-46d8-b909-4cb3a012ae92",
+      "name": "18 Postman Echo GET",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://postman-echo.com/get?demo=opencode",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "50ca0076-26ee-4e35-85c8-7717b7926c22",
+      "name": "19 Postman Echo POST",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "POST",
+        "url": "https://postman-echo.com/post",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "params": null,
+        "bodyType": "json",
+        "body": "{\"mcp\":\"opencode\"}",
+        "bodyForm": null,
+        "authType": "",
+        "authValue": "",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    },
+    {
+      "id": "ed8929b8-1385-4502-b88a-b4b00726087f",
+      "name": "20 Generic OAuth test",
+      "collectionId": "2522d6f1-188f-4900-be2b-4f0778da7550",
+      "payload": {
+        "method": "GET",
+        "url": "https://httpbin.org/anything/oauth-test",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": false
+          }
+        ],
+        "params": null,
+        "bodyType": "none",
+        "body": "",
+        "bodyForm": null,
+        "authType": "oauth2",
+        "authValue": "{\"authUrl\":\"https://github.com/login/oauth/authorize\",\"clientId\":\"demo-client\",\"redirectUri\":\"http://127.0.0.1:7317/callback\",\"scopes\":\"repo\",\"tokenUrl\":\"https://github.com/login/oauth/access_token\",\"usePkce\":true}",
+        "specPath": "",
+        "graphqlQuery": "",
+        "graphqlVariables": "",
+        "preScript": "",
+        "postScript": ""
+      },
+      "createdAt": "2026-08-24T20:17:39Z"
+    }
+  ]
+}
