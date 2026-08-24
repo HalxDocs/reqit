@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "reqit": {
+      "type": "local",
+      "command": ["C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", "mcp"],
+      "enabled": true
+    },
+    "reqit-http": {
+      "type": "remote",
+      "url": "http://127.0.0.1:7247/mcp",
+      "enabled": false
+    }
+  }
+}

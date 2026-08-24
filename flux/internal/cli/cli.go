@@ -16,7 +16,7 @@ import (
 	"flux/internal/workspaces"
 )
 
-// RunMCP starts the MCP server over stdio for agent integration.
+// RunMCP starts the MCP server over stdio (default) or HTTP (--http) for agent integration.
 func RunMCP(args []string) int {
 	// Find workspace directory
 	ws := workspaces.NewStore()
@@ -26,7 +26,7 @@ func RunMCP(args []string) int {
 		return 1
 	}
 
-	return mcpRun(dir)
+	return mcpRun(dir, args)
 }
 
 var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
@@ -60,12 +60,15 @@ Usage:
   reqit run <collection> [--env <name>] [--output <format>]
   reqit list collections
   reqit list environments
+  reqit mcp [--http] [--port 7247]
   reqit help
 
 Flags:
   --env       Environment name (default: active environment)
   --output    Output format: text (default) or json
   --workspace Workspace ID (default: active workspace)
+  --http      Run MCP server over HTTP (default: stdio) for OpenCode
+  --port      HTTP port for MCP (default: 7247)
 `)
 }
 

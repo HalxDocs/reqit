@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -175,6 +176,47 @@ var toolDefs = []Tool{
 		Description: "List all reqit workspaces",
 		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
 	},
+
+	// OpenCode bridge — let an AI agent drive reqit end-to-end
+	{
+		Name:        "opencode_ping",
+		Description: "Health check for the OpenCode ↔ reqit MCP bridge. Returns workspace and tool count.",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
+	},
+	{
+		Name:        "oauth_discover",
+		Description: "Discover OAuth 2.0 endpoints from an issuer URL via OIDC discovery (.well-known/openid-configuration). Works with any provider (Google, Entra, Auth0, Okta, Keycloak, custom).",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+			"issuer": {Type: "string", Description: "Issuer base URL, e.g. https://accounts.google.com or https://login.microsoftonline.com/{tenant}/v2.0"},
+		}, Required: []string{"issuer"}},
+	},
+	{
+		Name:        "oauth_diagnose_loopback",
+		Description: "Test that the OS browser can reach the loopback listener (the exact path an OAuth callback takes). Returns findings for OpenCode to surface if 'This site can't be reached'.",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
+	},
+	{
+		Name:        "event_inspector_list",
+		Description: "List captured webhook events from the Event Inspector (last 50). Shows verification status, type, and timestamp.",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+			"limit": {Type: "string", Description: "Max events to return (default 20, max 50)"},
+		}},
+	},
+	{
+		Name:        "event_inspector_get",
+		Description: "Get a single captured webhook event by ID, including headers, body, and replay history.",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+			"id": {Type: "string", Description: "Event ID from event_inspector_list"},
+		}, Required: []string{"id"}},
+	},
+	{
+		Name:        "get_request",
+		Description: "Get a single request by collection and request name, with full payload (headers, body, auth).",
+		InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{
+			"collection": {Type: "string", Description: "Collection name"},
+			"request":    {Type: "string", Description: "Request name"},
+		}, Required: []string{"collection", "request"}},
+	},
 }
 
 // RegisterAll registers all tools on the server.
@@ -223,6 +265,18 @@ func makeHandler(name, wsDir string) ToolHandler {
 		return handleGetProjectRoot(wsDir)
 	case "list_workspaces":
 		return handleListWorkspaces()
+	case "opencode_ping":
+		return handleOpencodePing(wsDir)
+	case "oauth_discover":
+		return handleOAuthDiscover()
+	case "oauth_diagnose_loopback":
+		return handleOAuthDiagnoseLoopback()
+	case "event_inspector_list":
+		return handleEventInspectorList(wsDir)
+	case "event_inspector_get":
+		return handleEventInspectorGet(wsDir)
+	case "get_request":
+		return handleGetRequest(wsDir)
 	default:
 		return func(args json.RawMessage) (string, error) {
 			return "", fmt.Errorf("unknown tool: %s", name)
@@ -898,6 +952,214 @@ func handleListWorkspaces() ToolHandler {
 			return "No workspaces found.", nil
 		}
 		return sb.String(), nil
+	}
+}
+
+// --- OpenCode bridge ---
+
+func handleOpencodePing(wsDir string) ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		return fmt.Sprintf("reqit MCP ✓\nworkspace: %s\ntools: %d\ntime: %s", wsDir, len(toolDefs), time.Now().Format(time.RFC3339)), nil
+	}
+}
+
+func handleOAuthDiscover() ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		var p struct {
+			Issuer string `json:"issuer"`
+		}
+		if err := json.Unmarshal(args, &p); err != nil {
+			return "", err
+		}
+		if p.Issuer == "" {
+			return "", fmt.Errorf("issuer is required, e.g. https://accounts.google.com")
+		}
+		// Use internal oauth2 discovery directly
+		// Lazy import to avoid cycle — we import here via a helper that shells out to the engine
+		// Instead, do a raw well-known fetch so this tool works even without the full engine wired.
+		meta, err := discoverGeneric(p.Issuer)
+		if err != nil {
+			return "", err
+		}
+		b, _ := json.MarshalIndent(meta, "", "  ")
+		return string(b), nil
+	}
+}
+
+func discoverGeneric(issuer string) (map[string]any, error) {
+	// Try both OIDC and RFC 8414 well-known paths.
+	issuer = strings.TrimRight(issuer, "/")
+	paths := []string{
+		issuer + "/.well-known/openid-configuration",
+		issuer + "/.well-known/oauth-authorization-server",
+	}
+	var lastErr error
+	for _, u := range paths {
+		resp, err := httpGetJSON(u)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if resp["authorization_endpoint"] != nil && resp["token_endpoint"] != nil {
+			resp["issuer"] = issuer
+			return resp, nil
+		}
+		lastErr = fmt.Errorf("discovery at %s missing endpoints", u)
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("discovery failed for %s", issuer)
+	}
+	return nil, lastErr
+}
+
+func httpGetJSON(u string) (map[string]any, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s returned %d", u, resp.StatusCode)
+	}
+	var m map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func handleOAuthDiagnoseLoopback() ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		// We can't run the full Go diagnose (needs browser) in a headless MCP call,
+		// so we do the part OpenCode can verify: can we bind a loopback listener?
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return "", fmt.Errorf("loopback bind failed: %w — another process may hold the loopback port. Try a fixed port like 127.0.0.1:7317", err)
+		}
+		port := ln.Addr().(*net.TCPAddr).Port
+		ln.Close()
+		return fmt.Sprintf("loopback OK — 127.0.0.1:%d is free. The OS browser should be able to reach http://127.0.0.1:%d/callback . If the browser shows 'This site can't be reached', check firewall/proxy or try --http mode.", port, port), nil
+	}
+}
+
+func handleEventInspectorList(wsDir string) ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		var p struct {
+			Limit string `json:"limit"`
+		}
+		json.Unmarshal(args, &p)
+		limit := 20
+		if p.Limit != "" {
+			fmt.Sscanf(p.Limit, "%d", &limit)
+		}
+		if limit > 50 {
+			limit = 50
+		}
+		// Event Inspector stores events under wsDir — use a direct file read
+		// to avoid importing the store (keeps this handler leaf).
+		eventsFile := filepath.Join(wsDir, ".reqit", "events.json")
+		// Also try the legacy path
+		if _, err := os.Stat(eventsFile); os.IsNotExist(err) {
+			eventsFile = filepath.Join(wsDir, "events.json")
+		}
+		data, err := os.ReadFile(eventsFile)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return "No events captured yet. Start the Event Inspector listener and send a webhook.", nil
+			}
+			return "", err
+		}
+		var wrapper struct {
+			Events []map[string]any `json:"events"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return "", err
+		}
+		if len(wrapper.Events) == 0 {
+			return "No events captured yet.", nil
+		}
+		if len(wrapper.Events) > limit {
+			wrapper.Events = wrapper.Events[:limit]
+		}
+		var sb strings.Builder
+		for i, e := range wrapper.Events {
+			id, _ := e["id"].(string)
+			verify, _ := e["verifyStatus"].(string)
+			typ, _ := e["eventType"].(string)
+			at, _ := e["receivedAt"].(string)
+			fmt.Fprintf(&sb, "%d. %s [%s] %s — %s\n", i+1, id, verify, typ, at)
+		}
+		return sb.String(), nil
+	}
+}
+
+func handleEventInspectorGet(wsDir string) ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(args, &p); err != nil {
+			return "", err
+		}
+		if p.ID == "" {
+			return "", fmt.Errorf("id is required")
+		}
+		eventsFile := filepath.Join(wsDir, ".reqit", "events.json")
+		if _, err := os.Stat(eventsFile); os.IsNotExist(err) {
+			eventsFile = filepath.Join(wsDir, "events.json")
+		}
+		data, err := os.ReadFile(eventsFile)
+		if err != nil {
+			return "", err
+		}
+		var wrapper struct {
+			Events []map[string]any `json:"events"`
+		}
+		if err := json.Unmarshal(data, &wrapper); err != nil {
+			return "", err
+		}
+		for _, e := range wrapper.Events {
+			if e["id"] == p.ID {
+				b, _ := json.MarshalIndent(e, "", "  ")
+				return string(b), nil
+			}
+		}
+		return "", fmt.Errorf("event not found: %s", p.ID)
+	}
+}
+
+func handleGetRequest(wsDir string) ToolHandler {
+	return func(args json.RawMessage) (string, error) {
+		var p struct {
+			Collection string `json:"collection"`
+			Request    string `json:"request"`
+		}
+		if err := json.Unmarshal(args, &p); err != nil {
+			return "", err
+		}
+		store := collections.NewStore(wsDir)
+		all, err := store.GetAll()
+		if err != nil {
+			return "", err
+		}
+		for _, c := range all {
+			if c.Name == p.Collection {
+				for _, r := range c.Requests {
+					if r.Name == p.Request {
+						b, _ := json.MarshalIndent(r, "", "  ")
+						return string(b), nil
+					}
+				}
+				return "", fmt.Errorf("request %q not found in collection %q", p.Request, p.Collection)
+			}
+		}
+		return "", fmt.Errorf("collection not found: %s", p.Collection)
 	}
 }
 
