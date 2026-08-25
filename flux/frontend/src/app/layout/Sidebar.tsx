@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Maximize2, Minimize2, Moon, PanelLeft, PanelLeftClose, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck, Sparkles } from "lucide-react";
+import { ArrowLeftRight, Book, ChevronDown, ChevronRight, Clock, Download, FileCode2, FileEdit, Folder, GitPullRequest, History as HistoryIcon, Maximize2, Minimize2, Moon, PanelLeft, PanelLeftClose, Puzzle, Rocket, Settings, Shield, Sun, Terminal, User, Users, Radio, RefreshCw, Webhook, Code2, Server, ScanEye, Zap, ClipboardCheck, Sparkles, Plug } from "lucide-react";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { useGitStore } from "@/features/git/stores/useGitStore";
@@ -328,6 +328,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             label="Mock Server"
             active={view === "mockpanel"}
             onClick={() => setView(view === "mockpanel" ? "http" : "mockpanel")}
+          />
+          <NavItem
+            icon={<Plug size={13} />}
+            label="MCP Bridge"
+            active={view === "mcp"}
+            onClick={() => setView(view === "mcp" ? "http" : "mcp")}
           />
         </CollapsibleSection>
       </div>

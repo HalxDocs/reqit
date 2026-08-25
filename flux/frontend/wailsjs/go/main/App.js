@@ -466,6 +466,14 @@ export function GetLocks() {
   return window['go']['main']['App']['GetLocks']();
 }
 
+export function GetMCPStatus() {
+  return window['go']['main']['App']['GetMCPStatus']();
+}
+
+export function GetMCPTools() {
+  return window['go']['main']['App']['GetMCPTools']();
+}
+
 export function GetMaskingRules() {
   return window['go']['main']['App']['GetMaskingRules']();
 }
@@ -990,12 +998,20 @@ export function StartInterceptor() {
   return window['go']['main']['App']['StartInterceptor']();
 }
 
+export function StartMCPHTTP(arg1) {
+  return window['go']['main']['App']['StartMCPHTTP'](arg1);
+}
+
 export function StartMockServer(arg1) {
   return window['go']['main']['App']['StartMockServer'](arg1);
 }
 
 export function StopInterceptor() {
   return window['go']['main']['App']['StopInterceptor']();
+}
+
+export function StopMCPHTTP() {
+  return window['go']['main']['App']['StopMCPHTTP']();
 }
 
 export function StopMockServer() {

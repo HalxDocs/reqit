@@ -34,6 +34,7 @@ import { AgentLensPanel } from "@/features/agentlens/components/AgentLensPanel";
 import { LoadTestPanel } from "@/features/loadtest/components/LoadTestPanel";
 import { TestSuitePanel } from "@/features/testbuilder/components/TestSuitePanel";
 import { MockPanel } from "@/features/mock/components/MockPanel";
+import { MCPPanel } from "@/features/mcp/components/MCPPanel";
 import { EventInspectorPanel } from "@/features/eventinspector/components/EventInspectorPanel";
 
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
@@ -448,10 +449,12 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       ) : view === "plugins" ? (
         <PluginManager />
       ) : view === "mockpanel" ? (
-        <MockPanel />
-      ) : view === "eventinspector" ? (
-        <EventInspectorPanel />
-      ) : (
+         <MockPanel />
+       ) : view === "mcp" ? (
+         <MCPPanel />
+       ) : view === "eventinspector" ? (
+         <EventInspectorPanel />
+       ) : (
       <div className="flex-1 flex flex-col min-w-0">
         <TabBar />
         <Breadcrumb />

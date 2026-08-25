@@ -586,6 +586,26 @@ export namespace main {
 	        this.count = source["count"];
 	    }
 	}
+	export class MCPStatus {
+	    running: boolean;
+	    port: number;
+	    stdioCommand: string;
+	    httpUrl: string;
+	    toolCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MCPStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.running = source["running"];
+	        this.port = source["port"];
+	        this.stdioCommand = source["stdioCommand"];
+	        this.httpUrl = source["httpUrl"];
+	        this.toolCount = source["toolCount"];
+	    }
+	}
 	export class MockStatus {
 	    running: boolean;
 	    port: number;

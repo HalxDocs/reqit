@@ -251,6 +251,10 @@ export function GetInterceptorStatus():Promise<main.InterceptorStatus>;
 
 export function GetLocks():Promise<Record<string, locks.LockInfo>>;
 
+export function GetMCPStatus():Promise<main.MCPStatus>;
+
+export function GetMCPTools():Promise<Array<Record<string, any>>>;
+
 export function GetMaskingRules():Promise<string>;
 
 export function GetMockStatus():Promise<main.MockStatus>;
@@ -513,9 +517,13 @@ export function SetTelemetryEnabled(arg1:boolean):Promise<void>;
 
 export function StartInterceptor():Promise<number>;
 
+export function StartMCPHTTP(arg1:number):Promise<string>;
+
 export function StartMockServer(arg1:number):Promise<main.MockStatus>;
 
 export function StopInterceptor():Promise<void>;
+
+export function StopMCPHTTP():Promise<void>;
 
 export function StopMockServer():Promise<void>;
 
