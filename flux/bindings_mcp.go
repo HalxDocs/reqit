@@ -107,6 +107,34 @@ func (a *App) GetMCPTools() []map[string]any {
 	return tools
 }
 
+func (a *App) GetMCPTraffic() ([]mcp.TrafficEntry, error) {
+	ws := workspaces.NewStore()
+	dir, _ := ws.ActiveDir()
+	store := mcp.NewTrafficStore(dir)
+	entries, err := store.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	if entries == nil {
+		return []mcp.TrafficEntry{}, nil
+	}
+	return entries, nil
+}
+
+func (a *App) ClearMCPTraffic() error {
+	ws := workspaces.NewStore()
+	dir, _ := ws.ActiveDir()
+	store := mcp.NewTrafficStore(dir)
+	return store.Clear()
+}
+
+func (a *App) GetMCPTrafficEntry(id string) (mcp.TrafficEntry, error) {
+	ws := workspaces.NewStore()
+	dir, _ := ws.ActiveDir()
+	store := mcp.NewTrafficStore(dir)
+	return store.Get(id)
+}
+
 func getMCPExePath() (string, error) {
 	// Best-effort: derive from current executable path
 	exe := "reqit"

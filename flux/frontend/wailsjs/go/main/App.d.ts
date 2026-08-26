@@ -12,6 +12,7 @@ import {interceptor} from '../models';
 import {cookies} from '../models';
 import {environments} from '../models';
 import {locks} from '../models';
+import {mcp} from '../models';
 import {plugin} from '../models';
 import {scheduler} from '../models';
 import {openapi} from '../models';
@@ -50,6 +51,8 @@ export function ClearCapturedRequests():Promise<void>;
 export function ClearCookiesForDomain(arg1:string):Promise<void>;
 
 export function ClearHistory():Promise<void>;
+
+export function ClearMCPTraffic():Promise<void>;
 
 export function ClearSocketSessions():Promise<void>;
 
@@ -254,6 +257,10 @@ export function GetLocks():Promise<Record<string, locks.LockInfo>>;
 export function GetMCPStatus():Promise<main.MCPStatus>;
 
 export function GetMCPTools():Promise<Array<Record<string, any>>>;
+
+export function GetMCPTraffic():Promise<Array<mcp.TrafficEntry>>;
+
+export function GetMCPTrafficEntry(arg1:string):Promise<mcp.TrafficEntry>;
 
 export function GetMaskingRules():Promise<string>;
 

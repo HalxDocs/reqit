@@ -765,6 +765,77 @@ export namespace main {
 
 }
 
+export namespace mcp {
+	
+	export class RPCError {
+	    code: number;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RPCError(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.code = source["code"];
+	        this.message = source["message"];
+	    }
+	}
+	export class TrafficEntry {
+	    id: string;
+	    timestamp: string;
+	    direction: string;
+	    method: string;
+	    toolName?: string;
+	    requestId?: number[];
+	    params?: number[];
+	    result?: number[];
+	    error?: RPCError;
+	    status: string;
+	    latencyMs: number;
+	    raw?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TrafficEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.timestamp = source["timestamp"];
+	        this.direction = source["direction"];
+	        this.method = source["method"];
+	        this.toolName = source["toolName"];
+	        this.requestId = source["requestId"];
+	        this.params = source["params"];
+	        this.result = source["result"];
+	        this.error = this.convertValues(source["error"], RPCError);
+	        this.status = source["status"];
+	        this.latencyMs = source["latencyMs"];
+	        this.raw = source["raw"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace models {
 	
 	export class Assertion {

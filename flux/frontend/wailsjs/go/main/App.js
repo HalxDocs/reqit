@@ -66,6 +66,10 @@ export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
 
+export function ClearMCPTraffic() {
+  return window['go']['main']['App']['ClearMCPTraffic']();
+}
+
 export function ClearSocketSessions() {
   return window['go']['main']['App']['ClearSocketSessions']();
 }
@@ -472,6 +476,14 @@ export function GetMCPStatus() {
 
 export function GetMCPTools() {
   return window['go']['main']['App']['GetMCPTools']();
+}
+
+export function GetMCPTraffic() {
+  return window['go']['main']['App']['GetMCPTraffic']();
+}
+
+export function GetMCPTrafficEntry(arg1) {
+  return window['go']['main']['App']['GetMCPTrafficEntry'](arg1);
 }
 
 export function GetMaskingRules() {
