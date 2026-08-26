@@ -14,6 +14,7 @@ const ASSERTION_TYPES = [
   { value: "varNotEqual", label: "Variable Not Equal" },
   { value: "jsonSchema", label: "JSON Schema" },
   { value: "customScript", label: "Custom Script" },
+  { value: "promptInjection", label: "Prompt Injection" },
 ];
 
 export function AssertionEditor({
@@ -62,7 +63,7 @@ export function AssertionEditor({
             />
           )}
 
-          {a.type !== "customScript" && a.type !== "jsonSchema" && a.type !== "statusCode" && a.type !== "maxTiming" && (
+          {a.type !== "customScript" && a.type !== "jsonSchema" && a.type !== "statusCode" && a.type !== "maxTiming" && a.type !== "promptInjection" && (
             <input
               type="text"
               value={a.value}
@@ -116,6 +117,7 @@ function placeholderFor(type: string): string {
     case "cookie": return "session_id";
     case "varEqual": case "varNotEqual": return "var name";
     case "jsonSchema": return '{ "$schema": "..." }';
+    case "promptInjection": return 'adversarial string (empty = check library)';
     default: return "";
   }
 }

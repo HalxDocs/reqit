@@ -207,6 +207,7 @@ const (
 	AssertVarNotEqual   AssertionType = "varNotEqual"    // variable-to-variable inequality
 	AssertJSONSchema    AssertionType = "jsonSchema"     // JSON Schema validation
 	AssertCustomScript  AssertionType = "customScript"   // custom JS assertion
+	AssertPromptInjection AssertionType = "promptInjection" // 2026 equivalent of SQLi — adversarial payload should not be echoed/executed
 )
 
 type Assertion struct {
