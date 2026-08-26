@@ -62,6 +62,10 @@ export function ClearCookiesForDomain(arg1) {
   return window['go']['main']['App']['ClearCookiesForDomain'](arg1);
 }
 
+export function ClearFlakyHistory() {
+  return window['go']['main']['App']['ClearFlakyHistory']();
+}
+
 export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
 }
@@ -390,6 +394,10 @@ export function GetAirGapConfig() {
   return window['go']['main']['App']['GetAirGapConfig']();
 }
 
+export function GetAllFlaky() {
+  return window['go']['main']['App']['GetAllFlaky']();
+}
+
 export function GetAutoSync() {
   return window['go']['main']['App']['GetAutoSync']();
 }
@@ -432,6 +440,10 @@ export function GetEnvironments() {
 
 export function GetFeatureRequests() {
   return window['go']['main']['App']['GetFeatureRequests']();
+}
+
+export function GetFlakyStats(arg1) {
+  return window['go']['main']['App']['GetFlakyStats'](arg1);
 }
 
 export function GetGitConflictFiles() {
@@ -524,6 +536,10 @@ export function GetRecipes() {
 
 export function GetRequestDetail(arg1) {
   return window['go']['main']['App']['GetRequestDetail'](arg1);
+}
+
+export function GetRunHistory() {
+  return window['go']['main']['App']['GetRunHistory']();
 }
 
 export function GetSSOProviders() {

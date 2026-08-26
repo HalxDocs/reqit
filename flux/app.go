@@ -25,6 +25,7 @@ import (
 	"flux/internal/growth"
 	"flux/internal/grpc"
 	"flux/internal/history"
+	"flux/internal/runhistory"
 	"flux/internal/interceptor"
 	"flux/internal/jwt"
 	"flux/internal/locks"
@@ -104,6 +105,7 @@ type App struct {
 	eventInspector  *eventinspector.Store
 	eventSecret     *eventinspector.SecretStore
 	eventListener   *eventinspector.Listener
+	runHistory      *runhistory.Store
 }
 
 func NewApp() *App {
@@ -355,6 +357,7 @@ func (a *App) mountWorkspace(dir string) {
 
 	a.collections = collections.NewStore(dir)
 	a.history = history.NewStore(dir)
+	a.runHistory = runhistory.NewStore(dir)
 	a.sockHistory = sockhistory.NewStore(dir)
 	a.environments = environments.NewStore(dir)
 	a.locks = locks.New(dir)
@@ -508,6 +511,7 @@ func (a *App) DeleteWorkspace(id string) error {
 	} else {
 		a.collections = collections.NewStore("")
 		a.history = history.NewStore("")
+		a.runHistory = runhistory.NewStore("")
 		a.sockHistory = sockhistory.NewStore("")
 		a.environments = environments.NewStore("")
 	}

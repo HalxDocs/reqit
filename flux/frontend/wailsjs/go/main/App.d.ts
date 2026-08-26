@@ -8,6 +8,7 @@ import {workspaces} from '../models';
 import {schema} from '../models';
 import {main} from '../models';
 import {git} from '../models';
+import {runhistory} from '../models';
 import {interceptor} from '../models';
 import {cookies} from '../models';
 import {environments} from '../models';
@@ -49,6 +50,8 @@ export function ClearAllCookies():Promise<void>;
 export function ClearCapturedRequests():Promise<void>;
 
 export function ClearCookiesForDomain(arg1:string):Promise<void>;
+
+export function ClearFlakyHistory():Promise<void>;
 
 export function ClearHistory():Promise<void>;
 
@@ -214,6 +217,8 @@ export function GetActiveWorkspace():Promise<workspaces.Info>;
 
 export function GetAirGapConfig():Promise<string>;
 
+export function GetAllFlaky():Promise<Array<runhistory.FlakyStats>>;
+
 export function GetAutoSync():Promise<boolean>;
 
 export function GetBadges():Promise<string>;
@@ -235,6 +240,8 @@ export function GetDevProfile():Promise<profile.DevProfile>;
 export function GetEnvironments():Promise<environments.Snapshot>;
 
 export function GetFeatureRequests():Promise<string>;
+
+export function GetFlakyStats(arg1:string):Promise<runhistory.FlakyStats>;
 
 export function GetGitConflictFiles():Promise<Array<string>>;
 
@@ -281,6 +288,8 @@ export function GetRecipeCategories():Promise<Array<string>>;
 export function GetRecipes():Promise<string>;
 
 export function GetRequestDetail(arg1:string):Promise<models.SavedRequest>;
+
+export function GetRunHistory():Promise<Array<runhistory.RunRecord>>;
 
 export function GetSSOProviders():Promise<string>;
 

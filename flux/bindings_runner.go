@@ -9,6 +9,8 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"flux/internal/runhistory"
+
 	"flux/internal/audit"
 	"flux/internal/external"
 	"flux/internal/loadtest"
@@ -79,7 +81,53 @@ func (a *App) RunCollectionWithConfig(config models.RunnerConfig) models.Collect
 			"fail":  fmt.Sprintf("%d", fail),
 		})
 	}
+	// Flaky detection: persist per-request run (cap 500, newest-first). No new
+	// execution — statistics on data the runner already generated.
+	if a.runHistory != nil {
+		for _, r := range result.Results {
+			_ = a.runHistory.AppendRun(runhistory.RunRecord{
+				RequestID:   r.RequestID,
+				RequestName: r.RequestName,
+				Passed:      !r.Skipped && r.Error == "" && len(r.AssertionErrors) == 0,
+				Retries:     r.Retries,
+				StatusCode:  r.StatusCode,
+				TimingMs:    r.TimingMs,
+				Error:       r.Error,
+			})
+		}
+		if a.ctx != nil {
+			runtime.EventsEmit(a.ctx, "runhistory:changed")
+		}
+	}
 	return result
+}
+
+func (a *App) GetFlakyStats(requestID string) (runhistory.FlakyStats, error) {
+	if a.runHistory == nil {
+		return runhistory.FlakyStats{}, nil
+	}
+	return a.runHistory.StatsFor(requestID)
+}
+
+func (a *App) GetAllFlaky() ([]runhistory.FlakyStats, error) {
+	if a.runHistory == nil {
+		return []runhistory.FlakyStats{}, nil
+	}
+	return a.runHistory.AllFlaky()
+}
+
+func (a *App) ClearFlakyHistory() error {
+	if a.runHistory == nil {
+		return nil
+	}
+	return a.runHistory.Clear()
+}
+
+func (a *App) GetRunHistory() ([]runhistory.RunRecord, error) {
+	if a.runHistory == nil {
+		return []runhistory.RunRecord{}, nil
+	}
+	return a.runHistory.GetAll()
 }
 
 func (a *App) CreateTestSuite(name, description, collID string) (models.TestSuite, error) {

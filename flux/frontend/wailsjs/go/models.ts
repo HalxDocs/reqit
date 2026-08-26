@@ -2593,6 +2593,65 @@ export namespace profile {
 
 }
 
+export namespace runhistory {
+	
+	export class FlakyStats {
+	    requestId: string;
+	    total: number;
+	    passed: number;
+	    failed: number;
+	    flakyRuns: number;
+	    flakeRate: number;
+	    isFlaky: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new FlakyStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.requestId = source["requestId"];
+	        this.total = source["total"];
+	        this.passed = source["passed"];
+	        this.failed = source["failed"];
+	        this.flakyRuns = source["flakyRuns"];
+	        this.flakeRate = source["flakeRate"];
+	        this.isFlaky = source["isFlaky"];
+	    }
+	}
+	export class RunRecord {
+	    id: string;
+	    requestId: string;
+	    requestName: string;
+	    collectionId: string;
+	    timestamp: string;
+	    passed: boolean;
+	    retries: number;
+	    statusCode: number;
+	    timingMs: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RunRecord(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.requestId = source["requestId"];
+	        this.requestName = source["requestName"];
+	        this.collectionId = source["collectionId"];
+	        this.timestamp = source["timestamp"];
+	        this.passed = source["passed"];
+	        this.retries = source["retries"];
+	        this.statusCode = source["statusCode"];
+	        this.timingMs = source["timingMs"];
+	        this.error = source["error"];
+	    }
+	}
+
+}
+
 export namespace scheduler {
 	
 	export class ScheduledRun {

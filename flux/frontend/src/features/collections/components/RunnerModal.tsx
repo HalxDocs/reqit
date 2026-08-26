@@ -7,7 +7,7 @@ import {
 } from "../../../../wailsjs/go/main/App";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { AssertionEditor } from "@/features/assertions/components/AssertionEditor";
-import { FileText, Download, Table } from "lucide-react";
+import { FileText, Download, Table, AlertTriangle } from "lucide-react";
 import { RequestChainingGraph } from "@/features/collections/components/RequestChainingGraph";
 import { SendNotification, PickFile, ReadFileText } from "../../../../wailsjs/go/main/App";
 import { models } from "../../../../wailsjs/go/models";
@@ -254,6 +254,11 @@ export function RunnerModal({ open, onClose, collection }: Props) {
                       {reqResults.length > 0 && !hasDataDriven && (
                         <span className={`text-11 font-bold ${reqResults[0].passed ? "text-teal" : reqResults[0].skipped ? "text-subtext" : "text-danger"}`}>
                           {reqResults[0].skipped ? "SKIP" : reqResults[0].passed ? "PASS" : "FAIL"}
+                        </span>
+                      )}
+                      {reqResults.length > 0 && !hasDataDriven && (reqResults[0].retries ?? 0) > 0 && reqResults[0].passed && (
+                        <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <AlertTriangle size={10} /> FLAKY
                         </span>
                       )}
                       {reqResults.length > 0 && !hasDataDriven && !reqResults[0].error && (
