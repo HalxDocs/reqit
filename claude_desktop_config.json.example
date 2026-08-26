@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "reqit": {
+      "command": "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe",
+      "args": ["mcp"],
+      "cwd": "C:/Users/USER/Desktop/falkam/flux",
+      "env": {}
+    }
+  }
+}

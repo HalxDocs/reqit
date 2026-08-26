@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "reqit": {
+      "command": "./build/bin/reqit.exe",
+      "args": ["mcp"],
+      "cwd": "."
+    }
+  }
+}

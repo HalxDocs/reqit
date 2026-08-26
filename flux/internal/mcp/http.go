@@ -26,13 +26,17 @@ func NewHTTPServer(mcp *Server) *HTTPServer {
 }
 
 // Handler returns an http.Handler that serves the MCP endpoints:
-//   POST /mcp       → JSON-RPC (initialize, tools/list, tools/call)
-//   GET  /mcp       → 405
-//   GET  /health    → 200 ok (for OpenCode probe)
+//   POST /mcp       → JSON-RPC (initialize, tools/list, tools/call) — Streamable HTTP
+//   GET  /mcp       → SSE stream (for remote ChatGPT/Cursor HTTP clients)
+//   GET  /.well-known/mcp → 307 redirect to /mcp (discovery probe)
+//   GET  /health    → 200 ok (for probes)
 //   GET  /tools     → JSON array of tool defs (REST convenience)
 func (h *HTTPServer) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", h.handleMCP)
+	mux.HandleFunc("/.well-known/mcp", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/mcp", http.StatusTemporaryRedirect)
+	})
 	mux.HandleFunc("/health", h.handleHealth)
 	mux.HandleFunc("/tools", h.handleToolsREST)
 	mux.HandleFunc("/", h.handleRoot)
@@ -74,9 +78,33 @@ func (h *HTTPServer) handleToolsREST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPServer) handleMCP(w http.ResponseWriter, r *http.Request) {
+	// SSE for remote clients that GET /mcp with Accept: text/event-stream
+	if r.Method == http.MethodGet {
+		accept := r.Header.Get("Accept")
+		if accept == "text/event-stream" || r.URL.Query().Get("transport") == "sse" {
+			h.handleMCPSSE(w, r)
+			return
+		}
+		// Generic GET probe — return info
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"name":    "reqit MCP",
+			"version": "0.7.1",
+			"transports": []string{"stdio", "http"},
+			"endpoints": map[string]string{
+				"mcp":   "POST /mcp (JSON-RPC) or GET /mcp with Accept: text/event-stream (SSE)",
+				"tools": "GET /tools",
+			},
+		})
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "POST only", http.StatusMethodNotAllowed)
 		return
+	}
+	// Echo client's requested protocol version for negotiation (universal)
+	if v := r.Header.Get("MCP-Protocol-Version"); v != "" {
+		w.Header().Set("MCP-Protocol-Version", v)
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -99,6 +127,27 @@ func (h *HTTPServer) handleMCP(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+func (h *HTTPServer) handleMCPSSE(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "SSE not supported", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "event: endpoint\ndata: /mcp\n\n")
+	flusher.Flush()
+	tools := make([]Tool, 0, len(h.mcp.tools))
+	for _, e := range h.mcp.tools {
+		tools = append(tools, e.def)
+	}
+	payload, _ := json.Marshal(map[string]any{"tools": tools})
+	fmt.Fprintf(w, "event: message\ndata: %s\n\n", payload)
+	flusher.Flush()
+}
+
 func writeRPCError(w http.ResponseWriter, id json.RawMessage, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -113,7 +162,8 @@ func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Accept")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Accept, Authorization, Mcp-Session-Id, MCP-Protocol-Version")
+		w.Header().Set("Access-Control-Expose-Headers", "Mcp-Session-Id, MCP-Protocol-Version")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

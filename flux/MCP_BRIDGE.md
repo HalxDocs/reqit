@@ -1,6 +1,8 @@
-# reqit ↔ OpenCode MCP Bridge
+# reqit ↔ Any AI — MCP Bridge (OpenCode, Claude, Cursor, VS Code)
 
-Reqit now exposes **all** its API-client capabilities to OpenCode (and any MCP-compatible agent) in two transports.
+Reqit exposes **all** its API-client capabilities to *any* MCP-compatible agent
+(OpenCode, Claude Code/Desktop, Cursor, VS Code, ChatGPT, generic) in two
+transports. 24 tools in one server (no split — you don't use Windsurf).
 
 ## Transports
 
@@ -17,17 +19,19 @@ Probe:
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ./build/bin/reqit mcp
 ```
 
-### 2. HTTP (for remote OpenCode / `curl`)
+### 2. HTTP (for remote agents / `curl` / ChatGPT)
 
 ```bash
 ./build/bin/reqit mcp --http --port 7247
-# → http://127.0.0.1:7247/mcp  (POST JSON-RPC)
-#   http://127.0.0.1:7247/health (GET)
-#   http://127.0.0.1:7247/tools  (GET REST list)
-#   http://127.0.0.1:7247/       (GET info)
+# → http://127.0.0.1:7247/mcp      (POST JSON-RPC — Streamable HTTP)
+#   http://127.0.0.1:7247/mcp      (GET  Accept: text/event-stream → SSE)
+#   http://127.0.0.1:7247/.well-known/mcp → 307 to /mcp (discovery)
+#   http://127.0.0.1:7247/health   (GET)
+#   http://127.0.0.1:7247/tools    (GET REST list)
+#   http://127.0.0.1:7247/         (GET info)
 ```
 
-All endpoints are CORS-enabled for browser agents.
+CORS allows `Authorization`, `Mcp-Session-Id`, `MCP-Protocol-Version`; server echoes the client's `MCP-Protocol-Version` (`2024-11-05` / `2025-03-26` / `2025-06-18`) for universal negotiation.
 
 Examples:
 
@@ -49,60 +53,38 @@ curl -s -X POST http://127.0.0.1:7247/mcp \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"opencode_ping","arguments":{}}}' | jq
 ```
 
-## OpenCode config
+## Configs — one file per AI (copy & restart the agent)
 
-Copy one of the provided configs into your OpenCode config directory:
+All files are already generated in this repo. Copy the one your AI reads:
 
-**Option A — stdio (local binary, recommended):**
+| AI | File to use / copy to | Type |
+|---|---|---|
+| **OpenCode** | `C:\Users\USER\Desktop\falkam\opencode.json` or `flux/opencode.json` | `local` (`C:/.../reqit.exe mcp`) |
+| **Generic** | `mcp.json` (repo root) or `flux/mcp.json` | `mcpServers.reqit` |
+| **VS Code** | `.vscode/mcp.json` and `flux/.vscode/mcp.json` | `servers.reqit` |
+| **Cursor** | `.cursor/mcp.json` and `flux/.cursor/mcp.json` | `mcpServers.reqit` |
+| **Claude Desktop** | `claude_desktop_config.json.example` → `%APPDATA%\Claude\claude_desktop_config.json` | `mcpServers` |
+| **Claude Code** | `claude mcp add reqit -- C:/.../flux/build/bin/reqit.exe mcp` | CLI |
 
-`opencode.json` at workspace root or `C:\Users\USER\Desktop\falkam\opencode.json`:
+**Stdio (local binary, recommended for OpenCode/Claude/Cursor/VS Code):**
+
+`opencode.json` / `mcp.json` / `.vscode/mcp.json` all contain:
+```json
+{ "mcpServers": { "reqit": { "command": "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", "args": ["mcp"], "cwd": "C:/Users/USER/Desktop/falkam/flux" } } }
+```
+
+**HTTP (remote, no spawn — for ChatGPT, remote OpenCode, `curl`):**
+
+First run `reqit mcp --http --port 7247`, then:
 
 ```json
-{
-  "mcp": {
-    "reqit": {
-      "type": "local",
-      "command": ["C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", "mcp"],
-      "enabled": true
-    }
-  }
-}
+{ "mcp": { "reqit-http": { "type": "remote", "url": "http://127.0.0.1:7247/mcp", "enabled": true } } }
 ```
 
-Relative variant (`flux/opencode.json`):
-
-```json
-{
-  "mcp": {
-    "reqit": {
-      "type": "local",
-      "command": ["./build/bin/reqit.exe", "mcp"],
-      "enabled": true
-    }
-  }
-}
-```
-
-**Option B — HTTP (remote, no spawn):**
-
-First run `reqit mcp --http`, then:
-
-```json
-{
-  "mcp": {
-    "reqit-http": {
-      "type": "remote",
-      "url": "http://127.0.0.1:7247/mcp",
-      "enabled": true
-    }
-  }
-}
-```
-
-Restart OpenCode after editing the config. Verify with `opencode_ping`:
+Verify any agent with:
 
 ```
-→ tools/call opencode_ping {} 
+→ tools/call opencode_ping {}
 ← "reqit MCP ✓ workspace: ... tools: 24"
 ```
 

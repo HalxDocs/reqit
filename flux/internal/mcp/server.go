@@ -167,8 +167,26 @@ func (s *Server) handleRequest(req Request) Response {
 }
 
 func (s *Server) handleInitialize(req Request) Response {
+	// Negotiate protocol version — echo client's requested version if recognized,
+	// otherwise default to 2024-11-05 (covers 2024-11-05, 2025-03-26, 2025-06-18).
+	version := "2024-11-05"
+	if req.Params != nil {
+		var p struct {
+			ProtocolVersion string `json:"protocolVersion"`
+		}
+		if err := json.Unmarshal(req.Params, &p); err == nil && p.ProtocolVersion != "" {
+			// Accept any 2024-11-05 or 2025-* version clients send; echo it back.
+			switch p.ProtocolVersion {
+			case "2024-11-05", "2025-03-26", "2025-06-18":
+				version = p.ProtocolVersion
+			default:
+				// Unknown future version — return our latest supported.
+				version = "2025-06-18"
+			}
+		}
+	}
 	result := InitializeResult{
-		ProtocolVersion: "2024-11-05",
+		ProtocolVersion: version,
 		Capabilities: Capabilities{
 			Tools: &ToolsCapability{ListChanged: false},
 		},
