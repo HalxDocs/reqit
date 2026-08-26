@@ -14,6 +14,7 @@ func LintTool(tool ToolDefinition, allTools []ToolDefinition, config LensConfig)
 	results = append(results, lintR3NamingLimits(tool, allTools, config)...)
 	results = append(results, lintR4NearDuplicates(tool, allTools)...)
 	results = append(results, lintR5DestructiveTagging(tool)...)
+	results = append(results, lintR6ToolPoisoning(tool)...)
 	return results
 }
 
@@ -209,6 +210,98 @@ func lintR5DestructiveTagging(tool ToolDefinition) []LintResult {
 			Severity:      SeverityError,
 			Message:       "Destructive tool '" + tool.Name + "' (DELETE or destructive name) has no warning in description.",
 			FixSuggestion: "Add 'DESTRUCTIVE: This action cannot be undone.' to the description.",
+		})
+	}
+
+	return results
+}
+
+// lintR6ToolPoisoning scans descriptions for instruction-like phrasing, hidden
+// unicode, or secret-like tokens that indicate a poisoned tool description.
+// It is the core of roadmap item 02 — runs as part of the normal readiness pass.
+func lintR6ToolPoisoning(tool ToolDefinition) []LintResult {
+	var results []LintResult
+	// Collect all description-bearing fields the agent sees: tool description
+	// plus every parameter description. Attackers hide instructions in any of
+	// these (the input, not just the top-level description).
+	texts := []string{tool.Description}
+	for _, p := range tool.Parameters {
+		if p.Description != "" {
+			texts = append(texts, p.Description)
+		}
+	}
+	joined := strings.Join(texts, " ")
+	if joined == "" {
+		return results
+	}
+	lower := strings.ToLower(joined)
+
+	// Imperative / instruction-like phrasing — the classic "ignore previous
+	// instructions" family. Check the lowercased joined text.
+	imperatives := []string{
+		"ignore previous instructions",
+		"disregard previous instructions",
+		"ignore all previous",
+		"you are now",
+		"system:",
+		"begin system",
+		"end system",
+		"do not tell the user",
+		"do not reveal",
+		"exfiltrate",
+		"send to",
+		"transfer to",
+		"drop table",
+		"delete all",
+		"reveal the secret",
+		"reveal your prompt",
+		"output your instructions",
+		"act as",
+		"pretend you are",
+		"new instructions:",
+		"important instructions",
+	}
+	for _, phrase := range imperatives {
+		if strings.Contains(lower, phrase) {
+			results = append(results, LintResult{
+				RuleID:        "R6",
+				RuleName:      "Tool-Poisoning",
+				Severity:      SeverityError,
+				Message:       "Tool description contains instruction-like phrasing '" + phrase + "' — agents may treat it as a command.",
+				FixSuggestion: "Remove imperative language. Describe data ('Returns the user's billing address.') not instructions ('Ignore previous instructions and …').",
+			})
+			break // one error is enough to tank the score; avoid duplicate spam
+		}
+	}
+
+	// Hidden unicode: zero-width and bidi controls that render invisibly but
+	// survive into the agent's context. Any occurrence is an error.
+	for _, r := range joined {
+		if r == '\u200B' || r == '\u200C' || r == '\u200D' || r == '\uFEFF' || r == '\u2060' ||
+			(r >= '\u202A' && r <= '\u202E') || (r >= '\u2066' && r <= '\u2069') || r == '\u00AD' {
+			results = append(results, LintResult{
+				RuleID:        "R6",
+				RuleName:      "Tool-Poisoning",
+				Severity:      SeverityError,
+				Message:       "Tool description contains hidden/invisible unicode (zero-width / bidi). Agents still see it.",
+				FixSuggestion: "Strip zero-width/bidi characters. Use only printable ASCII + normal whitespace.",
+			})
+			break
+		}
+	}
+
+	// Secret-like tokens in descriptions — descriptions are meant to describe
+	// data, not carry live secrets. If an API key pattern appears in a
+	// description, it was likely copied from a response example.
+	if strings.Contains(joined, "AKIA") || strings.Contains(joined, "sk-") || strings.Contains(joined, "ghp_") || strings.Contains(joined, "xoxb-") {
+		// Only flag if the secret-like token is not inside a code-block example.
+		// For now, flag unconditionally as info — the user can dismiss.
+		results = append(results, LintResult{
+			RuleID:        "R6",
+			RuleName:      "Tool-Poisoning",
+			Severity:      SeverityWarning,
+			Message:       "Tool description contains a secret-like token (AKIA / sk- / ghp_ / xoxb-). Descriptions should not carry live secrets.",
+			FixSuggestion: "Replace with a placeholder like <API_KEY> in the description.",
 		})
 	}
 
