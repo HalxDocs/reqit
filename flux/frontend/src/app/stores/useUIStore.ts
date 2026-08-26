@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
-export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "performance";
+export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "performance" | "visualize";
 
 export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel" | "eventinspector" | "mcp";
 

@@ -22,6 +22,7 @@ import { SaveCapturedResponse, SaveTextResponse } from "../../../../wailsjs/go/m
 import { useToastStore } from "@/app/stores/useToastStore";
 import { Trash2, ClipboardCopy } from "lucide-react";
 import { DiffSnapshots } from "@/features/response/components/DiffSnapshots";
+import { VisualizerView } from "@/features/response/components/VisualizerView";
 import { buildPayload } from "@/features/request/lib/buildPayload";
 import { toCurlShort } from "@/shared/lib/codegen";
 
@@ -79,6 +80,7 @@ export function ResponsePane() {
     { id: "cookies", label: cookieCount > 0 ? `Cookies (${cookieCount})` : "Cookies" },
     { id: "timeline", label: "Timeline" },
     { id: "performance", label: "Performance" },
+    { id: "visualize", label: "Visualize" },
   ], [cookieCount]);
 
   const currentDomain = useMemo(() => {
@@ -309,6 +311,9 @@ export function ResponsePane() {
         )}
         {!isLoading && response && !response.error && responseTab === "performance" && (
           <PerformanceChart />
+        )}
+        {responseTab === "visualize" && (
+          <VisualizerView />
         )}
         <DiffSnapshots method={method} url={url} response={response} snapshotKey={snapshotKey} />
         <AIDiagnosisPanel />
