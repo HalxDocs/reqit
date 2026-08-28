@@ -314,7 +314,64 @@ export namespace agentlens {
 		    return a;
 		}
 	}
+	export class ToolDrift {
+	    toolName: string;
+	    oldDesc: string;
+	    newDesc: string;
+	    changed: boolean;
+	    added: boolean;
+	    removed: boolean;
 	
+	    static createFrom(source: any = {}) {
+	        return new ToolDrift(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.toolName = source["toolName"];
+	        this.oldDesc = source["oldDesc"];
+	        this.newDesc = source["newDesc"];
+	        this.changed = source["changed"];
+	        this.added = source["added"];
+	        this.removed = source["removed"];
+	    }
+	}
+	
+	
+	export class ToolSnapshot {
+	    collectionId: string;
+	    capturedAt: string;
+	    tools: ToolDefinition[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolSnapshot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collectionId = source["collectionId"];
+	        this.capturedAt = source["capturedAt"];
+	        this.tools = this.convertValues(source["tools"], ToolDefinition);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 

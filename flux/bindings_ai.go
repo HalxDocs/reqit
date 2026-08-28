@@ -280,3 +280,43 @@ func (a *App) ExportMCPServerAgentLens() (*agentlenspkg.ExportResult, error) {
 	scoreResult := agentlenspkg.AnalyzeCollections(colls, dir)
 	return agentlenspkg.ExportMCPServer(dir, colls, scoreResult.Score, 1.0)
 }
+
+// CaptureToolSnapshot saves the current tool definitions for a collection as a
+// snapshot (git-native, per-collection). The file lives at
+// .reqit/agent-lens/snapshots/tools-<collID>.json — git history retains prior
+// versions, so drift is a diff view, not new storage.
+func (a *App) CaptureToolSnapshot(collID string) (*agentlenspkg.ToolSnapshot, error) {
+	if a.collections == nil {
+		return nil, errors.New("no active workspace")
+	}
+	colls, err := a.collections.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	var target *models.Collection
+	for i := range colls {
+		if colls[i].ID == collID {
+			target = &colls[i]
+			break
+		}
+	}
+	if target == nil {
+		return nil, errors.New("collection not found")
+	}
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.CaptureToolSnapshot(dir, *target)
+}
+
+func (a *App) GetToolSnapshot(collID string) (*agentlenspkg.ToolSnapshot, error) {
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.LoadToolSnapshot(dir, collID)
+}
+
+func (a *App) GetPrevToolSnapshot(collID string) (*agentlenspkg.ToolSnapshot, error) {
+	dir, _ := a.workspaces.ActiveDir()
+	return agentlenspkg.LoadPrevToolSnapshot(dir, collID)
+}
+
+func (a *App) DiffToolSnapshots(oldSnap, newSnap *agentlenspkg.ToolSnapshot) []agentlenspkg.ToolDrift {
+	return agentlenspkg.DiffToolSnapshots(oldSnap, newSnap)
+}

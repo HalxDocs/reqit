@@ -46,6 +46,10 @@ export function CancelRequest() {
   return window['go']['main']['App']['CancelRequest']();
 }
 
+export function CaptureToolSnapshot(arg1) {
+  return window['go']['main']['App']['CaptureToolSnapshot'](arg1);
+}
+
 export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
@@ -180,6 +184,10 @@ export function DetectSchemaDrift(arg1) {
 
 export function DiagnoseWithAI(arg1, arg2) {
   return window['go']['main']['App']['DiagnoseWithAI'](arg1, arg2);
+}
+
+export function DiffToolSnapshots(arg1, arg2) {
+  return window['go']['main']['App']['DiffToolSnapshots'](arg1, arg2);
 }
 
 export function DisconnectSocket() {
@@ -510,6 +518,10 @@ export function GetPlugins() {
   return window['go']['main']['App']['GetPlugins']();
 }
 
+export function GetPrevToolSnapshot(arg1) {
+  return window['go']['main']['App']['GetPrevToolSnapshot'](arg1);
+}
+
 export function GetProfile() {
   return window['go']['main']['App']['GetProfile']();
 }
@@ -592,6 +604,10 @@ export function GetTierCategories() {
 
 export function GetTiers() {
   return window['go']['main']['App']['GetTiers']();
+}
+
+export function GetToolSnapshot(arg1) {
+  return window['go']['main']['App']['GetToolSnapshot'](arg1);
 }
 
 export function GetVaultConfig() {

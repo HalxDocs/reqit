@@ -75,7 +75,7 @@ interface Collection {
   requests: any[];
 }
 
-type Tab = "lint" | "eval" | "export";
+type Tab = "lint" | "eval" | "export" | "drift";
 
 function ScoreBadge({ score }: { score: number }) {
   const color =
@@ -128,6 +128,12 @@ export function AgentLensPanel() {
   // Export state
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   const [exporting, setExporting] = useState(false);
+
+  // Drift state — tool snapshot + diff vs previous
+  const [driftSnap, setDriftSnap] = useState<any>(null);
+  const [driftPrev, setDriftPrev] = useState<any>(null);
+  const [drift, setDrift] = useState<any[]>([]);
+  const [driftCapturing, setDriftCapturing] = useState(false);
 
   const loadCollections = useCallback(async () => {
     try {
@@ -197,6 +203,52 @@ export function AgentLensPanel() {
     setExporting(false);
   };
 
+  const captureDrift = async () => {
+    if (!selectedColl) return;
+    setDriftCapturing(true);
+    try {
+      const { CaptureToolSnapshot, GetToolSnapshot, GetPrevToolSnapshot, DiffToolSnapshots } = await import("../../../../wailsjs/go/main/App");
+      await CaptureToolSnapshot(selectedColl);
+      const snap = await GetToolSnapshot(selectedColl);
+      const prev = await (GetPrevToolSnapshot(selectedColl) as Promise<any>).catch(() => null);
+      setDriftSnap(snap);
+      setDriftPrev(prev);
+      if (prev && snap) {
+        const d = await DiffToolSnapshots(prev, snap);
+        setDrift(d as any[]);
+      } else {
+        setDrift([]);
+      }
+      toast.success("Snapshot captured");
+    } catch (e: any) {
+      toast.error(String(e));
+    }
+    setDriftCapturing(false);
+  };
+
+  const loadDrift = useCallback(async () => {
+    if (!selectedColl) return;
+    try {
+      const { GetToolSnapshot, GetPrevToolSnapshot, DiffToolSnapshots } = await import("../../../../wailsjs/go/main/App");
+      const snap = await GetToolSnapshot(selectedColl);
+      const prev = await (GetPrevToolSnapshot(selectedColl) as Promise<any>).catch(() => null);
+      setDriftSnap(snap);
+      setDriftPrev(prev);
+      if (snap && prev) {
+        const d = await DiffToolSnapshots(prev, snap);
+        setDrift(d as any[]);
+      } else {
+        setDrift([]);
+      }
+    } catch {}
+  }, [selectedColl]);
+
+  useEffect(() => {
+    if (tab === "drift" && selectedColl) {
+      loadDrift();
+    }
+  }, [tab, selectedColl, loadDrift]);
+
   const selectedCollName = collections.find((c) => c.id === selectedColl)?.name || "";
 
   return (
@@ -210,7 +262,7 @@ export function AgentLensPanel() {
             <span className="text-[10px] text-subtext bg-surface px-1.5 py-0.5 rounded font-mono">M1-M3</span>
           </div>
           <div className="flex items-center gap-1">
-            {(["lint", "eval", "export"] as Tab[]).map((t) => (
+            {(["lint", "eval", "export", "drift"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -221,7 +273,7 @@ export function AgentLensPanel() {
                     : "bg-surface border border-border text-subtext hover:text-text hover:border-cyan/40"
                 )}
               >
-                {t === "lint" ? "Lint" : t === "eval" ? "Eval" : "Export"}
+                {t === "lint" ? "Lint" : t === "eval" ? "Eval" : t === "export" ? "Export" : "Drift"}
               </button>
             ))}
           </div>
@@ -554,6 +606,102 @@ go mod tidy
 go build -o mcp-server .
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ./mcp-server`}
                 </pre>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Drift Tab — git-native tool description diff */}
+      {tab === "drift" && (
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <div className="shrink-0 px-4 py-3 border-b border-border bg-card/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedColl}
+                onChange={(e) => setSelectedColl(e.target.value)}
+                className="h-[28px] px-2 text-xs bg-surface border border-border rounded text-text"
+              >
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.requests?.length || 0})</option>
+                ))}
+              </select>
+              <button
+                onClick={captureDrift}
+                disabled={driftCapturing || !selectedColl}
+                className="h-[28px] px-3 text-xs font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {driftCapturing ? <RefreshCw size={10} className="animate-spin" /> : <Clock size={10} />}
+                Snapshot
+              </button>
+            </div>
+            <div className="text-[10px] text-subtext">Diff vs previous snapshot + git history</div>
+          </div>
+
+          {!selectedColl ? (
+            <div className="flex-1 flex items-center justify-center text-xs text-subtext p-8">Select a collection to snapshot its tool descriptions.</div>
+          ) : !driftSnap ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
+              <div className="w-12 h-12 rounded-xl bg-cyan/10 border border-cyan/20 flex items-center justify-center">
+                <Clock size={20} className="text-cyan" />
+              </div>
+              <div className="text-xs font-bold text-text">No snapshot yet</div>
+              <div className="text-xs text-subtext max-w-sm">Click Snapshot to capture the current tool descriptions. The next capture will diff against this one — and git history retains every prior snapshot for `git diff`.</div>
+              <button onClick={captureDrift} disabled={driftCapturing} className="h-[28px] px-3 text-xs font-bold rounded-md bg-cyan text-white">
+                {driftCapturing ? "Capturing…" : "Capture now"}
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg border border-border bg-surface">
+                  <div className="text-lg font-bold text-cyan">{driftSnap.tools?.length ?? 0}</div>
+                  <div className="text-[10px] text-subtext">Tools in snapshot</div>
+                  <div className="text-[10px] text-subtext/60">{driftSnap.capturedAt ? new Date(driftSnap.capturedAt).toLocaleString() : ""}</div>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-surface">
+                  <div className="text-lg font-bold text-amber-400">{drift.filter((d: any) => d.changed).length}</div>
+                  <div className="text-[10px] text-subtext">Changed</div>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-surface">
+                  <div className="text-lg font-bold text-green-400">{drift.filter((d: any) => d.added).length} / <span className="text-red-400">{drift.filter((d: any) => d.removed).length}</span></div>
+                  <div className="text-[10px] text-subtext">Added / Removed</div>
+                </div>
+              </div>
+
+              {drift.length === 0 ? (
+                <div className="p-4 rounded-xl border border-border bg-card/50 text-center text-xs text-green-400">No drift — descriptions match the previous snapshot.</div>
+              ) : (
+                <div className="space-y-2">
+                  {drift.map((d: any) => (
+                    <div key={d.toolName} className="rounded-xl border border-border bg-card/50 overflow-hidden">
+                      <div className="px-3 py-2 bg-surface/30 border-b border-border flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-text">{d.toolName}</span>
+                        {d.added && <span className="text-[10px] text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full border border-green-400/20">Added</span>}
+                        {d.removed && <span className="text-[10px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-full border border-red-400/20">Removed</span>}
+                        {d.changed && <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full border border-amber-400/20">Changed</span>}
+                      </div>
+                      <div className="p-3 space-y-2 text-xs">
+                        {d.oldDesc && (
+                          <div>
+                            <div className="text-[10px] text-subtext uppercase tracking-wider">Before</div>
+                            <div className="mt-1 p-2 rounded bg-danger/5 border border-danger/10 text-subtext line-through">{d.oldDesc.slice(0, 400)}</div>
+                          </div>
+                        )}
+                        {d.newDesc && (
+                          <div>
+                            <div className="text-[10px] text-subtext uppercase tracking-wider">After</div>
+                            <div className="mt-1 p-2 rounded bg-green-500/5 border border-green-500/10 text-text">{d.newDesc.slice(0, 400)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="rounded-xl border border-border bg-surface p-3">
+                <div className="text-[10px] font-semibold text-subtext uppercase tracking-wider">Git history</div>
+                <div className="text-xs text-subtext mt-1">Snapshots live at <code className="font-mono bg-bg px-1 rounded">.reqit/agent-lens/snapshots/tools-{selectedColl.slice(0, 8)}.json</code> — every capture is a commit away via <code className="font-mono bg-bg px-1 rounded">git diff</code> or <code className="font-mono bg-bg px-1 rounded">PR Preview → Diff</code>.</div>
               </div>
             </div>
           )}

@@ -43,6 +43,8 @@ export function BuildSOAPEnvelope(arg1:string,arg2:string,arg3:string,arg4:strin
 
 export function CancelRequest():Promise<void>;
 
+export function CaptureToolSnapshot(arg1:string):Promise<agentlens.ToolSnapshot>;
+
 export function CheckForUpdates():Promise<updater.UpdateManifest>;
 
 export function ClearAllCookies():Promise<void>;
@@ -110,6 +112,8 @@ export function DeleteWorkspace(arg1:string):Promise<void>;
 export function DetectSchemaDrift(arg1:string):Promise<schema.Drift>;
 
 export function DiagnoseWithAI(arg1:models.RequestPayload,arg2:models.ResponseResult):Promise<string>;
+
+export function DiffToolSnapshots(arg1:agentlens.ToolSnapshot,arg2:agentlens.ToolSnapshot):Promise<Array<agentlens.ToolDrift>>;
 
 export function DisconnectSocket():Promise<void>;
 
@@ -275,6 +279,8 @@ export function GetMockStatus():Promise<main.MockStatus>;
 
 export function GetPlugins():Promise<Array<plugin.RegisteredPlugin>>;
 
+export function GetPrevToolSnapshot(arg1:string):Promise<agentlens.ToolSnapshot>;
+
 export function GetProfile():Promise<profile.Profile>;
 
 export function GetProxyConfig():Promise<string>;
@@ -316,6 +322,8 @@ export function GetTestSuites():Promise<Array<models.TestSuite>>;
 export function GetTierCategories():Promise<Array<string>>;
 
 export function GetTiers():Promise<string>;
+
+export function GetToolSnapshot(arg1:string):Promise<agentlens.ToolSnapshot>;
 
 export function GetVaultConfig():Promise<string>;
 
