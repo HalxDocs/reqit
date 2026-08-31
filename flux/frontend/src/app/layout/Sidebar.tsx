@@ -49,17 +49,38 @@ function CollapsibleSection({
   label,
   defaultOpen,
   children,
+  persistKey,
 }: {
   label: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
+  persistKey?: string;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
+  const [open, setOpen] = useState(() => {
+    if (persistKey) {
+      try {
+        const v = localStorage.getItem(persistKey);
+        if (v !== null) return v === "1";
+      } catch {}
+    }
+    return defaultOpen ?? false;
+  });
+  const toggle = useCallback(() => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (persistKey) {
+        try {
+          localStorage.setItem(persistKey, next ? "1" : "0");
+        } catch {}
+      }
+      return next;
+    });
+  }, [persistKey]);
   return (
     <div className="px-0.5">
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
         className="w-full h-[30px] px-3 flex items-center gap-1.5 text-11 font-semibold uppercase tracking-wider text-subtext/60 hover:text-subtext transition-colors"
       >
         {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
@@ -214,7 +235,8 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
 
       {/* ===== FIXED TOOLS (ALWAYS VISIBLE) ===== */}
       <div className="border-t border-border shrink-0 max-h-[40vh] overflow-y-auto">
-        <CollapsibleSection label="Tools" defaultOpen={false}>
+        <CollapsibleSection label="Tools" defaultOpen={false} persistKey="flux:toolsCollapsed">
+          <div className="px-3 pt-1 pb-0.5 text-[10px] font-bold text-subtext/50 uppercase tracking-wider">Realtime</div>
           <NavItem
             icon={<Radio size={13} />}
             label="WebSocket"
@@ -228,17 +250,45 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             onClick={() => setView(view === "sse" ? "http" : "sse")}
           />
           <NavItem
+            icon={<Webhook size={13} />}
+            label="Interceptor"
+            active={view === "interceptor"}
+            onClick={() => setView(view === "interceptor" ? "http" : "interceptor")}
+          />
+          <NavItem
             icon={<Zap size={13} />}
             label="Event Inspector"
             active={view === "eventinspector"}
             onClick={() => setView(view === "eventinspector" ? "http" : "eventinspector")}
           />
+          <div className="h-px bg-border/50 my-1 mx-3" />
+          <div className="px-3 pt-0.5 pb-0.5 text-[10px] font-bold text-subtext/50 uppercase tracking-wider">Automation</div>
           <NavItem
             icon={<Clock size={13} />}
             label="Scheduler"
             active={view === "scheduler"}
             onClick={() => setView(view === "scheduler" ? "http" : "scheduler")}
           />
+          <NavItem
+            icon={<Server size={13} />}
+            label="Mock Server"
+            active={view === "mockpanel"}
+            onClick={() => setView(view === "mockpanel" ? "http" : "mockpanel")}
+          />
+          <NavItem
+            icon={<Zap size={13} />}
+            label="Load Test"
+            active={false}
+            onClick={openLoadTest}
+          />
+          <NavItem
+            icon={<ClipboardCheck size={13} />}
+            label="Test Suites"
+            active={false}
+            onClick={openTestSuites}
+          />
+          <div className="h-px bg-border/50 my-1 mx-3" />
+          <div className="px-3 pt-0.5 pb-0.5 text-[10px] font-bold text-subtext/50 uppercase tracking-wider">Protocol</div>
           <NavItem
             icon={<Code2 size={13} />}
             label="GraphQL"
@@ -252,6 +302,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             onClick={() => setView(view === "grpc" ? "http" : "grpc")}
           />
           <NavItem
+            icon={<Plug size={13} />}
+            label="MCP Bridge"
+            active={view === "mcp"}
+            onClick={() => setView(view === "mcp" ? "http" : "mcp")}
+          />
+          <NavItem
             icon={<FileEdit size={13} />}
             label="API Designer"
             active={view === "spec"}
@@ -263,17 +319,19 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             active={view === "docs"}
             onClick={() => setView(view === "docs" ? "http" : "docs")}
           />
+          <div className="h-px bg-border/50 my-1 mx-3" />
+          <div className="px-3 pt-0.5 pb-0.5 text-[10px] font-bold text-subtext/50 uppercase tracking-wider">Platform</div>
+          <NavItem
+            icon={<ScanEye size={13} />}
+            label="Agent Lens"
+            active={view === "agentlens"}
+            onClick={() => setView(view === "agentlens" ? "http" : "agentlens")}
+          />
           <NavItem
             icon={<GitPullRequest size={13} />}
             label="Git & PR Preview"
             active={view === "pr"}
             onClick={() => setView(view === "pr" ? "http" : "pr")}
-          />
-          <NavItem
-            icon={<Webhook size={13} />}
-            label="Interceptor"
-            active={view === "interceptor"}
-            onClick={() => setView(view === "interceptor" ? "http" : "interceptor")}
           />
           <NavItem
             icon={<Shield size={13} />}
@@ -294,46 +352,16 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             onClick={() => setView(view === "migration" ? "http" : "migration")}
           />
           <NavItem
-            icon={<ScanEye size={13} />}
-            label="Agent Lens"
-            active={view === "agentlens"}
-            onClick={() => setView(view === "agentlens" ? "http" : "agentlens")}
-          />
-          <NavItem
-            icon={<Rocket size={13} />}
-            label="Growth"
-            active={view === "growth"}
-            onClick={() => setView(view === "growth" ? "http" : "growth")}
-          />
-          <NavItem
             icon={<Puzzle size={13} />}
             label="Plugins"
             active={view === "plugins"}
             onClick={() => setView(view === "plugins" ? "http" : "plugins")}
           />
           <NavItem
-            icon={<Zap size={13} />}
-            label="Load Test"
-            active={false}
-            onClick={openLoadTest}
-          />
-          <NavItem
-            icon={<ClipboardCheck size={13} />}
-            label="Test Suites"
-            active={false}
-            onClick={openTestSuites}
-          />
-          <NavItem
-            icon={<Server size={13} />}
-            label="Mock Server"
-            active={view === "mockpanel"}
-            onClick={() => setView(view === "mockpanel" ? "http" : "mockpanel")}
-          />
-          <NavItem
-            icon={<Plug size={13} />}
-            label="MCP Bridge"
-            active={view === "mcp"}
-            onClick={() => setView(view === "mcp" ? "http" : "mcp")}
+            icon={<Rocket size={13} />}
+            label="Growth"
+            active={view === "growth"}
+            onClick={() => setView(view === "growth" ? "http" : "growth")}
           />
         </CollapsibleSection>
       </div>

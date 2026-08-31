@@ -490,7 +490,16 @@ export function CollectionsTree() {
       </div>
 
       {collections.length === 0 && !creating && (
-        <div className="px-3 py-2 text-11 text-subtext italic shrink-0">No collections yet.</div>
+        <div className="px-3 py-2 text-11 text-subtext shrink-0">
+          <div className="italic">No collections yet.</div>
+          <button
+            type="button"
+            onClick={() => useUIStore.getState().setView("spec")}
+            className="mt-1 text-11 text-cyan hover:text-cyan-hover underline-offset-2 hover:underline"
+          >
+            Import OpenAPI → API Designer
+          </button>
+        </div>
       )}
 
       {filter && visible.length === 0 && collections.length > 0 && (

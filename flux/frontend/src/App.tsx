@@ -351,8 +351,26 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "env.prevField", label: "Previous Field", category: "Environment", scope: "envEditor", defaultKeys: ["shift+tab"], action: () => dispatchShortcut("env.prevField") },
       { id: "env.addVar", label: "Add Variable", category: "Environment", scope: "envEditor", defaultKeys: ["meta+enter", "ctrl+enter"], action: () => dispatchShortcut("env.addVar") },
       { id: "env.deleteVar", label: "Delete Variable", category: "Environment", scope: "envEditor", defaultKeys: ["meta+backspace", "ctrl+backspace"], action: () => dispatchShortcut("env.deleteVar") },
+
+      { id: "view.http", label: "View: Request", category: "View", scope: "global", defaultKeys: [], action: () => setView("http") },
+      { id: "view.socket", label: "View: WebSocket", category: "View", scope: "global", defaultKeys: [], action: () => setView("socket") },
+      { id: "view.sse", label: "View: SSE Viewer", category: "View", scope: "global", defaultKeys: [], action: () => setView("sse") },
+      { id: "view.eventinspector", label: "View: Event Inspector", category: "View", scope: "global", defaultKeys: [], action: () => setView("eventinspector") },
+      { id: "view.mcp", label: "View: MCP Bridge", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
+      { id: "view.mcptraffic", label: "View: MCP Traffic", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
+      { id: "view.interceptor", label: "View: Interceptor", category: "View", scope: "global", defaultKeys: [], action: () => setView("interceptor") },
+      { id: "view.scheduler", label: "View: Scheduler", category: "View", scope: "global", defaultKeys: [], action: () => setView("scheduler") },
+      { id: "view.graphql", label: "View: GraphQL", category: "View", scope: "global", defaultKeys: [], action: () => setView("graphql") },
+      { id: "view.grpc", label: "View: gRPC", category: "View", scope: "global", defaultKeys: [], action: () => setView("grpc") },
+      { id: "view.spec", label: "View: API Designer", category: "View", scope: "global", defaultKeys: [], action: () => setView("spec") },
+      { id: "view.docs", label: "View: API Reference", category: "View", scope: "global", defaultKeys: [], action: () => setView("docs") },
+      { id: "view.pr", label: "View: Git & PR Preview", category: "View", scope: "global", defaultKeys: [], action: () => setView("pr") },
+      { id: "view.security", label: "View: Security", category: "View", scope: "global", defaultKeys: [], action: () => setView("security") },
+      { id: "view.agentlens", label: "View: Agent Lens", category: "View", scope: "global", defaultKeys: [], action: () => setView("agentlens") },
+      { id: "view.plugins", label: "View: Plugins", category: "View", scope: "global", defaultKeys: [], action: () => setView("plugins") },
+      { id: "view.mockpanel", label: "View: Mock Server", category: "View", scope: "global", defaultKeys: [], action: () => setView("mockpanel") },
     ]);
-  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme, undo, redo, toggleSidebar, openEnvModal, openShortcutsModal, setResponseBodyView]);
+  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme, undo, redo, toggleSidebar, openEnvModal, openShortcutsModal, setResponseBodyView, setView]);
 
   useKeyboardShortcuts();
   useTabSync();

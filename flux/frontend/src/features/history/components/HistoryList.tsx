@@ -457,8 +457,17 @@ export function HistoryList() {
 
       {/* Entry list */}
       {entries.length === 0 ? (
-        <div className="px-3 py-2 text-11 text-subtext italic">
-          {allEntries.length === 0 ? "No history yet." : "No matches."}
+        <div className="px-3 py-2 text-11 text-subtext">
+          <div className="italic">{allEntries.length === 0 ? "No history yet." : "No matches."}</div>
+          {allEntries.length === 0 && (
+            <button
+              type="button"
+              onClick={() => useUIStore.getState().setView("interceptor")}
+              className="mt-1.5 text-11 text-cyan hover:text-cyan-hover underline-offset-2 hover:underline"
+            >
+              Capture browser traffic → Interceptor
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col">
