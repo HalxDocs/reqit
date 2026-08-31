@@ -140,20 +140,23 @@ export function AgentLensPanel() {
       const { GetCollections } = await import("../../../../wailsjs/go/main/App");
       const colls = await GetCollections();
       setCollections(colls || []);
-      if (colls?.length > 0 && !selectedColl) {
-        setSelectedColl(colls[0].id);
+      if (colls?.length > 0) {
+        setSelectedColl((prev) => prev || colls[0].id);
       }
     } catch (e) {
       console.warn("AgentLens: could not load collections:", e);
     }
-  }, [selectedColl]);
+  }, []);
 
   useEffect(() => {
     loadCollections();
   }, [loadCollections]);
 
   const analyze = async () => {
-    if (!selectedColl) return;
+    if (!selectedColl) {
+      toast.error("Select a collection first — or create one in the sidebar.");
+      return;
+    }
     setAnalyzing(true);
     try {
       const { AnalyzeCollectionAgentLens } = await import("../../../../wailsjs/go/main/App");
@@ -311,7 +314,8 @@ export function AgentLensPanel() {
               </select>
               <button
                 onClick={analyze}
-                disabled={analyzing || !selectedColl}
+                disabled={analyzing}
+                title={!selectedColl ? "Select a collection first" : "Score this collection"}
                 className="h-[28px] px-3 text-xs font-bold rounded-md bg-cyan text-white hover:bg-cyan-hover transition-all disabled:opacity-50 flex items-center gap-1.5"
               >
                 {analyzing ? <RefreshCw size={10} className="animate-spin" /> : <Zap size={10} />}
