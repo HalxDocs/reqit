@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
+import { useUIStore } from "@/app/stores/useUIStore";
 import { buildQueryString } from "@/shared/lib/url";
 
 const VAR_PATTERN = /(\{\{\s*[\w.-]+\s*\}\})/g;
@@ -24,23 +25,36 @@ export function UrlPreview() {
     return { fullInput: full, map: m, hasVars: VAR_PATTERN.test(full) };
   }, [url, params, environments, activeID]);
 
-  if (!hasVars) return null;
-
   const segments = fullInput.split(VAR_PATTERN);
+  const showCTA = !hasVars && fullInput.includes("{{");
+
+  if (!hasVars && !fullInput.includes("{{") && !fullInput) return null;
   const unresolvedCount = segments.filter((seg) => {
     const m = seg.match(INNER_PATTERN);
     return m && !map.has(m[1]);
   }).length;
 
+  const openEnvModal = useUIStore((s) => s.openEnvModal);
   return (
     <div className="px-4 py-2 bg-card/50 border-b border-border">
       <div className="text-11 text-subtext mb-1 uppercase font-semibold tracking-wider flex items-center justify-between">
         <span>Preview</span>
-        {unresolvedCount > 0 && (
-          <span className="text-warn normal-case font-mono">
-            {unresolvedCount} unresolved
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {unresolvedCount > 0 && (
+            <span className="text-warn normal-case font-mono">
+              {unresolvedCount} unresolved
+            </span>
+          )}
+          {showCTA && (
+            <button
+              type="button"
+              onClick={() => useUIStore.getState().openEnvModal()}
+              className="text-10 text-cyan hover:text-cyan-hover underline-offset-2 hover:underline normal-case"
+            >
+              No env — Create one
+            </button>
+          )}
+        </div>
       </div>
       <div className="font-mono text-12 break-all">
         {segments.map((seg, i) => {

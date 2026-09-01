@@ -209,6 +209,25 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           autoComplete="off"
           className="relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border border-border rounded-lg focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
         />
+        <button
+          type="button"
+          onClick={() => {
+            const input = document.getElementById("flux-url-bar") as HTMLInputElement | null;
+            if (!input) return;
+            const start = input.selectionStart ?? displayed.length;
+            const end = input.selectionEnd ?? displayed.length;
+            const next = displayed.slice(0, start) + "{{}}" + displayed.slice(end);
+            handleChange(next);
+            requestAnimationFrame(() => {
+              input.focus();
+              input.setSelectionRange(start + 2, start + 2);
+            });
+          }}
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-[24px] px-1.5 bg-surface border border-border rounded text-10 font-mono text-subtext hover:text-text hover:border-cyan/40 flex items-center justify-center"
+          title="Insert variable {{}}"
+        >
+          {"{{}}"}
+        </button>
         {acOpen && suggestions.length > 0 && (
           <div ref={acRef} className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-card border border-border rounded-xl shadow-xl py-1 max-h-[280px] overflow-y-auto">
             {suggestions.map((s, i) => (

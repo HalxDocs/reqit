@@ -34,8 +34,9 @@ export function KeyValueEditor({
   const handleBulkApply = () => {
     const lines = bulkText.trim().split("\n").filter(Boolean);
     for (const line of lines) {
-      const sep = line.includes(":") ? ":" : "\t";
-      const idx = line.indexOf(sep);
+      let idx = line.indexOf("\t");
+      if (idx === -1) idx = line.indexOf("=");
+      if (idx === -1) idx = line.indexOf(":");
       if (idx > 0) {
         const key = line.slice(0, idx).trim();
         const value = line.slice(idx + 1).trim();
@@ -68,7 +69,7 @@ export function KeyValueEditor({
           <textarea
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
-            placeholder={`key: value\nkey2: value2`}
+            placeholder={`key: value\nkey2=value2\nredirect=http://example.com/path`}
             spellCheck={false}
             className="w-full h-[200px] bg-surface border border-border rounded text-12 font-mono text-text p-2 outline-none focus:border-cyan resize-none placeholder:text-tertiary"
           />
@@ -111,6 +112,7 @@ export function KeyValueEditor({
                 onChange={(e) => onUpdate(row.id, { enabled: e.target.checked })}
                 className="accent-blue w-[14px] h-[14px] cursor-pointer"
                 aria-label="Enable row"
+                title="Uncheck to disable without deleting"
               />
               <input
                 type="text"
@@ -157,14 +159,19 @@ export function KeyValueEditor({
               {showTypeToggle && (
                 <button
                   type="button"
-                  onClick={() => onUpdate(row.id, { valueType: row.valueType === "file" ? "text" : "file", value: "" })}
+                  onClick={() => {
+                    if (row.valueType === "file" && row.value) {
+                      if (!confirm(`Switch "${row.value.split("\\").pop()?.split("/").pop()}" from file to text? The file path will be kept as text.`)) return;
+                    }
+                    onUpdate(row.id, { valueType: row.valueType === "file" ? "text" : "file" });
+                  }}
                   className={cn(
                     "flex items-center justify-center gap-1 text-11 transition-colors rounded-sm px-1",
                     row.valueType === "file"
                       ? "text-cyan bg-cyan/10"
                       : "text-subtext hover:text-text",
                   )}
-                  title={row.valueType === "file" ? "Text mode" : "File upload mode"}
+                  title={row.valueType === "file" ? "Text mode (keeps path as text)" : "File upload mode"}
                 >
                   {row.valueType === "file" ? <FileText size={10} /> : <Text size={10} />}
                 </button>

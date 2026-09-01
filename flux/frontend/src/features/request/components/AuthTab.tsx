@@ -80,9 +80,19 @@ export function AuthTab() {
             spellCheck={false} autoComplete="off"
             className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
           />
-          <p className="text-11 text-subtext mt-1">
+          <p className="text-11 text-subtext mt-1 flex items-center gap-2">
             Sent as: <span className="font-mono">Authorization: Bearer ...</span>
+            {authToken.includes(".") && authToken.split(".").length === 3 && (
+              <button type="button" onClick={() => {
+                try {
+                  const parts = authToken.split(".");
+                  const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+                  alert("JWT payload:\n" + JSON.stringify(payload, null, 2));
+                } catch { alert("Not a valid JWT"); }
+              }} className="text-cyan hover:text-cyan-hover underline-offset-2 hover:underline">Decode JWT</button>
+            )}
           </p>
+          <p className="text-10 text-subtext/60">Bearer = OAuth2 JWT; use Token Auth for `Token` header (e.g. GitHub).</p>
         </div>
       )}
 
@@ -91,12 +101,12 @@ export function AuthTab() {
           <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Token</label>
           <input
             type="text" value={authToken} onChange={(e) => setAuthToken(e.target.value)}
-            placeholder="your-api-token"
+            placeholder="ghp_xxxxxxxx or your-api-token"
             spellCheck={false} autoComplete="off"
             className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
           />
           <p className="text-11 text-subtext mt-1">
-            Sent as: <span className="font-mono">Authorization: Token ...</span>
+            Sent as: <span className="font-mono">Authorization: Token ...</span> — for GitHub/legacy `Token` scheme, not `Bearer`.
           </p>
         </div>
       )}
@@ -173,7 +183,7 @@ export function AuthTab() {
             <div className="flex flex-col gap-2">
               <label className="text-11 text-subtext font-semibold uppercase tracking-wider">Value</label>
               <input type="text" value={authKeyValue} onChange={(e) => setAuthKeyValue(e.target.value)}
-                spellCheck={false} autoComplete="off"
+                placeholder="{{api_key}} or abc123" spellCheck={false} autoComplete="off"
                 className="h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors"
               />
             </div>

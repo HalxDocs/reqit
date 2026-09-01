@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState, useRef } from "react";
 import { Check, AlertTriangle, RefreshCw, ChevronRight, ChevronDown } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { cn } from "@/shared/lib/cn";
 import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
 import { JsonEditor } from "@/shared/components/JsonEditor";
@@ -51,6 +52,7 @@ export function BodyTab() {
   const graphqlSchemaError = useRequestStore((s) => s.graphqlSchemaError);
   const setGraphqlSchemaError = useRequestStore((s) => s.setGraphqlSchemaError);
   const url = useRequestStore((s) => s.url);
+  const method = useRequestStore((s) => s.method);
   const headers = useRequestStore((s) => s.headers);
   const authType = useRequestStore((s) => s.authType);
   const authValue = useRequestStore((s) => {
@@ -80,7 +82,13 @@ export function BodyTab() {
     setGraphqlSchemaLoading(true);
     setGraphqlSchemaError("");
     try {
-      const schema = await fetchGraphQLSchema(url, headers, authType, authValue);
+      // Resolve {{var}} in URL, headers, and auth before fetching — otherwise
+      // auth with {{token}} is sent literally and fails.
+      const resolve = useEnvStore.getState().resolve;
+      const resolvedUrl = resolve(url);
+      const resolvedHeaders = headers.map((h) => ({ ...h, value: resolve(h.value) }));
+      const resolvedAuthValue = resolve(authValue);
+      const schema = await fetchGraphQLSchema(resolvedUrl, resolvedHeaders, authType, resolvedAuthValue);
       setGraphqlSchema(schema);
     } catch (err) {
       setGraphqlSchemaError(err instanceof Error ? err.message : "Failed to fetch schema");
@@ -132,9 +140,16 @@ export function BodyTab() {
         ))}
       </div>
 
+      {bodyType !== "none" && method === "GET" && (
+        <div className="px-4 py-2 text-11 text-amber-400 bg-amber-500/10 border-b border-amber-500/20">
+          Body with GET may be ignored by servers — use POST/PUT for bodies.
+        </div>
+      )}
+
       {bodyType === "none" && (
         <div className="px-4 py-6 text-12 text-subtext">
           No body will be sent with this request.
+          <div className="text-11 text-subtext/60 mt-1">Paste JSON here to auto-switch to Raw JSON.</div>
         </div>
       )}
 
@@ -217,6 +232,11 @@ export function BodyTab() {
           {graphqlSchemaError && (
             <div className="px-3 py-2 text-11 text-warn border-t border-border">
               {graphqlSchemaError}
+            </div>
+          )}
+          {graphqlSchema && !graphqlSchemaError && (
+            <div className="px-3 py-2 text-11 text-teal border-t border-border bg-teal/5">
+              Schema loaded — {graphqlSchema.types.length} types
             </div>
           )}
 
