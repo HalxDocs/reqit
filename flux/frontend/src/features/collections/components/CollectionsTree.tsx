@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckSquare, ChevronDown, ChevronRight, Copy,
-  FileCode2, Folder, Lock, Pencil, Plus, Square, Trash2,
+  FileCode2, Folder, FolderPlus, Lock, Pencil, Plus, Square, Trash2,
 } from "lucide-react";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -64,6 +64,7 @@ export function CollectionsTree() {
   const renameCollection = useCollectionStore((s) => s.renameCollection);
   const deleteCollection = useCollectionStore((s) => s.deleteCollection);
   const loadCollections = useCollectionStore((s) => s.load);
+  const addRequest = useCollectionStore((s) => s.addRequest);
   const deleteRequest = useCollectionStore((s) => s.deleteRequest);
   const deleteRequests = useCollectionStore((s) => s.deleteRequests);
   const renameRequest = useCollectionStore((s) => s.renameRequest);
@@ -209,6 +210,21 @@ export function CollectionsTree() {
     if (!t) { setCreating(false); return; }
     await createCollection(t);
     setNewName(""); setCreating(false);
+  };
+
+  const handleCreateFolder = async () => {
+    const folder = prompt("Folder name:");
+    if (folder === null) return;
+    const t = folder.trim().replace(/\//g, "");
+    if (!t) return;
+    if (collections.length === 0) {
+      const coll = await createCollection("New Collection");
+      await addRequest(coll.id, `${t}/New Request`, { method: "GET", url: "", headers: [], params: [], body: "", bodyType: "none" } as any);
+    } else {
+      const target = collections[0];
+      await addRequest(target.id, `${t}/New Request`, { method: "GET", url: "", headers: [], params: [], body: "", bodyType: "none" } as any);
+    }
+    toast.success(`Folder "${t}" created`);
   };
 
   const handleRename = async (id: string) => {
@@ -439,6 +455,11 @@ export function CollectionsTree() {
               <button type="button" onClick={() => setCreating(true)} data-shortcut="sidebar.newFolder"
                 className="flex-1 h-[28px] px-2 flex items-center gap-2 text-12 text-subtext hover:text-cyan hover:bg-cardHover rounded-md border border-dashed border-border hover:border-cyan transition-colors">
                 <Plus size={12} /><span>New collection</span>
+              </button>
+              <button type="button" onClick={handleCreateFolder}
+                className="h-[28px] px-2 flex items-center gap-1 text-11 rounded-md border border-border text-subtext hover:text-cyan hover:border-cyan/40 transition-colors"
+                title="New folder">
+                <FolderPlus size={11} /> Folder
               </button>
               <button type="button" onClick={() => { setSelecting((s) => !s); setSelected(new Set()); }}
                 className={`h-[28px] px-2 flex items-center gap-1 text-11 rounded-md transition-colors ${selecting ? "bg-cyan/10 text-cyan" : "text-subtext hover:text-text hover:bg-cardHover border border-border"}`}

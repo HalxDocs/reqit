@@ -81,12 +81,17 @@ export function HistoryList() {
   const [methods, setMethods] = useState<string[]>([]);
   const [statusCats, setStatusCats] = useState<StatusCategory[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [visibleCount, setVisibleCount] = useState(100);
 
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => setDebouncedSearch(search), 300);
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
   }, [search]);
+
+  useEffect(() => {
+    setVisibleCount(100);
+  }, [methods, statusCats, dateRange, showFavorites, debouncedSearch, sidebarFilter]);
 
   const activeFilterCount =
     (methods.length ? 1 : 0) +
@@ -142,6 +147,21 @@ export function HistoryList() {
     }
     return groups;
   }, [entries, dateRange]);
+
+  const { visibleGroupedEntries, remaining } = useMemo(() => {
+    let total = 0;
+    for (const g of groupedEntries) total += g.entries.length;
+    const remaining = Math.max(0, total - visibleCount);
+    let rendered = 0;
+    const visibleGroups = groupedEntries
+      .map((g) => {
+        const take = Math.max(0, Math.min(g.entries.length, visibleCount - rendered));
+        rendered += take;
+        return { label: g.label, entries: g.entries.slice(0, take) };
+      })
+      .filter((g) => g.entries.length > 0);
+    return { visibleGroupedEntries: visibleGroups, remaining };
+  }, [groupedEntries, visibleCount]);
 
   const handleLoad = (payload: { url: string; method: string }) => {
     const decoded = decodePayload(payload);
@@ -471,14 +491,14 @@ export function HistoryList() {
         </div>
       ) : (
         <div className="flex flex-col">
-          {groupedEntries.map((group) => (
+          {visibleGroupedEntries.map((group) => (
             <div key={group.label}>
               {group.label && (
                 <div className="sticky top-0 z-10 px-3 py-1 text-9 text-tertiary uppercase tracking-wider bg-sidebar/90 backdrop-blur-sm">
                   {group.label} ({group.entries.length})
                 </div>
               )}
-              {group.entries.slice(0, 100).map((e) => {
+              {group.entries.map((e) => {
                 const code = e.response?.statusCode || 0;
                 return (
                   <button
@@ -516,6 +536,15 @@ export function HistoryList() {
               })}
             </div>
           ))}
+          {remaining > 0 && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((n) => n + 100)}
+              className="mx-3 mt-2 h-[28px] px-3 text-11 text-cyan hover:text-cyan-hover border border-border rounded-md bg-surface hover:bg-cardHover transition-colors self-start"
+            >
+              Show {Math.min(100, remaining)} more ({remaining} remaining)
+            </button>
+          )}
         </div>
       )}
     </div>
