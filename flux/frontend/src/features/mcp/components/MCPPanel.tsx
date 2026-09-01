@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Copy, Check, Terminal, Globe, Plug, RefreshCw, Play, Square, ExternalLink, Boxes, Activity, Trash2, Search, Clock } from "lucide-react";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/shared/lib/cn";
 
 type MCPStatus = {
@@ -21,6 +22,7 @@ export function MCPPanel() {
   const [traffic, setTraffic] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
+  const debouncedFilter = useDebounce(filter, 200);
 
   const refresh = useCallback(async () => {
     try {
@@ -271,7 +273,7 @@ export function MCPPanel() {
           {/* List */}
           <div className="w-[38%] border-r border-border flex flex-col min-h-0">
             <div className="px-3 py-2 border-b border-border bg-surface/30 text-[10px] font-semibold text-subtext uppercase tracking-wider flex items-center justify-between">
-              <span>Frames — {traffic.filter((e: any) => !filter || `${e.method} ${e.toolName} ${e.raw}`.toLowerCase().includes(filter.toLowerCase())).length} / {traffic.length}</span>
+              <span>Frames — {traffic.filter((e: any) => !debouncedFilter || `${e.method} ${e.toolName} ${e.raw}`.toLowerCase().includes(debouncedFilter.toLowerCase())).length} / {traffic.length}</span>
               <span className="text-[10px] text-subtext/60">live • 1s poll</span>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -282,7 +284,7 @@ export function MCPPanel() {
                 </div>
               ) : (
                 traffic
-                  .filter((e: any) => !filter || `${e.method} ${e.toolName} ${e.raw}`.toLowerCase().includes(filter.toLowerCase()))
+                  .filter((e: any) => !debouncedFilter || `${e.method} ${e.toolName} ${e.raw}`.toLowerCase().includes(debouncedFilter.toLowerCase()))
                   .map((e: any) => {
                     const isError = e.status === "error";
                     const badge =

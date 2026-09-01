@@ -4,6 +4,7 @@ import { useSocketStore } from "@/features/websocket/stores/useSocketStore";
 import { useSocketHistoryStore } from "@/features/websocket/stores/useSocketHistoryStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/shared/lib/cn";
 
 const PROTOCOLS = [
@@ -40,19 +41,20 @@ export function SocketPanel() {
   const [clientCert, setClientCert] = useState("");
   const [clientKey, setClientKey] = useState("");
   const [msgSearch, setMsgSearch] = useState("");
+  const debouncedSearch = useDebounce(msgSearch, 200);
   const logEnd = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const filteredMessages = useMemo(() => {
-    if (!msgSearch.trim()) return messages;
-    const q = msgSearch.toLowerCase();
+    if (!debouncedSearch.trim()) return messages;
+    const q = debouncedSearch.toLowerCase();
     return messages.filter(
       (m) =>
         m.body.toLowerCase().includes(q) ||
         m.direction.toLowerCase().includes(q) ||
         (m.eventType && m.eventType.toLowerCase().includes(q)),
     );
-  }, [messages, msgSearch]);
+  }, [messages, debouncedSearch]);
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => { void loadHistory(); }, [loadHistory]);

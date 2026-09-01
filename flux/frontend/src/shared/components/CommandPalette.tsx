@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCommands, getActiveScope, type Command } from "@/shared/lib/commands";
+import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
+import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
+import { useEnvStore } from "@/features/env/stores/useEnvStore";
+import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
+import { useUIStore } from "@/app/stores/useUIStore";
 import { cn } from "@/shared/lib/cn";
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -10,6 +15,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const commands = useMemo(() => getCommands(), []);
+
+  const collections = useCollectionStore((s) => s.collections);
+  const historyEntries = useHistoryStore((s) => s.entries);
+  const envs = useEnvStore((s) => s.environments);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -25,6 +34,20 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         c.id.toLowerCase().includes(q),
     );
   }, [commands, query]);
+
+  const searchHits = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    if (q.length < 2) return { cols: [] as typeof collections, hist: [] as typeof historyEntries, envHits: [] as typeof envs };
+    const cols = collections
+      .flatMap((c) => c.requests.map((r) => ({ col: c, req: r })))
+      .filter(({ req }) => req.name.toLowerCase().includes(q) || req.payload.url.toLowerCase().includes(q))
+      .slice(0, 5);
+    const hist = historyEntries
+      .filter((h) => h.payload.url.toLowerCase().includes(q) || h.payload.method.toLowerCase().includes(q))
+      .slice(0, 5);
+    const envHits = envs.filter((e) => e.name.toLowerCase().includes(q) || e.vars.some((v) => v.key.toLowerCase().includes(q))).slice(0, 3);
+    return { cols, hist, envHits };
+  }, [query, collections, historyEntries, envs]);
 
   useEffect(() => {
     if (open) {
@@ -120,6 +143,74 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               </span>
             </button>
           ))}
+          {query.trim().length >= 2 && (searchHits.cols.length > 0 || searchHits.hist.length > 0 || searchHits.envHits.length > 0) && (
+            <div className="border-t border-border mt-1 pt-1">
+              {searchHits.cols.length > 0 && (
+                <>
+                  <div className="px-4 py-1 text-10 text-tertiary uppercase tracking-wider">Collections</div>
+                  {searchHits.cols.map(({ col, req }) => (
+                    <button
+                      key={req.id}
+                      type="button"
+                      onClick={() => {
+                        const { newTab } = useTabsStore.getState();
+                        // @ts-ignore — payload shape matches RequestState
+                        newTab({ title: req.name, request: req.payload as any, response: null });
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-card/50"
+                    >
+                      <span className="text-10 text-cyan font-mono w-[40px] shrink-0">{req.payload.method}</span>
+                      <span className="flex-1 text-12 text-text truncate">{req.name} — {req.payload.url.slice(0, 60)}</span>
+                      <span className="text-10 text-tertiary truncate">{col.name}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {searchHits.hist.length > 0 && (
+                <>
+                  <div className="px-4 py-1 text-10 text-tertiary uppercase tracking-wider">History</div>
+                  {searchHits.hist.map((h) => (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => {
+                        const { newTab } = useTabsStore.getState();
+                        const { decodePayload } = require("@/shared/lib/loadPayload");
+                        const decoded = decodePayload(h.payload);
+                        newTab({ title: h.payload.url || "History", request: decoded as any, response: null });
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-card/50"
+                    >
+                      <span className="text-10 text-cyan font-mono w-[40px] shrink-0">{h.payload.method}</span>
+                      <span className="flex-1 text-12 text-text truncate">{h.payload.url.slice(0, 60)}</span>
+                      <span className="text-10 text-tertiary">{h.response?.statusCode || "—"}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {searchHits.envHits.length > 0 && (
+                <>
+                  <div className="px-4 py-1 text-10 text-tertiary uppercase tracking-wider">Environments</div>
+                  {searchHits.envHits.map((e) => (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => {
+                        const { openEnvModal } = useUIStore.getState();
+                        openEnvModal();
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-card/50"
+                    >
+                      <span className="flex-1 text-12 text-text truncate">{e.name} — {e.vars.slice(0, 2).map((v: any) => v.key).join(", ")}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
