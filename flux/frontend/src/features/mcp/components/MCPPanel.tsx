@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Copy, Check, Terminal, Globe, Plug, RefreshCw, Play, Square, ExternalLink, Boxes, Activity, Trash2, Search, Clock } from "lucide-react";
+import { PanelHeader } from "@/shared/components/PanelHeader";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/shared/lib/cn";
 
@@ -101,21 +102,23 @@ export function MCPPanel() {
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-bg">
       {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-border bg-card/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Plug size={16} className="text-cyan" />
-          <h2 className="text-sm font-bold text-text">MCP Bridge</h2>
-          <span className="text-[10px] text-subtext bg-surface px-1.5 py-0.5 rounded font-mono">OpenCode</span>
-          {status && (
-            <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-bold", status.running ? "text-green-400 bg-green-400/10 border-green-400/20" : "text-subtext bg-surface border-border")}>
-              {status.running ? `● HTTP :${status.port}` : "● HTTP stopped"}
-            </span>
-          )}
-        </div>
-        <button onClick={refresh} className="h-[28px] px-3 text-xs rounded-md bg-surface border border-border text-subtext hover:text-text flex items-center gap-1.5">
-          <RefreshCw size={12} /> Refresh
-        </button>
-      </div>
+      <PanelHeader
+        title="MCP Bridge"
+        statusDot={status?.running ? "green" : "gray"}
+        actions={
+          <>
+            <span className="text-[10px] text-subtext bg-surface px-1.5 py-0.5 rounded font-mono">OpenCode</span>
+            {status && (
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-bold", status.running ? "text-green-400 bg-green-400/10 border-green-400/20" : "text-subtext bg-surface border-border")}>
+                {status.running ? `● HTTP :${status.port}` : "● HTTP stopped"}
+              </span>
+            )}
+            <button onClick={refresh} className="h-[28px] px-3 text-xs rounded-md bg-surface border border-border text-subtext hover:text-text flex items-center gap-1.5">
+              <RefreshCw size={12} /> Refresh
+            </button>
+          </>
+        }
+      />
 
       {/* Tabs — Overview | Traffic Inspector (Wireshark for MCP) */}
       <div className="shrink-0 px-4 py-2 border-b border-border bg-card/30 flex items-center gap-2">

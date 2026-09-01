@@ -89,7 +89,7 @@ function E2EETab({ onMsg }: { onMsg: (m: string) => void }) {
   return (
     <div className="space-y-4 max-w-lg">
       <div className="flex items-center gap-3">
-        <span className="inline-block w-3 h-3 rounded-full bg-${hasKey ? 'green' : 'gray'}-500" />
+        <span className={cn("inline-block w-3 h-3 rounded-full", hasKey ? "bg-success" : "bg-tertiary")} />
         <span className="text-13 text-text">{hasKey ? "Encryption key is set" : "No encryption key"}</span>
       </div>
       <p className="text-12 text-subtext">AES-256-GCM encryption with keys stored in your OS keychain. Encrypts collections and environments at rest.</p>
