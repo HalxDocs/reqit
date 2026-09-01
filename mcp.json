@@ -1,9 +1,10 @@
 {
+  "_comment": "Windows: C:/.../reqit.exe | Linux (Fedora): ./flux/build/bin/reqit — build with `go build -o flux/build/bin/reqit .` in flux/",
   "mcpServers": {
     "reqit": {
-      "command": "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe",
+      "command": "./flux/build/bin/reqit",
       "args": ["mcp"],
-      "cwd": "C:/Users/USER/Desktop/falkam/flux",
+      "cwd": ".",
       "env": {}
     }
   }

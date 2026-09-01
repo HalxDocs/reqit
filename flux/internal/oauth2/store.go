@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/zalando/go-keyring"
+	keyring "flux/internal/keyring"
 )
 
 // keyringService namespaces this app's entries in the OS keychain

@@ -18,7 +18,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/zalando/go-keyring"
+
+	keyring "flux/internal/keyring"
 )
 
 const keyringSvc = "flux-git"

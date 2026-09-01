@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 
 	"flux/internal/mcp"
@@ -145,8 +148,16 @@ func getMCPExePath() (string, error) {
 }
 
 func getExecutablePath() (string, error) {
-	// Avoid importing os/exec here; use a simple fallback
-	return "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", nil
+	exe, err := os.Executable()
+	if err == nil && exe != "" {
+		// Return the actual binary path — works on Windows (.exe), Linux, macOS
+		return exe, nil
+	}
+	// Fallback: relative path that works when running via `go run` or `wails dev`
+	if runtime.GOOS == "windows" {
+		return filepath.Join("build", "bin", "reqit.exe"), nil
+	}
+	return filepath.Join("build", "bin", "reqit"), nil
 }
 
 func mcpToolNames() []string {

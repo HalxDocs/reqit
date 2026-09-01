@@ -86,7 +86,9 @@ export function MCPPanel() {
     setBusy(false);
   };
 
-  const stdioCmd = status?.stdioCommand || "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe mcp";
+  const isWindows = typeof navigator !== "undefined" && navigator.platform.toLowerCase().includes("win");
+  const defaultExe = isWindows ? "reqit.exe" : "reqit";
+  const stdioCmd = status?.stdioCommand || `${defaultExe} mcp`;
   const httpUrl = status?.httpUrl || `http://127.0.0.1:${portInput}/mcp`;
   const opencodeJson = JSON.stringify(
     {

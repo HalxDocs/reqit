@@ -1,7 +1,8 @@
 {
+  "_comment": "Windows: ./build/bin/reqit.exe | Linux (Fedora): ./build/bin/reqit — build with `go build -o build/bin/reqit .`",
   "mcpServers": {
     "reqit": {
-      "command": "./build/bin/reqit.exe",
+      "command": "./build/bin/reqit",
       "args": ["mcp"],
       "cwd": "."
     }

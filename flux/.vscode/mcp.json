@@ -1,9 +1,10 @@
 {
+  "_comment": "Windows: ./build/bin/reqit.exe | Linux: ./build/bin/reqit",
   "servers": {
     "reqit": {
-      "command": "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe",
+      "command": "./build/bin/reqit",
       "args": ["mcp"],
-      "cwd": "C:/Users/USER/Desktop/falkam/flux",
+      "cwd": ".",
       "type": "stdio"
     }
   }

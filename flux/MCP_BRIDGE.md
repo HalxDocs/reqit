@@ -59,19 +59,20 @@ All files are already generated in this repo. Copy the one your AI reads:
 
 | AI | File to use / copy to | Type |
 |---|---|---|
-| **OpenCode** | `C:\Users\USER\Desktop\falkam\opencode.json` or `flux/opencode.json` | `local` (`C:/.../reqit.exe mcp`) |
+| **OpenCode** | `opencode.json` or `flux/opencode.json` | `local` (`reqit mcp`) |
 | **Generic** | `mcp.json` (repo root) or `flux/mcp.json` | `mcpServers.reqit` |
 | **VS Code** | `.vscode/mcp.json` and `flux/.vscode/mcp.json` | `servers.reqit` |
 | **Cursor** | `.cursor/mcp.json` and `flux/.cursor/mcp.json` | `mcpServers.reqit` |
-| **Claude Desktop** | `claude_desktop_config.json.example` → `%APPDATA%\Claude\claude_desktop_config.json` | `mcpServers` |
-| **Claude Code** | `claude mcp add reqit -- C:/.../flux/build/bin/reqit.exe mcp` | CLI |
+| **Claude Desktop** | `claude_desktop_config.json.example` → `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/.config/Claude/claude_desktop_config.json` (Linux) | `mcpServers` |
+| **Claude Code** | `claude mcp add reqit -- ./flux/build/bin/reqit mcp` (Linux) or `C:/.../reqit.exe mcp` (Windows) | CLI |
 
 **Stdio (local binary, recommended for OpenCode/Claude/Cursor/VS Code):**
 
-`opencode.json` / `mcp.json` / `.vscode/mcp.json` all contain:
+`opencode.json` / `mcp.json` / `.vscode/mcp.json` all contain (Windows `reqit.exe`, Linux `reqit`):
 ```json
-{ "mcpServers": { "reqit": { "command": "C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", "args": ["mcp"], "cwd": "C:/Users/USER/Desktop/falkam/flux" } } }
+{ "mcpServers": { "reqit": { "command": "./flux/build/bin/reqit", "args": ["mcp"], "cwd": "." } } }
 ```
+On Fedora Linux: build with `go build -o flux/build/bin/reqit .` (no `.exe`), ensure `chmod +x`.
 
 **HTTP (remote, no spawn — for ChatGPT, remote OpenCode, `curl`):**
 
@@ -87,6 +88,13 @@ Verify any agent with:
 → tools/call opencode_ping {}
 ← "reqit MCP ✓ workspace: ... tools: 24"
 ```
+
+## Fedora / Linux notes
+
+- **Deps:** `sudo dnf install webkit2gtk4.1 libsecret gnome-keyring` (for `go-keyring` SecretService) or rely on the new file fallback at `~/.config/flux/keyring-fallback.json` (0600) if SecretService is unavailable.
+- **Browser:** OAuth `xdg-open` now falls back to `gio open` / `sensible-browser` for Wayland.
+- **Binary:** `flux/build/bin/reqit` (no `.exe`), `chmod +x` after `go build`.
+- **MCP config:** use `./flux/build/bin/reqit` (not `.exe`) in JSON; `cwd` is `"."` at repo root.
 
 ## Tools (24 total)
 

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/zalando/go-keyring"
+	keyring "flux/internal/keyring"
 )
 
 const keyringSvc = "reqit-ai"

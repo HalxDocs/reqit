@@ -13,28 +13,48 @@ var openURLFn = func(cmd *exec.Cmd) error { return cmd.Start() }
 // OpenURL opens rawURL in the user's OS default browser:
 //   - macOS:     open
 //   - Windows:   rundll32 url.dll,FileProtocolHandler
-//   - Linux/BSD: xdg-open
+//   - Linux/BSD: xdg-open (with gio open / sensible-browser fallback for
+//     minimal Fedora installs or Wayland where xdg-open may not be present)
 //
 // In the Wails app the frontend uses BrowserOpenURL (the primary path); this
 // is the engine-level fallback so interactive flows work headlessly and are
 // testable. The launcher is spawned without waiting — browsers detach.
 func OpenURL(rawURL string) error {
-	name, args := openCommand(rawURL)
-	cmd := exec.Command(name, args...) //nolint:gosec — args is the user/engine-built URL
-	if err := openURLFn(cmd); err != nil {
-		return fmt.Errorf("oauth2: open %s with %s: %w", rawURL, name, err)
+	tryCommands := openCommands(rawURL)
+	var lastErr error
+	for _, c := range tryCommands {
+		cmd := exec.Command(c[0], c[1:]...) //nolint:gosec — args is the user/engine-built URL
+		if err := openURLFn(cmd); err == nil {
+			return nil
+		} else {
+			lastErr = err
+		}
 	}
-	return nil
+	return fmt.Errorf("oauth2: open %s: %w (tried %v)", rawURL, lastErr, tryCommands)
 }
 
-// openCommand returns the OS-specific launcher and its arguments for a URL.
+// openCommand returns the primary OS-specific launcher for a URL (kept for
+// tests that stub openURLFn).
 func openCommand(rawURL string) (string, []string) {
+	cmds := openCommands(rawURL)
+	return cmds[0][0], cmds[0][1:]
+}
+
+// openCommands returns the ordered list of launchers to try on this OS.
+// On Linux we try xdg-open, then gio open, then sensible-browser for
+// Fedora minimal / Wayland fallbacks.
+func openCommands(rawURL string) [][]string {
 	switch runtime.GOOS {
 	case "darwin":
-		return "open", []string{rawURL}
+		return [][]string{{"open", rawURL}}
 	case "windows":
-		return "rundll32", []string{"url.dll,FileProtocolHandler", rawURL}
+		return [][]string{{"rundll32", "url.dll,FileProtocolHandler", rawURL}}
 	default:
-		return "xdg-open", []string{rawURL}
+		return [][]string{
+			{"xdg-open", rawURL},
+			{"gio", "open", rawURL},
+			{"sensible-browser", rawURL},
+			{"x-www-browser", rawURL},
+		}
 	}
 }

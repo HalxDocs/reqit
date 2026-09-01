@@ -11,7 +11,8 @@ import (
 	"io"
 
 	"golang.org/x/crypto/argon2"
-	"github.com/zalando/go-keyring"
+
+	keyring "flux/internal/keyring"
 )
 
 const keyringSvc = "flux-crypto"

@@ -1,9 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "_comment": "Windows: ./build/bin/reqit.exe | Linux: ./build/bin/reqit",
   "mcp": {
     "reqit": {
       "type": "local",
-      "command": ["./build/bin/reqit.exe", "mcp"],
+      "command": ["./build/bin/reqit", "mcp"],
       "enabled": true
     },
     "reqit-http": {

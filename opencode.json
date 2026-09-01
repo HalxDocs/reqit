@@ -1,9 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "_comment": "Windows: C:/.../reqit.exe | Linux (Fedora): ./flux/build/bin/reqit — build with `go build -o flux/build/bin/reqit .`",
   "mcp": {
     "reqit": {
       "type": "local",
-      "command": ["C:/Users/USER/Desktop/falkam/flux/build/bin/reqit.exe", "mcp"],
+      "command": ["./flux/build/bin/reqit", "mcp"],
       "enabled": true
     },
     "reqit-http": {

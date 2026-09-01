@@ -3,7 +3,7 @@ package eventinspector
 import (
 	"errors"
 
-	"github.com/zalando/go-keyring"
+	keyring "flux/internal/keyring"
 )
 
 const keyringSvc = "flux-eventinspector"
