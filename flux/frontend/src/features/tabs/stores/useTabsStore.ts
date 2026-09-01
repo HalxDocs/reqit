@@ -3,6 +3,7 @@ import type { RequestState, ResponseResult } from "@/features/request/types/requ
 import { uid } from "@/shared/lib/id";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
+import { showConfirm } from "@/shared/components/ConfirmModal";
 
 export interface Tab {
   id: string;
@@ -114,6 +115,15 @@ export function deriveTitle(state: RequestState, fallback?: string): string {
   }
 }
 
+function isDirtyTab(tab: Tab, liveState: RequestState, liveResponse: ResponseResult | null): boolean {
+  if (tab.savedRequestID) {
+    // Saved tabs: dirty if any field differs from the saved snapshot.
+    return JSON.stringify(tab.request) !== JSON.stringify(liveState) || JSON.stringify(tab.response) !== JSON.stringify(liveResponse);
+  }
+  // Unsaved tabs: dirty if they have meaningful content (URL or body)
+  return !!(liveState.url.trim() || liveState.bodyRaw.trim() || liveState.bodyForm.some((f) => f.key || f.value));
+}
+
 type TabsStore = {
   tabs: Tab[];
   activeID: string;
@@ -121,7 +131,7 @@ type TabsStore = {
   hydrate: () => void;
   newTab: (overrides?: Partial<Tab>) => Tab;
   setActive: (id: string) => void;
-  closeTab: (id: string) => void;
+  closeTab: (id: string) => Promise<void>;
   togglePin: (id: string) => void;
   updateActiveTitle: () => void;
   syncFromActiveStores: () => void;
@@ -207,12 +217,28 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
     });
   },
 
-  closeTab: (id) => {
+  closeTab: async (id) => {
     const tabs = get().tabs;
+    const target = tabs.find((t) => t.id === id);
+    if (target) {
+      const liveState = target.id === get().activeID ? pickRequestState() : target.request;
+      const liveResponse = target.id === get().activeID ? useResponseStore.getState().response : target.response;
+      if (isDirtyTab(target, liveState, liveResponse)) {
+        const ok = await showConfirm({
+          title: "Close tab?",
+          message: `"${target.title}" has unsaved changes. Close without saving?`,
+          confirmLabel: "Close",
+          cancelLabel: "Keep",
+          variant: "danger",
+        });
+        if (!ok) return;
+      }
+    }
     if (tabs.length === 1) {
-      // Close the last tab — show empty state until a new tab is created.
-      set({ tabs: [], activeID: "" });
-      persist({ tabs: [], activeID: "" });
+      // Keep at least one tab — reset to a fresh untitled tab instead of empty state.
+      const fresh = newTab();
+      set({ tabs: [fresh], activeID: fresh.id });
+      persist({ tabs: [fresh], activeID: fresh.id });
       useRequestStore.getState().reset();
       useResponseStore.setState({ response: null, isLoading: false, startedAt: null });
       return;
@@ -257,7 +283,7 @@ export const useTabsStore = create<TabsStore>((set, get) => ({
               request: reqState,
               response,
               title: t.savedRequestID ? t.title : deriveTitle(reqState, t.title === "Untitled" ? undefined : undefined),
-              dirty: t.savedRequestID ? true : t.dirty,
+              dirty: isDirtyTab(t, reqState, response),
             }
           : t,
       ),

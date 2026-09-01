@@ -8,6 +8,7 @@ import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
 import { MethodSelect } from "@/shared/components/MethodSelect";
 import { buildQueryString, parseQueryString, splitUrl } from "@/shared/lib/url";
 import { uid } from "@/shared/lib/id";
+import { InlineAlert } from "@/shared/components/InlineAlert";
 import { CancelRequest, StartMockServer, StopMockServer, GetMockStatus, ToggleMockRecording, SetActiveEnvironment } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { useToastStore } from "@/app/stores/useToastStore";
@@ -20,6 +21,22 @@ import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
 
 const DEFAULT_PORT = 4321;
+
+function isValidUrl(url: string): boolean {
+  if (!url.trim()) return true;
+  if (url.includes("{{")) return true;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    try {
+      new URL(url, "http://localhost");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
 
 export function UrlBar({ onSend }: { onSend?: () => void }) {
   const method = useRequestStore((s) => s.method);
@@ -207,7 +224,12 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           }}
           spellCheck={false}
           autoComplete="off"
-          className="relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border border-border rounded-lg focus:border-cyan focus:ring-2 focus:ring-cyan/30 transition-all"
+          className={cn(
+            "relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border rounded-lg focus:ring-2 transition-all",
+            !isValidUrl(displayed) && displayed.trim() && !displayed.includes("{{")
+              ? "border-danger focus:border-danger focus:ring-danger/30"
+              : "border-border focus:border-cyan focus:ring-cyan/30"
+          )}
         />
         <button
           type="button"
@@ -377,6 +399,11 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           </button>
         )}
       </div>
+      {!isValidUrl(displayed) && displayed.trim() && !displayed.includes("{{") && (
+        <div className="px-4 pb-2">
+          <InlineAlert variant="error">Invalid URL — check for typos like `htt://` or missing `https://`.</InlineAlert>
+        </div>
+      )}
     </div>
   );
 }

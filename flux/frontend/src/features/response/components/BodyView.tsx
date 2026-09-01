@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect, useState } from "react";
-import { Download, Copy, FileJson, Save } from "lucide-react";
+import { Download, Copy, FileJson, Save, Check, AlertTriangle, RefreshCw, ChevronRight, ChevronDown } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
@@ -39,6 +39,10 @@ export function BodyView({
   const isImage = kind2 === "image";
   const isBinary = kind2 === "binary" && kind !== "json" && kind !== "xml" && kind !== "html";
 
+  const LARGE_BODY_THRESHOLD = 500 * 1024;
+  const isLargeBody = body.length > LARGE_BODY_THRESHOLD;
+  const [showFullLarge, setShowFullLarge] = useState(false);
+
   const parsedJson = useMemo(() => {
     if (bodyView !== "tree" || kind !== "json") return null;
     try {
@@ -48,12 +52,24 @@ export function BodyView({
     }
   }, [body, bodyView, kind]);
 
-  let value: string;
+  let rawValue: string;
   if (isImage || isBinary) {
-    value = bodyView === "hex" ? toHex(body) : bodyView === "raw" ? body : body;
+    rawValue = bodyView === "hex" ? toHex(body) : bodyView === "raw" ? body : body;
   } else {
-    value = bodyView === "pretty" && ok ? pretty : body;
-    if (bodyView === "hex") value = toHex(body);
+    rawValue = bodyView === "pretty" && ok ? pretty : body;
+    if (bodyView === "hex") rawValue = toHex(body);
+  }
+  // For large bodies, truncate unless the user explicitly expands
+  let value: string;
+  if (isLargeBody && !showFullLarge && bodyView !== "tree" && !isImage) {
+    const lines = rawValue.split("\n");
+    if (lines.length > 1000) {
+      value = lines.slice(0, 1000).join("\n") + `\n... (truncated, ${lines.length - 1000} more lines — click "Show full" above)`;
+    } else {
+      value = rawValue.slice(0, LARGE_BODY_THRESHOLD) + `\n... (truncated — click "Show full" above)`;
+    }
+  } else {
+    value = rawValue;
   }
 
   const cmExtensions = useMemo(() => {
@@ -249,6 +265,14 @@ export function BodyView({
         <CopyButton text={body} />
       </div>
 
+      {isLargeBody && !showFullLarge && (
+        <div className="px-3 py-2 bg-warn/10 border-b border-warn/20 flex items-center gap-2 text-11">
+          <AlertTriangle size={12} className="text-warn shrink-0" />
+          <span className="text-warn">Response is {(body.length / 1024).toFixed(1)}KB — Pretty view may be slow.</span>
+          <button onClick={() => setShowFullLarge(true)} className="ml-auto text-cyan hover:text-cyan-hover underline text-11">Show full</button>
+          <button onClick={() => setBodyView("raw")} className="text-subtext hover:text-text text-11">View raw</button>
+        </div>
+      )}
       <div className="flex-1 min-h-0 relative" onContextMenu={handleBodyCtx}>
         <div className="absolute inset-0 overflow-auto">
         {isImage ? (
