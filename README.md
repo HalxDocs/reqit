@@ -10,6 +10,8 @@
   <a href="https://github.com/HalxDocs/reqit/releases/latest"><img src="https://img.shields.io/badge/startup-%3C400ms-0891B2?style=flat-square" alt="Startup < 400ms" /></a>
   <a href="#"><img src="https://img.shields.io/badge/telemetry-zero-6B7280?style=flat-square" alt="Zero telemetry" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5B9CF6?style=flat-square" alt="MIT License" /></a>
+  <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/code%20of%20conduct-Contributor%20Covenant-5B9CF6?style=flat-square" alt="Code of Conduct" /></a>
+  <a href="SECURITY.md"><img src="https://img.shields.io/badge/security-policy-3FB950?style=flat-square" alt="Security Policy" /></a>
   <a href="https://github.com/HalxDocs/reqit/stargazers"><img src="https://img.shields.io/github/stars/HalxDocs/reqit?style=flat-square&label=stars" alt="GitHub Stars" /></a>
   <a href="https://github.com/HalxDocs/reqit/releases/latest"><img src="https://img.shields.io/github/downloads/HalxDocs/reqit/total?style=flat-square&label=downloads" alt="GitHub Downloads" /></a>
 </p>
@@ -52,6 +54,15 @@ sudo apt install libwebkit2gtk-4.1-0
 **Ubuntu 22.04 and earlier** (legacy):
 ```bash
 sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
+```
+
+**Fedora 40+** (and other RPM distros):
+```bash
+sudo dnf install webkit2gtk4.1 libsecret gnome-keyring
+# If you run a minimal install without Secret Service, reqit falls back to
+# ~/.config/flux/keyring-fallback.json (0600) — no extra setup, but
+# consider installing gnome-keyring for stronger isolation.
+# OAuth browser fallback on Wayland: xdg-open → gio open → sensible-browser
 ```
 
 ---
@@ -166,9 +177,23 @@ sudo apt install libwebkit2gtk-4.0-37 libjavascriptcoregtk-4.0-18
 | Response formatting | Collapsible JSON tree view, Pretty/Raw/Tree toggle (Ctrl+Shift+R), lazy expansion for large payloads |
 | Dev profiles | Publish your developer profile to `reqit.dev/:username` with skills, projects, badges, and GitHub activity |
 | reqit AI | BYOK error intelligence — paste an error, get diagnosis and generated assertions (requires your own API key) |
-| MCP Server | Model Context Protocol server for AI agent integration — collections, environments, history, mock server |
-| Agent Lens | Agent-readiness mapper, linter, and export — score your API collections for AI consumption |
+| MCP Server | Model Context Protocol server for AI agent integration — 24 tools, stdio + Streamable HTTP/SSE, universal configs (OpenCode/Claude/Cursor/VS Code) — see `flux/MCP_BRIDGE.md` |
+| MCP Traffic Inspector | Wireshark for your MCP server — live JSON-RPC frames, latency, tool names, params/result pretty-printed via `BodyView` |
+| Agent Lens | Agent-readiness mapper, linter (now with **R6 Tool-Poisoning** — imperative/hidden-unicode/secret scan), and export — score your API collections for AI consumption |
 | Schema drift detection | Snapshot OpenAPI specs and detect breaking changes between versions |
+| Tool Drift Snapshots | Git-native `tools-<collID>.json` snapshots + `DiffToolSnapshots` — diff a tool description against its last commit |
+
+### New in this release — Inspector Suite (low-bloat, extends existing surfaces)
+
+| Feature | What it is | Where |
+|---------|------------|-------|
+| **Response Diffing** | Diff today's response vs a saved snapshot **or** any `history.json` entry — header/status/body canonical JSON (sorted keys) + side-by-side | `ResponsePane → Diff with snapshot/history` |
+| **Flaky Detection** | `runhistory.json` (cap 500) + `FlakyStats` over last 20 runs — `Retries>0 && Passed` → amber **FLAKY** badge in Runner, `runhistory:changed` event | `RunnerModal` |
+| **Adversarial Assertions** | `promptInjection` assertion type + 6 smuggled-instruction payloads (`billing_address` etc.) — reuses `goja` engine, no new runner | `AssertionEditor → Prompt Injection` |
+| **Custom Visualizers** | Render mode inside `ResponsePane` — `visualizer.set(template,data)` from post-response script or Table/Geo/Chart picker, `localStorage` persisted | `ResponsePane → Visualize` tab |
+| **Tool-Poisoning** | Already in Agent Lens R6 above — no new UI, just a new `error` that tanks the score | `Agent Lens → Lint` |
+
+All 7 reuse existing panels — no new product categories, no new mental models.
 | Auto-updater | GitHub release checking with one-click install |
 | Plugin system | Directory-based plugin discovery and install |
 | System tray | Background execution with notifications |
@@ -226,15 +251,28 @@ Collections commit to Git like any other file. No cloud sync. No proprietary for
 | Keyboard-first UX | Yes (scoped) | Partial | No |
 | JSON tree view | Yes | Yes | No |
 | Dev profiles | Yes (public) | No | No |
-| MCP server | Yes | No | No |
-| Agent readiness | Yes | No | No |
+| MCP server | Yes (24 tools, HTTP + stdio, universal) | No | No |
+| MCP traffic inspector | Yes | No | No |
+| Agent readiness | Yes (incl. R6 poisoning + drift) | No | No |
+| Response diffing | Yes (env/time + headers) | No | No |
+| Flaky detection | Yes | No | No |
+| Adversarial assertions | Yes | No | No |
+| Custom visualizers | Yes | No | No |
 | Price | Free / OSS | Free+$12/m | Free / OSS |
 
 ---
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions, private reporting (`kamsyejindu@gmail.com` or GitHub Private Advisory), and secure-use notes (keyring fallback at `~/.config/flux/keyring-fallback.json`, visualizer HTML sandbox). Please **do not** open a public issue for security reports.
+
+## Code of Conduct
+
+We follow the [Contributor Covenant 2.1](CODE_OF_CONDUCT.md). Report unacceptable behavior to `kamsyejindu@gmail.com`.
+
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](.github/CONTRIBUTING.md). Keep PRs focused — one feature or fix per PR.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](.github/CONTRIBUTING.md). Keep PRs focused — one feature or fix per PR. By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Licensed under the [MIT License](LICENSE).
 
