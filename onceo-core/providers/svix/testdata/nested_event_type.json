@@ -1,0 +1,6 @@
+{
+  "data": {
+    "id": "evt_777",
+    "event_type": "customer.subscription.created"
+  }
+}

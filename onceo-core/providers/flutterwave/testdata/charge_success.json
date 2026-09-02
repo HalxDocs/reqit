@@ -1,0 +1,13 @@
+{
+  "event": "charge.success",
+  "data": {
+    "id": 9876545,
+    "tx_ref": "flw_ref_ghi789",
+    "flw_ref": "FLW-11111",
+    "status": "success",
+    "amount": 25000,
+    "charged_amount": 25000,
+    "currency": "NGN",
+    "created_at": "2026-07-08T12:15:00.000Z"
+  }
+}

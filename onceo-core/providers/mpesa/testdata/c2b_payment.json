@@ -1,0 +1,15 @@
+{
+  "TransactionType": "Pay Bill",
+  "TransID": "LGR12G8H1",
+  "TransTime": "20260708123500",
+  "TransAmount": "2000",
+  "BusinessShortCode": "123456",
+  "BillRefNumber": "INV-001",
+  "InvoiceNumber": "INV-001",
+  "OrgAccountBalance": "500000",
+  "ThirdPartyTransID": "TP-001",
+  "MSISDN": "254712345679",
+  "FirstName": "John",
+  "MiddleName": "Doe",
+  "LastName": "Smith"
+}

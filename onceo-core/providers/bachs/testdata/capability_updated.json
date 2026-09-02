@@ -1,0 +1,13 @@
+{
+  "id": "evt_1a2b3c4d5e6f7g8h",
+  "type": "capability.updated",
+  "created_at": "2026-08-07T11:06:41.204000+00:00",
+  "organization_id": "org_4d81fa9c2b6e0357",
+  "account": "org_4d81fa9c2b6e0357",
+  "data": {
+    "account": "org_4d81fa9c2b6e0357",
+    "capability": "payouts",
+    "status": "active",
+    "requested": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "29130-252084-3",
+      "CheckoutRequestID": "ws_CO_07072026123100000",
+      "ResultCode": 1037,
+      "ResultDesc": "DS timeout. The transaction was cancelled by the user or there was a timeout.",
+      "CallbackMetadata": null
+    }
+  }
+}

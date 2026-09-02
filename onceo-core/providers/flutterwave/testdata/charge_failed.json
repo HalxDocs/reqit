@@ -1,0 +1,13 @@
+{
+  "event": "charge.failed",
+  "data": {
+    "id": 9876544,
+    "tx_ref": "flw_ref_def456",
+    "flw_ref": "FLW-67890",
+    "status": "failed",
+    "amount": 30000,
+    "charged_amount": 0,
+    "currency": "NGN",
+    "created_at": "2026-07-08T12:11:00.000Z"
+  }
+}

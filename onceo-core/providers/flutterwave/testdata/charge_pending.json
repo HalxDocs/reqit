@@ -1,0 +1,13 @@
+{
+  "event": "charge.completed",
+  "data": {
+    "id": 9876546,
+    "tx_ref": "flw_ref_pending",
+    "flw_ref": "FLW-PEND-01",
+    "status": "pending",
+    "amount": 10000,
+    "charged_amount": 0,
+    "currency": "NGN",
+    "created_at": "2026-07-08T12:16:00.000Z"
+  }
+}

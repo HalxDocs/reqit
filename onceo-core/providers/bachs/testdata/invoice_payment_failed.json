@@ -1,0 +1,25 @@
+{
+  "id": "evt_1a2b3c4d5e6f7g8h",
+  "type": "invoice.payment_failed",
+  "created_at": "2026-04-27T12:00:00.000000+00:00",
+  "organization_id": "org_abc123",
+  "data": {
+    "invoice_id": "inv_1a2b3c4d5e",
+    "subscription": { "subscription_id": "sub_1a2b3c4d5e" },
+    "customer": { "customer_id": "cust_1a2b3c4d5e6f", "email": "jane@example.com", "name": "Jane Doe" },
+    "charge": null,
+    "status": "open",
+    "collection_method": "charge_automatically",
+    "currency": "USD",
+    "subtotal": "10.00",
+    "total": "10.00",
+    "amount_paid": "0.00",
+    "amount_remaining": "10.00",
+    "period_start": "2026-04-01T00:00:00Z",
+    "period_end": "2026-05-01T00:00:00Z",
+    "attempt_count": 1,
+    "next_payment_attempt": "2026-04-01T00:05:00Z",
+    "created_at": "2026-04-01T00:00:00Z",
+    "metadata": {}
+  }
+}

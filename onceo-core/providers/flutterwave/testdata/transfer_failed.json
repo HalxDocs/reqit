@@ -1,0 +1,10 @@
+{
+  "event": "transfer.failed",
+  "data": {
+    "id": 5555556,
+    "reference": "flw_transfer_ref_002",
+    "amount": 50000,
+    "currency": "NGN",
+    "status": "failed"
+  }
+}

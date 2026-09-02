@@ -1,0 +1,41 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/onceo
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of go coverage
+*.out
+*.prof
+coverage.txt
+coverage.html
+coverage.xml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+vendor/
+
+# Build output
+dist/
+build/
+
+# Temporary files
+tmp/
+
+# Agent workspace
+.freebuff/

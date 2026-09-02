@@ -1,0 +1,11 @@
+{
+  "event_type": "invoice.paid",
+  "api_user": "usr_abc123",
+  "data": {
+    "id": "inv_99",
+    "object": "invoice",
+    "amount_due": 100,
+    "currency": "ngn",
+    "customer": "cus_88"
+  }
+}

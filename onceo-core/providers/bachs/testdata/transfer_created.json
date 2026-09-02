@@ -1,0 +1,17 @@
+{
+  "id": "evt_3c4d5e6f7g8h9i0j",
+  "type": "transfer.created",
+  "created_at": "2026-08-07T11:04:22.518000+00:00",
+  "organization_id": "org_4d81fa9c2b6e0357",
+  "account": "org_4d81fa9c2b6e0357",
+  "data": {
+    "transfer_id": "tr_8c1e04a7b93f2d6540ab",
+    "source": "org_9f2c4a1b7e3d5086",
+    "destination": "org_4d81fa9c2b6e0357",
+    "amount": "7000.00",
+    "currency": "NGN",
+    "description": "Order #4471 seller share",
+    "metadata": {},
+    "created_at": "2026-08-07T11:04:22.518000+00:00"
+  }
+}

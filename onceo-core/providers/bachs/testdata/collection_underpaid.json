@@ -1,0 +1,18 @@
+{
+  "id": "evt_6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a",
+  "type": "collection.underpaid",
+  "created_at": "2026-02-22T17:10:00.000000+00:00",
+  "organization_id": "org_abc123",
+  "data": {
+    "charge_id": "chr_1a2b3c4d5e6f",
+    "reference": "pay_abc123def456",
+    "checkout_id": "chk_9x8y7z6w5v",
+    "amount_paid": "50000.00",
+    "amount_expected": "75000.00",
+    "amount_remaining": "25000.00",
+    "currency": "NGN",
+    "status": "UNDERPAID",
+    "provider_reference": "kora_ref_abc123",
+    "metadata": {}
+  }
+}

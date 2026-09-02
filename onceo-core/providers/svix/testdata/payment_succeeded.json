@@ -1,0 +1,13 @@
+{
+  "type": "payment.succeeded",
+  "api_user": "usr_0123456789",
+  "data": {
+    "id": "pay_123456",
+    "object": "payment",
+    "amount": 25000,
+    "currency": "usd",
+    "customer": "cus_123",
+    "status": "succeeded",
+    "event_type": "payment.succeeded"
+  }
+}

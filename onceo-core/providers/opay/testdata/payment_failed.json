@@ -1,0 +1,11 @@
+{
+  "eventType": "PAYMENT_FAILED",
+  "data": {
+    "reference": "opay_ref_002",
+    "amount": "120.00",
+    "currency": "NGN",
+    "status": "FAILED",
+    "orderNo": "ORDER_67890",
+    "completeTime": "2026-07-08T12:21:00.000Z"
+  }
+}

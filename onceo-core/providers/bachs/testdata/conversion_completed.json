@@ -1,0 +1,17 @@
+{
+  "id": "evt_1a2b3c4d5e6f7g8h",
+  "type": "conversion.completed",
+  "created_at": "2026-04-27T12:00:00.000000+00:00",
+  "organization_id": "org_abc123",
+  "data": {
+    "conversion_id": "cnv_1a2b3c4d5e",
+    "quote_id": "cq_1a2b3c4d5e",
+    "from_currency": "USD",
+    "to_currency": "NGN",
+    "from_amount": "100.00",
+    "to_amount": "165000.00",
+    "exchange_rate": "1650.00",
+    "status": "completed",
+    "created_at": "2026-04-27T12:00:00Z"
+  }
+}

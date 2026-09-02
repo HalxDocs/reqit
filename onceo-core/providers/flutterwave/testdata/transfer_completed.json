@@ -1,0 +1,10 @@
+{
+  "event": "transfer.completed",
+  "data": {
+    "id": 5555555,
+    "reference": "flw_transfer_ref_001",
+    "amount": 200000,
+    "currency": "NGN",
+    "status": "successful"
+  }
+}

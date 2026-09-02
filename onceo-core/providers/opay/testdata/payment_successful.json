@@ -1,0 +1,11 @@
+{
+  "eventType": "PAYMENT_SUCCESSFUL",
+  "data": {
+    "reference": "opay_ref_001",
+    "amount": "450.00",
+    "currency": "NGN",
+    "status": "SUCCESS",
+    "orderNo": "ORDER_12345",
+    "completeTime": "2026-07-08T12:20:00.000Z"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "evt_1a2b3c4d5e6f7g8h",
+  "type": "refund.paid",
+  "created_at": "2026-04-27T12:00:00.000000+00:00",
+  "organization_id": "org_abc123",
+  "data": {
+    "refund_id": "ref_1a2b3c4d5e",
+    "charge_id": "chr_1a2b3c4d5e6f",
+    "reference": "refund_9876",
+    "status": "paid",
+    "requested_amount": "10.00",
+    "refunded_amount": "10.00",
+    "refund_fee_amount": "0.00",
+    "fee_bearer": "merchant",
+    "reason": "Customer request"
+  }
+}

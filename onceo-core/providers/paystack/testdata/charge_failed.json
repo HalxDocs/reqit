@@ -1,0 +1,13 @@
+{
+  "event": "charge.failed",
+  "data": {
+    "id": 123456790,
+    "domain": "test",
+    "status": "failed",
+    "reference": "ref_def456",
+    "amount": 25000,
+    "currency": "NGN",
+    "paid_at": null,
+    "created_at": "2026-07-08T12:01:00.000Z"
+  }
+}

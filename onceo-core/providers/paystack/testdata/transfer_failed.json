@@ -1,0 +1,12 @@
+{
+  "event": "transfer.failed",
+  "data": {
+    "id": 987654322,
+    "reference": "transfer_ref_002",
+    "amount": 75000,
+    "currency": "NGN",
+    "status": "failed",
+    "recipient": "RCP_def456",
+    "created_at": "2026-07-08T12:06:00.000Z"
+  }
+}
