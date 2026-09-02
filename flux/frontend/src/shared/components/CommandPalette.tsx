@@ -37,7 +37,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   const searchHits = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (q.length < 2) return { cols: [] as typeof collections, hist: [] as typeof historyEntries, envHits: [] as typeof envs };
+    type ColHit = { col: (typeof collections)[number]; req: (typeof collections)[number]["requests"][number] };
+    if (q.length < 2) return { cols: [] as ColHit[], hist: [] as typeof historyEntries, envHits: [] as typeof envs };
     const cols = collections
       .flatMap((c) => c.requests.map((r) => ({ col: c, req: r })))
       .filter(({ req }) => req.name.toLowerCase().includes(q) || req.payload.url.toLowerCase().includes(q))

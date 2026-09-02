@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { Button } from "@/shared/components/Button";
+import { cn } from "@/shared/lib/cn";
 import {
   HasEncryptionKey, GenerateEncryptionKey, SetEncryptionPassphrase, DeleteEncryptionKey,
   ConfigureVault, GetVaultConfig, VaultGetSecret, VaultSetSecret,
