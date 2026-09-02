@@ -37,6 +37,13 @@ Thumbs.db
 .idea/
 .claude/
 
+# Incident / local notes (not part of product, keep out of release tag)
+account-recovery-checklist.md
+attacker-repos-evidence.txt
+github-support-message.md
+post-rotation-verification.md
+scan-leaked-secrets.py
+
 # Logs
 *.log
 npm-debug.log*

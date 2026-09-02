@@ -1,5 +1,67 @@
 # Changelog
 
+## [1.2.0] - 2026-09-02 — OAuth2 engine, Inspector suite, MCP universal & UX polish
+
+### Highlights
+- Full OAuth 2.0 rebuild (RFC 8252 loopback `127.0.0.1:0` + dual `::1`, PKCE S256 always-on, `client_secret` only for `Confidential`, fragment `HTML+JS` + `form_post` + SSO path, `state` verified, Go-only exchange, keychain `reqit:{ws}:{ref}:{host}`, `no_expiry` vs `expired` split). Fixes GitHub `bad_verification_code` retry, Entra `client_secret=undefined`, Fedora `~/.config/flux/keyring-fallback.json` + `xdg-open → gio open` fallback.
+- Event Inspector v1 — Svix `whsec_` verify, cap 1000, `events.json`, `whsec_` OS keychain, `Replays`, `EventInspectorPanel` (badge `verified`/`unverified`/`duplicate`), `requester.Execute` replay.
+- Realtime — `sock`/`sockhistory` (Ws/SSE, `bufio 1MB`, `Last-Event-ID`), `grpc` 4 streaming types + `proto` parsing, `testserver` (`:8080` + `:50051` with `httptest` ephemeral in tests), `TestLiveWebSocketViaSock` / `TestLiveSSEViaSock` (live `127.0.0.1`).
+- **MCP universal** (24 tools, stdio `reqit mcp` + HTTP `POST /mcp` + `GET /mcp` SSE + `/.well-known/mcp` 307, `MCP-Protocol-Version` 2024-11-05/2025-03-26/2025-06-18 negotiation, CORS, configs for OpenCode/Claude/Cursor/VS Code/Generic, `MCPPanel` Overview | Traffic Inspector, demo collection 20 endpoints).
+- 7 low-bloat inspector features (extend existing surfaces, no new product):
+  1. **MCP Traffic Inspector** (`internal/mcp/traffic.go`, `MCPPanel` Traffic tab reusing `EventInspector` two-pane + `BodyView`).
+  2. **Tool-Poisoning Scanner** (`internal/agentlens/linter.go` R6 — imperative `ignore previous instructions`, zero-width/bidi `U+200B`, `AKIA/sk-`).
+  3. **Response Diffing** (`DiffSnapshots.tsx` canonical `sortKeys` JSON, header diff, `history:changed` picker).
+  4. **Flaky Detection** (`internal/runhistory` `runhistory.json` cap 500, `FlakyStats` last 20, `RunnerModal` **FLAKY** amber badge).
+  5. **Adversarial Assertions** (`internal/assertions/payloads.go` 6 smuggled-instruction payloads, `AssertPromptInjection`, `AssertionEditor`).
+  6. **Custom Visualizers** (`VisualizerView.tsx`, `visualizerRegistry.ts`, `ResponsePane` `Visualize` tab, `visualizer.set(template,data)` + Table/Geo/Chart examples).
+  7. **Tool Drift Snapshots** (`internal/agentlens/tool_snapshot.go` `tools-<collID>.json` + `.prev.json`, `DiffToolSnapshots`, `AgentLensPanel` **Drift** tab).
+- 6 UX polish — grouped `Tools` (Realtime/Automation/Protocol/Platform, persisted `flux:toolsCollapsed`, 17 `view:*` `Cmd+K`), `UrlPreview` always-show + `{{}}` pill, `KeyValueEditor` `=` before `:`, `AuthTab` JWT decode, `BodyTab` `GET+body` warn + file→text keep-path, `ResponsePane` `InlineAlert`, `BodyView` 500KB banner + truncate, `useTabsStore` accurate dirty + `keep at least one tab` + confirm, `HistoryList` pagination, `CollectionsTree` **New Folder** (`FolderPlus`), `CommandPalette` federated search + debounced `SocketPanel`/`MCP Traffic`, `PanelHeader` + `lint-tokens.mjs`.
+- **Fedora / Linux** — cross-platform `os.Executable()` (`bindings_mcp.go`, `MCPPanel`), `opencode.json`/`mcp.json` relative `./flux/build/bin/reqit` with `_comment` for `reqit.exe`, `Oauth2/browser.go` `gio open` fallback, `README` `webkit2gtk4.1 + libsecret`.
+
+### OAuth2
+- `feat(oauth2): add canonical types, errors, and PKCE (RFC 7636)` — `types.go:OAuthConfig/TokenResult`, `errors.go:11` sentinels, `pkce.go:Verifier` 64 chars `S256Challenge`.
+- `feat(oauth2): keychain store, scrub, browser launcher, OIDC discovery, diagnostics` — `store.go` `reqit-oauth2`, `scrub.go` `Strip/Migrate/Rehydrate`, `browser.go` `open`/`rundll32`/`xdg-open`, `discovery.go` 5m cache both well-known paths, `diagnose.go` `DiagnoseLoopback`.
+- `feat(oauth2): loopback listener, token exchange, manual fallback` — `loopback.go:756` dual-stack + `Note` on busy `7317`, `exchange.go:525` 6 grants + `ClientAuthBasic/Body` + `GitHub` retry, `manual.go:104` paste-back.
+- `fix(oauth2): legacy State — ms expiry and FlowTimeoutSec` — `oauth2.go:26` `ExpiresAt` ms + `FlowTimeoutSec` for MFA.
+- `feat(oauth2): Wails boundary — loopback + manual + device + diagnostics` — `bindings_oauth2.go` 9 bindings + `CheckForUpdates` + `InstallUpdate` (selfupdate → NSIS fallback).
+- `fix(collections): scrub OAuth secrets — never write tokens to git` — `collections.go` `scrubbedForDisk` via `oauth2.MigrateAuthValue`.
+- `feat(requester): silent auto-refresh before outgoing OAuth requests` — 60s skew.
+- `feat(oauth): frontend OAuth2Flow + Discovery + auto-refresh UI` — grant picker (6 types, `client_credentials` + `password`/`implicit` behind amber RFC 9700 banners), presets `github/google/entra/auth0/okta/keycloak`, `OAuth2DiscoveryField`, `expiry.ts` `No expiry` neutral vs `Expired` red, live tick, `MigrateAuthValue`.
+- `fix(oauth): distinguish no-expiry from expired in token panel` — `getExpiryState`/`formatExpiry` + `FLAKY` badge fix.
+
+### Event Inspector & Realtime
+- `feat: Event Inspector — capture, verify, dedupe, and replay Svix webhooks` — `internal/eventinspector` (4 files) + `EventInspectorPanel` + `smoke_test.go` live TCP + keyring.
+- `feat: realtime protocols — gRPC streaming, WS/SSE sessions, and test server` — `internal/grpc` (4 files), `internal/sock`/`sockhistory`, `testserver` (`:8080` `ws` + `sse` + `:50051` gRPC), `TestLiveWebSocketViaSock` etc.
+
+### MCP
+- `feat(mcp): OpenCode bridge — HTTP transport + 6 new tools + CLI flags + config` — `http.go` `POST /mcp`, `tools.go` +6 `opencode_ping`/`oauth_*`/`event_inspector_*`, `cli/mcp.go` `--http --port 7247`, `opencode.json`/`mcp.json`.
+- `feat(mcp): demo collection — 20 endpoints via OpenCode bridge` — `demo-collections/opencode-mcp-demo.json`.
+- `feat(mcp): add MCP Bridge panel to UI so MCP is discoverable` — `MCPPanel.tsx` Overview + `useUIStore:view="mcp"` + `Sidebar` `Plug`.
+- `feat(mcp): universal AI support — SSE, version negotiation, configs for all agents` — `http.go` SSE + `server.go` version echo `2025-06-18`, `.vscode/mcp.json` + `.cursor/mcp.json` + `claude_desktop_config.json.example` + `flux/MCP_BRIDGE.md` universal table.
+- `feat(mcp): traffic inspector — Wireshark for your MCP server` — `traffic.go` + `MCPPanel` Traffic Inspector tab.
+
+### Inspector Suite (7)
+- `feat(agentlens): tool-poisoning scanner (R6)` — as above.
+- `feat(response): diff across env/time + header/status + canonical JSON` — as above.
+- `feat(runner): flaky request detection — history + quarantine` — as above.
+- `feat(assertions): adversarial / prompt-injection payloads + assertion type` — as above.
+- `feat(response): custom visualizers — render mode for HTML/templates` — as above.
+- `feat(agentlens): tool description drift snapshots (git-native)` — as above.
+
+### UX Polish (6)
+- `feat(ux): navigation & discoverability` — as above.
+- `feat(ux): request builder polish` — as above.
+- `feat(ux): response safety` — as above.
+- `feat(ux): collections/history polish` — as above.
+- `feat(ux): search everywhere` — as above.
+- `feat(ux): design system — PanelHeader + token lint + modal parity` — as above.
+- `fix(agentlens): Analyze button now always clickable with feedback` — `loadCollections` functional `setSelectedColl`, `analyze` toast when no selection, button `disabled` only while `analyzing`.
+
+### Platform & Docs
+- `fix(linux): Fedora support — cross-platform MCP paths, keyring fallback, browser fallback` — `internal/keyring/keyring.go` `~/.config/flux/keyring-fallback.json` (0600) + 5 store files, `browser.go` `gio open` fallback, `bindings_mcp.go:os.Executable()`, `MCPPanel` `navigator.platform`, `mcp.json` relative, `MCP_BRIDGE.md` Fedora section.
+- `docs: add Code of Conduct (Contributor Covenant 2.1)` + `docs: add Security Policy` + `docs(readme): update for OAuth2, MCP universal, 7 inspector features, Fedora`.
+- `chore: bump version to 1.2.0 (wails + frontend)` — `wails.json:1.1.0→1.2.0`, `frontend/package.json:0.0.0→1.2.0` aligned with `updater.CurrentVersion`.
+
 ## v0.7.0 (2026-06-15) — Collaboration & Team Platform
 
 ### Collaboration Sync (Decoupled, Self-Hosted)
