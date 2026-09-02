@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -210,6 +211,12 @@ func (sd *SpecDesign) Endpoints() []EndpointSummary {
 			})
 		}
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Path != out[j].Path {
+			return out[i].Path < out[j].Path
+		}
+		return out[i].Method < out[j].Method
+	})
 	return out
 }
 

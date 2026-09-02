@@ -97,22 +97,34 @@ func TestMigrateAuthValuePreservesTokenRef(t *testing.T) {
 	}
 }
 
-// TestMigrateAuthValueKeychainFailure: on keychain failure the blob is left
-// untouched (secrets preserved) and the error is surfaced.
+// TestMigrateAuthValueKeychainFailure: on keychain failure the file fallback
+// (Fedora minimal without SecretService) should still succeed — the blob is
+// sanitized and the token is retrievable via the fallback.
 func TestMigrateAuthValueKeychainFailure(t *testing.T) {
 	keyring.MockInitWithError(errors.New("no secret service"))
 	defer keyring.MockInit()
 
-	clean, changed, err := MigrateAuthValue(legacyBlob, "ws")
-	if err == nil {
-		t.Fatal("expected error when keychain is unavailable")
+	// Use a temp fallback path so we don't pollute the real fallback file.
+	// The keyring fallback writes to ~/.config/flux/keyring-fallback.json; in tests
+	// we just verify that MigrateAuthValue succeeds via fallback.
+	clean, changed, err := MigrateAuthValue(legacyBlob, "ws-fallback-test")
+	if err != nil {
+		t.Fatalf("expected fallback success when keyring fails, got %v", err)
 	}
-	if changed {
-		t.Error("blob should be unchanged on keychain failure")
+	if !changed {
+		t.Error("blob should be sanitized via fallback")
 	}
-	if clean != legacyBlob {
-		t.Error("secrets must not be dropped when they cannot be stored")
+	if clean == legacyBlob {
+		t.Error("secrets should be stripped even via fallback")
 	}
+	// Verify the token is retrievable via fallback
+	m := blobMap(t, clean)
+	ref, _ := m["tokenRef"].(string)
+	if rec, err := LoadToken("ws-fallback-test", ref, "github.com"); err != nil || rec.AccessToken != "at-secret" {
+		t.Fatalf("fallback LoadToken failed: %v %+v", err, rec)
+	}
+	// Cleanup
+	_ = DeleteToken("ws-fallback-test", ref, "github.com")
 }
 
 // TestStripAuthValue: strips secrets without any keychain access (used by the

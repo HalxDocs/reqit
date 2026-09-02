@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] - 2026-09-02 — OAuth2 engine, Inspector suite, MCP universal & UX polish
+## [2.0.0] - 2026-09-02 — OAuth2 engine, Inspector suite, MCP universal & UX polish
 
 ### Highlights
 - Full OAuth 2.0 rebuild (RFC 8252 loopback `127.0.0.1:0` + dual `::1`, PKCE S256 always-on, `client_secret` only for `Confidential`, fragment `HTML+JS` + `form_post` + SSO path, `state` verified, Go-only exchange, keychain `reqit:{ws}:{ref}:{host}`, `no_expiry` vs `expired` split). Fixes GitHub `bad_verification_code` retry, Entra `client_secret=undefined`, Fedora `~/.config/flux/keyring-fallback.json` + `xdg-open → gio open` fallback.
