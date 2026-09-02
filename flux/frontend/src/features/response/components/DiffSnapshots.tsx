@@ -1,7 +1,10 @@
 import { useState, useMemo } from "react";
-import { GitCompare, Trash2, Columns2, List, History, ArrowLeftRight } from "lucide-react";
+import { GitCompare, Trash2, Columns2, List, History, ArrowLeftRight, Settings } from "lucide-react";
 import { useDiffStore, type ResponseSnapshot } from "@/features/response/stores/useDiffStore";
+import { useDiffIgnoreStore } from "@/features/response/stores/useDiffIgnoreStore";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
+import { filterIgnoredFields } from "@/features/response/lib/diffIgnore";
+import { DiffIgnoreModal } from "@/features/response/components/DiffIgnoreModal";
 import { cn } from "@/shared/lib/cn";
 
 function lineDiff(oldLines: string[], newLines: string[]) {
@@ -50,7 +53,7 @@ function sortKeys(v: any): any {
   return v;
 }
 
-function headerDiff(oldH: Record<string, string> | undefined, newH: Record<string, string> | undefined) {
+function headerDiff(oldH: Record<string, string> | undefined, newH: Record<string, string> | undefined, ignorePatterns: string[]) {
   const a = oldH || {};
   const b = newH || {};
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
@@ -58,6 +61,8 @@ function headerDiff(oldH: Record<string, string> | undefined, newH: Record<strin
   for (const k of Array.from(keys).sort()) {
     const av = a[k];
     const bv = b[k];
+    const shouldIgnore = ignorePatterns.some((p) => k.toLowerCase() === p.toLowerCase());
+    if (shouldIgnore) continue;
     if (av === undefined) diffs.push({ key: k, type: "added", newVal: bv });
     else if (bv === undefined) diffs.push({ key: k, type: "removed", oldVal: av });
     else if (av !== bv) diffs.push({ key: k, type: "modified", oldVal: av, newVal: bv });
@@ -76,11 +81,17 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
   const saveSnapshot = useDiffStore((s) => s.saveSnapshot);
   const removeSnapshot = useDiffStore((s) => s.removeSnapshot);
   const historyEntries = useHistoryStore((s) => s.entries);
+
+  const { getEffectivePatterns, getEffectiveHeaderPatterns } = useDiffIgnoreStore();
+  const bodyIgnorePatterns = useMemo(() => getEffectivePatterns(snapshotKey), [getEffectivePatterns, snapshotKey]);
+  const headerIgnorePatterns = useMemo(() => getEffectiveHeaderPatterns(), [getEffectiveHeaderPatterns]);
+
   const existing = snapshots[snapshotKey];
   const [open, setOpen] = useState(false);
   const [sideBySide, setSideBySide] = useState(false);
   const [compareMode, setCompareMode] = useState<"snapshot" | "history">("snapshot");
   const [historyId, setHistoryId] = useState<string>("");
+  const [showSettings, setShowSettings] = useState(false);
 
   const historyCandidates = useMemo(() => {
     return historyEntries
@@ -106,7 +117,6 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
   })();
 
   if (!response || !baseline) {
-    // Still show save button when no baseline
     if (!response) return null;
     return (
       <div className="border-t border-border">
@@ -135,16 +145,20 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
     capturedAt: new Date().toISOString(),
   };
 
-  // Canonicalize JSON before diff so key-order changes don't count as diffs
-  const oldBodyCan = canonicalizeJSON(baseline.body ?? "");
-  const newBodyCan = canonicalizeJSON(response.body ?? "");
+  // Apply ignore patterns BEFORE canonicalization so ignored fields are removed first
+  const oldBodyFiltered = filterIgnoredFields(baseline.body ?? "", bodyIgnorePatterns);
+  const newBodyFiltered = filterIgnoredFields(response.body ?? "", bodyIgnorePatterns);
+  const oldBodyCan = canonicalizeJSON(oldBodyFiltered);
+  const newBodyCan = canonicalizeJSON(newBodyFiltered);
   const oldLines = oldBodyCan.split("\n");
   const newLines = newBodyCan.split("\n");
   const tooLarge = oldLines.length > 5000 || newLines.length > 5000;
   const diffs = tooLarge ? [] : lineDiff(oldLines, newLines);
   const adds = diffs.filter((d) => d.type === "added").length;
   const rems = diffs.filter((d) => d.type === "removed").length;
-  const headerDiffs = headerDiff(baseline.headers, response.headers);
+
+  // Header diff with ignore patterns
+  const headerDiffs = headerDiff(baseline.headers, response.headers, headerIgnorePatterns);
   const headerChanges = headerDiffs.filter((h) => h.type !== "same");
 
   return (
@@ -189,6 +203,14 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
             >
               {sideBySide ? <List size={11} /> : <Columns2 size={11} />}
               {sideBySide ? "Unified" : "Side-by-side"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-1 text-10 text-subtext hover:text-text transition-colors p-1"
+              title="Configure ignore patterns"
+            >
+              <Settings size={11} />
             </button>
           </div>
 
@@ -269,12 +291,16 @@ export function DiffSnapshots({ method, url, response, snapshotKey }: {
             </div>
           )}
 
-          <button type="button" onClick={() => { removeSnapshot(snapshotKey); setOpen(false); }}
-            className="mt-2 flex items-center gap-1 text-11 text-subtext/30 hover:text-danger transition-colors">
-            <Trash2 size={10} /> Clear snapshot
-          </button>
+          <div className="flex items-center gap-2 mt-2">
+            <button type="button" onClick={() => { removeSnapshot(snapshotKey); setOpen(false); }}
+              className="flex items-center gap-1 text-11 text-subtext/30 hover:text-danger transition-colors">
+              <Trash2 size={10} /> Clear snapshot
+            </button>
+          </div>
         </div>
       )}
+
+      <DiffIgnoreModal open={showSettings} onClose={() => setShowSettings(false)} snapshotKey={snapshotKey} />
     </div>
   );
 }
