@@ -139,7 +139,36 @@ export const useRequestStore = create<RequestStore>((set) => ({
   graphqlSchemaLoading: false,
   graphqlSchemaError: "",
 
-  setMethod: (method) => set({ method }),
+  setMethod: (method) =>
+    set((s) => {
+      // Postman-style: switching to a body-bearing method always leaves an
+      // enabled Content-Type header behind. Never overwrites a user-set value.
+      if (method === "POST" || method === "PUT" || method === "PATCH") {
+        const idx = s.headers.findIndex(
+          (h) => h.key.trim().toLowerCase() === "content-type",
+        );
+        if (idx === -1) {
+          return {
+            method,
+            headers: [
+              ...s.headers,
+              { id: uid("kv"), key: "Content-Type", value: "application/json", enabled: true },
+            ],
+          };
+        }
+        const row = s.headers[idx];
+        if (!row.enabled || !row.value.trim()) {
+          const next = [...s.headers];
+          next[idx] = {
+            ...row,
+            enabled: true,
+            value: row.value.trim() ? row.value : "application/json",
+          };
+          return { method, headers: next };
+        }
+      }
+      return { method };
+    }),
   setUrl: (url) => set({ url }),
 
   addParam: () => set((s) => ({ params: [...s.params, emptyRow()] })),

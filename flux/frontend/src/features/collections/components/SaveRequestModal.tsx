@@ -24,14 +24,18 @@ export function SaveRequestModal() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const seedName = useUIStore((s) => s.saveModalSeedName);
+  const seedCollID = useUIStore((s) => s.saveModalSeedCollID);
+
   useEffect(() => {
     if (!open) return;
     setErr(null);
     setBusy(false);
-    setName(useRequestStore.getState().url || "Untitled request");
-    setCollID(collections[0]?.id ?? NEW_COLLECTION_VALUE);
+    setName(seedName || useRequestStore.getState().url || "Untitled request");
+    const seedValid = seedCollID && collections.some((c) => c.id === seedCollID);
+    setCollID(seedValid ? (seedCollID as string) : (collections[0]?.id ?? NEW_COLLECTION_VALUE));
     setNewCollName("");
-  }, [open, collections]);
+  }, [open, collections, seedName, seedCollID]);
 
   const handleSave = async () => {
     if (!name.trim()) {

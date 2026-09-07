@@ -30,7 +30,9 @@ type UIStore = {
   setView: (v: WorkspaceView) => void;
 
   saveModalOpen: boolean;
-  openSaveModal: () => void;
+  saveModalSeedName: string | null;
+  saveModalSeedCollID: string | null;
+  openSaveModal: (seedName?: string, seedCollID?: string) => void;
   closeSaveModal: () => void;
 
   envModalOpen: boolean;
@@ -130,11 +132,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
   setView: (view) => set({ view }),
 
   saveModalOpen: false,
-  openSaveModal: () => {
+  saveModalSeedName: null,
+  saveModalSeedCollID: null,
+  openSaveModal: (seedName?: string, seedCollID?: string) => {
     if (get().saveModalOpen) return;
-    set({ saveModalOpen: true });
+    set({
+      saveModalOpen: true,
+      saveModalSeedName: seedName ?? null,
+      saveModalSeedCollID: seedCollID ?? null,
+    });
   },
-  closeSaveModal: () => set({ saveModalOpen: false }),
+  closeSaveModal: () => set({ saveModalOpen: false, saveModalSeedName: null, saveModalSeedCollID: null }),
 
   envModalOpen: false,
   openEnvModal: () => {

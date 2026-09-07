@@ -74,6 +74,7 @@ export function CollectionsTree() {
   const moveRequest = useCollectionStore((s) => s.moveRequest);
   const updateCollectionVariables = useCollectionStore((s) => s.updateCollectionVariables);
   const newTab = useTabsStore((s) => s.newTab);
+  const openSaveModal = useUIStore((s) => s.openSaveModal);
   const setLoadedRequestID = useUIStore((s) => s.setLoadedRequestID);
   const loadedRequestID = useUIStore((s) => s.loadedRequestID);
   const filter = useUIStore((s) => s.sidebarFilter);
@@ -324,6 +325,21 @@ export function CollectionsTree() {
     } catch (e) { toast.error(String(e)); }
   };
 
+  // Postman-style but easier: "New Request" opens a fresh tab AND immediately
+  // pops the save dialog pre-filled, so one Enter persists it. Cancelling just
+  // leaves an unsaved scratch tab.
+  const handleNewSavedRequest = (targetCollID?: string) => {
+    const taken = new Set<string>();
+    for (const c of collections) {
+      for (const r of c.requests) taken.add(r.name);
+    }
+    let seed = "New Request";
+    for (let n = 2; taken.has(seed); n++) seed = `New Request ${n}`;
+    newTab({ title: seed });
+    document.getElementById("flux-url-bar")?.focus();
+    openSaveModal(seed, targetCollID);
+  };
+
   const loadRequest = (req: models.SavedRequest) => {
     const decoded = decodePayload(req.payload, { preSetVars: req.preSetVars as unknown as PreSetVar[], extractRules: req.extractRules as unknown as ExtractRule[] });
     newTab({ title: req.name, savedRequestID: req.id, request: decoded, response: null, dirty: false });
@@ -562,6 +578,7 @@ export function CollectionsTree() {
                     {row.hasSpec && <span title={`Contract spec: ${c.spec}`} className="shrink-0 text-10 text-cyan/70 font-mono"><FileCode2 size={10} /></span>}
                     <span className="text-11 text-subtext font-mono shrink-0 mr-1">{c.requests.length}</span>
                     <CollectionMenu hasSpec={row.hasSpec} specPath={c.spec ?? ""}
+                      onNewRequest={() => handleNewSavedRequest(c.id)}
                       onRename={() => { setRenameValue(c.name); setRenamingID(c.id); }}
                       onExport={() => {
                         downloadText(JSON.stringify({ schema: "flux/collection/v1", exportedAt: new Date().toISOString(), collection: c }, null, 2), `${safeFilename(c.name)}.flux.json`);
@@ -652,7 +669,7 @@ export function CollectionsTree() {
 
       <button type="button" data-shortcut="sidebar.moveUp" onClick={() => { (document.querySelector<HTMLElement>('[data-shortcut="sidebar.search"]'))?.focus(); }} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
       <button type="button" data-shortcut="sidebar.moveDown" onClick={() => { (document.querySelector<HTMLElement>('[data-shortcut="sidebar.open"]'))?.click(); }} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
-      <button type="button" data-shortcut="sidebar.newRequest" onClick={() => newTab()} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
+      <button type="button" data-shortcut="sidebar.newRequest" onClick={() => handleNewSavedRequest()} style={{ display: "none" }} aria-hidden="true" tabIndex={-1} />
 
       <MarkdownExportModal
         open={!!mdExportColl}

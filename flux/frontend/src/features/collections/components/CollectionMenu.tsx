@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Code2, Download, Eye, FileCode2, Globe, MoreVertical, Unlink } from "lucide-react";
+import { Code2, Download, Eye, FileCode2, Globe, MoreVertical, Plus, Unlink } from "lucide-react";
 
 import { Button } from "@/shared/components/Button";
 import { DriftPanel } from "@/features/spec/components/DriftPanel";
@@ -20,12 +20,13 @@ interface CollectionMenuProps {
   onScripts: () => void;
   onDelete: () => void;
   onRun?: () => void;
+  onNewRequest?: () => void;
 }
 
 export function CollectionMenu({
   hasSpec, specPath, onRename, onExport, onExportOpenAPI,
   onPreviewOpenAPI, onViewOpenAPI, onExportMarkdown, onExportHTML, onLinkSpec, onUnlinkSpec,
-  onVariables, onScripts, onDelete, onRun,
+  onVariables, onScripts, onDelete, onRun, onNewRequest,
 }: CollectionMenuProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -40,6 +41,7 @@ export function CollectionMenu({
         <>
           <div className="fixed inset-0 z-10" onClick={close} />
           <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-md shadow-lg py-1 min-w-[170px]">
+            {onNewRequest && <Button variant="menu-item" onClick={() => { close(); onNewRequest(); }}><Plus size={12} />New Request</Button>}
             <Button variant="menu-item" onClick={() => { close(); onRename(); }}>Rename</Button>
             <Button variant="menu-item" onClick={() => { close(); onExport(); }}><Download size={12} />Export as JSON</Button>
             {onExportOpenAPI && <Button variant="menu-item" onClick={() => { close(); onExportOpenAPI(); }}><FileCode2 size={12} />Export OpenAPI</Button>}

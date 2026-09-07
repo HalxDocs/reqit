@@ -17,6 +17,60 @@ describe("useRequestStore", () => {
     expect(useRequestStore.getState().method).toBe("POST");
   });
 
+  it("switching to POST enables the default Content-Type header", () => {
+    const before = useRequestStore.getState().headers.find((h) => h.key === "Content-Type");
+    expect(before?.enabled).toBe(false);
+    useRequestStore.getState().setMethod("POST");
+    const row = useRequestStore.getState().headers.find((h) => h.key === "Content-Type");
+    expect(row?.enabled).toBe(true);
+    expect(row?.value).toBe("application/json");
+  });
+
+  it("switching to PUT/PATCH enables Content-Type, GET leaves it alone", () => {
+    useRequestStore.getState().setMethod("PUT");
+    expect(useRequestStore.getState().headers.find((h) => h.key === "Content-Type")?.enabled).toBe(true);
+
+    useRequestStore.setState(useRequestStore.getInitialState());
+    useRequestStore.getState().setMethod("PATCH");
+    expect(useRequestStore.getState().headers.find((h) => h.key === "Content-Type")?.enabled).toBe(true);
+
+    useRequestStore.setState(useRequestStore.getInitialState());
+    useRequestStore.getState().setMethod("GET");
+    expect(useRequestStore.getState().headers.find((h) => h.key === "Content-Type")?.enabled).toBe(false);
+
+    useRequestStore.getState().setMethod("DELETE");
+    expect(useRequestStore.getState().headers.find((h) => h.key === "Content-Type")?.enabled).toBe(false);
+  });
+
+  it("setMethod never overwrites a user-set Content-Type value", () => {
+    const s = useRequestStore.getState();
+    const id = s.headers.find((h) => h.key === "Content-Type")!.id;
+    s.updateHeader(id, { value: "text/xml", enabled: true });
+    s.setMethod("POST");
+    const row = useRequestStore.getState().headers.find((h) => h.key === "Content-Type");
+    expect(row?.value).toBe("text/xml");
+    expect(row?.enabled).toBe(true);
+  });
+
+  it("setMethod re-adds Content-Type if the row was deleted", () => {
+    const s = useRequestStore.getState();
+    s.headers.filter((h) => h.key === "Content-Type").forEach((h) => s.removeHeader(h.id));
+    expect(useRequestStore.getState().headers.some((h) => h.key.toLowerCase() === "content-type")).toBe(false);
+    s.setMethod("POST");
+    const rows = useRequestStore.getState().headers.filter((h) => h.key.toLowerCase() === "content-type");
+    expect(rows.length).toBe(1);
+    expect(rows[0].enabled).toBe(true);
+    expect(rows[0].value).toBe("application/json");
+  });
+
+  it("setMethod to POST twice does not duplicate Content-Type", () => {
+    const s = useRequestStore.getState();
+    s.setMethod("POST");
+    s.setMethod("POST");
+    const rows = useRequestStore.getState().headers.filter((h) => h.key.toLowerCase() === "content-type");
+    expect(rows.length).toBe(1);
+  });
+
   it("setUrl updates URL", () => {
     useRequestStore.getState().setUrl("https://example.com");
     expect(useRequestStore.getState().url).toBe("https://example.com");

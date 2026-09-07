@@ -286,7 +286,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 
         <button
           type="button"
-          onClick={openSaveModal}
+          onClick={() => openSaveModal()}
           title="Save request (Ctrl+S)"
           className="h-[34px] w-[34px] flex items-center justify-center bg-bg border border-border hover:border-cyan/50 rounded-lg text-subtext hover:text-text transition-all"
           aria-label="Save request"
