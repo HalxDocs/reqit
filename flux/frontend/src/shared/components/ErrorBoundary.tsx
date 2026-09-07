@@ -22,6 +22,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Keep the component stack in the dev console so hook-order crashes can be
+    // traced to the offending component instead of just showing the message.
+    console.error("[ErrorBoundary]", error, errorInfo.componentStack);
     toast.error(`ErrorBoundary caught: ${error.message}`);
   }
 
