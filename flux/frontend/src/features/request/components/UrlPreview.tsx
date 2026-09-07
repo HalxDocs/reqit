@@ -34,7 +34,6 @@ export function UrlPreview() {
     return m && !map.has(m[1]);
   }).length;
 
-  const openEnvModal = useUIStore((s) => s.openEnvModal);
   return (
     <div className="px-4 py-2 bg-card/50 border-b border-border">
       <div className="text-11 text-subtext mb-1 uppercase font-semibold tracking-wider flex items-center justify-between">
