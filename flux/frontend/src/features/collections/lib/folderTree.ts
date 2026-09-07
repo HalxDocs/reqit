@@ -22,7 +22,15 @@ export type TreeNode = FolderNode | RequestNode;
 export function buildFolderTree(requests: models.SavedRequest[], collID: string): TreeNode[] {
   const root: TreeNode[] = [];
   for (const req of requests) {
-    const parts = req.name.split("/");
+    // Postman parity: names containing "://" (e.g. requests named by URL after
+    // a Postman import) stay flat — splitting "http://localhost:8090/api/x"
+    // on "/" would create junk "http:" folders plus phantom empty segments
+    // from "//". Empty segments are skipped so "a//b" never renders a blank
+    // folder row.
+    const parts = req.name.includes("://")
+      ? [req.name]
+      : req.name.split("/").filter((p) => p !== "");
+    if (parts.length === 0) parts.push(req.name);
     let current = root;
     let path = "";
     for (let i = 0; i < parts.length - 1; i++) {

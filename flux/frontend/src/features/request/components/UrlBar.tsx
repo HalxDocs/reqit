@@ -401,7 +401,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       </div>
       {!isValidUrl(displayed) && displayed.trim() && !displayed.includes("{{") && (
         <div className="px-4 pb-2">
-          <InlineAlert variant="error">Invalid URL — check for typos like `htt://` or missing `https://`.</InlineAlert>
+          <InlineAlert variant="error">Invalid URL — check for a missing scheme (e.g. "https://") or typos.</InlineAlert>
         </div>
       )}
     </div>
