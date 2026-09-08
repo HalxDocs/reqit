@@ -196,7 +196,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       <MethodSelect value={method} onChange={setMethod} />
 
       <div className="flex-1 min-w-0 relative">
-        <div className="absolute inset-0 px-3 py-[9px] font-mono text-13 leading-[20px] whitespace-nowrap overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 pl-3 pr-12 py-[9px] font-mono text-13 leading-[20px] whitespace-nowrap overflow-hidden pointer-events-none">
           {highlightVars(displayed)}
         </div>
         <input
@@ -225,7 +225,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           spellCheck={false}
           autoComplete="off"
           className={cn(
-            "relative w-full h-[38px] px-3 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border rounded-lg focus:ring-2 transition-all",
+            "relative w-full h-[38px] pl-3 pr-12 bg-transparent font-mono text-13 text-transparent caret-text placeholder:text-subtext outline-none border rounded-lg focus:ring-2 transition-all",
             !isValidUrl(displayed) && displayed.trim() && !displayed.includes("{{")
               ? "border-danger focus:border-danger focus:ring-danger/30"
               : "border-border focus:border-cyan focus:ring-cyan/30"
