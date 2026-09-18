@@ -118,10 +118,14 @@ jobs:
         working-directory: flux
         run: wails build -platform linux/amd64 -o reqit -tags webkit2_41 -ldflags "-X 'flux/internal/updater.CurrentVersion=${{ github.ref_name }}'"
 
-      - name: Copy artifact
+      - name: Package Linux tarball
         run: |
-          mkdir -p release-artifacts
-          cp flux/build/bin/reqit release-artifacts/reqit-linux-amd64
+          mkdir -p release-artifacts linux-pkg
+          cp flux/build/bin/reqit linux-pkg/reqit-linux-amd64
+          cp flux/build/linux/reqit.desktop linux-pkg/
+          cp flux/build/appicon.png linux-pkg/reqit.png
+          chmod +x linux-pkg/reqit-linux-amd64
+          tar -czf release-artifacts/reqit-linux-amd64.tar.gz -C linux-pkg reqit-linux-amd64 reqit.desktop reqit.png
 
       - uses: actions/upload-artifact@v4
         with:
@@ -149,7 +153,7 @@ jobs:
           cd release-artifacts
           echo "win_sha=$(sha256sum reqit-windows-amd64.exe | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           echo "mac_sha=$(sha256sum reqit-macos-universal.zip | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-          echo "linux_sha=$(sha256sum reqit-linux-amd64 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_sha=$(sha256sum reqit-linux-amd64.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Generate latest.json manifest
         run: |
@@ -169,7 +173,7 @@ jobs:
                 "sha256": "${{ steps.checksums.outputs.mac_sha }}"
               },
               "linux-amd64": {
-                "url": "https://github.com/HalxDocs/reqit/releases/download/${TAG}/reqit-linux-amd64",
+                "url": "https://github.com/HalxDocs/reqit/releases/download/${TAG}/reqit-linux-amd64.tar.gz",
                 "sha256": "${{ steps.checksums.outputs.linux_sha }}"
               }
             }
