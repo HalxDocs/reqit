@@ -19,12 +19,6 @@ const GITHUB_URL = "https://github.com/HalxDocs/reqit";
 const RELEASES_URL = "https://github.com/HalxDocs/reqit/releases/latest";
 const PORTFOLIO_URL = "https://halxdocs.com";
 const DL_BASE = "https://github.com/HalxDocs/reqit/releases/latest/download";
-const ASSET_NAMES: Record<string, string> = {
-  windows: "reqit-windows-amd64.exe",
-  mac: "reqit-macos-universal.zip",
-  linux: "reqit-linux-amd64.tar.gz",
-};
-
 function getOS(): "windows" | "mac" | "linux" | "other" {
   const ua = navigator.userAgent;
   if (ua.includes("Win")) return "windows";
@@ -46,10 +40,20 @@ function normalizeAssetName(n: string) {
   return n.toLowerCase().replace(/[-_]/g, "");
 }
 
+// Candidate asset names per OS, newest first. The API lookup tries each in
+// order, so a rename (raw binary -> tarball) can never strand the button on
+// a 404: whatever the latest release actually contains wins. The direct
+// /latest/download/ fallback uses candidates[0].
+const ASSET_CANDIDATES: Record<string, string[]> = {
+  windows: ["reqit-windows-amd64.exe"],
+  mac: ["reqit-macos-universal.zip"],
+  linux: ["reqit-linux-amd64.tar.gz", "reqit-linux-amd64"],
+};
+
 function download() {
   const os = getOS();
-  const name = ASSET_NAMES[os];
-  if (!name) {
+  const candidates = ASSET_CANDIDATES[os];
+  if (!candidates || candidates.length === 0) {
     window.open(RELEASES_URL, "_blank", "noopener,noreferrer");
     return;
   }
@@ -61,8 +65,14 @@ function download() {
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null)
     .then((data: { assets?: { name: string; browser_download_url: string }[] } | null) => {
-      const match = data?.assets?.find((a) => normalizeAssetName(a.name) === normalizeAssetName(name));
-      window.open(match?.browser_download_url ?? `${DL_BASE}/${name}`, "_blank", "noopener,noreferrer");
+      for (const name of candidates) {
+        const match = data?.assets?.find((a) => normalizeAssetName(a.name) === normalizeAssetName(name));
+        if (match) {
+          window.open(match.browser_download_url, "_blank", "noopener,noreferrer");
+          return;
+        }
+      }
+      window.open(`${DL_BASE}/${candidates[0]}`, "_blank", "noopener,noreferrer");
     });
 }
 

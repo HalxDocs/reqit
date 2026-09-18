@@ -57,8 +57,8 @@ export const DOC_CATEGORIES: DocCategory[] = [
           },
           {
             heading: "Linux",
-            body: "Download reqit-linux-amd64, make it executable, and run it. The binary is statically linked — no system libraries beyond the usual GTK3/WebKit2GTK dependencies are required.",
-            code: "chmod +x reqit-linux-amd64\n./reqit-linux-amd64",
+            body: "Download reqit-linux-amd64.tar.gz, extract it, and run it. The tarball preserves the executable bit and includes a .desktop launcher — no system libraries beyond the usual GTK3/WebKit2GTK dependencies are required.",
+            code: "tar -xzf reqit-linux-amd64.tar.gz\n./reqit-linux-amd64",
           },
           {
             heading: "CLI-only mode",
