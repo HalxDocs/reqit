@@ -176,19 +176,6 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
     setAcOpen(false);
   };
 
-  const insertVarAtCaret = () => {
-    const input = document.getElementById("flux-url-bar") as HTMLInputElement | null;
-    if (!input) return;
-    const start = input.selectionStart ?? displayed.length;
-    const end = input.selectionEnd ?? displayed.length;
-    const next = displayed.slice(0, start) + "{{}}" + displayed.slice(end);
-    handleChange(next);
-    requestAnimationFrame(() => {
-      input.focus();
-      input.setSelectionRange(start + 2, start + 2);
-    });
-  };
-
   // Close on outside click
   useEffect(() => {
     if (!acOpen) return;
@@ -264,15 +251,6 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       </div>
 
       <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={insertVarAtCaret}
-          title="Insert variable {{}} at cursor"
-          aria-label="Insert variable"
-          className="h-[34px] px-2 flex items-center justify-center bg-bg border border-border hover:border-cyan/50 rounded-lg font-mono text-11 text-subtext hover:text-text transition-all"
-        >
-          {"{{}}"}
-        </button>
         <EnvQuickSwitch />
         <QuickEnvEditor />
         <TimeoutControl />
