@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=reqit
+GenericName=API Client
+Comment=Local-first API client — REST, WebSockets, GraphQL, gRPC, MCP
+Exec=reqit-linux-amd64 %U
+Icon=reqit
+Terminal=false
+Categories=Development;
+StartupWMClass=reqit

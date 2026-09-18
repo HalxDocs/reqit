@@ -34,7 +34,7 @@
 |----------|------|
 | Windows  | [reqit-windows-amd64.exe](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-windows-amd64.exe) |
 | macOS    | [reqit-macos-universal.zip](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-macos-universal.zip) |
-| Linux    | [reqit-linux-amd64](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64) |
+| Linux    | [reqit-linux-amd64.tar.gz](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64.tar.gz) |
 
 Latest release: [github.com/HalxDocs/reqit/releases/latest](https://github.com/HalxDocs/reqit/releases/latest)
 
@@ -50,12 +50,27 @@ Or via Terminal:
 xattr -cr /path/to/reqit.app
 ```
 
-### Linux — Make Executable
+### Linux — Install
+
+The tarball preserves the executable bit, so no `chmod` needed:
 
 ```bash
-chmod +x reqit-linux-amd64
+curl -LO https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64.tar.gz
+tar -xzf reqit-linux-amd64.tar.gz
 ./reqit-linux-amd64
 ```
+
+Optional — install system-wide with an app-menu entry:
+
+```bash
+sudo install -m 0755 reqit-linux-amd64 /usr/local/bin/
+sudo install -m 0644 reqit.desktop /usr/share/applications/
+sudo install -m 0644 reqit.png /usr/share/icons/hicolor/256x256/apps/reqit.png
+```
+
+Per-user alternative (no sudo): put the binary in `~/.local/bin`, the
+`.desktop` file in `~/.local/share/applications`, and the icon in
+`~/.local/share/icons/hicolor/256x256/apps/reqit.png`.
 
 ---
 

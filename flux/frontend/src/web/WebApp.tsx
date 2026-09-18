@@ -22,7 +22,7 @@ const DL_BASE = "https://github.com/HalxDocs/reqit/releases/latest/download";
 const ASSET_NAMES: Record<string, string> = {
   windows: "reqit-windows-amd64.exe",
   mac: "reqit-macos-universal.zip",
-  linux: "reqit-linux-amd64",
+  linux: "reqit-linux-amd64.tar.gz",
 };
 
 function getOS(): "windows" | "mac" | "linux" | "other" {

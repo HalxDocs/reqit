@@ -1,7 +1,9 @@
 package updater
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -19,6 +22,9 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/minio/selfupdate"
 )
+
+// maxUpdateBytes caps how much update payload we buffer/extract (200 MiB).
+const maxUpdateBytes = 200 << 20
 
 // CurrentVersion is the running version. Override at build time:
 //
@@ -71,6 +77,15 @@ func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
 		return err
 	}
 
+	// Linux ships as a .tar.gz (exec bit would be lost on a raw download).
+	// Unpack it and update from the contained executable.
+	if isGzip(data) {
+		data, err = extractExecutableFromTarGz(data)
+		if err != nil {
+			return fmt.Errorf("unpack update archive: %w", err)
+		}
+	}
+
 	// On Windows, try selfupdate first; fall back to NSIS installer.
 	if runtime.GOOS == "windows" {
 		if err := selfupdate.Apply(bytes.NewReader(data), selfupdate.Options{}); err != nil {
@@ -83,6 +98,61 @@ func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
 	}
 
 	return selfupdate.Apply(bytes.NewReader(data), selfupdate.Options{})
+}
+
+// isGzip reports whether data starts with the gzip magic header.
+func isGzip(data []byte) bool {
+	return len(data) > 2 && data[0] == 0x1f && data[1] == 0x8b
+}
+
+// preferredBinaryNames are matched (by base name) when unpacking a .tar.gz
+// update archive, so desktop files and icons in the same tarball are ignored.
+var preferredBinaryNames = []string{"reqit-linux-amd64", "reqit"}
+
+// extractExecutableFromTarGz unpacks a .tar.gz update archive and returns the
+// bytes of the contained executable. Only regular files are considered
+// (symlinks, devices, and absolute/parent paths are skipped).
+func extractExecutableFromTarGz(data []byte) ([]byte, error) {
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("open gzip: %w", err)
+	}
+	defer gz.Close()
+
+	tr := tar.NewReader(io.LimitReader(gz, maxUpdateBytes))
+	var fallback []byte
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read tar: %w", err)
+		}
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+		base := path.Base(filepath.ToSlash(hdr.Name))
+		if base == "." || base == "/" || base == "" {
+			continue
+		}
+		content, err := io.ReadAll(io.LimitReader(tr, maxUpdateBytes))
+		if err != nil {
+			return nil, fmt.Errorf("read entry %s: %w", base, err)
+		}
+		for _, want := range preferredBinaryNames {
+			if base == want {
+				return content, nil
+			}
+		}
+		if fallback == nil {
+			fallback = content
+		}
+	}
+	if fallback == nil {
+		return nil, fmt.Errorf("no executable found in update archive")
+	}
+	return fallback, nil
 }
 
 // downloadWithChecksum downloads an asset and verifies its SHA256 checksum.

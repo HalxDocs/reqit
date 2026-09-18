@@ -36,11 +36,19 @@
 curl -LO https://github.com/HalxDocs/reqit/releases/latest/download/reqit-windows-amd64.exe
 ```
 
+**Linux:**
+
+```bash
+curl -LO https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64.tar.gz
+tar -xzf reqit-linux-amd64.tar.gz
+./reqit-linux-amd64
+```
+
 | Platform | File |
 |----------|------|
 | Windows  | [reqit-windows-amd64.exe](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-windows-amd64.exe) |
 | macOS    | [reqit-macos-universal.zip](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-macos-universal.zip) |
-| Linux    | [reqit-linux-amd64](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64) |
+| Linux    | [reqit-linux-amd64.tar.gz](https://github.com/HalxDocs/reqit/releases/latest/download/reqit-linux-amd64.tar.gz) |
 
 ### Linux dependencies
 
