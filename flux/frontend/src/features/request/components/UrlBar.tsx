@@ -192,7 +192,8 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   }, [acOpen]);
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-surface">
+    <div className="border-b border-border bg-surface">
+    <div className="flex items-center gap-2 px-4 py-2.5">
       <MethodSelect value={method} onChange={setMethod} />
 
       <div className="flex-1 min-w-0 relative">
@@ -380,6 +381,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           </button>
         )}
       </div>
+    </div>
       {!isValidUrl(displayed) && displayed.trim() && !displayed.includes("{{") && (
         <div className="px-4 pb-2">
           <InlineAlert variant="error">Invalid URL — check for a missing scheme (e.g. "https://") or typos.</InlineAlert>
