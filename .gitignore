@@ -4,8 +4,11 @@ flux/flux
 flux/reqit.exe
 flux/reqit
 flux/build/bin/
-flux/frontend/dist/
+flux/frontend/dist/*
 flux/frontend/dist-web/
+# Keep the embed placeholder: main.go uses //go:embed all:frontend/dist, so a
+# fresh clone must contain at least one file or `go build ./...` fails.
+!flux/frontend/dist/.gitkeep
 flux/frontend/package.json.md5
 index.html
 *.exe

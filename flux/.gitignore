@@ -1,4 +1,7 @@
 build/bin
 node_modules
-frontend/dist
+frontend/dist/*
 frontend/dist-web
+# Keep the embed placeholder: main.go uses //go:embed all:frontend/dist, so a
+# fresh clone must contain at least one file or `go build ./...` fails.
+!frontend/dist/.gitkeep
