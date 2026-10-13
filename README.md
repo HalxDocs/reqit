@@ -155,6 +155,39 @@ sudo dnf install webkit2gtk4.1 libsecret gnome-keyring
 | Test generation | Playwright and Jest (JS/TS) from collections |
 | CLI mode | Headless collection execution for CI/CD pipelines |
 
+#### Running the tests
+
+```bash
+# Go backend
+cd flux && go test ./...                    # unit tests, no network or containers
+cd flux/frontend && npm test               # frontend unit tests
+cd flux/frontend && npm run build:web      # typecheck + production build
+```
+
+The default Go suite is hermetic and fast: no network calls and no containers.
+
+Some tests talk to real providers and are **opt-in**. They skip unless you set
+the matching variable, so `go test ./...` never blocks on a slow external service.
+
+| Variable | Enables |
+|----------|---------|
+| `TEST_KEYCLOAK_DOCKER=1` | Keycloak integration — boots a real Keycloak container |
+| `KEYCLOAK_URL` | Keycloak against an already-running instance |
+| `TEST_ENTRA_TENANT=organizations` | Live Entra ID metadata discovery |
+| `TEST_ENTRA_CLIENT_ID` / `TEST_ENTRA_PUBLIC_CLIENT_ID` (+ matching secret) | Live Entra token flows |
+| `TEST_GITHUB_CLIENT_ID` | Live GitHub device-flow smoke test |
+| `TEST_GITHUB_WAIT_APPROVAL=1` | Waits for a human to approve the device code |
+
+```bash
+cd flux && TEST_KEYCLOAK_DOCKER=1 go test ./internal/oauth2/ -timeout 15m
+```
+
+Use `-short` to skip all live/integration tests explicitly:
+
+```bash
+cd flux && go test -short ./...
+```
+
 ### Import / Export
 
 | Feature | Description |
