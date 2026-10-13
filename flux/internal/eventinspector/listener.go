@@ -54,10 +54,14 @@ func (l *Listener) Start() (int, error) {
 	}
 	l.listener = ln
 	l.port = ln.Addr().(*net.TCPAddr).Port
-	l.server = &http.Server{Handler: http.HandlerFunc(l.handle)}
+	server := &http.Server{Handler: http.HandlerFunc(l.handle)}
+	l.server = server
 	l.running = true
 	go func() {
-		if err := l.server.Serve(ln); err != nil && err != http.ErrServerClosed {
+		// Use the captured server, not l.server: Stop() clears that field, and
+		// reading it here raced with it, panicking on a nil dereference when the
+		// listener was stopped right after it started.
+		if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
 			log.Printf("eventinspector: serve error: %v", err)
 		}
 	}()
