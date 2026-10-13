@@ -645,7 +645,8 @@ func (k *keycloak) deleteRealm(t *testing.T, realm string) {
 }
 
 // setupKeycloak returns a reachable Keycloak base URL. It prefers
-// KEYCLOAK_URL, else spawns a container when Docker exists, else skips.
+// KEYCLOAK_URL, else spawns a container when Docker exists AND the test opted
+// in, else skips.
 func setupKeycloak(t *testing.T) *keycloak {
 	t.Helper()
 	if u := os.Getenv("KEYCLOAK_URL"); u != "" {
@@ -659,8 +660,17 @@ func setupKeycloak(t *testing.T) *keycloak {
 		t.Logf("keycloak: using external instance at %s", base)
 		return kc
 	}
+	if testing.Short() {
+		t.Skip("skipping Keycloak integration in -short mode")
+	}
+	// Having docker on PATH is not consent to pull and boot a ~500MB Keycloak
+	// container on every `go test ./...`. Require an explicit opt-in so the
+	// default suite stays fast and hermetic.
+	if !envIsSet("TEST_KEYCLOAK_DOCKER") {
+		t.Skip("set TEST_KEYCLOAK_DOCKER=1 (or KEYCLOAK_URL) to run Keycloak integration tests")
+	}
 	if _, err := exec.LookPath("docker"); err != nil {
-		t.Skipf("KEYCLOAK_URL unset and docker unavailable: %v", err)
+		t.Skipf("TEST_KEYCLOAK_DOCKER set but docker unavailable: %v", err)
 	}
 
 	// Pick a free host port for the container's 8080.
@@ -671,7 +681,9 @@ func setupKeycloak(t *testing.T) *keycloak {
 	port := ln.Addr().(*net.TCPAddr).Port
 	_ = ln.Close()
 
-	name := fmt.Sprintf("reqit-kc-smoke-%d", os.Getpid())
+	// Unique per test invocation: a crashed earlier run can leave a container
+	// behind, and a reused name would fail `docker run` outright.
+	name := fmt.Sprintf("reqit-kc-smoke-%d-%d", os.Getpid(), time.Now().UnixNano())
 	image := envOr("KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.1")
 	cmd := exec.Command("docker", "run", "-d", "--name", name,
 		"-p", fmt.Sprintf("127.0.0.1:%d:8080", port),
@@ -1000,6 +1012,14 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// envIsSet reports whether an opt-in variable is enabled. Accepts any non-empty
+// value other than an explicit false, so `TEST_X=0` disables and `TEST_X=1`
+// enables.
+func envIsSet(key string) bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	return v != "" && v != "0" && v != "false" && v != "no"
 }
 
 // TestParseKeycloakLoginForm verifies the login-form parser against the real
