@@ -1,5 +1,5 @@
 import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock, Pencil } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
@@ -150,6 +150,22 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const [acOpen, setAcOpen] = useState(false);
   const suggestions = useUrlAutocomplete(url);
   const acRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const syncOverlayScroll = () => {
+    const input = inputRef.current;
+    const overlay = overlayRef.current;
+    if (input && overlay) overlay.scrollLeft = input.scrollLeft;
+  };
+
+  // The visible text is a highlight overlay stacked over a transparent input.
+  // Re-glue it after every render: programmatic value updates can reset the
+  // input's scroll position without firing onScroll, leaving long URLs cut
+  // off instead of following the caret like a normal input.
+  useLayoutEffect(() => {
+    syncOverlayScroll();
+  });
 
   // Show dropdown when suggestions exist and user has typed
   useEffect(() => {
@@ -167,6 +183,17 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
     }
     setAcIndex(-1);
     setAcOpen(true);
+    // Keep the caret in view like a normal input: when typing at the end,
+    // pin the viewport to the end, then re-glue the highlight overlay.
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      const overlay = overlayRef.current;
+      if (!input || !overlay) return;
+      if (input.selectionStart === input.value.length) {
+        input.scrollLeft = input.scrollWidth;
+      }
+      overlay.scrollLeft = input.scrollLeft;
+    });
   };
 
   const selectSuggestion = (s: { url: string; method: string }) => {
@@ -197,18 +224,18 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
       <MethodSelect value={method} onChange={setMethod} />
 
       <div className="flex-1 min-w-0 relative">
-        <div className="absolute inset-0 px-3 py-[9px] font-mono text-13 leading-[20px] whitespace-nowrap overflow-hidden pointer-events-none">
+        <div ref={overlayRef} className="absolute inset-0 px-3 py-[9px] font-mono text-13 leading-[20px] whitespace-nowrap overflow-hidden pointer-events-none">
           {highlightVars(displayed)}
         </div>
         <input
           id="flux-url-bar"
+          ref={inputRef}
           type="text"
           value={displayed}
           placeholder="https://api.example.com/endpoint"
           onChange={(e) => handleChange(e.target.value)}
           onScroll={(e) => {
-            const el = e.currentTarget.previousElementSibling;
-            if (el) el.scrollLeft = e.currentTarget.scrollLeft;
+            syncOverlayScroll();
           }}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
