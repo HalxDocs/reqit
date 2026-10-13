@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { GitBranch, GitCommit, RefreshCw, Upload, Settings, ChevronDown, ChevronRight, Plus, Users } from "lucide-react";
+import { GitBranch, GitCommit, RefreshCw, Upload, Settings, ChevronDown, ChevronRight, Plus, Users, ShieldAlert, ShieldCheck } from "lucide-react";
 import {
   GetGitStatus,
+  GetBackupStatus,
   InitGit,
   CommitAndPush,
   GitPull,
@@ -19,6 +20,23 @@ interface GitStatus {
   hasChanges: boolean;
   currentBranch: string;
   remoteUrl: string;
+}
+
+interface BackupStatus {
+  workspace: string;
+  isRepo: boolean;
+  hasRemote: boolean;
+  remoteUrl: string;
+  hasCredentials: boolean;
+  uncommitted: boolean;
+  unpushedCommits: boolean;
+  lastPushAt: string;
+  lastPushError: string;
+  lastCommitAt: string;
+  autoSyncEnabled: boolean;
+  autoSyncDebounceMs: number;
+  healthy: boolean;
+  problems: string;
 }
 
 interface CommitInfo {
@@ -51,6 +69,7 @@ function timeAgo(iso: string) {
 export function GitPanel() {
   const toast = useToastStore((s) => s.push);
   const [status, setStatus] = useState<GitStatus | null>(null);
+  const [backup, setBackup] = useState<BackupStatus | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   const [log, setLog] = useState<CommitInfo[]>([]);
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -75,6 +94,11 @@ export function GitPanel() {
     } catch {
       // not a git repo yet
     }
+    try {
+      setBackup(await GetBackupStatus() as BackupStatus);
+    } catch {
+      setBackup(null);
+    }
   };
 
   useEffect(() => {
@@ -83,7 +107,17 @@ export function GitPanel() {
       void refresh();
       toast("success", "Workspace updated from remote");
     });
-    return () => { if (typeof off === "function") off(); };
+    const offBackup = EventsOn("git:backup:status", () => {
+      void refresh();
+    });
+    const offSync = EventsOn("git:sync:complete", () => {
+      void refresh();
+    });
+    return () => {
+      if (typeof off === "function") off();
+      if (typeof offBackup === "function") offBackup();
+      if (typeof offSync === "function") offSync();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -180,12 +214,53 @@ export function GitPanel() {
           {status?.hasChanges && (
             <span className="w-[6px] h-[6px] rounded-full bg-amber-400 shrink-0" title="Uncommitted changes" />
           )}
+          {!backup?.healthy && backup && !backup.healthy && (
+            <span
+              className={`w-[6px] h-[6px] rounded-full shrink-0 ${backup.isRepo && backup.hasRemote ? "bg-danger" : "bg-subtext/40"}`}
+              title={backup.problems || "This workspace is not backed up"}
+            />
+          )}
         </span>
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
       </button>
 
       {expanded && (
         <div className="px-3 pb-3 flex flex-col gap-2">
+
+          {/* Backup health — say plainly when data is not safe off this machine */}
+          {backup && !backup.healthy && (
+            <div className="rounded-lg border border-danger/30 bg-danger/5 px-2.5 py-2 flex flex-col gap-1.5">
+              <div className="text-11 font-semibold text-danger flex items-center gap-1.5">
+                <ShieldAlert size={12} />
+                Not backed up
+              </div>
+              <p className="text-11 text-subtext leading-relaxed">
+                {backup.problems || "Some changes have not reached your remote."}
+              </p>
+              {backup.uncommitted && (
+                <p className="text-11 text-subtext">There are uncommitted changes in this workspace.</p>
+              )}
+              {backup.unpushedCommits && !backup.uncommitted && (
+                <p className="text-11 text-subtext">Local commits have not reached the remote yet.</p>
+              )}
+              {(!backup.hasRemote || !backup.hasCredentials) && (
+                <button
+                  type="button"
+                  onClick={() => setShowSetup(true)}
+                  className="self-start text-11 text-cyan hover:underline"
+                >
+                  Fix this now
+                </button>
+              )}
+            </div>
+          )}
+
+          {backup?.healthy && backup.lastPushAt && (
+            <div className="text-11 text-subtext/80 flex items-center gap-1.5">
+              <ShieldCheck size={12} className="text-teal shrink-0" />
+              Backed up {timeAgo(backup.lastPushAt)}
+            </div>
+          )}
 
           {/* Not initialised */}
           {!status?.initialised && !showSetup && (

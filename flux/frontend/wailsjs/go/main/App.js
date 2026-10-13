@@ -477,6 +477,9 @@ export function GetGitStashList() {
 export function GetGitStatus() {
   return window['go']['main']['App']['GetGitStatus']();
 }
+export function GetBackupStatus() {
+  return window['go']['main']['App']['GetBackupStatus']();
+}
 
 export function GetHistory() {
   return window['go']['main']['App']['GetHistory']();

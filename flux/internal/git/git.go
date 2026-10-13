@@ -246,6 +246,61 @@ func (s *Store) HasChanges() bool {
 	return !status.IsClean()
 }
 
+// HasUnpushedCommits reports whether the local branch has commits the remote
+// has not seen. Backup health needs this: a workspace can have a clean worktree
+// yet still hold unsaved history when a push has been failing.
+func (s *Store) HasUnpushedCommits() (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	remote, err := s.repo.Remote("origin")
+	if err != nil {
+		// No origin remote: nothing has ever been pushed, so local commits are
+		// definitionally unpushed. Report true so callers warn instead of
+		// treating an unbacked-up workspace as safe.
+		return true, err
+	}
+	refs, err := remote.List(&gogit.ListOptions{})
+	if err != nil {
+		// Without credentials or network we cannot prove the remote is current.
+		// Report "has unpushed work" so the caller warns instead of assuming safety.
+		return true, err
+	}
+	var remoteHash plumbing.Hash
+	for _, ref := range refs {
+		if ref.Name().IsBranch() {
+			remoteHash = ref.Hash()
+			break
+		}
+	}
+	local, err := s.repo.Head()
+	if err != nil {
+		return true, err
+	}
+	if remoteHash.IsZero() {
+		// Remote has no branches yet, so local commits definitely are not pushed.
+		return true, nil
+	}
+	return local.Hash() != remoteHash, nil
+}
+
+// LastCommitTime returns when the most recent commit was authored, or the zero
+// time when the repository has no commits.
+func (s *Store) LastCommitTime() (time.Time, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	head, err := s.repo.Head()
+	if err != nil {
+		return time.Time{}, err
+	}
+	c, err := s.repo.CommitObject(head.Hash())
+	if err != nil {
+		return time.Time{}, err
+	}
+	return c.Author.When, nil
+}
+
 // GetActiveContributors returns unique authors who committed within the last 24 hours.
 func (s *Store) GetActiveContributors() ([]Contributor, error) {
 	s.mu.Lock()

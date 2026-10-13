@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -102,6 +103,8 @@ type App struct {
 	schedulerExec   *schedpkg.Executor
 	autoSyncOn      bool
 	autoSyncMu      sync.Mutex
+	syncState       gitSyncState
+	autoSyncTimer   *time.Timer
 	eventInspector  *eventinspector.Store
 	eventSecret     *eventinspector.SecretStore
 	eventListener   *eventinspector.Listener
@@ -178,6 +181,12 @@ func (a *App) startup(ctx context.Context) {
 	if dir, err := a.workspaces.ActiveDir(); err == nil && dir != "" {
 		a.mountWorkspace(dir)
 	}
+
+	// Report backup health on launch so an unbacked-up workspace is visible
+	// before the user has done anything, not only after a failed push.
+	go func() {
+		runtime.EventsEmit(a.ctx, "git:backup:status", a.GetBackupStatus())
+	}()
 
 	// Check for updates in the background — emit event if one is found.
 	if a.airgap == nil || !a.airgap.Get().UpdateCheckDisabled {

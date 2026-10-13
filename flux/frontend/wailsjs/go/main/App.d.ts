@@ -258,6 +258,7 @@ export function GetGitLog(arg1:number):Promise<Array<git.CommitInfo>>;
 export function GetGitStashList():Promise<Array<git.StashEntry>>;
 
 export function GetGitStatus():Promise<main.GitStatus>;
+export function GetBackupStatus():Promise<main.BackupStatus>;
 
 export function GetHistory():Promise<Array<models.HistoryEntry>>;
 

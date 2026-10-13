@@ -627,6 +627,44 @@ export namespace main {
 	        this.autoSync = source["autoSync"];
 	    }
 	}
+	export class BackupStatus {
+	    workspace: string;
+	    isRepo: boolean;
+	    hasRemote: boolean;
+	    remoteUrl: string;
+	    hasCredentials: boolean;
+	    uncommitted: boolean;
+	    unpushedCommits: boolean;
+	    lastPushAt: string;
+	    lastPushError: string;
+	    lastCommitAt: string;
+	    autoSyncEnabled: boolean;
+	    autoSyncDebounceMs: number;
+	    healthy: boolean;
+	    problems: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BackupStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workspace = source["workspace"];
+	        this.isRepo = source["isRepo"];
+	        this.hasRemote = source["hasRemote"];
+	        this.remoteUrl = source["remoteUrl"];
+	        this.hasCredentials = source["hasCredentials"];
+	        this.uncommitted = source["uncommitted"];
+	        this.unpushedCommits = source["unpushedCommits"];
+	        this.lastPushAt = source["lastPushAt"];
+	        this.lastPushError = source["lastPushError"];
+	        this.lastCommitAt = source["lastCommitAt"];
+	        this.autoSyncEnabled = source["autoSyncEnabled"];
+	        this.autoSyncDebounceMs = source["autoSyncDebounceMs"];
+	        this.healthy = source["healthy"];
+	        this.problems = source["problems"];
+	    }
+	}
 	export class InterceptorStatus {
 	    running: boolean;
 	    port: number;
