@@ -379,3 +379,42 @@ func TestExecuteTimingBreakdown(t *testing.T) {
 		t.Errorf("expected positive total time, got %d", result.Timing.TotalMs)
 	}
 }
+
+func TestMsDurationNeverReportsZeroForRealTime(t *testing.T) {
+	cases := []struct {
+		name string
+		d    time.Duration
+		want int64
+	}{
+		{"zero stays zero", 0, 0},
+		{"negative stays zero", -5 * time.Millisecond, 0},
+		{"sub-millisecond rounds up to 1", 400 * time.Microsecond, 1},
+		{"nanosecond rounds up to 1", time.Nanosecond, 1},
+		{"exact millisecond", 5 * time.Millisecond, 5},
+		{"mixed value truncates normally", 1500 * time.Microsecond, 1},
+		{"seconds", 3 * time.Second, 3000},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := msDuration(tc.d); got != tc.want {
+				t.Errorf("msDuration(%v) = %d, want %d", tc.d, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestMsBetweenIgnoresIncompleteSpans(t *testing.T) {
+	now := time.Now()
+	if got := msBetween(time.Time{}, now); got != 0 {
+		t.Errorf("zero start should yield 0, got %d", got)
+	}
+	if got := msBetween(now, time.Time{}); got != 0 {
+		t.Errorf("zero end should yield 0, got %d", got)
+	}
+	if got := msBetween(now, now.Add(-time.Second)); got != 0 {
+		t.Errorf("negative span should yield 0, got %d", got)
+	}
+	if got := msBetween(now, now.Add(250*time.Millisecond)); got != 250 {
+		t.Errorf("250ms span = %d, want 250", got)
+	}
+}

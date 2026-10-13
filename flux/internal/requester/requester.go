@@ -80,6 +80,33 @@ func transportForPayload(payload models.RequestPayload) *http.Transport {
 	}
 }
 
+// msDuration converts a duration to whole milliseconds, never reporting 0 for
+// a request that actually took time. Fast local requests complete in well under
+// a millisecond, and Duration.Milliseconds() truncates those to 0 — which reads
+// as "no time elapsed" in the UI and made TestExecuteTimingBreakdown fail on an
+// idle machine while passing under load.
+func msDuration(d time.Duration) int64 {
+	if d <= 0 {
+		return 0
+	}
+	ms := d.Milliseconds()
+	if ms < 1 {
+		return 1
+	}
+	return ms
+}
+
+// msBetween is msDuration for a span between two trace timestamps.
+func msBetween(start, end time.Time) int64 {
+	if start.IsZero() || end.IsZero() || end.Before(start) {
+		return 0
+	}
+	return msDuration(end.Sub(start))
+}
+
+// msSince is msBetween against the current time.
+func msSince(start, end time.Time) int64 { return msBetween(start, end) }
+
 func Execute(ctx context.Context, payload models.RequestPayload, jar http.CookieJar) models.ResponseResult {
 	tr := transportForPayload(payload)
 	client := httpClient
@@ -204,19 +231,19 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 	{
 		var dns, tcp, tlsH, ttfb, download int64
 		if !dnsStart.IsZero() && !dnsEnd.IsZero() {
-			dns = dnsEnd.Sub(dnsStart).Milliseconds()
+			dns = msSince(dnsStart, dnsEnd)
 		}
 		if !tcpStart.IsZero() && !tcpEnd.IsZero() {
-			tcp = tcpEnd.Sub(tcpStart).Milliseconds()
+			tcp = msSince(tcpStart, tcpEnd)
 		}
 		if !tlsStart.IsZero() && !tlsEnd.IsZero() {
-			tlsH = tlsEnd.Sub(tlsStart).Milliseconds()
+			tlsH = msSince(tlsStart, tlsEnd)
 		}
 		if !gotFirstByte.IsZero() {
-			ttfb = gotFirstByte.Sub(start).Milliseconds()
+			ttfb = msBetween(start, gotFirstByte)
 		}
 		if !gotFirstByte.IsZero() {
-			download = downloadEnd.Sub(gotFirstByte).Milliseconds()
+			download = msBetween(gotFirstByte, downloadEnd)
 		}
 		timingBreakdown = &models.TimingBreakdown{
 			DNSLookupMs:    dns,
@@ -224,7 +251,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 			TLSHandshakeMs: tlsH,
 			TTFBMs:         ttfb,
 			DownloadMs:     download,
-			TotalMs:        timing.Milliseconds(),
+			TotalMs:        msDuration(timing),
 		}
 	}
 
@@ -234,7 +261,7 @@ func Execute(ctx context.Context, payload models.RequestPayload, jar http.Cookie
 		Headers:      headers,
 		Body:         bodyStr,
 		BodyIsBase64: bodyIsBase64,
-		TimingMs:     timing.Milliseconds(),
+		TimingMs:     msDuration(timing),
 		Timing:       timingBreakdown,
 		SizeBytes:    sizeBytes,
 		Cookies:      setCookies,
@@ -453,7 +480,7 @@ func errResult(err error, elapsed time.Duration) models.ResponseResult {
 		StatusCode: 0,
 		Headers:    map[string]string{},
 		Body:       "",
-		TimingMs:   elapsed.Milliseconds(),
+		TimingMs:   msDuration(elapsed),
 		SizeBytes:  0,
 		Error:      err.Error(),
 	}
@@ -534,7 +561,7 @@ func ExecuteStream(ctx context.Context, payload models.RequestPayload, jar http.
 			Headers:      headers,
 			Body:         bodyStr,
 			BodyIsBase64: bodyIsBase64,
-			TimingMs:     timing.Milliseconds(),
+			TimingMs:     msDuration(timing),
 			SizeBytes:    int64(len(respBody)),
 			Error:        "",
 		}
@@ -548,7 +575,7 @@ func ExecuteStream(ctx context.Context, payload models.RequestPayload, jar http.
 		StatusCode: resp.StatusCode,
 		Headers:    headers,
 		Body:       accumulated.String(),
-		TimingMs:   time.Since(start).Milliseconds(),
+		TimingMs:   msDuration(time.Since(start)),
 		SizeBytes:  int64(accumulated.Len()),
 		Error:      "",
 	}
