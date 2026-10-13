@@ -96,12 +96,13 @@ describe("useTabsStore", () => {
     expect(s.activeID).toBe(t1.id);
   });
 
-  it("closeTab on last tab empties tabs and resets request store", () => {
+  it("closeTab on last tab keeps one fresh tab and resets request store", async () => {
     useRequestStore.getState().setUrl("https://example.com");
-    useTabsStore.getState().closeTab(useTabsStore.getState().tabs[0].id);
+    await useTabsStore.getState().closeTab(useTabsStore.getState().tabs[0].id);
     const s = useTabsStore.getState();
-    expect(s.tabs.length).toBe(0);
-    expect(s.activeID).toBe("");
+    expect(s.tabs.length).toBe(1);
+    expect(s.tabs[0].id).toBe(s.activeID);
+    expect(s.tabs[0].dirty).toBe(false);
     expect(useRequestStore.getState().url).toBe("");
   });
 
