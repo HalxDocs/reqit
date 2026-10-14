@@ -1,5 +1,57 @@
 # Changelog
 
+## [2.4.0] - 2026-10-13 — Backup health, crash + timing fixes, hermetic test suite
+
+### Fixes
+- `fix(eventinspector): stop SIGSEGV when listener stopped right after start` — the serve goroutine read `l.server` unlocked while `Stop()` set it to `nil`, panicking the whole app. Reproduced by `go test`: `net/http.(*Server).Serve` on a nil receiver. Now captures the server in a local. Verified with `-race`.
+- `fix(requester): stop reporting 0ms for sub-millisecond requests` — `Duration.Milliseconds()` truncates, so a fast local request reported `0ms` for DNS, TCP, TLS, TTFB, download **and** total. The frontend already hedged with `timing.totalMs || 1`, so the zero was a known-but-unfixed case. Adds `msDuration`/`msBetween` helpers that round real elapsed time up to at least 1ms while leaving genuine zero as zero.
+- `fix(request): keep long URLs scrolling with the caret in the URL bar` — the highlight overlay only re-synced via `onScroll`, which programmatic value updates never fire, leaving long URLs cut off. Re-glues the overlay in a layout effect and pins the viewport to the end when the caret is at the end.
+- `fix(build): keep the go:embed placeholder so a fresh clone builds` — `main.go` embeds `all:frontend/dist`, but that directory was fully gitignored, so `go build ./...` failed on any clean checkout. Commits a `.gitkeep` and switches the rules to `dist/*`.
+- `fix(build): recreate the embed placeholder after every frontend build` — vite's `emptyOutDir` wiped the `.gitkeep`, so building and then committing would silently re-break fresh clones.
+
+### Features
+- `feat(git): surface backup health and debounce auto-sync` — collections and environments already lived in git, but nothing told a user whether their data had actually left the machine:
+  - Debounced auto-sync, so a burst of mutations becomes one commit+push instead of one per binding call.
+  - Sync outcomes are recorded, including `no git credentials`, which previously no-op'd silently.
+  - New `GetBackupStatus`, derived live from git — remote, credentials, uncommitted work, unpushed commits, last push time, and plain-English `problems`. `HasUnpushedCommits` errs toward "unpushed" so an unbacked-up workspace is never reported safe.
+  - Emits status at startup; the Git panel shows a **Not backed up** banner with a fix action, or a quiet `Backed up Nm ago` when healthy.
+  - `CommitAndPush` now fails loudly instead of returning `nil` after a commit-only save with no credentials.
+  - Adds the first test file for `internal/git`.
+
+### Developer Experience
+- `test(oauth2): gate Keycloak container behind explicit opt-in` — `setupKeycloak` skipped only when docker was *absent*, so any machine with Docker installed pulled a ~500MB Keycloak image and waited up to 180s on every `go test ./...`. Having `docker` on `PATH` is not consent to boot a container; now requires `TEST_KEYCLOAK_DOCKER` (or `KEYCLOAK_URL`) and honours `-short`. Container names made unique so a crashed run cannot block the next. Package went from a 60s timeout to **0.84s**; the full suite now completes in ~8s.
+- `fix(test): stop confirm-guarded actions deadlocking the suite` — `showConfirm()` only settles when a real modal renders, so any test touching a confirm-guarded action hung forever instead of failing. Defaults the confirm in test setup; individual tests can override for the cancel path. Also refreshed the last-tab close test, which still asserted the empty-state behaviour intentionally replaced on 2026-09-01.
+- `docs: test instructions with the live-provider opt-in variables` — the gated Keycloak/Entra/GitHub tests were undiscoverable.
+
+## [2.3.0] - 2026-09-19 — Re-tag of 2.2.1
+
+- Identical tree to `v2.2.1` (same tree hash `6a4bf7c`) — a re-release, not new code. No functional changes from 2.2.1.
+
+## [2.2.1] - 2026-09-19 — URL bar sizing and Linux download fixes
+
+### Fixes
+- `fix(request): invalid-URL banner no longer squeezes the URL field` — the banner rendered as a flex item inside the URL row, so the moment a URL turned invalid (e.g. typing `:`, where bare `https` resolves against the localhost base and counts as valid but `https:` does not) the long message stole all flex width and the input collapsed to a sliver. It now renders full-width below the row.
+- `fix(web): Linux download never 404s` — the button looked up only one asset name; after the v2.2.0 rename (raw binary → tarball) any miss fell back to a dead URL and GitHub served a 404. Now tries candidates in order (`tar.gz`, then legacy raw) against the release assets before falling back to the direct link. Docs Linux section updated to the tarball flow.
+
+## [2.2.0] - 2026-09-18 — URL bar rework, Linux packaging, hook-order crash fix
+
+### Fixes
+- `fix(request): remove inset variable button to restore full URL width` — follows `reserve padding for inset variable button` and `move variable-insert button out of URL input`.
+- `fix(frontend): hook after early return in UrlPreview crashed on URL edit` — a hook was called after an early return, breaking hook order and crashing on every URL edit. `chore(frontend)` additionally logs component stacks in `ErrorBoundary` to make hook-order crashes diagnosable.
+- `fix(collections): keep URL-named requests flat in tree` + clarify the invalid-URL hint.
+
+### Features
+- `feat(request): Postman-style auto-save for New Request + Content-Type auto-check`.
+
+### Platform
+- `fix(linux): tarball-ready updater, desktop entry, docs` — the updater extracts the executable from `.tar.gz` archives (gzip sniffed, regular files only, 200MiB cap) with 5 new tests, and a `flux/build/linux/reqit.desktop` launcher entry ships alongside. WebApp download button, README and DOCS point at `reqit-linux-amd64.tar.gz` with extract and system-wide/per-user install instructions.
+- Release workflow packages Linux artifacts into a tarball and adjusts checksum calculations.
+
+## [2.1.0] - 2026-09-02 — Diff ignore patterns
+
+### Features
+- `feat(response): add ignore patterns to diff` — exclude volatile values so response diffs show only meaningful changes. Adds `diffIgnore.ts` (exact + glob matching), `useDiffIgnoreStore` with global defaults, per-request overrides and header patterns (localStorage-persisted), and `DiffIgnoreModal` with Global / Per-Request / Headers tabs. Defaults ignore `timestamp`, `requestId`, `traceId`, `spanId`, `createdAt`, `updatedAt`, `*Id`; headers ignore `Date`, `X-Request-Id`, `X-Correlation-Id`, `ETag`, `X-Trace-Id`, `X-Span-Id`. `DiffSnapshots.tsx` applies patterns before canonicalisation and gains a settings button.
+
 ## [2.0.0] - 2026-09-02 — OAuth2 engine, Inspector suite, MCP universal & UX polish
 
 ### Highlights
