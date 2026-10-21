@@ -1,11 +1,11 @@
 package markdown
 
 type ExportOptions struct {
-	IncludeHeaders   bool
-	IncludeBody      bool
-	IncludeExamples  bool
-	BaseURL          string
-	Timestamp        bool
+	IncludeHeaders  bool
+	IncludeBody     bool
+	IncludeExamples bool
+	BaseURL         string
+	Timestamp       bool
 }
 
 func DefaultOptions() ExportOptions {

@@ -52,9 +52,9 @@ func TestIsGzip(t *testing.T) {
 
 func TestExtractExecutableFromTarGz_PreferredName(t *testing.T) {
 	data := buildTestTarGz(t, map[string][]byte{
-		"reqit.desktop":       []byte("[Desktop Entry]"),
-		"reqit.png":           []byte("fake-png"),
-		"reqit-linux-amd64":   []byte("fake-elf-binary"),
+		"reqit.desktop":     []byte("[Desktop Entry]"),
+		"reqit.png":         []byte("fake-png"),
+		"reqit-linux-amd64": []byte("fake-elf-binary"),
 	}, map[string]string{
 		"evil-link": "/etc/passwd",
 	})
@@ -94,9 +94,9 @@ func TestExtractExecutableFromTarGz_Corrupt(t *testing.T) {
 func TestAssetForCurrentPlatform(t *testing.T) {
 	m := &UpdateManifest{
 		Platforms: map[string]PlatformAsset{
-			"linux-amd64":    {URL: "https://example.com/linux.zip", SHA256: "abc"},
-			"darwin-arm64":   {URL: "https://example.com/mac.zip", SHA256: "def"},
-			"windows-amd64":  {URL: "https://example.com/win.zip", SHA256: "ghi"},
+			"linux-amd64":   {URL: "https://example.com/linux.zip", SHA256: "abc"},
+			"darwin-arm64":  {URL: "https://example.com/mac.zip", SHA256: "def"},
+			"windows-amd64": {URL: "https://example.com/win.zip", SHA256: "ghi"},
 		},
 	}
 	key := runtime.GOOS + "-" + runtime.GOARCH

@@ -211,7 +211,7 @@ func TestStoreCap(t *testing.T) {
 		t.Fatalf("expected cap %d, got %d", Cap, len(recs))
 	}
 	// Newest first.
-	if recs[0].ID != "id-" + strconv.Itoa(Cap+49) {
+	if recs[0].ID != "id-"+strconv.Itoa(Cap+49) {
 		t.Errorf("expected newest-first ordering, got %q", recs[0].ID)
 	}
 }

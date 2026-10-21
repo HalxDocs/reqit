@@ -18,18 +18,18 @@ import (
 type Tier string
 
 const (
-	TierOSS       Tier = "oss"
-	TierPro       Tier = "pro"
+	TierOSS        Tier = "oss"
+	TierPro        Tier = "pro"
 	TierEnterprise Tier = "enterprise"
 )
 
 type FeatureTier struct {
-	Feature       string `json:"feature"`
-	OSS           bool   `json:"oss"`
-	Pro           bool   `json:"pro"`
-	Enterprise    bool   `json:"enterprise"`
-	Category      string `json:"category"`
-	Description   string `json:"description"`
+	Feature     string `json:"feature"`
+	OSS         bool   `json:"oss"`
+	Pro         bool   `json:"pro"`
+	Enterprise  bool   `json:"enterprise"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
 }
 
 // DefaultFeatureTiers defines the open-core boundary — what is free vs paid.
@@ -270,24 +270,24 @@ func GenerateBadges() []Badge {
 // ---------------------------------------------------------------------------
 
 type Store struct {
-	mu       sync.RWMutex
-	dataDir  string
+	mu      sync.RWMutex
+	dataDir string
 
-	tiers    []FeatureTier
-	recipes  []Recipe
+	tiers     []FeatureTier
+	recipes   []Recipe
 	community CommunityConfig
-	requests []FeatureRequest
-	badges   []Badge
+	requests  []FeatureRequest
+	badges    []Badge
 }
 
 func New(dataDir string) *Store {
 	s := &Store{
-		dataDir:  dataDir,
-		tiers:    DefaultFeatureTiers,
-		recipes:  DefaultRecipes(),
+		dataDir:   dataDir,
+		tiers:     DefaultFeatureTiers,
+		recipes:   DefaultRecipes(),
 		community: DefaultCommunityConfig(),
-		requests: DefaultFeatureRequests(),
-		badges:   GenerateBadges(),
+		requests:  DefaultFeatureRequests(),
+		badges:    GenerateBadges(),
 	}
 	s.load()
 	return s

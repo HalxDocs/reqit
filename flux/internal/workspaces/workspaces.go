@@ -56,10 +56,10 @@ type indexWrapper struct {
 }
 
 type Store struct {
-	mu         sync.Mutex
-	entries    []Entry
-	active     string
-	loaded     bool
+	mu      sync.Mutex
+	entries []Entry
+	active  string
+	loaded  bool
 }
 
 func NewStore() *Store { return &Store{} }

@@ -9,14 +9,14 @@ import (
 
 // AirGapConfig controls network isolation for air-gapped deployments.
 type AirGapConfig struct {
-	NetworkDisabled        bool `json:"networkDisabled"`
-	UpdateCheckDisabled   bool `json:"updateCheckDisabled"`
+	NetworkDisabled         bool `json:"networkDisabled"`
+	UpdateCheckDisabled     bool `json:"updateCheckDisabled"`
 	PluginDownloadsDisabled bool `json:"pluginDownloadsDisabled"`
-	RegistrySyncDisabled  bool `json:"registrySyncDisabled"`
-	TelemetryDisabled     bool `json:"telemetryDisabled"`
-	InterceptorDisabled   bool `json:"interceptorDisabled"`
-	VaultAccessDisabled   bool `json:"vaultAccessDisabled"`
-	SSODisabled           bool `json:"ssoDisabled"`
+	RegistrySyncDisabled    bool `json:"registrySyncDisabled"`
+	TelemetryDisabled       bool `json:"telemetryDisabled"`
+	InterceptorDisabled     bool `json:"interceptorDisabled"`
+	VaultAccessDisabled     bool `json:"vaultAccessDisabled"`
+	SSODisabled             bool `json:"ssoDisabled"`
 }
 
 const airgapFileName = "airgap.json"

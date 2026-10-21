@@ -22,14 +22,14 @@ import (
 // the client sends messages, closes the send side, and the read loop emits
 // frames live to the frontend.
 type streamSession struct {
-	id      string
-	cancel  context.CancelFunc
-	cc      *grpc.ClientConn
-	stream  grpc.ClientStream
-	md      *desc.MethodDescriptor
-	done    chan struct{}
-	scanMu  sync.Mutex
-	cleanM  sync.Once
+	id     string
+	cancel context.CancelFunc
+	cc     *grpc.ClientConn
+	stream grpc.ClientStream
+	md     *desc.MethodDescriptor
+	done   chan struct{}
+	scanMu sync.Mutex
+	cleanM sync.Once
 }
 
 // StreamEventCallback receives every stream session event.

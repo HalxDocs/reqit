@@ -28,9 +28,9 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "reqit",
-		Width:  1280,
-		Height: 800,
+		Title:     "reqit",
+		Width:     1280,
+		Height:    800,
 		MinWidth:  1024,
 		MinHeight: 640,
 		AssetServer: &assetserver.Options{

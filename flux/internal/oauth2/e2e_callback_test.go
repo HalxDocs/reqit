@@ -174,9 +174,9 @@ func TestE2EFormPostErrorProvesAzureADDenyFix(t *testing.T) {
 
 	// Azure AD sends access_denied via form_post.
 	form := url.Values{
-		"state":              {redir.State},
-		"error":              {"access_denied"},
-		"error_description":  {"User cancelled the consent"},
+		"state":             {redir.State},
+		"error":             {"access_denied"},
+		"error_description": {"User cancelled the consent"},
 	}
 	resp, err := http.PostForm(root+"/callback", form)
 	if err != nil {

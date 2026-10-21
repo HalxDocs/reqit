@@ -43,8 +43,8 @@ type BackupStatus struct {
 // gitSyncState records the outcome of the most recent background sync so the UI
 // can warn instead of failing silently.
 type gitSyncState struct {
-	mu        sync.Mutex
-	lastPush  time.Time
+	mu         sync.Mutex
+	lastPush   time.Time
 	lastErr    string
 	lastCommit time.Time
 }

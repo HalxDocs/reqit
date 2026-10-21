@@ -122,7 +122,7 @@ func (ms *MockServer) SetRules(rules []Rule) {
 }
 
 func (ms *MockServer) Recording() *RecordingSink { return ms.recording }
-func (ms *MockServer) State() *StateStore         { return ms.state }
+func (ms *MockServer) State() *StateStore        { return ms.state }
 
 func (ms *MockServer) Start() {
 	go func() { _ = ms.server.ListenAndServe() }()

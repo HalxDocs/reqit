@@ -8,10 +8,10 @@ type PlatformAsset struct {
 }
 
 type UpdateManifest struct {
-	Version   string                    `json:"version"`
-	Notes     string                    `json:"notes"`
-	PubDate   string                    `json:"pub_date"`
-	Platforms map[string]PlatformAsset  `json:"platforms"`
+	Version   string                   `json:"version"`
+	Notes     string                   `json:"notes"`
+	PubDate   string                   `json:"pub_date"`
+	Platforms map[string]PlatformAsset `json:"platforms"`
 }
 
 func (m *UpdateManifest) AssetForCurrentPlatform() (PlatformAsset, bool) {

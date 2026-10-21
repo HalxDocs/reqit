@@ -38,10 +38,10 @@ type trafficWrapper struct {
 // TrafficStore persists MCP frames per workspace, mirroring eventinspector.Store
 // and sockhistory.Store: newest-first, capped, file-backed.
 type TrafficStore struct {
-	mu     sync.Mutex
-	dir    string
+	mu      sync.Mutex
+	dir     string
 	entries []TrafficEntry
-	loaded bool
+	loaded  bool
 }
 
 func NewTrafficStore(dir string) *TrafficStore {

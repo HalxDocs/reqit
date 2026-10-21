@@ -8,19 +8,19 @@ import (
 
 // Drift represents the difference between two schema snapshots.
 type Drift struct {
-	OldVersion string            `json:"oldVersion"`
-	NewVersion string            `json:"newVersion"`
-	Added      []EndpointDrift   `json:"added"`
-	Removed    []EndpointDrift   `json:"removed"`
-	Changed    []EndpointDrift   `json:"changed"`
-	Summary    string            `json:"summary"`
+	OldVersion string          `json:"oldVersion"`
+	NewVersion string          `json:"newVersion"`
+	Added      []EndpointDrift `json:"added"`
+	Removed    []EndpointDrift `json:"removed"`
+	Changed    []EndpointDrift `json:"changed"`
+	Summary    string          `json:"summary"`
 }
 
 // EndpointDrift describes a change to a single endpoint.
 type EndpointDrift struct {
-	Method string        `json:"method"`
-	Path   string        `json:"path"`
-	Detail string        `json:"detail,omitempty"`
+	Method  string        `json:"method"`
+	Path    string        `json:"path"`
+	Detail  string        `json:"detail,omitempty"`
 	Changes []FieldChange `json:"changes,omitempty"`
 }
 

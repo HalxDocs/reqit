@@ -47,7 +47,7 @@ func (s *Store) load() error {
 func (s *Store) save() error {
 	return storage.SaveTo(s.dir, fileName, wrapper{Active: s.active, Environments: s.envs})
 } // caller must hold s.mu (except when called from MergeVars goroutine, where it's safe
-  // because no concurrent write will modify s.active/s.envs during the marshal)
+// because no concurrent write will modify s.active/s.envs during the marshal)
 
 type Snapshot struct {
 	Active       string               `json:"active"`

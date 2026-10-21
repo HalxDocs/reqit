@@ -13,11 +13,11 @@ import (
 
 // Request represents a GraphQL request.
 type Request struct {
-	URL         string `json:"url"`
-	Query       string `json:"query"`
-	Variables   string `json:"variables,omitempty"` // JSON object string
-	OperationName string `json:"operationName,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
+	URL           string            `json:"url"`
+	Query         string            `json:"query"`
+	Variables     string            `json:"variables,omitempty"` // JSON object string
+	OperationName string            `json:"operationName,omitempty"`
+	Headers       map[string]string `json:"headers,omitempty"`
 }
 
 // Response represents a GraphQL response.
@@ -30,9 +30,9 @@ type Response struct {
 
 // GraphQLError represents a single GraphQL error.
 type GraphQLError struct {
-	Message    string          `json:"message"`
-	Locations  []ErrorLocation `json:"locations,omitempty"`
-	Path       []interface{}   `json:"path,omitempty"`
+	Message    string                 `json:"message"`
+	Locations  []ErrorLocation        `json:"locations,omitempty"`
+	Path       []interface{}          `json:"path,omitempty"`
 	Extensions map[string]interface{} `json:"extensions,omitempty"`
 }
 

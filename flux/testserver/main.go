@@ -213,6 +213,7 @@ func echoServiceDesc(fd *desc.FileDescriptor) *grpc.ServiceDesc {
 	md.Metadata = fd.AsFileDescriptorProto()
 	return md
 }
+
 // echoServer is the empty handler type required by grpc.ServiceDesc.
 type echoServer struct{}
 

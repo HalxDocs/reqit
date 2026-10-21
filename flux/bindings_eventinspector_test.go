@@ -4,14 +4,14 @@ import "testing"
 
 func TestFilterReplayHeadersStripsHopByHop(t *testing.T) {
 	headers := map[string]string{
-		"Content-Type":         "application/json",
-		"Connection":           "keep-alive",
-		"Transfer-Encoding":    "chunked",
-		"Content-Length":       "42",
-		"X-Custom":             "yes",
-		"svix-id":              "msg_1",
-		"svix-timestamp":       "1700000000",
-		"svix-signature":       "v1,abc",
+		"Content-Type":      "application/json",
+		"Connection":        "keep-alive",
+		"Transfer-Encoding": "chunked",
+		"Content-Length":    "42",
+		"X-Custom":          "yes",
+		"svix-id":           "msg_1",
+		"svix-timestamp":    "1700000000",
+		"svix-signature":    "v1,abc",
 	}
 	out := filterReplayHeaders(headers, false)
 
@@ -30,8 +30,8 @@ func TestFilterReplayHeadersStripsHopByHop(t *testing.T) {
 
 func TestFilterReplayHeadersPreserveSvix(t *testing.T) {
 	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"svix-id":       "msg_1",
+		"Content-Type":   "application/json",
+		"svix-id":        "msg_1",
 		"svix-signature": "v1,abc",
 	}
 	out := filterReplayHeaders(headers, true)

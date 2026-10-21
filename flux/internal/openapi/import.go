@@ -14,9 +14,9 @@ import (
 // ImportResult holds the collections generated from an OpenAPI spec.
 type ImportResult struct {
 	Collections []models.Collection `json:"collections"`
-	Endpoints   int                  `json:"endpoints"`
-	SpecTitle   string               `json:"specTitle"`
-	SpecVersion string               `json:"specVersion"`
+	Endpoints   int                 `json:"endpoints"`
+	SpecTitle   string              `json:"specTitle"`
+	SpecVersion string              `json:"specVersion"`
 }
 
 // Import parses an OpenAPI 3.x spec file and generates reqit collections and requests.

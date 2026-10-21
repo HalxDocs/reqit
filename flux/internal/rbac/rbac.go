@@ -50,18 +50,18 @@ var RolePermissions = map[Role][]Permission{
 
 // ACE is an access control entry: who can do what on which resource.
 type ACE struct {
-	UserID      string       `json:"userId"`
-	ResourceID  string       `json:"resourceId"`
+	UserID       string       `json:"userId"`
+	ResourceID   string       `json:"resourceId"`
 	ResourceType ResourceType `json:"resourceType"`
-	Role        Role         `json:"role"`
-	Permissions []Permission `json:"permissions,omitempty"` // custom overrides
+	Role         Role         `json:"role"`
+	Permissions  []Permission `json:"permissions,omitempty"` // custom overrides
 }
 
 // Store manages RBAC access control entries.
 type Store struct {
-	mu       sync.RWMutex
-	dataDir  string
-	entries  []ACE
+	mu      sync.RWMutex
+	dataDir string
+	entries []ACE
 }
 
 // New creates an RBAC store.
@@ -71,11 +71,11 @@ func New(dataDir string) *Store {
 	// If empty, grant admin to all by default.
 	if len(s.entries) == 0 {
 		s.entries = append(s.entries, ACE{
-			UserID:      "*",
-			ResourceID:  "*",
+			UserID:       "*",
+			ResourceID:   "*",
 			ResourceType: "*",
-			Role:        RoleAdmin,
-			Permissions: RolePermissions[RoleAdmin],
+			Role:         RoleAdmin,
+			Permissions:  RolePermissions[RoleAdmin],
 		})
 		_ = s.save()
 	}

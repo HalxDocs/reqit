@@ -12,34 +12,34 @@ import (
 )
 
 type hoppExport struct {
-	V int            `json:"v"`
+	V           int              `json:"v"`
 	Collections []hoppCollection `json:"collections"`
 }
 
 type hoppCollection struct {
-	ID     string      `json:"id"`
-	Name   string      `json:"name"`
-	Folder []hoppFolder `json:"folder"`
+	ID      string        `json:"id"`
+	Name    string        `json:"name"`
+	Folder  []hoppFolder  `json:"folder"`
 	Request []hoppRequest `json:"request"`
 }
 
 type hoppFolder struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
+	ID     string       `json:"id"`
+	Name   string       `json:"name"`
 	Folder []hoppFolder `json:"folder"`
 }
 
 type hoppRequest struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	Method    string        `json:"method"`
-	Endpoint  string        `json:"endpoint"`
-	Params    []hoppParam   `json:"params"`
-	Headers   []hoppHeader  `json:"headers"`
-	Body      string        `json:"body"`
-	BodyType  string        `json:"bodyType"`
-	Auth      *hoppAuth     `json:"auth"`
-	FolderID  string        `json:"folderId"`
+	ID       string       `json:"id"`
+	Name     string       `json:"name"`
+	Method   string       `json:"method"`
+	Endpoint string       `json:"endpoint"`
+	Params   []hoppParam  `json:"params"`
+	Headers  []hoppHeader `json:"headers"`
+	Body     string       `json:"body"`
+	BodyType string       `json:"bodyType"`
+	Auth     *hoppAuth    `json:"auth"`
+	FolderID string       `json:"folderId"`
 }
 
 type hoppParam struct {

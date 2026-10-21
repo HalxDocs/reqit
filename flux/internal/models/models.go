@@ -8,16 +8,16 @@ type Header struct {
 }
 
 type RequestPayload struct {
-	Method    string   `json:"method"`
-	URL       string   `json:"url"`
-	Headers   []Header `json:"headers"`
-	Params    []Header `json:"params"`
-	BodyType  string   `json:"bodyType"`  // "none"|"json"|"form"|"urlencoded"|"graphql"|"grpc"|"soap"
-	Body      string   `json:"body"`
-	BodyForm  []Header `json:"bodyForm"`  // for form / urlencoded modes
-	AuthType  string   `json:"authType"`  // "none"|"bearer"|"basic"|"digest"|"ntlm"|"oauth2"|"token"
-	AuthValue string   `json:"authValue"` // token, "user:pass", or oauth2 config JSON
-	SpecPath  string   `json:"specPath"`  // optional, relative to workspace root
+	Method           string   `json:"method"`
+	URL              string   `json:"url"`
+	Headers          []Header `json:"headers"`
+	Params           []Header `json:"params"`
+	BodyType         string   `json:"bodyType"` // "none"|"json"|"form"|"urlencoded"|"graphql"|"grpc"|"soap"
+	Body             string   `json:"body"`
+	BodyForm         []Header `json:"bodyForm"`  // for form / urlencoded modes
+	AuthType         string   `json:"authType"`  // "none"|"bearer"|"basic"|"digest"|"ntlm"|"oauth2"|"token"
+	AuthValue        string   `json:"authValue"` // token, "user:pass", or oauth2 config JSON
+	SpecPath         string   `json:"specPath"`  // optional, relative to workspace root
 	GraphQLQuery     string   `json:"graphqlQuery"`
 	GraphQLVariables string   `json:"graphqlVariables"`
 	PreScript        string   `json:"preScript"`
@@ -33,7 +33,7 @@ type RequestPayload struct {
 	// mTLS client certificate
 	ClientCert string `json:"clientCert,omitempty"` // PEM-encoded certificate
 	ClientKey  string `json:"clientKey,omitempty"`  // PEM-encoded private key
-	Timeout    int    `json:"timeout,omitempty"`     // seconds, 0 = default (30s)
+	Timeout    int    `json:"timeout,omitempty"`    // seconds, 0 = default (30s)
 	// ValidateURL enforces SSRF protection on this request: blocks private/loopback
 	// IPs and internal hostnames.  Default false allows localhost (the normal case
 	// for a local API tool).  Set true for imported/shared/runner-originated requests.
@@ -94,17 +94,17 @@ type TimingBreakdown struct {
 }
 
 type ResponseResult struct {
-	Status        string            `json:"status"`
-	StatusCode    int               `json:"statusCode"`
-	Headers       map[string]string `json:"headers"`
-	Body          string            `json:"body"`
-	BodyIsBase64  bool              `json:"bodyIsBase64"`
-	TimingMs      int64             `json:"timingMs"`
-	Timing        *TimingBreakdown  `json:"timing,omitempty"`
-	SizeBytes     int64             `json:"sizeBytes"`
-	Error         string            `json:"error"`
-	Cookies       []CookieSummary   `json:"cookies"`
-	Validation    *ValidationResult `json:"validation,omitempty"`
+	Status       string            `json:"status"`
+	StatusCode   int               `json:"statusCode"`
+	Headers      map[string]string `json:"headers"`
+	Body         string            `json:"body"`
+	BodyIsBase64 bool              `json:"bodyIsBase64"`
+	TimingMs     int64             `json:"timingMs"`
+	Timing       *TimingBreakdown  `json:"timing,omitempty"`
+	SizeBytes    int64             `json:"sizeBytes"`
+	Error        string            `json:"error"`
+	Cookies      []CookieSummary   `json:"cookies"`
+	Validation   *ValidationResult `json:"validation,omitempty"`
 }
 
 // SSEEvent is a single parsed Server-Sent Event streamed to the frontend while
@@ -116,10 +116,10 @@ type SSEEvent struct {
 }
 
 type SavedResponse struct {
-	StatusCode  int               `json:"statusCode"`
-	Headers     map[string]string `json:"headers"`
-	Body        string            `json:"body"`
-	CapturedAt  string            `json:"capturedAt"`
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`
+	CapturedAt string            `json:"capturedAt"`
 }
 
 type MockOverride struct {
@@ -130,12 +130,12 @@ type MockOverride struct {
 }
 
 type SavedRequest struct {
-	ID           string         `json:"id"`
-	Name         string         `json:"name"`
-	Notes        string         `json:"notes,omitempty"`
-	CollID       string         `json:"collectionId"`
-	Payload      RequestPayload `json:"payload"`
-	CreatedAt    string         `json:"createdAt"`
+	ID            string         `json:"id"`
+	Name          string         `json:"name"`
+	Notes         string         `json:"notes,omitempty"`
+	CollID        string         `json:"collectionId"`
+	Payload       RequestPayload `json:"payload"`
+	CreatedAt     string         `json:"createdAt"`
 	SavedResponse *SavedResponse `json:"savedResponse,omitempty"`
 	MockOverride  *MockOverride  `json:"mockOverride,omitempty"`
 	PreSetVars    []PreSetVar    `json:"preSetVars,omitempty"`
@@ -148,8 +148,8 @@ type Collection struct {
 	Description string         `json:"description,omitempty"`
 	SpecPath    string         `json:"spec,omitempty"` // optional OpenAPI spec path relative to workspace
 	Public      bool           `json:"public,omitempty"`
-	Variables   []EnvVar       `json:"variables,omitempty"` // collection-scoped variables
-	PreScript   string         `json:"preScript,omitempty"` // JS pre-request script run before each request
+	Variables   []EnvVar       `json:"variables,omitempty"`  // collection-scoped variables
+	PreScript   string         `json:"preScript,omitempty"`  // JS pre-request script run before each request
 	PostScript  string         `json:"postScript,omitempty"` // JS post-response script run after each request
 	Requests    []SavedRequest `json:"requests"`
 }
@@ -195,31 +195,31 @@ type ExtractRule struct {
 type AssertionType string
 
 const (
-	AssertStatusCode     AssertionType = "statusCode"
-	AssertMaxTiming     AssertionType = "maxTiming"
-	AssertBodyContains  AssertionType = "bodyContains"
-	AssertBodyMatch     AssertionType = "bodyMatch"      // regex match
-	AssertBodyNotMatch  AssertionType = "bodyNotMatch"   // regex not match
-	AssertJSONPath      AssertionType = "jsonPath"       // JSON path value comparison
-	AssertHeader        AssertionType = "header"         // header value check
-	AssertCookie        AssertionType = "cookie"         // cookie value check
-	AssertVarEqual      AssertionType = "varEqual"       // variable-to-variable equality
-	AssertVarNotEqual   AssertionType = "varNotEqual"    // variable-to-variable inequality
-	AssertJSONSchema    AssertionType = "jsonSchema"     // JSON Schema validation
-	AssertCustomScript  AssertionType = "customScript"   // custom JS assertion
+	AssertStatusCode      AssertionType = "statusCode"
+	AssertMaxTiming       AssertionType = "maxTiming"
+	AssertBodyContains    AssertionType = "bodyContains"
+	AssertBodyMatch       AssertionType = "bodyMatch"       // regex match
+	AssertBodyNotMatch    AssertionType = "bodyNotMatch"    // regex not match
+	AssertJSONPath        AssertionType = "jsonPath"        // JSON path value comparison
+	AssertHeader          AssertionType = "header"          // header value check
+	AssertCookie          AssertionType = "cookie"          // cookie value check
+	AssertVarEqual        AssertionType = "varEqual"        // variable-to-variable equality
+	AssertVarNotEqual     AssertionType = "varNotEqual"     // variable-to-variable inequality
+	AssertJSONSchema      AssertionType = "jsonSchema"      // JSON Schema validation
+	AssertCustomScript    AssertionType = "customScript"    // custom JS assertion
 	AssertPromptInjection AssertionType = "promptInjection" // 2026 equivalent of SQLi — adversarial payload should not be echoed/executed
 )
 
 type Assertion struct {
 	Type   AssertionType `json:"type"`
-	Target string        `json:"target"` // header name, cookie name, JSON path, regex, var name, schema JSON
-	Value  string        `json:"value,omitempty"` // expected value (empty for schema/script)
+	Target string        `json:"target"`           // header name, cookie name, JSON path, regex, var name, schema JSON
+	Value  string        `json:"value,omitempty"`  // expected value (empty for schema/script)
 	Script string        `json:"script,omitempty"` // custom JS assertion script
 
 	// Legacy fields (kept for backward compatibility with existing runner modal)
-	StatusCode     int   `json:"statusCode,omitempty"`
-	MaxTimingMs    int64 `json:"maxTimingMs,omitempty"`
-	BodyContains   string `json:"bodyContains,omitempty"`
+	StatusCode   int    `json:"statusCode,omitempty"`
+	MaxTimingMs  int64  `json:"maxTimingMs,omitempty"`
+	BodyContains string `json:"bodyContains,omitempty"`
 }
 
 type RunnerRequest struct {
@@ -229,19 +229,19 @@ type RunnerRequest struct {
 	PreSetVars   []PreSetVar    `json:"preSetVars,omitempty"`
 	ExtractRules []ExtractRule  `json:"extractRules,omitempty"`
 	Assertions   []Assertion    `json:"assertions,omitempty"`
-	Retries      int            `json:"retries,omitempty"`      // retry up to N times on failure
-	Condition    string         `json:"condition,omitempty"`   // JS condition to decide whether to run
+	Retries      int            `json:"retries,omitempty"`   // retry up to N times on failure
+	Condition    string         `json:"condition,omitempty"` // JS condition to decide whether to run
 }
 
 type RunnerConfig struct {
-	Requests         []RunnerRequest            `json:"requests"`
-	Env              map[string]string          `json:"env,omitempty"`
-	MaxConcurrent    int                        `json:"maxConcurrent,omitempty"`    // semaphore size for concurrent runner (default 5)
-	Concurrency      int                        `json:"concurrency,omitempty"`      // max VUs for load test
-	RampUp           int                        `json:"rampUp,omitempty"`           // ramp-up duration in seconds
-	Iterations       int                        `json:"iterations,omitempty"`       // iterations per VU
-	RetryDelayMs     int                        `json:"retryDelayMs,omitempty"`
-	DataRows         []map[string]string        `json:"dataRows,omitempty"`         // data-driven: each map is one row of variables
+	Requests      []RunnerRequest     `json:"requests"`
+	Env           map[string]string   `json:"env,omitempty"`
+	MaxConcurrent int                 `json:"maxConcurrent,omitempty"` // semaphore size for concurrent runner (default 5)
+	Concurrency   int                 `json:"concurrency,omitempty"`   // max VUs for load test
+	RampUp        int                 `json:"rampUp,omitempty"`        // ramp-up duration in seconds
+	Iterations    int                 `json:"iterations,omitempty"`    // iterations per VU
+	RetryDelayMs  int                 `json:"retryDelayMs,omitempty"`
+	DataRows      []map[string]string `json:"dataRows,omitempty"` // data-driven: each map is one row of variables
 }
 
 type RequestRunResult struct {
@@ -273,29 +273,29 @@ type CollectionRunResult struct {
 // --- Test Suites / Visual Test Builder ---
 
 type TestSuite struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	Description string       `json:"description,omitempty"`
-	Groups      []TestGroup  `json:"groups"`
-	CollID      string       `json:"collectionId,omitempty"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	Description string      `json:"description,omitempty"`
+	Groups      []TestGroup `json:"groups"`
+	CollID      string      `json:"collectionId,omitempty"`
 }
 
 type TestGroup struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	RequestID string   `json:"requestId"` // references a SavedRequest or RunnerRequest
+	ID         string      `json:"id"`
+	Name       string      `json:"name"`
+	RequestID  string      `json:"requestId"` // references a SavedRequest or RunnerRequest
 	Assertions []Assertion `json:"assertions"`
-	Children  []TestGroup `json:"children,omitempty"` // nested groups
+	Children   []TestGroup `json:"children,omitempty"` // nested groups
 }
 
 // --- Load / Performance Testing ---
 
 type LoadTestConfig struct {
-	Request     RequestPayload `json:"request"`
-	VUs         int            `json:"vus"`         // virtual users
-	DurationSec int            `json:"durationSec"` // test duration
-	RampUpSec   int            `json:"rampUpSec"`   // ramp-up time
-	Iterations  int            `json:"iterations"`  // total iterations (0 = run for duration)
+	Request     RequestPayload    `json:"request"`
+	VUs         int               `json:"vus"`         // virtual users
+	DurationSec int               `json:"durationSec"` // test duration
+	RampUpSec   int               `json:"rampUpSec"`   // ramp-up time
+	Iterations  int               `json:"iterations"`  // total iterations (0 = run for duration)
 	Env         map[string]string `json:"env,omitempty"`
 }
 
@@ -308,17 +308,17 @@ type LoadTestSample struct {
 }
 
 type LoadTestResult struct {
-	Config     LoadTestConfig    `json:"config"`
-	Samples    []LoadTestSample  `json:"samples"`
-	TotalReqs  int               `json:"totalReqs"`
-	Passed     int               `json:"passed"`
-	Failed     int               `json:"failed"`
+	Config      LoadTestConfig   `json:"config"`
+	Samples     []LoadTestSample `json:"samples"`
+	TotalReqs   int              `json:"totalReqs"`
+	Passed      int              `json:"passed"`
+	Failed      int              `json:"failed"`
 	AvgTimingMs float64          `json:"avgTimingMs"`
 	P50TimingMs float64          `json:"p50TimingMs"`
 	P95TimingMs float64          `json:"p95TimingMs"`
 	P99TimingMs float64          `json:"p99TimingMs"`
-	DurationMs int64             `json:"durationMs"`
-	Error      string            `json:"error,omitempty"`
+	DurationMs  int64            `json:"durationMs"`
+	Error       string           `json:"error,omitempty"`
 }
 
 // --- Reports ---
@@ -333,22 +333,22 @@ const (
 )
 
 type TestReport struct {
-	Title          string                `json:"title"`
-	CreatedAt      string                `json:"createdAt"`
-	RunResult      *CollectionRunResult  `json:"runResult,omitempty"`
-	LoadResult     *LoadTestResult       `json:"loadResult,omitempty"`
-	Sections       []ReportSection       `json:"sections"`
-	HTML           string                `json:"html,omitempty"` // rendered HTML report
+	Title      string               `json:"title"`
+	CreatedAt  string               `json:"createdAt"`
+	RunResult  *CollectionRunResult `json:"runResult,omitempty"`
+	LoadResult *LoadTestResult      `json:"loadResult,omitempty"`
+	Sections   []ReportSection      `json:"sections"`
+	HTML       string               `json:"html,omitempty"` // rendered HTML report
 }
 
 // --- External Runner Compliance ---
 
 type ExternalRunnerConfig struct {
-	Type            string `json:"type"`            // "playwright" | "jest" | "cli"
-	CollectionID    string `json:"collectionId"`
-	OutputDir       string `json:"outputDir"`
-	GenerateTestFile bool  `json:"generateTestFile"`
-	TestFilePath    string `json:"testFilePath,omitempty"`
+	Type             string `json:"type"` // "playwright" | "jest" | "cli"
+	CollectionID     string `json:"collectionId"`
+	OutputDir        string `json:"outputDir"`
+	GenerateTestFile bool   `json:"generateTestFile"`
+	TestFilePath     string `json:"testFilePath,omitempty"`
 }
 
 // --- OAuth2 ---
@@ -360,7 +360,7 @@ type OAuth2TokenResponse struct {
 	ExpiresIn    int    `json:"expiresIn"`
 	// ExpiresAt is the Unix epoch in milliseconds (JS-compatible with
 	// Date.now()) — never seconds. Set by the engine from ExpiresIn.
-	ExpiresAt int64 `json:"expiresAt"`
+	ExpiresAt int64  `json:"expiresAt"`
 	Error     string `json:"error,omitempty"`
 }
 
@@ -461,12 +461,12 @@ type SocketState struct {
 // SocketSession is a persisted WebSocket/SSE/Socket.IO session for revisiting
 // past connections and their message logs.
 type SocketSession struct {
-	ID        string          `json:"id"`
-	URL       string          `json:"url"`
-	Protocol  string          `json:"protocol"` // "ws" | "sse" | "socketio"
+	ID        string            `json:"id"`
+	URL       string            `json:"url"`
+	Protocol  string            `json:"protocol"` // "ws" | "sse" | "socketio"
 	Headers   map[string]string `json:"headers,omitempty"`
-	CreatedAt string          `json:"createdAt"`
-	Messages  []SocketMessage `json:"messages"`
+	CreatedAt string            `json:"createdAt"`
+	Messages  []SocketMessage   `json:"messages"`
 }
 
 type SocketIOConnectRequest struct {
@@ -515,8 +515,8 @@ type VerifyResult struct {
 
 // EventInspectorStatus reports the capture listener state to the UI.
 type EventInspectorStatus struct {
-	Running bool   `json:"running"`
-	Port    int    `json:"port"`
-	Count   int    `json:"count"`
+	Running   bool `json:"running"`
+	Port      int  `json:"port"`
+	Count     int  `json:"count"`
 	HasSecret bool `json:"hasSecret"`
 }

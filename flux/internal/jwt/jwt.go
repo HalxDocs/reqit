@@ -14,13 +14,13 @@ type Header struct {
 }
 
 type Claims struct {
-	Iss   string `json:"iss,omitempty"`
-	Sub   string `json:"sub,omitempty"`
-	Aud   string `json:"aud,omitempty"`
-	Exp   int64  `json:"exp,omitempty"`
-	Nbf   int64  `json:"nbf,omitempty"`
-	Iat   int64  `json:"iat,omitempty"`
-	JTI   string `json:"jti,omitempty"`
+	Iss   string                 `json:"iss,omitempty"`
+	Sub   string                 `json:"sub,omitempty"`
+	Aud   string                 `json:"aud,omitempty"`
+	Exp   int64                  `json:"exp,omitempty"`
+	Nbf   int64                  `json:"nbf,omitempty"`
+	Iat   int64                  `json:"iat,omitempty"`
+	JTI   string                 `json:"jti,omitempty"`
 	Extra map[string]interface{} `json:"-"`
 }
 

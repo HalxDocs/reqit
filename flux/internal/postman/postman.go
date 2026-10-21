@@ -34,7 +34,7 @@ type rawItem struct {
 }
 
 type rawEvent struct {
-	Listen string   `json:"listen"`
+	Listen string    `json:"listen"`
 	Script rawScript `json:"script"`
 }
 
@@ -44,11 +44,11 @@ type rawScript struct {
 }
 
 type rawRequest struct {
-	Method string         `json:"method"`
-	Header []rawKV        `json:"header"`
+	Method string          `json:"method"`
+	Header []rawKV         `json:"header"`
 	URL    json.RawMessage `json:"url"`
-	Body   *rawBody       `json:"body"`
-	Auth   *rawAuth       `json:"auth"`
+	Body   *rawBody        `json:"body"`
+	Auth   *rawAuth        `json:"auth"`
 }
 
 type rawKV struct {
@@ -58,11 +58,11 @@ type rawKV struct {
 }
 
 type rawBody struct {
-	Mode       string  `json:"mode"`
-	Raw        string  `json:"raw"`
+	Mode       string          `json:"mode"`
+	Raw        string          `json:"raw"`
 	Options    *rawBodyOptions `json:"options"`
-	URLEncoded []rawKV `json:"urlencoded"`
-	FormData   []rawKV `json:"formdata"`
+	URLEncoded []rawKV         `json:"urlencoded"`
+	FormData   []rawKV         `json:"formdata"`
 }
 
 type rawBodyOptions struct {
@@ -74,37 +74,37 @@ type rawLang struct {
 }
 
 type rawAuth struct {
-	Type   string  `json:"type"`
-	Bearer []rawKV `json:"bearer"`
-	Basic  []rawKV `json:"basic"`
-	APIKey []rawKV `json:"apikey"`
-	Digest []rawKV `json:"digest"`
-	OAuth2 []rawKV `json:"oauth2"`
+	Type      string  `json:"type"`
+	Bearer    []rawKV `json:"bearer"`
+	Basic     []rawKV `json:"basic"`
+	APIKey    []rawKV `json:"apikey"`
+	Digest    []rawKV `json:"digest"`
+	OAuth2    []rawKV `json:"oauth2"`
 	BearerAlt []rawKV `json:"bearerAlt"`
 }
 
 type rawURL struct {
-	Raw     string  `json:"raw"`
-	Host    any     `json:"host"`
-	Path    any     `json:"path"`
-	Query   []rawKV `json:"query"`
+	Raw      string   `json:"raw"`
+	Host     any      `json:"host"`
+	Path     any      `json:"path"`
+	Query    []rawKV  `json:"query"`
 	Variable []rawVar `json:"variable"`
-	Port    string  `json:"port"`
-	Protocol string `json:"protocol"`
+	Port     string   `json:"port"`
+	Protocol string   `json:"protocol"`
 }
 
 // EnvironmentData holds variables from a Postman environment file.
 type EnvironmentData struct {
-	Name     string   `json:"name"`
-	Values   []rawVar `json:"values"`
+	Name   string   `json:"name"`
+	Values []rawVar `json:"values"`
 }
 
 // ImportResult holds everything parsed from a Postman collection + environment.
 type ImportResult struct {
-	Requests     []models.SavedRequest `json:"requests"`
-	Variables    map[string]string     `json:"variables"`
-	Scripts      []string              `json:"scripts"`
-	Auth         *models.RequestPayload `json:"auth,omitempty"`
+	Requests  []models.SavedRequest  `json:"requests"`
+	Variables map[string]string      `json:"variables"`
+	Scripts   []string               `json:"scripts"`
+	Auth      *models.RequestPayload `json:"auth,omitempty"`
 }
 
 func Parse(data []byte, collID string) ([]models.SavedRequest, error) {
@@ -327,8 +327,10 @@ func parseAuth(auth *rawAuth, payload *models.RequestPayload) {
 		user, pass := "", ""
 		for _, kv := range auth.Basic {
 			switch kv.Key {
-			case "username": user = kv.Value
-			case "password": pass = kv.Value
+			case "username":
+				user = kv.Value
+			case "password":
+				pass = kv.Value
 			}
 		}
 		payload.AuthValue = user + ":" + pass
@@ -337,8 +339,10 @@ func parseAuth(auth *rawAuth, payload *models.RequestPayload) {
 		key, val := "", ""
 		for _, kv := range auth.APIKey {
 			switch kv.Key {
-			case "key": key = kv.Value
-			case "value": val = kv.Value
+			case "key":
+				key = kv.Value
+			case "value":
+				val = kv.Value
 			}
 		}
 		payload.AuthValue = key + ":" + val
@@ -347,8 +351,10 @@ func parseAuth(auth *rawAuth, payload *models.RequestPayload) {
 		user, pass := "", ""
 		for _, kv := range auth.Digest {
 			switch kv.Key {
-			case "username": user = kv.Value
-			case "password": pass = kv.Value
+			case "username":
+				user = kv.Value
+			case "password":
+				pass = kv.Value
 			}
 		}
 		payload.AuthValue = user + ":" + pass

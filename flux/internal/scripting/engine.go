@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dop251/goja"
 	"flux/internal/models"
 	"flux/internal/security"
+	"github.com/dop251/goja"
 )
 
 const scriptTimeout = 10 * time.Second
@@ -62,11 +62,11 @@ type Header struct {
 }
 
 type ResponseAPI struct {
-	Status      int               `json:"statusCode"`
-	StatusText  string            `json:"statusText"`
-	Body        string            `json:"body"`
-	Headers     map[string]string `json:"headers"`
-	TimingMs    int64             `json:"responseTime"`
+	Status     int               `json:"statusCode"`
+	StatusText string            `json:"statusText"`
+	Body       string            `json:"body"`
+	Headers    map[string]string `json:"headers"`
+	TimingMs   int64             `json:"responseTime"`
 }
 
 type VarStore struct {
@@ -510,10 +510,10 @@ func RunPostScript(script string, payload *models.RequestPayload, result *models
 }
 
 type ScriptEnv struct {
-	Vars  map[string]string `json:"vars"`
-	Logs  []string          `json:"logs"`
-	Pass  int               `json:"pass"`
-	Fail  int               `json:"fail"`
+	Vars map[string]string `json:"vars"`
+	Logs []string          `json:"logs"`
+	Pass int               `json:"pass"`
+	Fail int               `json:"fail"`
 }
 
 func ExtractVars(source map[string]string) string {

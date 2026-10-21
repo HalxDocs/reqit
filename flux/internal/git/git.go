@@ -32,9 +32,9 @@ type CommitInfo struct {
 }
 
 type Contributor struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Commits int    `json:"commits"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Commits  int    `json:"commits"`
 	LastSeen string `json:"lastSeen"`
 }
 
@@ -405,8 +405,8 @@ func (s *Store) PopStash() error {
 
 // StashEntry holds info about a stashed change.
 type StashEntry struct {
-	Index int    `json:"index"`
-	Ref   string `json:"ref"`
+	Index   int    `json:"index"`
+	Ref     string `json:"ref"`
 	Message string `json:"message"`
 }
 
@@ -503,10 +503,10 @@ func parseNumStat(raw string) []DiffEntry {
 
 // DiffContent holds the full diff text for a single file.
 type DiffContent struct {
-	Path    string   `json:"path"`
-	RawDiff string   `json:"rawDiff"`
-	Added   int      `json:"added"`
-	Deleted int      `json:"deleted"`
+	Path    string `json:"path"`
+	RawDiff string `json:"rawDiff"`
+	Added   int    `json:"added"`
+	Deleted int    `json:"deleted"`
 }
 
 // GetDiffContent returns the full diff text for tracked file changes.

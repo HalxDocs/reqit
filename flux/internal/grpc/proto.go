@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	protoCacheMu sync.Mutex
-	protoCache   = map[string]*desc.FileDescriptor{}
+	protoCacheMu  sync.Mutex
+	protoCache    = map[string]*desc.FileDescriptor{}
 	protoErrCache = map[string]error{}
 )
 
@@ -29,7 +29,7 @@ func loadProto(path string) (*desc.FileDescriptor, error) {
 	if fd, ok := protoCache[path]; ok {
 		return fd, nil
 	}
-if err, ok := protoErrCache[path]; ok {
+	if err, ok := protoErrCache[path]; ok {
 		return nil, err
 	}
 

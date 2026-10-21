@@ -251,5 +251,3 @@ type EndpointSummary struct {
 	Summary     string `json:"summary"`
 	Description string `json:"description,omitempty"`
 }
-
-

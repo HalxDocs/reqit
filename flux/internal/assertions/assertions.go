@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"flux/internal/models"
 	"github.com/dop251/goja"
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	"flux/internal/models"
 )
 
 type Context struct {
@@ -244,9 +244,9 @@ func runCustomScript(ctx *Context, script string) string {
 	vm := goja.New()
 
 	_ = vm.Set("response", map[string]interface{}{
-		"status":     ctx.Response.StatusCode,
-		"body":       ctx.Response.Body,
-		"headers":    ctx.Response.Headers,
+		"status":       ctx.Response.StatusCode,
+		"body":         ctx.Response.Body,
+		"headers":      ctx.Response.Headers,
 		"responseTime": ctx.Response.TimingMs,
 	})
 

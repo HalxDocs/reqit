@@ -10,12 +10,12 @@ import (
 )
 
 type SwaggerHubClient struct {
-	BaseURL  string
-	APIKey   string
-	Owner    string
-	Repo     string
-	Version  string
-	HTTP     *http.Client
+	BaseURL string
+	APIKey  string
+	Owner   string
+	Repo    string
+	Version string
+	HTTP    *http.Client
 }
 
 type SwaggerHubPushResult struct {

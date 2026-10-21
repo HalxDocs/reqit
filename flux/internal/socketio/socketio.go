@@ -177,10 +177,10 @@ func (c *Client) Connect(rawURL, cookieHeader string, extraHeaders map[string]st
 	}
 
 	var handshake struct {
-		SID         string   `json:"sid"`
-		Upgrades    []string `json:"upgrades"`
-		PingInterval int    `json:"pingInterval"`
-		PingTimeout  int    `json:"pingTimeout"`
+		SID          string   `json:"sid"`
+		Upgrades     []string `json:"upgrades"`
+		PingInterval int      `json:"pingInterval"`
+		PingTimeout  int      `json:"pingTimeout"`
 	}
 	if err := json.Unmarshal([]byte(raw), &handshake); err != nil {
 		c.setStatus("error")

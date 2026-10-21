@@ -13,27 +13,27 @@ import (
 
 // EvalRunResult is the result of a single eval run (one task, one execution).
 type EvalRunResult struct {
-	TaskIndex    int            `json:"taskIndex"`
-	Prompt       string         `json:"prompt"`
-	ExpectTool   string         `json:"expectTool"`
-	ExpectArgs   map[string]any `json:"expectArgs,omitempty"`
-	ActualTool   string         `json:"actualTool"`
-	ActualArgs   map[string]any `json:"actualArgs,omitempty"`
-	ToolMatch    bool           `json:"toolMatch"`
-	ArgsMatch    bool           `json:"argsMatch"`
-	Passed       bool           `json:"passed"`
-	LatencyMs    int64          `json:"latencyMs"`
-	Error        string         `json:"error,omitempty"`
-	Timestamp    string         `json:"timestamp"`
+	TaskIndex  int            `json:"taskIndex"`
+	Prompt     string         `json:"prompt"`
+	ExpectTool string         `json:"expectTool"`
+	ExpectArgs map[string]any `json:"expectArgs,omitempty"`
+	ActualTool string         `json:"actualTool"`
+	ActualArgs map[string]any `json:"actualArgs,omitempty"`
+	ToolMatch  bool           `json:"toolMatch"`
+	ArgsMatch  bool           `json:"argsMatch"`
+	Passed     bool           `json:"passed"`
+	LatencyMs  int64          `json:"latencyMs"`
+	Error      string         `json:"error,omitempty"`
+	Timestamp  string         `json:"timestamp"`
 }
 
 // EvalTaskResult is the aggregated result for one task (across runs_per_task).
 type EvalTaskResult struct {
-	TaskIndex int              `json:"taskIndex"`
-	Prompt    string           `json:"prompt"`
-	Runs      []EvalRunResult  `json:"runs"`
-	PassRate  float64          `json:"passRate"` // 0.0 - 1.0
-	Passed    bool             `json:"passed"`   // true if passRate >= threshold
+	TaskIndex int             `json:"taskIndex"`
+	Prompt    string          `json:"prompt"`
+	Runs      []EvalRunResult `json:"runs"`
+	PassRate  float64         `json:"passRate"` // 0.0 - 1.0
+	Passed    bool            `json:"passed"`   // true if passRate >= threshold
 }
 
 // EvalSuiteResult is the full result of running an eval suite.

@@ -19,13 +19,13 @@ const maxBodySize = 1 << 20 // 1MB, matches onceo.MaxBodySize
 // only (never a routable interface) on an ephemeral port so it is not exposed
 // to the LAN; a tunnel (ngrok/cloudflared) forwards external deliveries to it.
 type Listener struct {
-	mu       sync.Mutex
-	server   *http.Server
-	listener net.Listener
-	port     int
-	running  bool
-	store    *Store
-	secret   *SecretStore
+	mu        sync.Mutex
+	server    *http.Server
+	listener  net.Listener
+	port      int
+	running   bool
+	store     *Store
+	secret    *SecretStore
 	onCapture func(models.EventRecord)
 }
 
@@ -122,11 +122,11 @@ func (l *Listener) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rec := models.EventRecord{
-		Method:      r.Method,
-		SourceURL:   r.URL.RequestURI(),
-		Headers:     headers,
-		Body:        string(body),
-		ContentType: r.Header.Get("Content-Type"),
+		Method:       r.Method,
+		SourceURL:    r.URL.RequestURI(),
+		Headers:      headers,
+		Body:         string(body),
+		ContentType:  r.Header.Get("Content-Type"),
 		VerifyStatus: "unverified",
 	}
 

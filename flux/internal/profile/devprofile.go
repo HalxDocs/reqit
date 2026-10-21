@@ -26,7 +26,7 @@ type DevProfile struct {
 	Stats          DevStats      `json:"stats"`
 	Skills         []string      `json:"skills,omitempty"`
 	SocialLinks    []SocialLink  `json:"socialLinks,omitempty"`
-	GitHubUsername  string        `json:"githubUsername,omitempty"`
+	GitHubUsername string        `json:"githubUsername,omitempty"`
 	Projects       []ProjectRef  `json:"projects,omitempty"`
 	UserProjects   []UserProject `json:"userProjects,omitempty"`
 	Public         bool          `json:"public"`
@@ -76,7 +76,7 @@ type PublicProfile struct {
 	UserProjects   []UserProject `json:"userProjects,omitempty"`
 	Skills         []string      `json:"skills,omitempty"`
 	SocialLinks    []SocialLink  `json:"socialLinks,omitempty"`
-	GitHubUsername  string        `json:"githubUsername,omitempty"`
+	GitHubUsername string        `json:"githubUsername,omitempty"`
 	UpdatedAt      string        `json:"updatedAt"`
 }
 
@@ -210,21 +210,21 @@ func (s *DevProfileStore) GetPublicProfile() (*PublicProfile, error) {
 		return nil, errors.New("username not set — go to Settings > Profile to set your username")
 	}
 	return &PublicProfile{
-		Username:      s.profile.Username,
-		DisplayName:   s.profile.DisplayName,
-		Bio:           s.profile.Bio,
-		AvatarURL:     s.profile.AvatarURL,
-		Links:         s.profile.Links,
-		Location:      s.profile.Location,
-		Company:       s.profile.Company,
-		Badges:        s.profile.Badges,
-		Stats:         s.profile.Stats,
-		Skills:        s.profile.Skills,
-		SocialLinks:   s.profile.SocialLinks,
+		Username:       s.profile.Username,
+		DisplayName:    s.profile.DisplayName,
+		Bio:            s.profile.Bio,
+		AvatarURL:      s.profile.AvatarURL,
+		Links:          s.profile.Links,
+		Location:       s.profile.Location,
+		Company:        s.profile.Company,
+		Badges:         s.profile.Badges,
+		Stats:          s.profile.Stats,
+		Skills:         s.profile.Skills,
+		SocialLinks:    s.profile.SocialLinks,
 		GitHubUsername: s.profile.GitHubUsername,
-		Projects:      s.profile.Projects,
-		UserProjects:  s.profile.UserProjects,
-		UpdatedAt:     s.profile.UpdatedAt,
+		Projects:       s.profile.Projects,
+		UserProjects:   s.profile.UserProjects,
+		UpdatedAt:      s.profile.UpdatedAt,
 	}, nil
 }
 

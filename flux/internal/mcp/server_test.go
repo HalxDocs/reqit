@@ -107,7 +107,9 @@ func TestHandleToolsCall(t *testing.T) {
 			Properties: map[string]PropSchema{"msg": {Type: "string"}},
 		},
 	}, func(args json.RawMessage) (string, error) {
-		var p struct{ Msg string `json:"msg"` }
+		var p struct {
+			Msg string `json:"msg"`
+		}
 		json.Unmarshal(args, &p)
 		return "echo:" + p.Msg, nil
 	})
@@ -186,7 +188,8 @@ func TestToolHandlerError(t *testing.T) {
 		Description: "Always fails",
 		InputSchema: InputSchema{Type: "object"},
 	}, func(args json.RawMessage) (string, error) {
-		var x struct{}; return "", json.Unmarshal([]byte("invalid"), &x) // force error
+		var x struct{}
+		return "", json.Unmarshal([]byte("invalid"), &x) // force error
 	})
 
 	params, _ := json.Marshal(ToolCallParams{

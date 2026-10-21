@@ -62,13 +62,13 @@ type templateData struct {
 }
 
 type templateRequest struct {
-	Name         string
-	Method       string
-	URL          string
-	Body         string
-	HeadersJSON  string
-	Headers      map[string]string
-	Assertions   []string
+	Name        string
+	Method      string
+	URL         string
+	Body        string
+	HeadersJSON string
+	Headers     map[string]string
+	Assertions  []string
 }
 
 func GeneratePlaywrightTest(collection models.Collection, requests []models.SavedRequest, assertions map[string][]models.Assertion, useTS bool) (string, error) {
@@ -214,7 +214,7 @@ func jsonPathChain(path string) string {
 
 func executeTemplate(tpl string, data templateData) (string, error) {
 	funcMap := template.FuncMap{
-		"lower": strings.ToLower,
+		"lower":  strings.ToLower,
 		"printf": fmt.Sprintf,
 	}
 	t, err := template.New("test").Funcs(funcMap).Parse(tpl)

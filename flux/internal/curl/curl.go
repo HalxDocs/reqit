@@ -21,15 +21,15 @@ type Parser struct {
 
 // ParseResult holds the parsed request data.
 type ParseResult struct {
-	Method      string          `json:"method"`
-	URL         string          `json:"url"`
-	Headers     []models.Header `json:"headers"`
-	Body        string          `json:"body"`
-	BodyType    string          `json:"bodyType"`
-	Cookies     []models.Header `json:"cookies"`
-	Insecure    bool            `json:"insecure"`
-	Compressed  bool            `json:"compressed"`
-	ResolvedRefs []string       `json:"resolvedRefs,omitempty"`
+	Method       string          `json:"method"`
+	URL          string          `json:"url"`
+	Headers      []models.Header `json:"headers"`
+	Body         string          `json:"body"`
+	BodyType     string          `json:"bodyType"`
+	Cookies      []models.Header `json:"cookies"`
+	Insecure     bool            `json:"insecure"`
+	Compressed   bool            `json:"compressed"`
+	ResolvedRefs []string        `json:"resolvedRefs,omitempty"`
 }
 
 // New creates a cURL parser.
@@ -252,8 +252,8 @@ func (p *Parser) parseCookie(raw string, result *ParseResult) {
 			result.Cookies = append(result.Cookies, models.Header{Key: part, Value: "", Enabled: true})
 		} else {
 			result.Cookies = append(result.Cookies, models.Header{
-				Key: strings.TrimSpace(part[:idx]),
-				Value: strings.TrimSpace(part[idx+1:]),
+				Key:     strings.TrimSpace(part[:idx]),
+				Value:   strings.TrimSpace(part[idx+1:]),
 				Enabled: true,
 			})
 		}

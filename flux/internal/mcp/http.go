@@ -26,11 +26,12 @@ func NewHTTPServer(mcp *Server) *HTTPServer {
 }
 
 // Handler returns an http.Handler that serves the MCP endpoints:
-//   POST /mcp       → JSON-RPC (initialize, tools/list, tools/call) — Streamable HTTP
-//   GET  /mcp       → SSE stream (for remote ChatGPT/Cursor HTTP clients)
-//   GET  /.well-known/mcp → 307 redirect to /mcp (discovery probe)
-//   GET  /health    → 200 ok (for probes)
-//   GET  /tools     → JSON array of tool defs (REST convenience)
+//
+//	POST /mcp       → JSON-RPC (initialize, tools/list, tools/call) — Streamable HTTP
+//	GET  /mcp       → SSE stream (for remote ChatGPT/Cursor HTTP clients)
+//	GET  /.well-known/mcp → 307 redirect to /mcp (discovery probe)
+//	GET  /health    → 200 ok (for probes)
+//	GET  /tools     → JSON array of tool defs (REST convenience)
 func (h *HTTPServer) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", h.handleMCP)
@@ -88,8 +89,8 @@ func (h *HTTPServer) handleMCP(w http.ResponseWriter, r *http.Request) {
 		// Generic GET probe — return info
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
-			"name":    "reqit MCP",
-			"version": "0.7.1",
+			"name":       "reqit MCP",
+			"version":    "0.7.1",
 			"transports": []string{"stdio", "http"},
 			"endpoints": map[string]string{
 				"mcp":   "POST /mcp (JSON-RPC) or GET /mcp with Accept: text/event-stream (SSE)",

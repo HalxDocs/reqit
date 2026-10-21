@@ -37,14 +37,14 @@ type GRPCRequest struct {
 }
 
 type GRPCResponse struct {
-	StatusCode  int                 `json:"statusCode"`
-	Body        string              `json:"body"`
-	Error       string              `json:"error,omitempty"`
-	DurationMs  int64               `json:"durationMs"`
-	Headers     map[string]string   `json:"headers"`
-	Trailers    map[string]string   `json:"trailers"`
-	GrpcCode    int                 `json:"grpcCode,omitempty"`
-	GrpcStatus  string              `json:"grpcStatus,omitempty"`
+	StatusCode int               `json:"statusCode"`
+	Body       string            `json:"body"`
+	Error      string            `json:"error,omitempty"`
+	DurationMs int64             `json:"durationMs"`
+	Headers    map[string]string `json:"headers"`
+	Trailers   map[string]string `json:"trailers"`
+	GrpcCode   int               `json:"grpcCode,omitempty"`
+	GrpcStatus string            `json:"grpcStatus,omitempty"`
 }
 
 type StreamFrame struct {
@@ -257,13 +257,13 @@ func Invoke(ctx context.Context, req GRPCRequest) *GRPCResponse {
 	if err != nil {
 		st, _ := status.FromError(err)
 		return &GRPCResponse{
-			StatusCode:  int(st.Code()),
-			Error:       st.Message(),
-			GrpcCode:    int(st.Code()),
-			GrpcStatus:  st.Code().String(),
-			DurationMs:  duration,
-			Headers:     headers,
-			Trailers:    trailers,
+			StatusCode: int(st.Code()),
+			Error:      st.Message(),
+			GrpcCode:   int(st.Code()),
+			GrpcStatus: st.Code().String(),
+			DurationMs: duration,
+			Headers:    headers,
+			Trailers:   trailers,
 		}
 	}
 

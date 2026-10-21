@@ -13,19 +13,19 @@ import (
 )
 
 type insomniaDoc struct {
-	Type      string          `json:"_type"`
-	ParentID  string          `json:"parentId"`
-	ID        string          `json:"_id"`
-	Name      string          `json:"name"`
-	Method    string          `json:"method"`
-	URL       string          `json:"url"`
+	Type      string           `json:"_type"`
+	ParentID  string           `json:"parentId"`
+	ID        string           `json:"_id"`
+	Name      string           `json:"name"`
+	Method    string           `json:"method"`
+	URL       string           `json:"url"`
 	Headers   []insomniaHeader `json:"headers"`
-	Body      *insomniaBody   `json:"body"`
-	Resources []insomniaDoc   `json:"resources"`
-	Children  []insomniaDoc   `json:"children"`
-	Auth      *insomniaAuth   `json:"authentication"`
-	Scope     string          `json:"scope"`
-	Data      json.RawMessage `json:"data"`
+	Body      *insomniaBody    `json:"body"`
+	Resources []insomniaDoc    `json:"resources"`
+	Children  []insomniaDoc    `json:"children"`
+	Auth      *insomniaAuth    `json:"authentication"`
+	Scope     string           `json:"scope"`
+	Data      json.RawMessage  `json:"data"`
 }
 
 type insomniaHeader struct {
@@ -45,13 +45,13 @@ type insomniaParam struct {
 }
 
 type insomniaAuth struct {
-	Type    string            `json:"type"`
-	Token   string            `json:"token"`
-	User    string            `json:"user"`
-	Pass    string            `json:"password"`
-	Key     string            `json:"key"`
-	Value   string            `json:"value"`
-	Disable bool              `json:"disabled"`
+	Type    string `json:"type"`
+	Token   string `json:"token"`
+	User    string `json:"user"`
+	Pass    string `json:"password"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+	Disable bool   `json:"disabled"`
 }
 
 type insomniaExport struct {
@@ -244,15 +244,15 @@ func Export(requests []models.SavedRequest, name string) ([]byte, error) {
 		}
 		id := uuid.NewString()
 		doc := insomniaDoc{
-			Type:    "request",
-			ID:      id,
+			Type:     "request",
+			ID:       id,
 			ParentID: "__WORKSPACE_ID__",
-			Name:    r.Name,
-			Method:  r.Payload.Method,
-			URL:     r.Payload.URL,
-			Headers: headers,
-			Body:    body,
-			Auth:    auth,
+			Name:     r.Name,
+			Method:   r.Payload.Method,
+			URL:      r.Payload.URL,
+			Headers:  headers,
+			Body:     body,
+			Auth:     auth,
 		}
 		resources = append(resources, doc)
 	}

@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dop251/goja"
 	"flux/internal/assertions"
 	"flux/internal/models"
 	"flux/internal/requester"
+	"github.com/dop251/goja"
 )
 
 var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)

@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	aipkg "flux/internal/ai"
 	agentlenspkg "flux/internal/agentlens"
+	aipkg "flux/internal/ai"
 	"flux/internal/models"
 )
 
 // --- AI ---
 
 type AISettingsResult struct {
-	Enabled      bool   `json:"enabled"`
-	Provider     string `json:"provider"`
-	HasAPIKey    bool   `json:"hasApiKey"`
-	BaseURL      string `json:"baseUrl"`
-	Model        string `json:"model"`
+	Enabled   bool   `json:"enabled"`
+	Provider  string `json:"provider"`
+	HasAPIKey bool   `json:"hasApiKey"`
+	BaseURL   string `json:"baseUrl"`
+	Model     string `json:"model"`
 }
 
 func (a *App) GetAISettings() AISettingsResult {

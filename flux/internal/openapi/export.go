@@ -137,7 +137,7 @@ func Export(coll models.Collection) (string, error) {
 				op.RequestBody = &openapi3.RequestBodyRef{
 					Value: &openapi3.RequestBody{
 						Required: true,
-						Content: openapi3.NewContentWithFormDataSchema(schema),
+						Content:  openapi3.NewContentWithFormDataSchema(schema),
 					},
 				}
 			}
@@ -188,7 +188,7 @@ func registerAuth(doc *openapi3.T, authTyp, authVal string) {
 		if _, ok := doc.Components.SecuritySchemes["bearer"]; !ok {
 			doc.Components.SecuritySchemes["bearer"] = &openapi3.SecuritySchemeRef{
 				Value: &openapi3.SecurityScheme{
-					Type: "http",
+					Type:   "http",
 					Scheme: "bearer",
 				},
 			}
@@ -197,7 +197,7 @@ func registerAuth(doc *openapi3.T, authTyp, authVal string) {
 		if _, ok := doc.Components.SecuritySchemes["basic"]; !ok {
 			doc.Components.SecuritySchemes["basic"] = &openapi3.SecuritySchemeRef{
 				Value: &openapi3.SecurityScheme{
-					Type: "http",
+					Type:   "http",
 					Scheme: "basic",
 				},
 			}
@@ -367,5 +367,3 @@ func jsToSchema(v any) *openapi3.Schema {
 		return openapi3.NewStringSchema()
 	}
 }
-
-

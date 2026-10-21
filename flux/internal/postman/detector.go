@@ -40,8 +40,8 @@ func DetectVersion(data []byte) (string, error) {
 // DetectFileType detects whether the JSON data is a collection, environment, or workspace export.
 func DetectFileType(data []byte) string {
 	var probe struct {
-		Info  struct{} `json:"info"`
-		Item  []struct{} `json:"item"`
+		Info   struct{}   `json:"info"`
+		Item   []struct{} `json:"item"`
 		Values []struct{} `json:"values"`
 	}
 	if err := json.Unmarshal(data, &probe); err != nil {

@@ -30,10 +30,10 @@ type wrapper struct {
 }
 
 type Store struct {
-	mu     sync.Mutex
-	dir    string
+	mu      sync.Mutex
+	dir     string
 	records []RunRecord
-	loaded bool
+	loaded  bool
 }
 
 func NewStore(dir string) *Store {
@@ -116,13 +116,13 @@ func (s *Store) Clear() error {
 
 // FlakyStats is the aggregated flake detection result for one request.
 type FlakyStats struct {
-	RequestID  string  `json:"requestId"`
-	Total      int     `json:"total"`
-	Passed     int     `json:"passed"`
-	Failed     int     `json:"failed"`
-	FlakyRuns  int     `json:"flakyRuns"` // passed after retry
-	FlakeRate  float64 `json:"flakeRate"`
-	IsFlaky    bool    `json:"isFlaky"`
+	RequestID string  `json:"requestId"`
+	Total     int     `json:"total"`
+	Passed    int     `json:"passed"`
+	Failed    int     `json:"failed"`
+	FlakyRuns int     `json:"flakyRuns"` // passed after retry
+	FlakeRate float64 `json:"flakeRate"`
+	IsFlaky   bool    `json:"isFlaky"`
 }
 
 // StatsFor computes flaky stats for requestID over its history (last 20).

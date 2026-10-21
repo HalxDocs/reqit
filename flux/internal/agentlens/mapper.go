@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	paramPattern  = regexp.MustCompile(`\{(\w+)\}`)
+	paramPattern   = regexp.MustCompile(`\{(\w+)\}`)
 	acronymPattern = regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
-_wordBreak      = regexp.MustCompile(`[-_\s]+`)
+	_wordBreak     = regexp.MustCompile(`[-_\s]+`)
 )
 
 // MapRequestToTool converts a SavedRequest into a ToolDefinition.

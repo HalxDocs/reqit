@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/google/uuid"
 	"flux/internal/models"
+	"github.com/google/uuid"
 )
 
 const testSuitesFile = "testsuites.json"

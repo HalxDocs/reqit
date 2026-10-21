@@ -38,13 +38,13 @@ type OIDCConfig struct {
 
 // ProviderConfig represents a configured SSO provider.
 type ProviderConfig struct {
-	ID      string      `json:"id"`
-	Name    string      `json:"name"`
+	ID      string       `json:"id"`
+	Name    string       `json:"name"`
 	Type    ProviderType `json:"type"`
-	SAML    *SAMLConfig `json:"saml,omitempty"`
-	OIDC    *OIDCConfig `json:"oidc,omitempty"`
-	Enabled bool        `json:"enabled"`
-	Default bool        `json:"default"`
+	SAML    *SAMLConfig  `json:"saml,omitempty"`
+	OIDC    *OIDCConfig  `json:"oidc,omitempty"`
+	Enabled bool         `json:"enabled"`
+	Default bool         `json:"default"`
 }
 
 // UserProfile is returned after successful SSO authentication.

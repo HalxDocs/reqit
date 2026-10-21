@@ -20,7 +20,7 @@ type Body struct {
 }
 
 type WSDLInfo struct {
-	TargetNamespace string   `xml:"targetNamespace,attr"`
+	TargetNamespace string    `xml:"targetNamespace,attr"`
 	Services        []Service `xml:"service"`
 	Bindings        []Binding `xml:"binding"`
 	Messages        []Message `xml:"message"`
@@ -38,9 +38,9 @@ type Port struct {
 }
 
 type Binding struct {
-	Name    string `xml:"name,attr"`
-	Type    string `xml:"type,attr"`
-	Verb    string `xml:"operation>input>body>use,attr"`
+	Name string `xml:"name,attr"`
+	Type string `xml:"type,attr"`
+	Verb string `xml:"operation>input>body>use,attr"`
 }
 
 type Message struct {

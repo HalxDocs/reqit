@@ -47,7 +47,7 @@ func (sc *SpecCache) Invalidate(path string) {
 
 // ValidationError represents a single spec violation.
 type ValidationError struct {
-	Layer   string `json:"layer"`   // "status" | "body" | "header"
+	Layer   string `json:"layer"` // "status" | "body" | "header"
 	Field   string `json:"field"`
 	Message string `json:"message"`
 }

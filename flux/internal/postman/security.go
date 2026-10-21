@@ -9,7 +9,7 @@ import (
 type SecretWarning struct {
 	RequestName string `json:"requestName"`
 	HeaderKey   string `json:"headerKey"`
-	Field       string `json:"field"`     // "header", "variable", "body"
+	Field       string `json:"field"` // "header", "variable", "body"
 	Hint        string `json:"hint"`
 	ValuePrefix string `json:"valuePrefix"` // first 8 chars of matched value
 }
@@ -18,14 +18,14 @@ type SecretWarning struct {
 var DefaultSecretPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)bearer\s+[a-z0-9\-._~+/]+=*\b`),
 	regexp.MustCompile(`(?i)(api[_-]?key|apikey)\s*[:=]\s*['"]?[\w\-]{16,}`),
-	regexp.MustCompile(`sk-[a-zA-Z0-9]{32,}`),               // OpenAI
-	regexp.MustCompile(`ghp_[a-zA-Z0-9]{36}\b`),             // GitHub PAT
-	regexp.MustCompile(`gho_[a-zA-Z0-9]{36}\b`),             // GitHub OAuth
-	regexp.MustCompile(`xoxb-[0-9]+-[a-zA-Z0-9]+`),          // Slack Bot
-	regexp.MustCompile(`xoxp-[0-9]+-[a-zA-Z0-9]+`),          // Slack User
+	regexp.MustCompile(`sk-[a-zA-Z0-9]{32,}`),      // OpenAI
+	regexp.MustCompile(`ghp_[a-zA-Z0-9]{36}\b`),    // GitHub PAT
+	regexp.MustCompile(`gho_[a-zA-Z0-9]{36}\b`),    // GitHub OAuth
+	regexp.MustCompile(`xoxb-[0-9]+-[a-zA-Z0-9]+`), // Slack Bot
+	regexp.MustCompile(`xoxp-[0-9]+-[a-zA-Z0-9]+`), // Slack User
 	regexp.MustCompile(`(?i)token\s*[:=]\s*['"]?[a-z0-9\-._~+/]{20,}`),
 	regexp.MustCompile(`(?i)secret\s*[:=]\s*['"]?[a-z0-9\-._~+/]{16,}`),
-	regexp.MustCompile(`AKIA[0-9A-Z]{16}`),                  // AWS Access Key
+	regexp.MustCompile(`AKIA[0-9A-Z]{16}`),                                        // AWS Access Key
 	regexp.MustCompile(`eyJ[a-zA-Z0-9\-_]+\.eyJ[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+`), // JWT
 }
 

@@ -195,9 +195,9 @@ func (a *App) ImportPostmanFull(jsonData, targetCollID string) (string, error) {
 		transpiled[i] = postman.TranspileScript(s)
 	}
 	out, _ := json.Marshal(map[string]interface{}{
-		"requests":      len(result.Requests),
-		"variables":     result.Variables,
-		"scripts":       transpiled,
+		"requests":       len(result.Requests),
+		"variables":      result.Variables,
+		"scripts":        transpiled,
 		"collectionAuth": result.Auth,
 	})
 	runtime.EventsEmit(a.ctx, "collections:changed")
@@ -466,7 +466,7 @@ func (a *App) ImportOpenAPI(path string) (*openapi.ImportResult, error) {
 	runtime.EventsEmit(a.ctx, "collections:changed")
 	if a.audit != nil {
 		_ = a.audit.Log("user", audit.ActionImport, "spec", filepath.Base(path), "", map[string]string{
-			"source": "openapi",
+			"source":      "openapi",
 			"collections": fmt.Sprintf("%d", len(result.Collections)),
 		})
 	}

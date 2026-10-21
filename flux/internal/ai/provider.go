@@ -507,8 +507,8 @@ func chatAnthropicWithTools(cfg Config, messages []Message, tools []ToolDef) (To
 	toolDefs := make([]map[string]any, len(tools))
 	for i, t := range tools {
 		toolDefs[i] = map[string]any{
-			"name":        t.Name,
-			"description": t.Description,
+			"name":         t.Name,
+			"description":  t.Description,
 			"input_schema": t.Parameters,
 		}
 	}
@@ -550,9 +550,9 @@ func chatAnthropicWithTools(cfg Config, messages []Message, tools []ToolDef) (To
 
 	var result struct {
 		Content []struct {
-			Type  string `json:"type"`
-			Text  string `json:"text"`
-			Name  string `json:"name"`
+			Type  string         `json:"type"`
+			Text  string         `json:"text"`
+			Name  string         `json:"name"`
 			Input map[string]any `json:"input"`
 		} `json:"content"`
 	}
@@ -640,8 +640,8 @@ func chatGeminiWithTools(cfg Config, messages []Message, tools []ToolDef) (ToolC
 		Candidates []struct {
 			Content struct {
 				Parts []struct {
-					Text           string         `json:"text"`
-					FunctionCall   *struct {
+					Text         string `json:"text"`
+					FunctionCall *struct {
 						Name string         `json:"name"`
 						Args map[string]any `json:"args"`
 					} `json:"functionCall"`

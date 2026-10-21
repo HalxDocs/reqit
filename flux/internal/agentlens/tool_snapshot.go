@@ -97,12 +97,12 @@ func LoadPrevToolSnapshot(workspaceDir, collID string) (*ToolSnapshot, error) {
 
 // ToolDrift describes how a tool's description changed between two snapshots.
 type ToolDrift struct {
-	ToolName  string `json:"toolName"`
-	OldDesc   string `json:"oldDesc"`
-	NewDesc   string `json:"newDesc"`
-	Changed   bool   `json:"changed"`
-	Added     bool   `json:"added"`
-	Removed   bool   `json:"removed"`
+	ToolName string `json:"toolName"`
+	OldDesc  string `json:"oldDesc"`
+	NewDesc  string `json:"newDesc"`
+	Changed  bool   `json:"changed"`
+	Added    bool   `json:"added"`
+	Removed  bool   `json:"removed"`
 }
 
 // DiffToolSnapshots compares two snapshots and returns per-tool drift.

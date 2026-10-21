@@ -31,15 +31,15 @@ type Endpoint struct {
 
 // Param represents a request parameter.
 type Param struct {
-	Name     string    `json:"name"`
-	In       string    `json:"in"` // query, header, path, cookie
-	Required bool      `json:"required"`
+	Name     string     `json:"name"`
+	In       string     `json:"in"` // query, header, path, cookie
+	Required bool       `json:"required"`
 	Schema   *SchemaRef `json:"schema,omitempty"`
 }
 
 // Response represents an expected response.
 type Response struct {
-	StatusCode string    `json:"statusCode"`
+	StatusCode string     `json:"statusCode"`
 	Schema     *SchemaRef `json:"schema,omitempty"`
 }
 

@@ -2,17 +2,17 @@ package agentlens
 
 // ToolDefinition represents a request mapped to an MCP tool.
 type ToolDefinition struct {
-	RequestID   string            `json:"requestId"`
-	RequestName string            `json:"requestName"`
-	Folder      string            `json:"folder"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Method      string            `json:"method"`
-	Path        string            `json:"path"`
-	InputSchema map[string]any    `json:"inputSchema"`
-	Parameters  []ToolParam       `json:"parameters"`
-	Deprecated  bool              `json:"deprecated"`
-	Destructive bool              `json:"destructive"`
+	RequestID   string         `json:"requestId"`
+	RequestName string         `json:"requestName"`
+	Folder      string         `json:"folder"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Method      string         `json:"method"`
+	Path        string         `json:"path"`
+	InputSchema map[string]any `json:"inputSchema"`
+	Parameters  []ToolParam    `json:"parameters"`
+	Deprecated  bool           `json:"deprecated"`
+	Destructive bool           `json:"destructive"`
 }
 
 // ToolParam describes a single parameter in the tool's input schema.
@@ -36,11 +36,11 @@ const (
 
 // LintResult is the output of a single lint rule for a single tool.
 type LintResult struct {
-	RuleID        string        `json:"ruleId"`
-	RuleName      string        `json:"ruleName"`
-	Severity      LintSeverity  `json:"severity"`
-	Message       string        `json:"message"`
-	FixSuggestion string        `json:"fixSuggestion"`
+	RuleID        string       `json:"ruleId"`
+	RuleName      string       `json:"ruleName"`
+	Severity      LintSeverity `json:"severity"`
+	Message       string       `json:"message"`
+	FixSuggestion string       `json:"fixSuggestion"`
 }
 
 // ToolScore aggregates lint results into a 0-100 score for one tool.
@@ -88,16 +88,16 @@ type LensDefaults struct {
 
 // EvalTask is a single eval task from suite.yaml.
 type EvalTask struct {
-	Prompt                   string         `json:"prompt" yaml:"prompt"`
-	ExpectTool               string         `json:"expectTool" yaml:"expect_tool"`
-	ExpectArgs               map[string]any `json:"expectArgs,omitempty" yaml:"expect_args,omitempty"`
-	ExpectDestructiveConfirmed bool         `json:"expectDestructiveConfirmed,omitempty" yaml:"expect_destructive_confirmed,omitempty"`
+	Prompt                     string         `json:"prompt" yaml:"prompt"`
+	ExpectTool                 string         `json:"expectTool" yaml:"expect_tool"`
+	ExpectArgs                 map[string]any `json:"expectArgs,omitempty" yaml:"expect_args,omitempty"`
+	ExpectDestructiveConfirmed bool           `json:"expectDestructiveConfirmed,omitempty" yaml:"expect_destructive_confirmed,omitempty"`
 }
 
 // EvalSuite is the suite.yaml structure.
 type EvalSuite struct {
-	Version    int        `yaml:"version" json:"version"`
-	Provider   string     `yaml:"provider" json:"provider"`
-	Model      string     `yaml:"model" json:"model"`
-	Tasks      []EvalTask `yaml:"tasks" json:"tasks"`
+	Version  int        `yaml:"version" json:"version"`
+	Provider string     `yaml:"provider" json:"provider"`
+	Model    string     `yaml:"model" json:"model"`
+	Tasks    []EvalTask `yaml:"tasks" json:"tasks"`
 }

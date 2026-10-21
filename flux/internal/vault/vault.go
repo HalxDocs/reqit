@@ -175,10 +175,10 @@ func (p *AWSProvider) SetSecret(path, value string) error {
 // VaultConfigView is a redacted view of Config that can be safely sent to the
 // frontend over the Wails IPC bridge.  It omits secret fields (Token).
 type VaultConfigView struct {
-	Type        string `json:"type"`
-	Addr        string `json:"addr,omitempty"`
-	Region      string `json:"region,omitempty"`
-	IsConfigured bool  `json:"isConfigured"`
+	Type         string `json:"type"`
+	Addr         string `json:"addr,omitempty"`
+	Region       string `json:"region,omitempty"`
+	IsConfigured bool   `json:"isConfigured"`
 }
 
 // MarshalConfig serialises vault config to JSON (includes secret fields —
@@ -194,9 +194,9 @@ func MarshalConfig(cfg Config) (string, error) {
 // MarshalConfigView serialises a redacted view of vault config for the frontend.
 func MarshalConfigView(cfg Config) (string, error) {
 	view := VaultConfigView{
-		Type:        cfg.Type,
-		Addr:        cfg.Addr,
-		Region:      cfg.Region,
+		Type:         cfg.Type,
+		Addr:         cfg.Addr,
+		Region:       cfg.Region,
 		IsConfigured: cfg.Token != "" && cfg.Type != "",
 	}
 	data, err := json.Marshal(view)

@@ -143,8 +143,8 @@ func TestDetectDrift_ModifiedEndpoint(t *testing.T) {
 		Version: "3.0.3",
 		Endpoints: []Endpoint{
 			{
-				Method: "POST",
-				Path:   "/users",
+				Method:      "POST",
+				Path:        "/users",
 				RequestBody: &SchemaRef{Type: "object"},
 			},
 		},
