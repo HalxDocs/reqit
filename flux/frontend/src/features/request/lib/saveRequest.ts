@@ -6,7 +6,7 @@ import { toast } from "@/app/stores/useToastStore";
 import { buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import type { models } from "../../../../wailsjs/go/models";
 
-export type SaveOutcome = "saved" | "needs-details";
+export type SaveOutcome = "saved" | "needs-details" | "failed";
 
 /**
  * Locate the collection and saved request a tab points at.
@@ -56,6 +56,6 @@ export async function saveActiveRequest(): Promise<SaveOutcome> {
     return "saved";
   } catch (e) {
     toast.error(e instanceof Error ? e.message : String(e));
-    return "saved";
+    return "failed";
   }
 }

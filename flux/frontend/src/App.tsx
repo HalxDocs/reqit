@@ -35,11 +35,13 @@ import { LoadTestPanel } from "@/features/loadtest/components/LoadTestPanel";
 import { TestSuitePanel } from "@/features/testbuilder/components/TestSuitePanel";
 import { MockPanel } from "@/features/mock/components/MockPanel";
 import { MCPPanel } from "@/features/mcp/components/MCPPanel";
+import MQTTPanel from "@/features/request/components/MQTTPanel";
 import { EventInspectorPanel } from "@/features/eventinspector/components/EventInspectorPanel";
 
 import { PasteCurlModal } from "@/shared/components/PasteCurlModal";
 import { TeamModal } from "@/features/git/components/TeamModal";
 import { RunnerModal } from "@/features/collections/components/RunnerModal";
+import { ExternalRunnerPanel } from "@/features/external/components/ExternalRunnerPanel";
 import { DevProfileModal } from "@/features/profile/components/DevProfilePanel";
 import { SocketPanel } from "@/features/websocket/components/SocketPanel";
 import { SSEViewer } from "@/features/websocket/components/SSEViewer";
@@ -165,6 +167,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const panelLayout = useUIStore((s) => s.panelLayout);
   const { size, onResize } = useResizablePanel(panelLayout === "horizontal" ? "width" : "height");
   const runnerCollID = useUIStore((s) => s.runnerCollID);
+  const externalRunnerOpen = useUIStore((s) => s.externalRunnerOpen);
+  const closeExternalRunner = useUIStore((s) => s.closeExternalRunner);
   const closeRunner = useUIStore((s) => s.closeRunner);
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
@@ -316,6 +320,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
         const colls = useCollectionStore.getState().collections;
         if (colls.length > 0) useUIStore.getState().openRunner(colls[0].id);
       }},
+      { id: "collection.externalTest", label: "Generate External Test", category: "Collection", scope: "global", defaultKeys: [], action: () => useUIStore.getState().openExternalRunner() },
 
       { id: "tree.expand", label: "Expand Node", category: "Response", scope: "responseTree", defaultKeys: ["arrowright"], action: () => dispatchShortcut("tree.expand") },
       { id: "tree.collapse", label: "Collapse Node", category: "Response", scope: "responseTree", defaultKeys: ["arrowleft"], action: () => dispatchShortcut("tree.collapse") },
@@ -370,6 +375,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "view.sse", label: "View: SSE Viewer", category: "View", scope: "global", defaultKeys: [], action: () => setView("sse") },
       { id: "view.eventinspector", label: "View: Event Inspector", category: "View", scope: "global", defaultKeys: [], action: () => setView("eventinspector") },
       { id: "view.mcp", label: "View: MCP Bridge", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
+      { id: "view.mqtt", label: "View: MQTT Client", category: "View", scope: "global", defaultKeys: [], action: () => setView("mqtt") },
       { id: "view.mcptraffic", label: "View: MCP Traffic", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
       { id: "view.interceptor", label: "View: Interceptor", category: "View", scope: "global", defaultKeys: [], action: () => setView("interceptor") },
       { id: "view.scheduler", label: "View: Scheduler", category: "View", scope: "global", defaultKeys: [], action: () => setView("scheduler") },
@@ -495,6 +501,8 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
          <MockPanel />
        ) : view === "mcp" ? (
          <MCPPanel />
+       ) : view === "mqtt" ? (
+         <MQTTPanel />
        ) : view === "eventinspector" ? (
          <EventInspectorPanel />
        ) : (
@@ -541,6 +549,10 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           collection={runnerColl}
         />
       )}
+      <ExternalRunnerPanel
+        open={externalRunnerOpen}
+        onClose={closeExternalRunner}
+      />
       <WhatsNewModal
         open={whatsNewOpen || whatsNewModalOpen}
         onClose={() => {

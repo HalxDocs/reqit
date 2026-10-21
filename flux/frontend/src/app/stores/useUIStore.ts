@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type RequestTab = "params" | "headers" | "body" | "auth" | "scripts" | "notes";
 export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "performance" | "visualize";
 
-export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel" | "eventinspector" | "mcp";
+export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel" | "eventinspector" | "mcp" | "mqtt";
 
 export type PanelLayout = "horizontal" | "vertical";
 
@@ -77,6 +77,9 @@ type UIStore = {
   runnerCollID: string | null;
   openRunner: (collID: string) => void;
   closeRunner: () => void;
+  externalRunnerOpen: boolean;
+  openExternalRunner: () => void;
+  closeExternalRunner: () => void;
   openapiCollID: string | null;
   openOpenAPI: (collID: string) => void;
   closeOpenAPI: () => void;
@@ -211,6 +214,9 @@ export const useUIStore = create<UIStore>((set, get) => ({
   runnerCollID: null,
   openRunner: (runnerCollID) => set({ runnerCollID }),
   closeRunner: () => set({ runnerCollID: null }),
+  externalRunnerOpen: false,
+  openExternalRunner: () => set({ externalRunnerOpen: true }),
+  closeExternalRunner: () => set({ externalRunnerOpen: false }),
 
   openapiCollID: null,
   openOpenAPI: (openapiCollID) => set({ openapiCollID, view: "openapi" }),

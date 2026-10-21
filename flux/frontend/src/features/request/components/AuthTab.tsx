@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Shield, Upload, X } from "lucide-react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { cn } from "@/shared/lib/cn";
 import { OAuth2Flow } from "./OAuth2Flow";
+import { JWTDecoder } from "./JWTDecoder";
 import { AuthPresetButtons } from "@/features/presets/components/PresetManager";
 import type { ApiKeyIn, AuthType } from "@/features/request/types/request";
 
@@ -25,6 +26,7 @@ const API_KEY_IN: { id: ApiKeyIn; label: string }[] = [
 export function AuthTab() {
   const authType = useRequestStore((s) => s.authType);
   const setAuthType = useRequestStore((s) => s.setAuthType);
+  const [showJwtDecoder, setShowJwtDecoder] = useState(false);
   const authToken = useRequestStore((s) => s.authToken);
   const setAuthToken = useRequestStore((s) => s.setAuthToken);
   const authUser = useRequestStore((s) => s.authUser);
@@ -83,15 +85,20 @@ export function AuthTab() {
           <p className="text-11 text-subtext mt-1 flex items-center gap-2">
             Sent as: <span className="font-mono">Authorization: Bearer ...</span>
             {authToken.includes(".") && authToken.split(".").length === 3 && (
-              <button type="button" onClick={() => {
-                try {
-                  const parts = authToken.split(".");
-                  const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-                  alert("JWT payload:\n" + JSON.stringify(payload, null, 2));
-                } catch { alert("Not a valid JWT"); }
-              }} className="text-cyan hover:text-cyan-hover underline-offset-2 hover:underline">Decode JWT</button>
+              <button
+                type="button"
+                onClick={() => setShowJwtDecoder((v) => !v)}
+                className="text-cyan hover:text-cyan-hover underline-offset-2 hover:underline"
+              >
+                {showJwtDecoder ? "Hide JWT" : "Decode JWT"}
+              </button>
             )}
           </p>
+          {showJwtDecoder && authToken.includes(".") && (
+            <div className="mt-2 border border-border rounded-md overflow-hidden">
+              <JWTDecoder initialToken={authToken} showInput={false} />
+            </div>
+          )}
           <p className="text-10 text-subtext/60">Bearer = OAuth2 JWT; use Token Auth for `Token` header (e.g. GitHub).</p>
         </div>
       )}

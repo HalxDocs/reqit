@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Fingerprint, AlertCircle, CheckCircle2 } from "lucide-react";
 import { DecodeJWT } from "../../../../wailsjs/go/main/App";
-import type { JWTDecoded } from "@/features/request/types/request";
+import type { models } from "../../../../wailsjs/go/models";
 
 function KeyValueList({ data }: { data: Record<string, unknown> }) {
   return (
@@ -16,9 +16,22 @@ function KeyValueList({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-export function JWTDecoder() {
-  const [token, setToken] = useState("");
-  const [decoded, setDecoded] = useState<JWTDecoded | null>(null);
+/**
+ * Decodes a JSON Web Token and shows its header, claims and expiry.
+ *
+ * When `initialToken` is given the token is decoded on mount, which lets the
+ * component be embedded next to a token the user has already entered. Set
+ * `showInput` to false to render only the result.
+ */
+export function JWTDecoder({
+  initialToken,
+  showInput = true,
+}: {
+  initialToken?: string;
+  showInput?: boolean;
+} = {}) {
+  const [token, setToken] = useState(initialToken ?? "");
+  const [decoded, setDecoded] = useState<models.JWTDecoded | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleDecode = async () => {
@@ -40,27 +53,39 @@ export function JWTDecoder() {
     }
   };
 
+  // Decode a token that was supplied from outside, e.g. the bearer token in
+  // the auth tab.
+  useEffect(() => {
+    if (!initialToken) return;
+    setToken(initialToken);
+    void handleDecode();
+    // Only re-run when the supplied token actually changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken]);
+
   return (
     <div className="flex flex-col">
-      <div className="p-4 border-b border-border flex flex-col gap-2">
-        <textarea
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="Paste your JWT token here..."
-          rows={4}
-          spellCheck={false}
-          className="w-full px-3 py-2 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors resize-none"
-        />
-        <button
-          type="button"
-          onClick={handleDecode}
-          disabled={loading || !token.trim()}
-          className="h-[36px] px-4 bg-cyan hover:bg-cyan-hover active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all self-start disabled:opacity-50"
-        >
-          <Fingerprint size={14} />
-          <span>{loading ? "Decoding..." : "Decode"}</span>
-        </button>
-      </div>
+      {showInput && (
+        <div className="p-4 border-b border-border flex flex-col gap-2">
+          <textarea
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="Paste your JWT token here..."
+            rows={4}
+            spellCheck={false}
+            className="w-full px-3 py-2 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors resize-none"
+          />
+          <button
+            type="button"
+            onClick={handleDecode}
+            disabled={loading || !token.trim()}
+            className="h-[36px] px-4 bg-cyan hover:bg-cyan-hover active:scale-[0.97] rounded-md font-bold text-13 text-white flex items-center gap-2 transition-all self-start disabled:opacity-50"
+          >
+            <Fingerprint size={14} />
+            <span>{loading ? "Decoding..." : "Decode"}</span>
+          </button>
+        </div>
+      )}
 
       {decoded?.error && (
         <div className="px-4 py-3 flex items-center gap-2 text-12 text-danger border-b border-border">

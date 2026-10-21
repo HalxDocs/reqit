@@ -2,8 +2,26 @@ package oauth2
 
 // Canonical OAuth 2.0 types for the reqit engine. This file is the single
 // source of truth for the wire/JSON shape exchanged with the Wails bindings
-// and, later, the OS keychain store. The legacy OAuth2Config / TokenResponse
-// types in oauth2.go are kept until the bindings migrate to these types.
+// and, later, the OS keychain store.
+
+// OAuth2Config is the wire shape the Wails bindings accept. It is translated
+// into the engine's OAuthConfig by mapOAuthConfig before the flow runs.
+type OAuth2Config struct {
+	AuthURL      string `json:"authUrl"`
+	TokenURL     string `json:"tokenUrl"`
+	DeviceURL    string `json:"deviceUrl"`
+	ClientID     string `json:"clientId"`
+	ClientSecret string `json:"clientSecret"`
+	Scopes       string `json:"scopes"`
+	RedirectURI  string `json:"redirectUri"`
+	UsePKCE      bool   `json:"usePkce"`
+	ClientAuth   string `json:"clientAuth,omitempty"` // "body" | "basic" for client_credentials (Hoppscotch parity)
+	// FlowTimeoutSec overrides the default callback timeout for interactive
+	// flows (authorization code, implicit). Providers that show MFA pages
+	// (Google, Entra ID) need a longer window; fast providers (GitHub) can
+	// use a shorter one. Zero uses the engine default (5 minutes).
+	FlowTimeoutSec int `json:"flowTimeoutSec,omitempty"`
+}
 
 // GrantType identifies the OAuth 2.0 flow a request uses. The values are the
 // flow identifiers used throughout reqit; the exact wire value sent to a

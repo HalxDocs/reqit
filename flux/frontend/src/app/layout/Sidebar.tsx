@@ -6,6 +6,7 @@ import { useGitStore } from "@/features/git/stores/useGitStore";
 import { cn } from "@/shared/lib/cn";
 import { CollectionsTree } from "@/features/collections/components/CollectionsTree";
 import { HistoryList } from "@/features/history/components/HistoryList";
+import { GitPanel } from "@/features/git/components/GitPanel";
 import { EnvSwitcher } from "@/features/env/components/EnvSwitcher";
 import { SearchBar } from "@/features/collections/components/SearchBar";
 import { WorkspaceTemplatePicker } from "@/features/workspace/components/WorkspaceTemplatePicker";
@@ -97,6 +98,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
   const openSettings = useUIStore((s) => s.openSettingsModal);
   const openLoadTest = useUIStore((s) => s.openLoadTestModal);
   const openTestSuites = useUIStore((s) => s.openTestSuitesModal);
+  const openExternalRunner = useUIStore((s) => s.openExternalRunner);
   const openTeam = useUIStore((s) => s.openTeamModal);
   const openDevProfile = useUIStore((s) => s.openDevProfileModal);
   const openWhatsNew = useUIStore((s) => s.openWhatsNewModal);
@@ -287,6 +289,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             active={false}
             onClick={openTestSuites}
           />
+          <NavItem
+            icon={<FileCode2 size={13} />}
+            label="External Test"
+            active={false}
+            onClick={openExternalRunner}
+          />
           <div className="h-px bg-border/50 my-1 mx-3" />
           <div className="px-3 pt-0.5 pb-0.5 text-[10px] font-bold text-subtext/50 uppercase tracking-wider">Protocol</div>
           <NavItem
@@ -306,6 +314,12 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             label="MCP Bridge"
             active={view === "mcp"}
             onClick={() => setView(view === "mcp" ? "http" : "mcp")}
+          />
+          <NavItem
+            icon={<Radio size={13} />}
+            label="MQTT Client"
+            active={view === "mqtt"}
+            onClick={() => setView(view === "mqtt" ? "http" : "mqtt")}
           />
           <NavItem
             icon={<FileEdit size={13} />}
@@ -364,6 +378,9 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             onClick={() => setView(view === "growth" ? "http" : "growth")}
           />
         </CollapsibleSection>
+
+        {/* Git sync status: shows whether the workspace is actually backed up. */}
+        <GitPanel />
       </div>
 
       {/* ===== STICKY BOTTOM: TEAM + PROFILE + SETTINGS ===== */}

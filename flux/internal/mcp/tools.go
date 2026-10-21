@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +17,7 @@ import (
 	"flux/internal/environments"
 	"flux/internal/models"
 	"flux/internal/requester"
+	"flux/internal/security"
 	"flux/internal/workspaces"
 )
 
@@ -653,33 +653,6 @@ func handleSwitchEnvironment(wsDir string) ToolHandler {
 
 // --- Execution ---
 
-// isSSRFRisk checks if a URL targets internal/loopback addresses.
-func isSSRFRisk(rawURL string) bool {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return true // block on parse error
-	}
-	hostname := u.Hostname()
-	if hostname == "" {
-		return false
-	}
-	// Block loopback.
-	if hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == "0.0.0.0" {
-		return true
-	}
-	// Block private IP ranges.
-	if ip := net.ParseIP(hostname); ip != nil {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-			return true
-		}
-	}
-	// Block metadata endpoints.
-	if strings.HasSuffix(hostname, ".internal") || strings.HasSuffix(hostname, ".local") {
-		return true
-	}
-	return false
-}
-
 func handleSendRequest() ToolHandler {
 	return func(args json.RawMessage) (string, error) {
 		var p struct {
@@ -692,8 +665,12 @@ func handleSendRequest() ToolHandler {
 			return "", err
 		}
 
-		if isSSRFRisk(p.URL) {
-			return "", fmt.Errorf("blocked: request to %s is not allowed (SSRF protection: no localhost/internal URLs)", p.URL)
+		// An MCP client can pass any URL, so this tool is a server-side
+		// request forgery surface. Use the same validator the requester uses:
+		// it checks the scheme and resolves the host, which closes the
+		// DNS-rebinding bypass a host-only check leaves open.
+		if err := security.ValidateURL(p.URL); err != nil {
+			return "", fmt.Errorf("blocked: request to %s is not allowed (SSRF protection): %w", p.URL, err)
 		}
 
 		payload := models.RequestPayload{
@@ -701,6 +678,9 @@ func handleSendRequest() ToolHandler {
 			URL:      p.URL,
 			BodyType: "none",
 			Body:     p.Body,
+			// The requester applies this check too; enabling it here means the
+			// request is refused before it is dispatched, not after.
+			ValidateURL: true,
 		}
 		if p.Body != "" {
 			payload.BodyType = "json"
