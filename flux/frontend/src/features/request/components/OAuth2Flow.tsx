@@ -19,6 +19,9 @@ import {
 } from "../../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import { OAuth2DiscoveryField, type OAuth2DiscoveryMeta } from "./OAuth2DiscoveryField";
+import { Field } from "@/shared/components/Field";
+import { NO_OPEN_GRACE_MS, providerTimeoutMs } from "@/features/request/oauth2/providerTimeouts";
+import { PRESETS, type GrantType, type Preset } from "@/features/request/oauth2/presets";
 import type { OAuth2Config, OAuth2TokenResponse } from "@/features/request/types/request";
 
 // Fixed loopback callback used by providers that require an exact
@@ -26,42 +29,6 @@ import type { OAuth2Config, OAuth2TokenResponse } from "@/features/request/types
 // else defaults to an empty redirect URI so the engine auto-assigns an
 // ephemeral loopback port per RFC 8252 §7.3.
 const REDIRECT = "http://127.0.0.1:7317/callback";
-// If the browser launcher succeeded but the app window never lost focus (the
-// browser never took over), assume it silently didn't open and auto-switch to
-// the paste-back fallback after this grace period.
-const NO_OPEN_GRACE_MS = 15_000;
-
-// Provider-aware callback timeouts. MFA-heavy providers need longer windows
-// because the user may need to approve a push notification, enter a TOTP
-// code, or select a passkey. Fast providers (GitHub, GitLab) use shorter
-// timeouts so stale tabs fail fast.
-const TIMEOUT_MFA_MS = 10 * 60 * 1000;  // Google, Entra ID, Okta, Auth0
-const TIMEOUT_DEFAULT_MS = 5 * 60 * 1000; // everything else
-const TIMEOUT_FAST_MS = 3 * 60 * 1000;  // GitHub, GitLab (no MFA redirect)
-
-// Provider patterns that typically show MFA/consent screens.
-const MFA_PROVIDER_PATTERNS = [
-  /googleapis\.com/i,
-  /microsoftonline\.com/i,
-  /entra\.microsoft\.com/i,
-  /login\.microsoftonline\.com/i,
-  /okta\.com/i,
-  /auth0\.com/i,
-];
-
-// Fast providers that never show MFA pages during the OAuth redirect.
-const FAST_PROVIDER_PATTERNS = [
-  /github\.com/i,
-  /gitlab\.com/i,
-];
-
-/** Select the callback timeout for the current provider. */
-function providerTimeoutMs(authUrl: string, tokenUrl: string): number {
-  const combined = authUrl + tokenUrl;
-  if (FAST_PROVIDER_PATTERNS.some((p) => p.test(combined))) return TIMEOUT_FAST_MS;
-  if (MFA_PROVIDER_PATTERNS.some((p) => p.test(combined))) return TIMEOUT_MFA_MS;
-  return TIMEOUT_DEFAULT_MS;
-}
 
 interface OAuth2DeviceStart {
   deviceCode: string;
@@ -72,41 +39,8 @@ interface OAuth2DeviceStart {
   interval: number;
 }
 
-type GrantType = "auth_code" | "device" | "client_credentials" | "password" | "implicit";
-
-interface Preset {
-  key: string;
-  label: string;
-  authUrl: string;
-  tokenUrl: string;
-  deviceUrl: string;
-  scopes: string;
-}
-
-const PRESETS: Preset[] = [
-  { key: "github", label: "GitHub", authUrl: "https://github.com/login/oauth/authorize", tokenUrl: "https://github.com/login/oauth/access_token", deviceUrl: "https://github.com/login/device/code", scopes: "repo user gist" },
-  { key: "google", label: "Google", authUrl: "https://accounts.google.com/o/oauth2/v2/auth", tokenUrl: "https://oauth2.googleapis.com/token", deviceUrl: "https://oauth2.googleapis.com/device/code", scopes: "openid email profile" },
-  { key: "spotify", label: "Spotify", authUrl: "https://accounts.spotify.com/authorize", tokenUrl: "https://accounts.spotify.com/api/token", deviceUrl: "", scopes: "user-read-email" },
-  { key: "slack", label: "Slack", authUrl: "https://slack.com/oauth/v2/authorize", tokenUrl: "https://slack.com/api/oauth.v2.access", deviceUrl: "", scopes: "chat:write" },
-  { key: "gitlab", label: "GitLab", authUrl: "https://gitlab.com/oauth/authorize", tokenUrl: "https://gitlab.com/oauth/token", deviceUrl: "https://gitlab.com/oauth/device/code", scopes: "api read_user" },
-  { key: "entra", label: "Entra ID", authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize", tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token", deviceUrl: "", scopes: "openid profile email offline_access User.Read" },
-  { key: "auth0", label: "Auth0", authUrl: "https://YOUR_TENANT.auth0.com/authorize", tokenUrl: "https://YOUR_TENANT.auth0.com/oauth/token", deviceUrl: "https://YOUR_TENANT.auth0.com/oauth/device/code", scopes: "openid profile email" },
-  { key: "okta", label: "Okta", authUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/authorize", tokenUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/token", deviceUrl: "https://YOUR_DOMAIN.okta.com/oauth2/default/v1/device/authorize", scopes: "openid profile email" },
-  { key: "keycloak", label: "Keycloak", authUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/auth", tokenUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/token", deviceUrl: "http://localhost:8080/realms/reqit-test/protocol/openid-connect/auth/device", scopes: "openid profile" },
-  { key: "custom", label: "Custom", authUrl: "", tokenUrl: "", deviceUrl: "", scopes: "" },
-];
-
 const inputClass =
   "h-[36px] px-3 bg-surface border border-border rounded-md font-mono text-12 text-text placeholder:text-subtext outline-none focus:border-cyan focus:ring-2 focus:ring-cyan transition-colors";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-11 text-subtext font-semibold uppercase tracking-wider">{label}</label>
-      {children}
-    </div>
-  );
-}
 
 function redirectPort(uri: string): string {
   if (!uri) return "auto";

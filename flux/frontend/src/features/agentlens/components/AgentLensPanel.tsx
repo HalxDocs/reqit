@@ -2,78 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { ScanEye, RefreshCw, ChevronRight, AlertTriangle, AlertCircle, Info, Check, Zap, Play, Download, FolderOpen, Clock, Target } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import { toast } from "@/app/stores/useToastStore";
+import type { agentlens, models } from "../../../../wailsjs/go/models";
 
-interface LintResult {
-  ruleId: string;
-  ruleName: string;
-  severity: "error" | "warning" | "info";
-  message: string;
-  fixSuggestion: string;
-}
-
-interface ToolScore {
-  toolName: string;
-  requestId: string;
-  score: number;
-  results: LintResult[];
-  errorCount: number;
-  warningCount: number;
-  infoCount: number;
-}
-
-interface CollectionScore {
-  score: number;
-  toolCount: number;
-  exposedCount: number;
-  tools: ToolScore[];
-  errors: number;
-  warnings: number;
-  infos: number;
-}
-
-interface EvalRunResult {
-  taskIndex: number;
-  prompt: string;
-  expectTool: string;
-  actualTool: string;
-  toolMatch: boolean;
-  argsMatch: boolean;
-  passed: boolean;
-  latencyMs: number;
-  error: string;
-}
-
-interface EvalTaskResult {
-  taskIndex: number;
-  prompt: string;
-  runs: EvalRunResult[];
-  passRate: number;
-  passed: boolean;
-}
-
-interface EvalSuiteResult {
-  provider: string;
-  model: string;
-  tasks: EvalTaskResult[];
-  totalRuns: number;
-  totalPassed: number;
-  passRate: number;
-  score: number;
-  startedAt: string;
-  finishedAt: string;
-}
-
-interface ExportResult {
-  outputDir: string;
-  files: string[];
-  tools: number;
-}
-
-interface Collection {
-  id: string;
-  name: string;
-  requests: any[];
-}
 
 type Tab = "lint" | "eval" | "export" | "drift";
 
@@ -114,19 +44,19 @@ function PassFailBadge({ passed }: { passed: boolean }) {
 }
 
 export function AgentLensPanel() {
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collections, setCollections] = useState<models.Collection[]>([]);
   const [selectedColl, setSelectedColl] = useState<string>("");
-  const [score, setScore] = useState<CollectionScore | null>(null);
+  const [score, setScore] = useState<agentlens.CollectionScore | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [tab, setTab] = useState<Tab>("lint");
 
   // Eval state
-  const [evalResult, setEvalResult] = useState<EvalSuiteResult | null>(null);
+  const [evalResult, setEvalResult] = useState<agentlens.EvalSuiteResult | null>(null);
   const [evalRunning, setEvalRunning] = useState(false);
 
   // Export state
-  const [exportResult, setExportResult] = useState<ExportResult | null>(null);
+  const [exportResult, setExportResult] = useState<agentlens.ExportResult | null>(null);
   const [exporting, setExporting] = useState(false);
 
   // Drift state — tool snapshot + diff vs previous
@@ -161,7 +91,7 @@ export function AgentLensPanel() {
     try {
       const { AnalyzeCollectionAgentLens } = await import("../../../../wailsjs/go/main/App");
       const result = await AnalyzeCollectionAgentLens(selectedColl);
-      setScore(result as unknown as CollectionScore);
+      setScore(result as unknown as agentlens.CollectionScore);
     } catch (e: any) {
       toast.error(`Analysis failed: ${e?.message || e}`);
     }
@@ -173,7 +103,7 @@ export function AgentLensPanel() {
     try {
       const { AnalyzeAllCollectionsAgentLens } = await import("../../../../wailsjs/go/main/App");
       const result = await AnalyzeAllCollectionsAgentLens();
-      setScore(result as unknown as CollectionScore);
+      setScore(result as unknown as agentlens.CollectionScore);
     } catch (e: any) {
       toast.error(`Analysis failed: ${e?.message || e}`);
     }
@@ -185,7 +115,7 @@ export function AgentLensPanel() {
     try {
       const { RunEvalAgentLens } = await import("../../../../wailsjs/go/main/App");
       const result = await RunEvalAgentLens();
-      setEvalResult(result as unknown as EvalSuiteResult);
+      setEvalResult(result as unknown as agentlens.EvalSuiteResult);
       toast.success(`Eval complete: ${result.totalPassed}/${result.totalRuns} passed`);
     } catch (e: any) {
       toast.error(`Eval failed: ${e?.message || e}`);
@@ -198,7 +128,7 @@ export function AgentLensPanel() {
     try {
       const { ExportMCPServerAgentLens } = await import("../../../../wailsjs/go/main/App");
       const result = await ExportMCPServerAgentLens();
-      setExportResult(result as unknown as ExportResult);
+      setExportResult(result as unknown as agentlens.ExportResult);
       toast.success(`MCP server exported to ${result.outputDir}`);
     } catch (e: any) {
       toast.error(`Export failed: ${e?.message || e}`);

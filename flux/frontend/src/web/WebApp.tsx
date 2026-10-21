@@ -13,6 +13,7 @@ import { WebDocsPage } from "../features/docs/components/WebDocsPage";
 import { BlogPage } from "../features/blog/components/BlogPanel";
 import { PublicProfilePage } from "../features/profile/components/PublicProfilePage";
 import { getSEO, applySEO } from "../shared/lib/seo";
+import { useGitHubStars } from "../shared/hooks/useGitHubStars";
 import reqitLogo from "../assets/images/reqitlogo.jpeg";
 
 const GITHUB_URL = "https://github.com/HalxDocs/reqit";
@@ -78,27 +79,6 @@ function download() {
 
 function open(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
-}
-
-function useGitHubStars(repo: string) {
-  const [stars, setStars] = useState<number | null>(null);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const fetch_ = async () => {
-    try {
-      const res = await fetch(`https://api.github.com/repos/${repo}`, {
-        headers: { Accept: "application/vnd.github.v3+json" },
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { stargazers_count: number };
-      setStars(data.stargazers_count);
-    } catch { /* ignore */ }
-  };
-  useEffect(() => {
-    void fetch_();
-    timer.current = setInterval(() => void fetch_(), 60_000);
-    return () => { if (timer.current) clearInterval(timer.current); };
-  }, [repo]);
-  return stars;
 }
 
 function fmtStars(n: number | null) {

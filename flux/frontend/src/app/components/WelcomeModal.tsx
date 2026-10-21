@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@/shared/components/Modal";
+import { Field } from "@/shared/components/Field";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
 import reqitLogo from "../../assets/images/reqitlogo.jpeg";
@@ -95,16 +96,5 @@ export function WelcomeModal() {
         </div>
       </div>
     </Modal>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

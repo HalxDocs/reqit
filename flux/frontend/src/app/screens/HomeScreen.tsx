@@ -31,6 +31,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { BookOpen, Trash2 } from "lucide-react";
 import { showConfirm } from "@/shared/components/ConfirmModal";
+import { useGitHubStars, fmtStars } from "@/shared/hooks/useGitHubStars";
 import { BlogPage } from "@/features/blog/components/BlogPanel";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
@@ -50,40 +51,6 @@ function openExternal(url: string) {
   } catch {
     window.open(url, "_blank", "noopener,noreferrer");
   }
-}
-
-function useGitHubStars(repo: string) {
-  const [stars, setStars] = useState<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const fetchStars = async () => {
-    try {
-      const res = await fetch(`https://api.github.com/repos/${repo}`, {
-        headers: { Accept: "application/vnd.github.v3+json" },
-      });
-      if (!res.ok) return;
-      const data = await res.json() as { stargazers_count: number };
-      setStars(data.stargazers_count);
-    } catch {
-      // network unavailable — keep showing whatever we have
-    }
-  };
-
-  useEffect(() => {
-    void fetchStars();
-    timerRef.current = setInterval(() => void fetchStars(), 60_000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repo]);
-
-  return stars;
-}
-
-function fmtStars(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
 }
 
 const STEPS = [
@@ -506,7 +473,7 @@ export function HomeScreen({ onEnter }: { onEnter: () => Promise<void> }) {
             <HugeiconsIcon icon={GithubIcon} size={13} color="currentColor" />
             <HugeiconsIcon icon={StarIcon} size={11} color="#f0a500" strokeWidth={2} />
             <span className="font-mono text-11 min-w-[24px] text-center">
-              {stars === null ? "—" : fmtStars(stars)}
+              {fmtStars(stars)}
             </span>
           </button>
           <button
@@ -611,7 +578,7 @@ function LandingView({
           >
             <HugeiconsIcon icon={GithubIcon} size={11} color="currentColor" />
             <HugeiconsIcon icon={StarIcon} size={10} color="#f0a500" strokeWidth={2} />
-            <span className="font-mono">{stars === null ? "—" : fmtStars(stars)}</span>
+            <span className="font-mono">{fmtStars(stars)}</span>
           </button>
         </div>
 

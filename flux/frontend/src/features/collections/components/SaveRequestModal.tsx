@@ -7,6 +7,7 @@ import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import { UpdateScriptRules } from "../../../../wailsjs/go/main/App";
 import { toast } from "@/app/stores/useToastStore";
+import { Field } from "@/shared/components/Field";
 
 const NEW_COLLECTION_VALUE = "__new__";
 
@@ -145,16 +146,5 @@ export function SaveRequestModal() {
         </div>
       </div>
     </Modal>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="text-11 text-subtext font-semibold uppercase tracking-wider">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }
