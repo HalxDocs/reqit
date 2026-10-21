@@ -64,10 +64,19 @@ export function SaveRequestModal() {
       }
       markActiveSaved(saved.id, name.trim());
       useUIStore.getState().setLoadedRequestID(saved.id);
-      toast.success(`Saved "${name.trim()}"`);
+      const collectionName =
+        targetID === NEW_COLLECTION_VALUE
+          ? newCollName.trim()
+          : collections.find((c) => c.id === targetID)?.name;
+      toast.success(
+        collectionName ? `Saved "${name.trim()}" to ${collectionName}` : `Saved "${name.trim()}"`,
+      );
       close();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      const message = e instanceof Error ? e.message : String(e);
+      setErr(message);
+      // The inline error is easy to miss, so also surface it as a toast.
+      toast.error(message);
     } finally {
       setBusy(false);
     }

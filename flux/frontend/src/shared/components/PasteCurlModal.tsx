@@ -6,6 +6,7 @@ import { parseCurl } from "@/shared/lib/curlParser";
 
 export function PasteCurlModal() {
   const open = useUIStore((s) => s.pasteCurlModalOpen);
+  const initialText = useUIStore((s) => s.pasteCurlModalText);
   const close = useUIStore((s) => s.closePasteCurlModal);
   const newTab = useTabsStore((s) => s.newTab);
 
@@ -14,9 +15,10 @@ export function PasteCurlModal() {
 
   useEffect(() => {
     if (!open) return;
-    setText("");
+    // Pre-fill when the command came from the URL field, otherwise start empty.
+    setText(initialText);
     setErr(null);
-  }, [open]);
+  }, [open, initialText]);
 
   const handleImport = () => {
     setErr(null);

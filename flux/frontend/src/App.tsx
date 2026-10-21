@@ -62,7 +62,10 @@ import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { useTabsStore, deriveTitle } from "@/features/tabs/stores/useTabsStore";
 import { useProfileStore } from "@/app/stores/useProfileStore";
-import { useUndoRedo } from "@/shared/lib/useUndoRedo";
+import { useFieldHistory } from "@/shared/hooks/useFieldHistory";
+import { snapshotRequestState } from "@/features/request/lib/snapshotRequest";
+import { saveActiveRequest } from "@/features/request/lib/saveRequest";
+import type { RequestState } from "@/features/request/types/request";
 import { useWorkspaceStore } from "@/features/workspace/stores/useWorkspaceStore";
 import { registerCommands } from "@/shared/lib/commands";
 import { useThemeStore } from "@/shared/lib/useTheme";
@@ -186,7 +189,11 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const closeTab = useTabsStore((s) => s.closeTab);
   const activeID = useTabsStore((s) => s.activeID);
   const toggleTheme = useThemeStore((s) => s.toggle);
-  const { undo, redo } = useUndoRedo();
+  const requestHistory = useFieldHistory<RequestState>({ coalesceMs: 700 });
+  // The hook returns a fresh object each render, but its callbacks are stable.
+  // Depending on the callbacks keeps the effects below from re-running on
+  // every render.
+  const { push: pushRequestSnapshot, undo: undoRequest, redo: redoRequest } = requestHistory;
 
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
@@ -242,7 +249,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
     registerCommands([
       { id: "cmd.palette", label: "Show Command Palette", category: "General", scope: "global", defaultKeys: ["meta+k", "ctrl+k"], action: () => setCmdPaletteOpen(true) },
       { id: "request.send", label: "Send Request", category: "Request", scope: "global", defaultKeys: ["meta+enter", "ctrl+enter"], action: () => { if (!useResponseStore.getState().isLoading) send(); } },
-      { id: "request.save", label: "Save Request", category: "Request", scope: "global", defaultKeys: ["meta+s", "ctrl+s"], action: () => openSaveModal() },
+      { id: "request.save", label: "Save Request", category: "Request", scope: "global", defaultKeys: ["meta+s", "ctrl+s"], action: () => { void saveActiveRequest(); } },
       { id: "request.duplicate", label: "Duplicate Request", category: "Request", scope: "global", defaultKeys: ["meta+shift+d", "ctrl+shift+d"], action: () => {
         const s = useRequestStore.getState();
         newTab({
@@ -297,8 +304,14 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "settings", label: "Open Settings", category: "General", scope: "global", defaultKeys: ["meta+,", "ctrl+,"], action: () => openSettings() },
       { id: "theme.toggle", label: "Toggle Theme", category: "General", scope: "global", defaultKeys: [], action: () => toggleTheme() },
       { id: "shortcuts.toggle", label: "Toggle Shortcuts Overlay", category: "General", scope: "global", defaultKeys: ["meta+/", "ctrl+/"], action: () => openShortcutsModal() },
-      { id: "edit.undo", label: "Undo", category: "Edit", scope: "global", defaultKeys: ["meta+z", "ctrl+z"], action: () => undo() },
-      { id: "edit.redo", label: "Redo", category: "Edit", scope: "global", defaultKeys: ["meta+shift+z", "ctrl+shift+z"], action: () => redo() },
+      { id: "edit.undo", label: "Undo", category: "Edit", scope: "global", defaultKeys: ["meta+z", "ctrl+z"], action: () => {
+        const restored = undoRequest(snapshotRequestState());
+        if (restored) useRequestStore.getState().loadState(restored);
+      } },
+      { id: "edit.redo", label: "Redo", category: "Edit", scope: "global", defaultKeys: ["meta+shift+z", "ctrl+shift+z"], action: () => {
+        const restored = redoRequest(snapshotRequestState());
+        if (restored) useRequestStore.getState().loadState(restored);
+      } },
       { id: "collection.run", label: "Run Collection", category: "Collection", scope: "global", defaultKeys: ["meta+r", "ctrl+r"], action: () => {
         const colls = useCollectionStore.getState().collections;
         if (colls.length > 0) useUIStore.getState().openRunner(colls[0].id);
@@ -370,9 +383,21 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "view.plugins", label: "View: Plugins", category: "View", scope: "global", defaultKeys: [], action: () => setView("plugins") },
       { id: "view.mockpanel", label: "View: Mock Server", category: "View", scope: "global", defaultKeys: [], action: () => setView("mockpanel") },
     ]);
-  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme, undo, redo, toggleSidebar, openEnvModal, openShortcutsModal, setResponseBodyView, setView]);
+  }, [send, openSaveModal, newTab, closeTab, activeID, openPasteCurl, openImport, openCodeGen, openSettings, toggleTheme, undoRequest, redoRequest, toggleSidebar, openEnvModal, openShortcutsModal, setResponseBodyView, setView]);
 
   useKeyboardShortcuts();
+
+  // Record request state so undo can step back through edits. The history
+  // coalesces bursts of changes, so one undo removes a burst of typing rather
+  // than a single keystroke.
+  useEffect(() => {
+    let previous = snapshotRequestState();
+    const unsubscribe = useRequestStore.subscribe(() => {
+      pushRequestSnapshot(previous);
+      previous = snapshotRequestState();
+    });
+    return unsubscribe;
+  }, [pushRequestSnapshot]);
   useTabSync();
 
   // Auto-show What's New on version change

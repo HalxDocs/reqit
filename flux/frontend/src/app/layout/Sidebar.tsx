@@ -186,7 +186,7 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={openPasteCurl}
+                onClick={() => openPasteCurl()}
                 className="text-subtext hover:text-cyan transition-colors p-1 rounded-sm"
                 aria-label="Paste cURL"
                 title="Paste cURL command"
