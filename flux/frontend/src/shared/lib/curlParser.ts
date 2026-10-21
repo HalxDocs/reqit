@@ -35,53 +35,116 @@ const emptyRow = (): KeyValue => ({
   enabled: true,
 });
 
+function isSpace(ch: string): boolean {
+  return ch === " " || ch === "\t" || ch === "\n" || ch === "\r";
+}
+
+// Inside double quotes a backslash only escapes these characters; anything
+// else keeps its backslash, exactly as a POSIX shell would.
+const DOUBLE_QUOTE_ESCAPES = new Set(['$', "`", '"', "\\"]);
+
+/**
+ * Tokenize a shell-ish command into arguments, following POSIX quoting rules.
+ *
+ * The important property for cURL parsing is that single quotes are literal:
+ *
+ *     --data-raw '{"text":"he said \"hi\""}'
+ *
+ * must yield the JSON body unchanged, because the shell hands it over
+ * unchanged. Treating backslash as an escape inside single quotes corrupts
+ * nested JSON strings and produces invalid JSON.
+ *
+ * - single quotes: fully literal, no escape processing at all
+ * - double quotes: backslash escapes only $ ` " \ and a newline
+ * - bare words: backslash escapes the next character
+ *
+ * Adjacent quoted segments concatenate into one argument, so `'a'\''b'`
+ * yields the single argument `a'b`.
+ */
 function tokenize(input: string): string[] {
-  // Strip backslash line continuations.
-  const cleaned = input.replace(/\\\r?\n/g, " ").trim();
   const tokens: string[] = [];
   let i = 0;
-  while (i < cleaned.length) {
-    const ch = cleaned[i];
-    if (ch === " " || ch === "\t" || ch === "\n" || ch === "\r") {
+
+  while (i < input.length) {
+    if (isSpace(input[i])) {
       i++;
       continue;
     }
-    if (ch === "'" || ch === '"') {
-      const quote = ch;
-      i++;
-      let buf = "";
-      while (i < cleaned.length && cleaned[i] !== quote) {
-        if (cleaned[i] === "\\" && i + 1 < cleaned.length) {
-          buf += cleaned[i + 1];
+
+    let buf = "";
+    while (i < input.length && !isSpace(input[i])) {
+      const ch = input[i];
+
+      if (ch === "'") {
+        // Single quotes are literal — copy through to the closing quote.
+        i++;
+        while (i < input.length && input[i] !== "'") {
+          buf += input[i];
+          i++;
+        }
+        i++; // consume the closing quote (or run off the end)
+        continue;
+      }
+
+      if (ch === '"') {
+        i++;
+        while (i < input.length && input[i] !== '"') {
+          if (input[i] === "\\" && i + 1 < input.length) {
+            const next = input[i + 1];
+            if (DOUBLE_QUOTE_ESCAPES.has(next)) {
+              buf += next;
+              i += 2;
+              continue;
+            }
+            if (next === "\n") {
+              // Backslash-newline is a line continuation: it disappears.
+              i += 2;
+              continue;
+            }
+            // Not an escape in double quotes — keep the backslash.
+            buf += "\\";
+            i++;
+            continue;
+          }
+          buf += input[i];
+          i++;
+        }
+        i++; // consume the closing quote (or run off the end)
+        continue;
+      }
+
+      if (ch === "\\" && i + 1 < input.length) {
+        const next = input[i + 1];
+        if (next === "\n") {
+          // Line continuation outside quotes: it disappears entirely.
           i += 2;
           continue;
         }
-        buf += cleaned[i];
-        i++;
-      }
-      i++; // consume closing quote (or end)
-      tokens.push(buf);
-      continue;
-    }
-    let buf = "";
-    while (
-      i < cleaned.length &&
-      cleaned[i] !== " " &&
-      cleaned[i] !== "\t" &&
-      cleaned[i] !== "\n" &&
-      cleaned[i] !== "\r"
-    ) {
-      if (cleaned[i] === "\\" && i + 1 < cleaned.length) {
-        buf += cleaned[i + 1];
+        if (next === "\r" && input[i + 2] === "\n") {
+          i += 3;
+          continue;
+        }
+        buf += next;
         i += 2;
         continue;
       }
-      buf += cleaned[i];
+
+      buf += ch;
       i++;
     }
     tokens.push(buf);
   }
   return tokens;
+}
+
+/**
+ * Cheap check for a cURL command. Used to detect a cURL pasted into the URL
+ * field, so it must be fast and must not throw on partial input.
+ */
+export function looksLikeCurl(input: string): boolean {
+  const trimmed = input.trimStart();
+  if (!/^curl(?:\s|$)/i.test(trimmed)) return false;
+  return /https?:\/\//i.test(trimmed);
 }
 
 function expectsValue(flag: string): boolean {
