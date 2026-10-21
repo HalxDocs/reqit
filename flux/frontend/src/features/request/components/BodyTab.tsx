@@ -3,6 +3,7 @@ import { Check, AlertTriangle, RefreshCw, ChevronRight, ChevronDown } from "luci
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { cn } from "@/shared/lib/cn";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { KeyValueEditor } from "@/shared/components/KeyValueEditor";
 import { JsonEditor } from "@/shared/components/JsonEditor";
 import { GraphqlEditor } from "@/shared/components/GraphqlEditor";
@@ -20,6 +21,17 @@ const MODES: { id: BodyType; label: string }[] = [
   { id: "grpc", label: "gRPC" },
   { id: "soap", label: "SOAP" },
 ];
+
+// Above this size the body is no longer validated on every keystroke. Parsing
+// a 5 MB document costs about 30 ms, which is enough to make typing feel
+// stuck, and the answer is not worth that cost.
+const LARGE_BODY_THRESHOLD = 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function validateJson(body: string): { ok: boolean; error?: string } {
   const trimmed = body.trim();
@@ -63,7 +75,16 @@ export function BodyTab() {
     return "";
   });
 
-  const validity = useMemo(() => validateJson(bodyRaw), [bodyRaw]);
+  const bodySize = bodyRaw.length;
+  const isLargeBody = bodySize > LARGE_BODY_THRESHOLD;
+  // Validation is debounced so a large document is not re-parsed on every
+  // keystroke, and skipped entirely once the body is large enough that
+  // parsing it would make typing feel stuck.
+  const debouncedBodyRaw = useDebounce(bodyRaw, 300);
+  const validity = useMemo(
+    () => (isLargeBody ? { ok: true } : validateJson(debouncedBodyRaw)),
+    [debouncedBodyRaw, isLargeBody],
+  );
 
   const handleFormat = () => {
     try {
@@ -159,6 +180,11 @@ export function BodyTab() {
             <div className="flex items-center gap-2 text-11">
               {bodyRaw.trim() === "" ? (
                 <span className="text-subtext">Empty body</span>
+              ) : isLargeBody ? (
+                <span className="text-subtext flex items-center gap-1" title="Validation is skipped for large bodies to keep typing responsive">
+                  <AlertTriangle size={11} className="text-warn" />
+                  Large body — validation skipped
+                </span>
               ) : validity.ok ? (
                 <span className="text-teal flex items-center gap-1">
                   <Check size={11} />
@@ -169,6 +195,9 @@ export function BodyTab() {
                   <AlertTriangle size={11} />
                   Invalid JSON
                 </span>
+              )}
+              {bodySize > 0 && (
+                <span className="text-subtext/60 font-mono text-10">{formatBytes(bodySize)}</span>
               )}
             </div>
             <button

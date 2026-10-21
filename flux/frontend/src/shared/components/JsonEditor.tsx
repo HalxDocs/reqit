@@ -10,24 +10,30 @@ type Props = {
   onChange?: (value: string) => void;
   readOnly?: boolean;
   placeholder?: string;
-  minHeight?: string;
 };
 
-export function JsonEditor({
-  value,
-  onChange,
-  readOnly = false,
-  placeholder,
-  minHeight = "240px",
-}: Props) {
+export function JsonEditor({ value, onChange, readOnly = false, placeholder }: Props) {
   const theme = useThemeStore((s) => s.resolved);
   const extensions = useMemo(
-    () => [json(), fluxCmTheme, EditorView.lineWrapping],
+    () => [
+      json(),
+      fluxCmTheme,
+      EditorView.lineWrapping,
+      // The editor has to own its scrolling, otherwise a large document makes
+      // the editor grow to the full document height and pushes the rest of the
+      // request panel out of view. Pinning the height to the container and
+      // letting the scroller overflow keeps a multi-megabyte payload inside
+      // the panel and scrolls internally.
+      EditorView.theme({
+        "&": { height: "100%", minHeight: "0" },
+        ".cm-scroller": { overflow: "auto" },
+      }),
+    ],
     [],
   );
 
   return (
-    <div style={{ minHeight }} className="h-full flex flex-col">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden">
       <CodeMirror
         value={value}
         theme={theme}
@@ -44,7 +50,7 @@ export function JsonEditor({
           autocompletion: false,
         }}
         height="100%"
-        className="h-full"
+        className="h-full min-h-0 overflow-hidden"
       />
     </div>
   );
