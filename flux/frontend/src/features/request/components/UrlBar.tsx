@@ -1,4 +1,4 @@
-import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock, Pencil } from "lucide-react";
+import { Code2, Copy, Save, Send, X, Server, Square, Copy as CopyIcon, Zap, Radio, Disc, ChevronDown, ChevronUp, Globe, Clock, Pencil, Terminal } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
@@ -15,12 +15,25 @@ import { useToastStore } from "@/app/stores/useToastStore";
 import { useEndpointCache } from "@/features/request/stores/useEndpointCache";
 import { cn } from "@/shared/lib/cn";
 import { useUrlAutocomplete } from "@/features/request/hooks/useUrlAutocomplete";
+import { useFieldHistory } from "@/shared/hooks/useFieldHistory";
+import { looksLikeCurl } from "@/shared/lib/curlParser";
+import { saveActiveRequest } from "@/features/request/lib/saveRequest";
 import { BrowserOpenURL } from "../../../../wailsjs/runtime/runtime";
 import { MethodBadge } from "@/shared/components/MethodBadge";
 import type { KeyValue } from "@/features/request/types/request";
 import type { main } from "../../../../wailsjs/go/models";
 
 const DEFAULT_PORT = 4321;
+
+/**
+ * The parts of a request that the URL field owns. Undo restores both, because
+ * the displayed value is the URL plus its query string, and the query string
+ * lives in the params rows rather than in the URL itself.
+ */
+interface UrlFieldState {
+  url: string;
+  params: KeyValue[];
+}
 
 function isValidUrl(url: string): boolean {
   if (!url.trim()) return true;
@@ -46,6 +59,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const setUrl = useRequestStore((s) => s.setUrl);
   const isLoading = useResponseStore((s) => s.isLoading);
   const openSaveModal = useUIStore((s) => s.openSaveModal);
+  const openPasteCurlModal = useUIStore((s) => s.openPasteCurlModal);
   const openCodeGen = useUIStore((s) => s.openCodeGenModal);
   const newTab = useTabsStore((s) => s.newTab);
   const requestState = useRequestStore.getState();
@@ -152,6 +166,10 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   const acRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  // A cURL command pasted into the URL field is offered as an import rather
+  // than silently replacing what the user typed.
+  const [curlPaste, setCurlPaste] = useState<string | null>(null);
+  const history = useFieldHistory<UrlFieldState>();
 
   const syncOverlayScroll = () => {
     const input = inputRef.current;
@@ -175,6 +193,8 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
   }, [suggestions, url]);
 
   const handleChange = (val: string) => {
+    // Record the state before the edit so Ctrl+Z can restore it.
+    history.push({ url, params });
     const { base, query } = splitUrl(val);
     setUrl(base);
     if (query) {
@@ -202,6 +222,42 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
     setAcIndex(-1);
     setAcOpen(false);
   };
+
+  // Restore a previously captured URL state.
+  const restoreUrlState = (state: UrlFieldState | undefined) => {
+    if (!state) return false;
+    setUrl(state.url);
+    replaceParams(state.params.map((p) => ({ ...p })));
+    setCurlPaste(null);
+    return true;
+  };
+
+  const handleUndo = () => {
+    const restored = restoreUrlState(history.undo({ url, params }));
+    if (restored) {
+      // The field owns Ctrl+Z, so the global handler must not also act on it.
+      setAcIndex(-1);
+    }
+  };
+
+  const handleRedo = () => {
+    const restored = restoreUrlState(history.redo({ url, params }));
+    if (restored) setAcIndex(-1);
+  };
+
+  // A pasted cURL command is detected and offered as an import. The text the
+  // user pasted is left in place — replacing it silently would destroy work.
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text/plain");
+    if (!text) return;
+    if (looksLikeCurl(text)) {
+      setCurlPaste(text);
+      // Stop the paste from filling the URL field with a cURL command.
+      e.preventDefault();
+    }
+  };
+
+  const dismissCurlPaste = () => setCurlPaste(null);
 
   // Close on outside click
   useEffect(() => {
@@ -234,6 +290,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
           value={displayed}
           placeholder="https://api.example.com/endpoint"
           onChange={(e) => handleChange(e.target.value)}
+          onPaste={handlePaste}
           onScroll={(e) => {
             syncOverlayScroll();
           }}
@@ -242,6 +299,26 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
               e.preventDefault();
               e.stopPropagation();
               if (!isLoading) onSend?.();
+              return;
+            }
+            // Ctrl/Cmd+Z and Ctrl+Y undo and redo URL edits. The field keeps
+            // its own history because the displayed value is derived from
+            // state, which makes the browser's native undo unreliable here.
+            // Only these chords are stopped — everything else must still reach
+            // the global shortcut handler.
+            if (e.metaKey || e.ctrlKey) {
+              const key = e.key.toLowerCase();
+              const isUndo = key === "z" && !e.shiftKey;
+              const isRedo = (key === "z" && e.shiftKey) || key === "y";
+              if (isUndo || isRedo) {
+                if (history.canUndo || history.canRedo) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isUndo) handleUndo();
+                  else handleRedo();
+                }
+                return;
+              }
             }
             if (acOpen && suggestions.length > 0) {
               if (e.key === "ArrowDown") { e.preventDefault(); setAcIndex((i) => Math.min(i + 1, suggestions.length - 1)); return; }
@@ -259,6 +336,32 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
               : "border-border focus:border-cyan focus:ring-cyan/30"
           )}
         />
+        {curlPaste && (
+          <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-cyan/40 rounded-xl shadow-xl px-3 py-2 flex items-center gap-2">
+            <Terminal size={13} className="text-cyan shrink-0" />
+            <span className="text-12 text-text flex-1 min-w-0 truncate">
+              cURL command detected
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                openPasteCurlModal(curlPaste);
+                setCurlPaste(null);
+              }}
+              className="text-12 font-semibold text-cyan hover:underline shrink-0"
+            >
+              Import as request
+            </button>
+            <button
+              type="button"
+              onClick={dismissCurlPaste}
+              className="text-subtext hover:text-text transition-colors shrink-0"
+              aria-label="Dismiss"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
         {acOpen && suggestions.length > 0 && (
           <div ref={acRef} className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-card border border-border rounded-xl shadow-xl py-1 max-h-[280px] overflow-y-auto">
             {suggestions.map((s, i) => (
@@ -295,7 +398,7 @@ export function UrlBar({ onSend }: { onSend?: () => void }) {
 
         <button
           type="button"
-          onClick={() => openSaveModal()}
+          onClick={() => { void saveActiveRequest(); }}
           title="Save request (Ctrl+S)"
           className="h-[34px] w-[34px] flex items-center justify-center bg-bg border border-border hover:border-cyan/50 rounded-lg text-subtext hover:text-text transition-all"
           aria-label="Save request"
