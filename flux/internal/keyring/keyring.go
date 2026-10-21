@@ -134,17 +134,38 @@ func Get(service, key string) (string, error) {
 
 func Delete(service, key string) error {
 	err := keyring.Delete(service, key)
-	// Always try to delete from fallback as well
+
+	// The fallback is always cleaned as well, because on a machine without a
+	// keyring daemon that is where the value actually lives.
 	mu.Lock()
 	defer mu.Unlock()
 	_ = loadFallback()
+	heldInFallback := false
 	if svc, ok := fallback[service]; ok {
-		delete(svc, key)
-		_ = saveFallback()
+		if _, ok := svc[key]; ok {
+			heldInFallback = true
+			delete(svc, key)
+			_ = saveFallback()
+		}
 	}
-	if err != nil && !errors.Is(err, keyring.ErrNotFound) {
-		// If fallback had it, consider success
+
+	if err == nil {
+		// Removed from the OS keyring.
 		return nil
 	}
+	if errors.Is(err, keyring.ErrNotFound) {
+		// The OS keyring never held this secret. If the fallback did, it has
+		// just been cleaned, so the secret is gone either way. Reporting the
+		// error here made clearing a secret fail on any machine without a
+		// keyring daemon, even though the value was removed.
+		return nil
+	}
+	if heldInFallback {
+		// The OS keyring was unreachable, but the value we knew about lived in
+		// the fallback and has been removed.
+		return nil
+	}
+	// The OS keyring could not be reached and the value was not in the
+	// fallback, so it may still be stored there.
 	return err
 }
