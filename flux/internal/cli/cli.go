@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"flux/internal/environments"
 	"flux/internal/models"
 	"flux/internal/requester"
+	"flux/internal/vars"
 	"flux/internal/workspaces"
 )
 
@@ -28,8 +28,6 @@ func RunMCP(args []string) int {
 
 	return mcpRun(dir, args)
 }
-
-var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
 
 // Run is the CLI entry point. It returns an exit code (0 = success).
 func Run(args []string) int {
@@ -297,35 +295,11 @@ func buildEnvMap(env *models.Environment) map[string]string {
 }
 
 func resolve(s string, env map[string]string) string {
-	return varPattern.ReplaceAllStringFunc(s, func(match string) string {
-		name := strings.TrimSpace(match[2 : len(match)-2])
-		if v, ok := env[name]; ok {
-			return v
-		}
-		return match
-	})
+	return vars.Resolve(s, env, nil)
 }
 
 func resolvePayload(p models.RequestPayload, env map[string]string) models.RequestPayload {
-	p.URL = resolve(p.URL, env)
-	for i := range p.Headers {
-		if p.Headers[i].Enabled {
-			p.Headers[i].Value = resolve(p.Headers[i].Value, env)
-		}
-	}
-	for i := range p.Params {
-		if p.Params[i].Enabled {
-			p.Params[i].Value = resolve(p.Params[i].Value, env)
-		}
-	}
-	p.Body = resolve(p.Body, env)
-	p.AuthValue = resolve(p.AuthValue, env)
-	for i := range p.BodyForm {
-		if p.BodyForm[i].Enabled {
-			p.BodyForm[i].Value = resolve(p.BodyForm[i].Value, env)
-		}
-	}
-	return p
+	return vars.ResolvePayload(p, env, nil)
 }
 
 // ---- output ----

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,10 +14,9 @@ import (
 	"flux/internal/assertions"
 	"flux/internal/models"
 	"flux/internal/requester"
+	"flux/internal/vars"
 	"github.com/dop251/goja"
 )
-
-var varPattern = regexp.MustCompile(`\{\{\s*([\w.-]+)\s*\}\}`)
 
 // fakerNames are common first names for test data generation.
 var fakerNames = []string{"Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Hank", "Iris", "Jack", "Kate", "Liam", "Mia", "Noah", "Olivia", "Paul", "Quinn", "Rose", "Sam", "Tina", "Uma", "Vince", "Wendy", "Xander", "Yara", "Zane"}
@@ -358,76 +356,23 @@ func singleResult(req models.RunnerRequest, resp models.ResponseResult, assertio
 
 func resolvePayload(p models.RequestPayload, env map[string]string) models.RequestPayload {
 	p.ValidateURL = true
-	if !hasVars(p.URL, p.Body, p.AuthValue, p.Headers, p.Params, p.BodyForm) {
+	if !vars.HasVars(p.URL, p.Body, p.AuthValue, p.Headers, p.Params, p.BodyForm) {
 		return p
 	}
-	p.URL = resolve(p.URL, env)
-	for i := range p.Headers {
-		if p.Headers[i].Enabled {
-			p.Headers[i].Value = resolve(p.Headers[i].Value, env)
-		}
-	}
-	for i := range p.Params {
-		if p.Params[i].Enabled {
-			p.Params[i].Value = resolve(p.Params[i].Value, env)
-		}
-	}
-	p.Body = resolve(p.Body, env)
-	p.AuthValue = resolve(p.AuthValue, env)
-	for i := range p.BodyForm {
-		if p.BodyForm[i].Enabled {
-			p.BodyForm[i].Value = resolve(p.BodyForm[i].Value, env)
-		}
-	}
-	return p
-}
-
-// hasVars returns true if any of the fields contain a {{...}} pattern.
-// This is a cheap check that avoids regex overhead for the common case
-// where no variable substitution is needed.
-func hasVars(url, body, authValue string, headers, params, form []models.Header) bool {
-	if strings.Contains(url, "{{") {
-		return true
-	}
-	if strings.Contains(body, "{{") {
-		return true
-	}
-	if strings.Contains(authValue, "{{") {
-		return true
-	}
-	for _, h := range headers {
-		if h.Enabled && strings.Contains(h.Value, "{{") {
-			return true
-		}
-	}
-	for _, p := range params {
-		if p.Enabled && strings.Contains(p.Value, "{{") {
-			return true
-		}
-	}
-	for _, f := range form {
-		if f.Enabled && strings.Contains(f.Value, "{{") {
-			return true
-		}
-	}
-	return false
+	return vars.ResolvePayload(p, env, fakerFallback)
 }
 
 func resolve(s string, env map[string]string) string {
-	if !strings.Contains(s, "{{") {
-		return s
+	return vars.Resolve(s, env, fakerFallback)
+}
+
+// fakerFallback handles the {{faker.*}} placeholders used to generate test
+// data for load runs.
+func fakerFallback(name string) (string, bool) {
+	if !strings.HasPrefix(name, "faker.") {
+		return "", false
 	}
-	return varPattern.ReplaceAllStringFunc(s, func(match string) string {
-		name := match[2 : len(match)-2]
-		name = strings.TrimSpace(name)
-		if v, ok := env[name]; ok {
-			return v
-		}
-		if strings.HasPrefix(name, "faker.") {
-			return resolveFaker(name[6:])
-		}
-		return match
-	})
+	return resolveFaker(name[6:]), true
 }
 
 func resolveFaker(typ string) string {
