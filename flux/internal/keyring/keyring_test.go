@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/zalando/go-keyring"
 )
 
 // resetFallback puts the package back to a clean state and points the
@@ -12,6 +14,13 @@ import (
 // user config.
 func resetFallback(t *testing.T) string {
 	t.Helper()
+
+	// Mock the OS keyring. Without it the tests depend on a keyring daemon
+	// being present, which is true on a desktop and false on a CI runner —
+	// and a missing daemon surfaces as a connection error rather than
+	// "not found", so the behaviour differed by environment.
+	keyring.MockInit()
+
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 

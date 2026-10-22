@@ -5,8 +5,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	oskeyring "github.com/zalando/go-keyring"
+
 	"flux/internal/keyring"
 )
+
+// The OS keyring is mocked for the whole file: a keyring daemon is present on
+// a desktop and absent on a CI runner, and the tests must not depend on which.
+func init() {
+	oskeyring.MockInit()
+}
 
 func newRepo(t *testing.T) *Store {
 	t.Helper()

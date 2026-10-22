@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/zalando/go-keyring"
 	"time"
 
 	"flux/internal/models"
@@ -249,12 +251,17 @@ func TestStorePersistsAcrossReload(t *testing.T) {
 	}
 }
 
+func init() {
+	keyring.MockInit()
+}
+
 func TestSecretStoreRoundtrip(t *testing.T) {
-	// Uses the real OS keyring; skip when unavailable (CI/headless).
+	// The OS keyring is mocked: a keyring daemon is present on a desktop and
+	// absent on a CI runner, and the test must not depend on which.
 	ss := NewSecretStore()
 	defer ss.Delete()
 	if err := ss.Set("whsec_ci_test"); err != nil {
-		t.Skipf("keyring unavailable: %v", err)
+		t.Fatalf("Set: %v", err)
 	}
 	if got := ss.Get(); got != "whsec_ci_test" {
 		t.Fatalf("expected roundtripped secret, got %q", got)
