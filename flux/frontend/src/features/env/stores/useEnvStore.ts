@@ -26,6 +26,8 @@ type EnvStore = {
 
   resolve: (text: string, extraVars?: Map<string, string>) => string;
   unresolved: (text: string) => string[];
+  /** The variables of the active environment, as a name to value map. */
+  activeVars: () => Map<string, string>;
 };
 
 const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g;
@@ -104,6 +106,8 @@ export const useEnvStore = create<EnvStore>((set, get) => {
   cleanup: () => {
     EventsOff(ENV_EVENT);
   },
+
+  activeVars: () => activeMap(get().environments, get().activeID),
   };
 });
 

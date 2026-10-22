@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { SendRequestStream, SetEnvVar, UpdateSavedRequest } from "../../../../wailsjs/go/main/App";
+import { SendRequestStream, SetEnvVar, UpdateSavedRequest, VaultGetSecret } from "../../../../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../../../../wailsjs/runtime/runtime";
 import { useRequestStore } from "@/features/request/stores/useRequestStore";
 import { useResponseStore, type SSEStreamEvent } from "@/features/request/stores/useResponseStore";
@@ -11,7 +11,47 @@ import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
 import { buildPayload, buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import { runSecurityChecks } from "@/features/request/lib/securityCheck";
 import { setEndpointCache } from "@/features/request/stores/useEndpointCache";
+import { vaultRefName, containsVaultRef } from "@/features/env/lib/vaultRefs";
+import { toast } from "@/app/stores/useToastStore";
 import type { ResponseResult } from "@/features/request/types/request";
+
+/**
+ * Fetch the secrets that the active environment refers to.
+ *
+ * An environment value of "{{VAULT_STRIPE_KEY}}" means "ask the configured
+ * vault for STRIPE_KEY when a request is sent". The secret is fetched here,
+ * held in memory for the length of the request, and never written to disk.
+ *
+ * The returned map is keyed by the environment variable name, so the usual
+ * substitution resolves the request field to the secret. A collection variable
+ * of the same name wins, and the vault is not consulted for it.
+ */
+async function resolveVaultVars(overrides: Map<string, string> | undefined): Promise<Map<string, string>> {
+  const resolved = new Map<string, string>();
+  const envVars = useEnvStore.getState().activeVars();
+
+  // Which environment variables point at the vault, and at which secret.
+  const wanted = new Map<string, string>();
+  for (const [key, value] of envVars) {
+    if (overrides?.has(key)) continue;
+    const secretName = vaultRefName(value);
+    if (secretName) wanted.set(key, secretName);
+  }
+  if (wanted.size === 0) return resolved;
+
+  for (const [key, secretName] of wanted) {
+    try {
+      resolved.set(key, await VaultGetSecret(secretName));
+    } catch (e) {
+      // Leave the reference in place so the failure is visible in the request
+      // rather than sending an empty credential.
+      toast.error(
+        `Could not read ${secretName} from the vault: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  }
+  return resolved;
+}
 
 function makeSessionID(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -72,12 +112,21 @@ export function useSendRequest() {
       }
     }
 
+    // Fetch any secrets the environment refers to. The values are held in
+    // memory for this request only — they are never written to disk.
+    const vaultVars = await resolveVaultVars(collVars);
+
     // Resolve PreSetVars into the active environment (request chaining data pipeline)
     const preSetVars = requestState.preSetVars?.filter((v) => v.key);
     if (preSetVars?.length) {
       const resolve = useEnvStore.getState().resolve;
       for (const v of preSetVars) {
+        // Resolve without the vault values here. This result is persisted to
+        // the environment, and a secret must never be written to disk. A value
+        // that still refers to the vault is left alone rather than stored as a
+        // reference that would never resolve.
         const resolved = resolve(v.value, collVars);
+        if (containsVaultRef(resolved)) continue;
         try { await SetEnvVar(v.key, resolved); } catch { /* best-effort */ }
       }
     }
@@ -102,7 +151,7 @@ export function useSendRequest() {
         };
         EventsOn("sse:event", onEvent);
         EventsOn("sse:done", onDone);
-        SendRequestStream(sessionID, payloadForSend() as never).catch((err: unknown) => {
+        SendRequestStream(sessionID, payloadForSend(vaultVars) as never).catch((err: unknown) => {
           EventsOff("sse:event");
           EventsOff("sse:done");
           reject(err);
@@ -179,8 +228,10 @@ export function useSendRequest() {
   }, [setLoading, setResponse, setSecurityWarnings, appendStreamEvent, setStreaming, refreshHistory]);
 }
 
-// payloadForSend builds the payload at send time from the current request state.
-function payloadForSend(): unknown {
+// payloadForSend builds the payload at send time from the current request
+// state. The vault values are folded in last so a secret always wins over the
+// reference it came from.
+function payloadForSend(vaultVars: Map<string, string>): unknown {
   const requestState = useRequestStore.getState();
   const loadedID = useUIStore.getState().loadedRequestID;
   let collVars: Map<string, string> | undefined;
@@ -194,7 +245,7 @@ function payloadForSend(): unknown {
             if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
           }
         }
-        const payload = buildPayload(requestState, collVars);
+        const payload = buildPayload(requestState, mergeVars(collVars, vaultVars));
         if (col.preScript) payload.preScript = col.preScript + "\n\n" + (payload.preScript ?? "");
         if (col.postScript) payload.postScript = col.postScript + "\n\n" + (payload.postScript ?? "");
         if (col.spec) (payload as typeof payload & { specPath: string }).specPath = col.spec;
@@ -202,5 +253,16 @@ function payloadForSend(): unknown {
       }
     }
   }
-  return buildPayload(requestState, collVars);
+  return buildPayload(requestState, mergeVars(collVars, vaultVars));
+}
+
+// mergeVars combines the collection variables with the vault values. The
+// collection variables win, because a collection that defines a variable
+// means to use its own value rather than the vault.
+function mergeVars(
+  collVars: Map<string, string> | undefined,
+  vaultVars: Map<string, string>,
+): Map<string, string> | undefined {
+  if (vaultVars.size === 0) return collVars;
+  return new Map([...vaultVars, ...(collVars ?? [])]);
 }

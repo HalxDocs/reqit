@@ -1481,62 +1481,50 @@ Your eyes do not care about marketing. They care about contrast ratios and backg
   {
     slug: "explainer-vault",
     title: "encrypted secrets storage",
-    description: "API keys in environment files that get committed to git are a liability. The vault encrypts secrets at rest with AES-256.",
+    description: "Two ways to keep an API key out of your repository: an encrypted environment file, or a reference to a secret you already keep in 1Password, HashiCorp Vault or AWS.",
     date: "2026-06-16",
     readTime: "3 min read",
     tags: ["explainer", "vault", "security", "secrets"],
     category: "Technical deep-dives",
     content: `API keys in environment files that get committed to git are a liability. Every leaked key is a billing surprise waiting to happen. The 2024 Heroku and GitLab token leaks exposed thousands of repositories because developers stored secrets in plaintext config files.
 
-reqit's vault encrypts secrets at rest using AES-256 with a master password you control. The encryption key never leaves your machine.
+Reqit gives you two ways to keep a secret out of your repository, and they work together.
 
-## before: plain text
+## 1. The environment file is encrypted and never committed
 
-Your environment file contains actual secrets:
+Environment values are written to a file inside the \`.reqit/\` directory of your workspace, which reqit adds to your \`.gitignore\`. So the file with your API keys is not part of your commit in the first place.
 
-\`\`\`
-{
-  "BASE_URL": "https://api.stripe.com",
-  "STRIPE_KEY": "sk_live_REPLACE_WITH_YOUR_KEY",
-  "SENDGRID_KEY": "SG.xxxxx.yyyyy"
-}
-\`\`\`
+On top of that, the file is encrypted with AES-256-GCM. The key is generated on your machine and stored in your OS keychain — it never leaves your machine, and reqit has no copy of it. Turn encryption on under Security.
 
-If this file gets committed, the keys are public. Even if you delete the commit, the keys remain in git history.
+## 2. Or reference a secret you already keep in a vault
 
-## after: vault references
-
-The same file with vault references:
+If you already use 1Password, HashiCorp Vault or AWS Secrets Manager, you do not need to copy a secret into reqit at all. Set the value of an environment variable to a reference:
 
 \`\`\`
 {
   "BASE_URL": "https://api.stripe.com",
-  "STRIPE_KEY": "{{VAULT_STRIPE_KEY}}",
-  "SENDGRID_KEY": "{{VAULT_SENDGRID_KEY}}"
+  "STRIPE_KEY": "{{VAULT_STRIPE_KEY}}"
 }
 \`\`\`
 
-The vault stores the actual values encrypted on disk. reqit decrypts them at request time only. The environment file is safe to commit because it contains no secrets.
+When you send a request, reqit asks the configured vault for \`STRIPE_KEY\` and puts the value in the request. The secret is fetched at that moment, held in memory for the length of the request, and never written to disk. Your environment file holds a reference, not a key.
 
-## setup
-
-1. Open Settings > Vault
-2. Set a master password
-3. Add key/value pairs
-4. Reference them in any field with \`{{VAULT_KEY_NAME}}\`
-
-The vault locks after 5 minutes of inactivity. It decrypts only when reqit sends a request and the vault is unlocked. Per-workspace isolation means project A's secrets are invisible to project B.
-
-## proof: commit safety
+## what this looks like in a diff
 
 \`\`\`diff
-- "STRIPE_KEY": "sk_live_REPLACE_WITH_YOUR_KEY",
+- "STRIPE_KEY": "sk_live_REAL_KEY",
 + "STRIPE_KEY": "{{VAULT_STRIPE_KEY}}",
 \`\`\`
 
-Your git diff shows a variable reference, not a secret. The actual key lives encrypted on your disk, accessible only when you unlock the vault.
+Your git diff shows a variable reference, not a secret.
 
-Plain text secrets are a debt. The vault makes that debt disappear.
+## setup
+
+1. Open Security and generate a key. It is stored in your OS keychain, and it is what encrypts your environment file.
+2. Optional: point the Vault section at 1Password, HashiCorp Vault or AWS Secrets Manager.
+3. Set an environment variable to \`{{VAULT_SECRET_NAME}}\` to fetch that secret at request time.
+
+Plain text secrets are a debt. Reqit makes that debt disappear.
 
 [reqit on GitHub](https://github.com/HalxDocs/reqit)`,
   },
