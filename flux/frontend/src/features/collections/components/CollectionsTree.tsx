@@ -21,6 +21,13 @@ import { showConfirm } from "@/shared/components/ConfirmModal";
 import { BulkEditModal } from "@/features/collections/components/BulkEditModal";
 import { buildFolderTree, countNodes, type TreeNode, type FolderNode, type RequestNode } from "@/features/collections/lib/folderTree";
 import {
+  useTreeVirtualization,
+  COLL_H,
+  REQ_H,
+  EMPTY_H,
+  type TreeRow,
+} from "@/features/collections/hooks/useTreeVirtualization";
+import {
   ExportCollectionMarkdown,
   ExportCollectionHTML,
   ExportOpenAPI,
@@ -33,17 +40,6 @@ import {
 } from "../../../../wailsjs/go/main/App";
 import type { main, models } from "../../../../wailsjs/go/models";
 import type { HttpMethod, PreSetVar, ExtractRule } from "@/features/request/types/request";
-
-const COLL_H = 32;
-const REQ_H = 28;
-const EMPTY_H = 28;
-const OVERSCAN = 10;
-
-type Row =
-  | { type: "coll"; id: string; coll: models.Collection; requests: models.SavedRequest[]; hasSpec: boolean; isOpen: boolean }
-  | { type: "folder"; id: string; collID: string; name: string; depth: number; isOpen: boolean; childCount: number }
-  | { type: "req"; id: string; collID: string; req: models.SavedRequest; method: HttpMethod; depth: number }
-  | { type: "empty" };
 
 interface DragItem {
   type: "coll" | "req";
@@ -102,25 +98,12 @@ export function CollectionsTree() {
     includeHeaders: true, includeBody: true, includeExamples: true, baseUrl: "", timestamp: true, darkMode: true,
   });
   const renameReqRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [containerH, setContainerH] = useState(400);
   const dragItem = useRef<DragItem | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [folderExpanded, setFolderExpanded] = useState<Record<string, boolean>>({});
 
   const toggleFolder = useCallback((path: string) => {
     setFolderExpanded((prev) => ({ ...prev, [path]: !prev[path] }));
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) setContainerH(e.contentRect.height);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -146,8 +129,8 @@ export function CollectionsTree() {
       .filter((x) => x.cm || x.requests.length > 0);
   }, [collections, filter]);
 
-  const rows = useMemo((): Row[] => {
-    const r: Row[] = [];
+  const rows = useMemo((): TreeRow[] => {
+    const r: TreeRow[] = [];
     for (const { coll: c, requests: reqs } of visible) {
       const isOpen = expanded[c.id] !== false || !!filter;
       r.push({ type: "coll", id: c.id, coll: c, requests: reqs, hasSpec: !!c.spec, isOpen });
@@ -179,32 +162,18 @@ export function CollectionsTree() {
     return r;
   }, [visible, expanded, filter, folderExpanded]);
 
-  const { totalH, offsets } = useMemo(() => {
-    const o: number[] = [];
-    let acc = 0;
-    for (const row of rows) {
-      o.push(acc);
-      if (row.type === "coll") acc += COLL_H;
-      else if (row.type === "folder") acc += COLL_H;
-      else acc += REQ_H;
-    }
-    return { totalH: acc, offsets: o };
-  }, [rows]);
+  const { scrollRef, visibleRows, topPad, bottomPad, totalH, handleScroll, setContainerH } =
+    useTreeVirtualization(rows);
 
-  const { startIdx, endIdx } = useMemo(() => {
-    if (rows.length === 0) return { startIdx: 0, endIdx: 0 };
-    const s = search(offsets, scrollTop - OVERSCAN * REQ_H);
-    const e = search(offsets, scrollTop + containerH + OVERSCAN * REQ_H);
-    return { startIdx: Math.max(0, s - 1), endIdx: Math.min(rows.length, e + 1) };
-  }, [offsets, scrollTop, containerH]);
-
-  const visibleRows = rows.slice(startIdx, endIdx);
-  const topPad = offsets[startIdx] || 0;
-  const bottomPad = totalH - (offsets[endIdx - 1] || 0) - (rows[endIdx - 1]?.type === "coll" || rows[endIdx - 1]?.type === "folder" ? COLL_H : REQ_H);
-
-  const handleScroll = useCallback(() => {
-    if (scrollRef.current) setScrollTop(scrollRef.current.scrollTop);
-  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) setContainerH(e.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [scrollRef, setContainerH]);
 
   const handleCreate = async () => {
     const t = newName.trim();
@@ -713,10 +682,5 @@ export function CollectionsTree() {
   );
 }
 
-function search(offsets: number[], t: number): number {
-  let lo = 0, hi = offsets.length;
-  while (lo < hi) { const m = (lo + hi) >> 1; if (offsets[m] <= t) lo = m + 1; else hi = m; }
-  return lo;
-}
 
 
