@@ -1,32 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 
 export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
-
-  const handleClick = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        setCopied(false);
-        timerRef.current = undefined;
-      }, 1500);
-    } catch {
-      // clipboard may be unavailable in some contexts; fail silently
-    }
-  }, [text]);
+  const { copied, copy } = useCopyToClipboard();
 
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => void copy(text)}
       disabled={!text}
       className="flex items-center gap-1 h-[24px] px-2 text-11 text-subtext hover:text-text disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
     >

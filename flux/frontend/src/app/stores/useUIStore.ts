@@ -5,7 +5,7 @@ export type ResponseTab = "body" | "headers" | "cookies" | "timeline" | "perform
 
 export type WorkspaceView = "http" | "socket" | "sse" | "scheduler" | "docs" | "spec" | "openapi" | "interceptor" | "integrations" | "pr" | "security" | "migration" | "growth" | "graphql" | "grpc" | "agentlens" | "plugins" | "loadtest" | "testsuites" | "mockpanel" | "eventinspector" | "mcp" | "mqtt";
 
-export type PanelLayout = "horizontal" | "vertical";
+type PanelLayout = "horizontal" | "vertical";
 
 const LAYOUT_KEY = "flux:panelLayout";
 function readStoredLayout(): PanelLayout {

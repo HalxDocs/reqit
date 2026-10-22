@@ -9,7 +9,7 @@ export function formatTiming(ms: number): string {
   return `${(ms / 1000).toFixed(2)} s`;
 }
 
-export type BodyKind = "json" | "xml" | "html" | "image" | "binary" | "text";
+type BodyKind = "json" | "xml" | "html" | "image" | "binary" | "text";
 
 export function detectBodyKind(body: string, contentType: string): BodyKind {
   const ct = contentType.toLowerCase();

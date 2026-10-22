@@ -1,4 +1,4 @@
-export interface DocResource {
+interface DocResource {
   title: string;
   url: string;
   desc: string;

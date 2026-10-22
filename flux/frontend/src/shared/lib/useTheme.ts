@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ThemeMode = "dark" | "light" | "system";
+type ThemeMode = "dark" | "light" | "system";
 
 const STORAGE_KEY = "flux:theme";
 

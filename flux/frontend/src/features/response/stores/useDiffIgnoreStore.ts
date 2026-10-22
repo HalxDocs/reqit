@@ -13,7 +13,7 @@ const DEFAULT_GLOBAL_PATTERNS = [
 
 const STORAGE_KEY = "reqit:diff_ignore";
 
-export interface DiffIgnoreState {
+interface DiffIgnoreState {
   globalPatterns: string[];
   perRequestPatterns: Record<string, string[]>;
   ignoreHeaders: boolean;

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { GetProxyConfig, SetProxyConfig } from "../../../wailsjs/go/main/App";
 
-export interface ProxyConfig {
+interface ProxyConfig {
   enabled: boolean;
   url: string;
   username: string;

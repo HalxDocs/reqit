@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { ChevronRight, ChevronDown, Copy, Check } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
+import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+import { comboFromEvent } from "@/shared/lib/commands";
 
 interface TreeNode {
   key: string | number;
@@ -200,23 +202,16 @@ function TreeNodeComponent({
 }
 
 function CopyNodeButton({ path, value }: { path: string; value: unknown }) {
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const { copied, copy } = useCopyToClipboard();
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
-
-  const handleCopy = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
       const text = typeof value === "string" ? value : JSON.stringify(value);
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  }, [value]);
+      void copy(text);
+    },
+    [value, copy],
+  );
 
   return (
     <button
@@ -269,12 +264,8 @@ export function JsonTreeView({ data, className, searchQuery }: JsonTreeViewProps
     const handler = (e: KeyboardEvent) => {
       if (!document.activeElement?.closest("[data-scope='responseTree']")) return;
 
-      const parts: string[] = [];
-      if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
-      if (e.shiftKey) parts.push("shift");
-      const key = e.key.toLowerCase();
-      parts.push(key);
-      const combo = parts.join("+");
+      const combo = comboFromEvent(e);
+      if (!combo) return;
 
       if (combo === "meta+arrowdown" || combo === "ctrl+arrowdown") {
         e.preventDefault();

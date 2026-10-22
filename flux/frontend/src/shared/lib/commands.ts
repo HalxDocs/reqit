@@ -175,6 +175,21 @@ export function isTextEntry(target: EventTarget | null): boolean {
   return false;
 }
 
+/**
+ * Build the normalised combo string for a keyboard event, e.g. "ctrl+shift+z".
+ * Returns an empty string for the modifier keys themselves.
+ */
+export function comboFromEvent(e: KeyboardEvent): string {
+  const parts: string[] = [];
+  if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
+  if (e.altKey) parts.push("alt");
+  if (e.shiftKey) parts.push("shift");
+  const key = e.key.toLowerCase();
+  if (key === "control" || key === "alt" || key === "shift" || key === "meta") return "";
+  parts.push(key);
+  return parts.join("+");
+}
+
 export function handleKeyEvent(e: KeyboardEvent): boolean {
   const inTextEntry = isTextEntry(e.target);
   const hasModifier = e.metaKey || e.ctrlKey;
@@ -183,17 +198,13 @@ export function handleKeyEvent(e: KeyboardEvent): boolean {
   // in a text field must reach the field, not a global command.
   if (inTextEntry && !hasModifier) return false;
 
-  const parts: string[] = [];
-  if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
-  if (e.altKey) parts.push("alt");
-  if (e.shiftKey) parts.push("shift");
   const key = e.key.toLowerCase();
-  if (key === "control" || key === "alt" || key === "shift" || key === "meta") return false;
-  parts.push(key);
-  const combo = parts.join("+");
 
   // Native editing chords belong to the text field while the user is typing.
   if (inTextEntry && hasModifier && NATIVE_EDIT_KEYS.has(key)) return false;
+
+  const combo = comboFromEvent(e);
+  if (!combo) return false;
 
   const claimants = keyBindings.get(combo);
   if (!claimants || claimants.length === 0) return false;

@@ -26,7 +26,7 @@ export function secondsUntil(expiresAtMs?: number, nowMs: number = Date.now()): 
   return Math.max(0, Math.floor((expiresAtMs - nowMs) / 1000));
 }
 
-export type ExpiryState = "no_expiry" | "expired" | "expiring_soon" | "valid";
+type ExpiryState = "no_expiry" | "expired" | "expiring_soon" | "valid";
 
 /**
  * Classifies an expiry timestamp into a display state.

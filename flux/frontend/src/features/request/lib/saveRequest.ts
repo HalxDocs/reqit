@@ -6,7 +6,7 @@ import { toast } from "@/app/stores/useToastStore";
 import { buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import type { models } from "../../../../wailsjs/go/models";
 
-export type SaveOutcome = "saved" | "needs-details" | "failed";
+type SaveOutcome = "saved" | "needs-details" | "failed";
 
 /**
  * Locate the collection and saved request a tab points at.

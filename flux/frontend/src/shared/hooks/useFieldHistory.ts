@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-export interface FieldHistoryOptions {
+interface FieldHistoryOptions {
   /** Maximum number of entries kept. Older entries are dropped. */
   limit?: number;
   /**
@@ -10,7 +10,7 @@ export interface FieldHistoryOptions {
   coalesceMs?: number;
 }
 
-export interface FieldHistory<T> {
+interface FieldHistory<T> {
   /**
    * Records the value that was current *before* an edit. Consecutive calls
    * inside the coalescing window are ignored, so the first value of a burst

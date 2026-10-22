@@ -8,6 +8,7 @@ import { CopyButton } from "@/features/response/components/CopyButton";
 import { JsonTreeView } from "@/features/response/components/JsonTreeView";
 import { ContextMenu, type ContextMenuItem } from "@/shared/components/ContextMenu";
 import { tryPretty, detectBodyKind } from "@/shared/lib/format";
+import { comboFromEvent } from "@/shared/lib/commands";
 import { fluxCmTheme } from "@/shared/lib/cmTheme";
 import { useThemeStore } from "@/shared/lib/useTheme";
 import { useUIStore } from "@/app/stores/useUIStore";
@@ -163,13 +164,7 @@ export function BodyView({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const parts: string[] = [];
-      if (e.metaKey || e.ctrlKey) parts.push(e.metaKey ? "meta" : "ctrl");
-      if (e.shiftKey) parts.push("shift");
-      const key = e.key.toLowerCase();
-      if (key === "control" || key === "alt" || key === "shift" || key === "meta") return;
-      parts.push(key);
-      const combo = parts.join("+");
+      const combo = comboFromEvent(e);
       if (combo === "meta+shift+r" || combo === "ctrl+shift+r") {
         e.preventDefault();
         cycleView();

@@ -160,7 +160,7 @@ export interface JWTDecoded {
   error?: string;
 }
 
-export interface GraphQLFieldTypeRef {
+interface GraphQLFieldTypeRef {
   name: string;
   kind: string;
   ofType?: GraphQLFieldTypeRef | null;

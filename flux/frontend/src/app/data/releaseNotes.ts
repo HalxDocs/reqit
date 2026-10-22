@@ -30,12 +30,12 @@ export type NavTarget =
   | "modal:envcompare"
   | "modal:testsuites";
 
-export interface FeatureItem {
+interface FeatureItem {
   label: string;
   nav: NavTarget;
 }
 
-export interface FeatureCategory {
+interface FeatureCategory {
   category: string;
   items: FeatureItem[];
 }
@@ -171,7 +171,7 @@ export const allFeatures: FeatureCategory[] = [
   },
 ];
 
-export interface ReleaseNote {
+interface ReleaseNote {
   version: string;
   date: string;
   title: string;

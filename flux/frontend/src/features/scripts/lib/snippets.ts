@@ -1,4 +1,4 @@
-export interface ScriptSnippet {
+interface ScriptSnippet {
   id: string;
   title: string;
   description: string;

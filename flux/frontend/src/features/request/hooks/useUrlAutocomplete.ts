@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useHistoryStore } from "@/features/history/stores/useHistoryStore";
 import { useCollectionStore } from "@/features/collections/stores/useCollectionStore";
 
-export interface UrlSuggestion {
+interface UrlSuggestion {
   url: string;
   method: string;
   source: "history" | "saved";

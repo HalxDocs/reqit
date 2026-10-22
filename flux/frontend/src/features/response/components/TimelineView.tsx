@@ -1,6 +1,7 @@
 import { useResponseStore } from "@/features/request/stores/useResponseStore";
 import { formatTiming } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/cn";
+import { formatSize } from "@/shared/lib/format";
 
 type Phase = {
   label: string;
@@ -74,10 +75,4 @@ export function TimelineView() {
       </div>
     </div>
   );
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
