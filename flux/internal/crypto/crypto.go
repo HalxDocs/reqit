@@ -29,6 +29,14 @@ func New(appDataDir string) *Store {
 	return &Store{appDataDir: appDataDir}
 }
 
+// App returns the encryption store for the running app.
+//
+// The key itself lives in the OS keychain, so the store holds no per-workspace
+// state and any caller can have one.
+func App() *Store {
+	return &Store{}
+}
+
 // HasKey reports whether an encryption key exists in the OS keychain.
 func (s *Store) HasKey() bool {
 	_, err := keyring.Get(keyringSvc, "e2ee-key")

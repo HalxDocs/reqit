@@ -2,6 +2,7 @@ package cookies
 
 import (
 	"encoding/json"
+	"flux/internal/storage"
 	"net/http"
 	"net/url"
 	"os"
@@ -28,7 +29,7 @@ type Store struct {
 func New(workspaceDir string) *Store {
 	s := &Store{
 		data: make(map[string][]stored),
-		file: filepath.Join(workspaceDir, ".reqit-cookies.json"),
+		file: filepath.Join(storage.DataDir(workspaceDir), "cookies.json"),
 	}
 	_ = s.load()
 	return s

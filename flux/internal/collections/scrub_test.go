@@ -81,7 +81,7 @@ func TestOAuthSecretsMigratedOnLoad(t *testing.T) {
 	keyring.MockInit()
 
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "collections"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".reqit", "collections"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -104,11 +104,11 @@ func TestOAuthSecretsMigratedOnLoad(t *testing.T) {
     }
   ]
 }`
-	if err := os.WriteFile(filepath.Join(dir, "collections", "legacy-1.json"), []byte(legacy), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ".reqit", "collections", "legacy-1.json"), []byte(legacy), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	// Minimal index so the store can find the collection.
-	if err := os.WriteFile(filepath.Join(dir, "collections", "index.json"), []byte(`{"collections":[{"id":"legacy-1","name":"legacy","order":0,"updatedAt":"2026-01-01T00:00:00Z"}]}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ".reqit", "collections", "index.json"), []byte(`{"collections":[{"id":"legacy-1","name":"legacy","order":0,"updatedAt":"2026-01-01T00:00:00Z"}]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -217,7 +217,7 @@ func TestClientSecretNeverReachesDisk(t *testing.T) {
 
 func readCollectionFile(t *testing.T, dir, id string) models.Collection {
 	t.Helper()
-	raw, err := os.ReadFile(filepath.Join(dir, "collections", id+".json"))
+	raw, err := os.ReadFile(filepath.Join(dir, ".reqit", "collections", id+".json"))
 	if err != nil {
 		t.Fatal(err)
 	}

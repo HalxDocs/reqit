@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"flux/internal/collections"
+	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/models"
 	"flux/internal/requester"
@@ -101,7 +102,7 @@ func listResources(args []string) int {
 		}
 
 	case "environments", "envs":
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		snap, err := es.Get()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading environments: %v\n", err)
@@ -201,7 +202,7 @@ func runCollection(args []string) int {
 	}
 
 	// Load environments and pick the right one.
-	es := environments.NewStore(wsDir)
+	es := environments.NewStore(wsDir, crypto.App())
 	envSnap, err := es.Get()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading environments: %v\n", err)

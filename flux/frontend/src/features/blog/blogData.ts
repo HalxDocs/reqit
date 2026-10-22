@@ -310,7 +310,9 @@ Same request. Two environments. Zero copy-paste. Zero risk of sending a test tok
 
 ## secrets handling
 
-Sensitive values like API keys and tokens should not sit in environment files you commit to git. reqit has a vault that encrypts secrets at rest. Your environment file references \`{{VAULT_API_KEY}}\` instead of the actual key. The vault decrypts only when reqit sends a request.
+Sensitive values like API keys and tokens should not sit in files you commit to git. Reqit keeps environment values in a file that is excluded from your repository, and encrypts it with AES-256-GCM using a key held in your OS keychain. Add a key under Security to turn encryption on.
+
+Collections stay plain JSON, so a change to a request still shows up in a pull request next to the code it belongs to.
 
 ## what goes in an environment
 

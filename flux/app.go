@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,6 +40,7 @@ import (
 	"flux/internal/socketio"
 	"flux/internal/sockhistory"
 	"flux/internal/sso"
+	"flux/internal/storage"
 	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
 	traypkg "flux/internal/tray"
@@ -253,6 +256,14 @@ func (a *App) mountWorkspace(dir string) {
 	// Ensure .reqit/ directory structure exists for Git-native storage.
 	_ = gitpkg.ReqitInit(dir)
 
+	// Move data written by older versions out of the repository root and into
+	// .reqit/. The ignore rules reqit writes are written for those paths, so
+	// before this the files landed where they were not protected — an API key
+	// in an environment was committed and pushed.
+	if moved, err := storage.MigrateToDataDir(dir); err == nil && len(moved) > 0 {
+		log.Printf("reqit: moved %d file(s) into .reqit/: %s", len(moved), strings.Join(moved, ", "))
+	}
+
 	// Ensure .gitignore protects secret files from being committed.
 	a.ensureWorkspaceGitignore(dir)
 
@@ -260,7 +271,7 @@ func (a *App) mountWorkspace(dir string) {
 	a.history = history.NewStore(dir)
 	a.runHistory = runhistory.NewStore(dir)
 	a.sockHistory = sockhistory.NewStore(dir)
-	a.environments = environments.NewStore(dir)
+	a.environments = environments.NewStore(dir, a.crypto)
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
 	a.testSuites = testbuilder.NewStore(dir)
@@ -351,9 +362,17 @@ func (a *App) ensureWorkspaceGitignore(dir string) {
 			"*.crt\n" +
 			"**/secrets.json\n" +
 			"**/credentials.json\n" +
-			".reqit/ai.json\n" +
+			// Environment values hold API keys, so they stay local. The
+			// environment structure itself is not secret and is kept so the
+			// names of the variables are shared.
+			".reqit/environments.json\n" +
+			// Session cookies and captured traffic are credentials.
 			".reqit/cookies.json\n" +
 			".reqit/interceptor/\n" +
+			// AI provider keys and agent-lens configuration.
+			".reqit/ai.json\n" +
+			// Lock files are runtime state.
+			".reqit/locks/\n" +
 			"*.log\n",
 	)
 	// Only write if file doesn't exist — don't overwrite user's custom gitignore.

@@ -25,7 +25,12 @@ func ReqitInit(repoRoot string) error {
 
 	// Write or update .gitignore
 	gitignorePath := filepath.Join(repoRoot, ".gitignore")
-	entry := "\n# reqit — never commit secret environments or local overrides\n.reqit/**/*.secrets.json\n.reqit/**/local.json\n"
+	entry := "\n# reqit — never commit secret environments or local overrides\n" +
+		".reqit/environments.json\n" +
+		".reqit/cookies.json\n" +
+		".reqit/locks/\n" +
+		".reqit/**/*.secrets.json\n" +
+		".reqit/**/local.json\n"
 	return appendIfMissing(gitignorePath, entry)
 }
 

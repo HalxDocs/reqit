@@ -45,7 +45,7 @@ type TrafficStore struct {
 }
 
 func NewTrafficStore(dir string) *TrafficStore {
-	return &TrafficStore{dir: dir}
+	return &TrafficStore{dir: storage.DataDir(dir)}
 }
 
 func (s *TrafficStore) load() error {

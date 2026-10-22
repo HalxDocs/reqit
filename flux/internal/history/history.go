@@ -27,7 +27,7 @@ type Store struct {
 }
 
 func NewStore(dir string) *Store {
-	return &Store{dir: dir, workspaceKey: oauth2.WorkspaceKeyFromDir(dir)}
+	return &Store{dir: storage.DataDir(dir), workspaceKey: oauth2.WorkspaceKeyFromDir(dir)}
 }
 
 func (s *Store) load() error {

@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json"
+	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/models"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 
 func handleListEnvironments(wsDir string) ToolHandler {
 	return func(args json.RawMessage) (string, error) {
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		snap, err := es.Get()
 		if err != nil {
 			return "", err
@@ -38,7 +39,7 @@ func handleGetEnvironment(wsDir string) ToolHandler {
 		if err := json.Unmarshal(args, &p); err != nil {
 			return "", err
 		}
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		snap, err := es.Get()
 		if err != nil {
 			return "", err
@@ -66,7 +67,7 @@ func handleSetVariable(wsDir string) ToolHandler {
 		if err := json.Unmarshal(args, &p); err != nil {
 			return "", err
 		}
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		snap, err := es.Get()
 		if err != nil {
 			return "", err
@@ -105,7 +106,7 @@ func handleSwitchEnvironment(wsDir string) ToolHandler {
 		if err := json.Unmarshal(args, &p); err != nil {
 			return "", err
 		}
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		snap, err := es.Get()
 		if err != nil {
 			return "", err

@@ -62,7 +62,7 @@ func (a *App) DeleteWorkspace(id string) error {
 		a.history = history.NewStore("")
 		a.runHistory = runhistory.NewStore("")
 		a.sockHistory = sockhistory.NewStore("")
-		a.environments = environments.NewStore("")
+		a.environments = environments.NewStore("", a.crypto)
 	}
 	return nil
 }

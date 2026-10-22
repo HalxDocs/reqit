@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"flux/internal/models"
+	"flux/internal/storage"
 	"github.com/google/uuid"
 )
 
@@ -19,7 +20,7 @@ type Store struct {
 }
 
 func NewStore(dir string) *Store {
-	s := &Store{dir: dir}
+	s := &Store{dir: storage.DataDir(dir)}
 	_ = s.load()
 	return s
 }

@@ -86,6 +86,21 @@ func Save(name string, value any) error {
 // SaveTo JSON-encodes value and atomically writes it to the named file in the
 // given directory (write to <name>.tmp then rename so a crash mid-write
 // cannot truncate the prior file).
+// DataDirName is the directory, inside a workspace, that holds every file
+// reqit owns.
+const DataDirName = ".reqit"
+
+// DataDir returns the directory inside a workspace that holds reqit's own
+// files.
+//
+// Everything reqit writes belongs under this directory, not at the root of
+// the user's repository. The .gitignore rules reqit writes are written for
+// these paths, and the documentation describes this layout, so keeping the
+// data here is what makes both of them true.
+func DataDir(workspaceDir string) string {
+	return filepath.Join(workspaceDir, DataDirName)
+}
+
 // CollectionDir returns the per-collection subdirectory within dir.
 func CollectionDir(dir string) string {
 	return filepath.Join(dir, "collections")

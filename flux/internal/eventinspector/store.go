@@ -29,7 +29,7 @@ type Store struct {
 }
 
 func NewStore(dir string) *Store {
-	return &Store{dir: dir, verified: map[string]bool{}}
+	return &Store{dir: storage.DataDir(dir), verified: map[string]bool{}}
 }
 
 func (s *Store) load() error {

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"encoding/json"
+	"flux/internal/storage"
 	"os"
 	"sync"
 	"time"
@@ -40,7 +41,7 @@ type Store struct {
 }
 
 func NewStore(dir string) *Store {
-	return &Store{dir: dir}
+	return &Store{dir: storage.DataDir(dir)}
 }
 
 func (s *Store) load() error {

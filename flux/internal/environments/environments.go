@@ -1,11 +1,16 @@
 package environments
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/google/uuid"
 
+	"flux/internal/crypto"
 	"flux/internal/models"
 	"flux/internal/storage"
 )
@@ -20,21 +25,50 @@ type wrapper struct {
 type Store struct {
 	mu     sync.Mutex
 	dir    string
+	crypto *crypto.Store
 	envs   []models.Environment
 	active string
 	loaded bool
 }
 
-func NewStore(dir string) *Store { return &Store{dir: dir} }
+// NewStore returns a store for the environments in a workspace.
+//
+// Environment values hold API keys, so the file is excluded from git and is
+// encrypted with the key held in the OS keychain when one is set. Without a
+// key the file is still kept out of git, but stored as plain JSON.
+func NewStore(dir string, cryptoStore *crypto.Store) *Store {
+	return &Store{dir: storage.DataDir(dir), crypto: cryptoStore}
+}
 
 func (s *Store) load() error {
 	if s.loaded {
 		return nil
 	}
 	w := wrapper{}
-	if err := storage.LoadFrom(s.dir, fileName, &w); err != nil {
+
+	data, err := os.ReadFile(filepath.Join(s.dir, fileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			s.envs = []models.Environment{}
+			s.loaded = true
+			return nil
+		}
 		return err
 	}
+
+	// A file written before encryption was enabled is plain JSON; one written
+	// with a key is sealed in an envelope.
+	if crypto.IsEncrypted(data) {
+		if s.crypto == nil {
+			return errors.New("environment file is encrypted but no encryption key is available")
+		}
+		if err := s.crypto.Open(data, &w); err != nil {
+			return fmt.Errorf("environment file could not be decrypted: %w", err)
+		}
+	} else if err := json.Unmarshal(data, &w); err != nil {
+		return err
+	}
+
 	if w.Environments == nil {
 		w.Environments = []models.Environment{}
 	}
@@ -45,9 +79,33 @@ func (s *Store) load() error {
 }
 
 func (s *Store) save() error {
-	return storage.SaveTo(s.dir, fileName, wrapper{Active: s.active, Environments: s.envs})
+	value := wrapper{Active: s.active, Environments: s.envs}
+
+	// Encrypt when a key is available, so the values on disk are unreadable
+	// without the OS keychain.
+	if s.crypto != nil && s.crypto.HasKey() {
+		data, err := s.crypto.Seal(value)
+		if err != nil {
+			return fmt.Errorf("encrypt environments: %w", err)
+		}
+		if err := os.MkdirAll(s.dir, 0o755); err != nil {
+			return err
+		}
+		return atomicWrite(filepath.Join(s.dir, fileName), data)
+	}
+	return storage.SaveTo(s.dir, fileName, value)
 } // caller must hold s.mu (except when called from MergeVars goroutine, where it's safe
 // because no concurrent write will modify s.active/s.envs during the marshal)
+
+// atomicWrite writes data to a temporary file and renames it over the target,
+// so a crash mid-write cannot truncate the previous file.
+func atomicWrite(path string, data []byte) error {
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
+}
 
 type Snapshot struct {
 	Active       string               `json:"active"`

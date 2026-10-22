@@ -42,7 +42,7 @@ type collReqRef struct {
 
 func NewStore(dir string) *Store {
 	s := &Store{
-		dir:          dir,
+		dir:          storage.DataDir(dir),
 		workspaceKey: oauth2.WorkspaceKeyFromDir(dir),
 		requestIndex: make(map[string]*collReqRef),
 		dirty:        make(map[int]bool),

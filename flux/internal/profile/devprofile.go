@@ -107,7 +107,7 @@ type DevProfileStore struct {
 }
 
 func NewDevProfileStore(dir string) *DevProfileStore {
-	return &DevProfileStore{dir: dir}
+	return &DevProfileStore{dir: storage.DataDir(dir)}
 }
 
 func (s *DevProfileStore) load() error {

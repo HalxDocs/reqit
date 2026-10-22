@@ -26,7 +26,7 @@ type Store struct {
 	loaded   bool
 }
 
-func NewStore(dir string) *Store { return &Store{dir: dir} }
+func NewStore(dir string) *Store { return &Store{dir: storage.DataDir(dir)} }
 
 func (s *Store) load() error {
 	if s.loaded {

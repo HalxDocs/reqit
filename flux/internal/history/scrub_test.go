@@ -29,7 +29,7 @@ func TestOAuthSecretsNeverReachHistoryFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	raw, err := os.ReadFile(filepath.Join(dir, "history.json"))
+	raw, err := os.ReadFile(filepath.Join(dir, ".reqit", "history.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

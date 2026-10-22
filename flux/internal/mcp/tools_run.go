@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flux/internal/collections"
+	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/models"
 	"flux/internal/requester"
@@ -44,7 +45,7 @@ func handleRunCollection(wsDir string) ToolHandler {
 		}
 
 		// Load environments
-		es := environments.NewStore(wsDir)
+		es := environments.NewStore(wsDir, crypto.App())
 		envSnap, err := es.Get()
 		if err != nil {
 			return "", fmt.Errorf("load environments: %w", err)

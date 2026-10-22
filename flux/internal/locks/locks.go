@@ -2,6 +2,7 @@ package locks
 
 import (
 	"encoding/json"
+	"flux/internal/storage"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +21,7 @@ type Store struct {
 }
 
 func New(workspaceDir string) *Store {
-	dir := filepath.Join(workspaceDir, ".locks")
+	dir := filepath.Join(storage.DataDir(workspaceDir), "locks")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		// Directory creation failed; lock operations will fail with write errors.
 		return &Store{dir: dir}
