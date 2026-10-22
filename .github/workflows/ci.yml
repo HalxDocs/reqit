@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Go: unit and integration tests ─────────────────────────────────────────
+  go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache-dependency-path: flux/go.sum
+
+      - name: Vet
+        working-directory: flux
+        run: go vet ./...
+
+      - name: Check formatting
+        working-directory: flux
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Test
+        working-directory: flux
+        run: go test ./... -timeout 5m
+
+  # ── Frontend: tests, typecheck and production build ───────────────────────
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: flux/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: flux/frontend
+        run: npm ci
+
+      - name: Test
+        working-directory: flux/frontend
+        run: npm test
+
+      - name: Typecheck
+        working-directory: flux/frontend
+        run: npx tsc --noEmit
+
+      - name: Production build
+        working-directory: flux/frontend
+        run: npm run build:web
+
+  # ── OAuth 2.0 against a real provider ────────────────────────────────────
+  # The oauth2 engine is the part of reqit most likely to break silently: a
+  # change that keeps every unit test green can still fail a real provider.
+  # These tests drive a real Keycloak in Docker through every grant type.
+  oauth2-keycloak:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache-dependency-path: flux/go.sum
+
+      - name: Run the OAuth 2.0 suite against Keycloak
+        working-directory: flux
+        env:
+          TEST_KEYCLOAK_DOCKER: "1"
+        # Each test starts its own Keycloak container, so this takes a while.
+        run: go test ./internal/oauth2/ -run TestKeycloak -count=1 -v -timeout 20m
