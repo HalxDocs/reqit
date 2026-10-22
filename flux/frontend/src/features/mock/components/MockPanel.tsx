@@ -9,6 +9,7 @@ import {
 } from "../../../../wailsjs/go/main/App";
 import type { main } from "../../../../wailsjs/go/models";
 import { useToastStore } from "@/app/stores/useToastStore";
+import { MockRulesEditor } from "./MockRulesEditor";
 
 const DEFAULT_PORT = 4321;
 
@@ -136,6 +137,8 @@ export function MockPanel() {
           </ul>
         </div>
       )}
+
+      <MockRulesEditor />
     </div>
   );
 }

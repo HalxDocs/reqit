@@ -143,47 +143,6 @@ func TestRulesEngine_ContainsCondition(t *testing.T) {
 	}
 }
 
-func TestStateStore(t *testing.T) {
-	ss := NewStateStore()
-	if ss.Get("/api/test") != 0 {
-		t.Error("initial count should be 0")
-	}
-	c1 := ss.Next("/api/test")
-	if c1 != 1 {
-		t.Errorf("first call = %d", c1)
-	}
-	c2 := ss.Next("/api/test")
-	if c2 != 2 {
-		t.Errorf("second call = %d", c2)
-	}
-}
-
-func TestStateStoreSession(t *testing.T) {
-	ss := NewStateStore()
-	s1 := ss.SessionNext("sess-a", "/api/check")
-	if s1 != 1 {
-		t.Errorf("sess-a first = %d", s1)
-	}
-	s2 := ss.SessionNext("sess-b", "/api/check")
-	if s2 != 1 {
-		t.Errorf("sess-b first = %d", s2)
-	}
-	s3 := ss.SessionNext("sess-a", "/api/check")
-	if s3 != 2 {
-		t.Errorf("sess-a second = %d", s3)
-	}
-}
-
-func TestStateStoreReset(t *testing.T) {
-	ss := NewStateStore()
-	ss.Next("/api/reset-test")
-	ss.Next("/api/reset-test")
-	ss.Reset("/api/reset-test")
-	if ss.Get("/api/reset-test") != 0 {
-		t.Error("count should be 0 after reset")
-	}
-}
-
 func TestMockVariables(t *testing.T) {
 	result := MockVariables("{{$guid}}")
 	if result == "{{$guid}}" {

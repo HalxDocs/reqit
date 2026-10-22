@@ -14,6 +14,7 @@ import {cookies} from '../models';
 import {environments} from '../models';
 import {locks} from '../models';
 import {mcp} from '../models';
+import {mock} from '../models';
 import {plugin} from '../models';
 import {scheduler} from '../models';
 import {openapi} from '../models';
@@ -225,6 +226,8 @@ export function GetAllFlaky():Promise<Array<runhistory.FlakyStats>>;
 
 export function GetAutoSync():Promise<boolean>;
 
+export function GetBackupStatus():Promise<main.BackupStatus>;
+
 export function GetBadges():Promise<string>;
 
 export function GetBranches():Promise<Array<string>>;
@@ -258,7 +261,6 @@ export function GetGitLog(arg1:number):Promise<Array<git.CommitInfo>>;
 export function GetGitStashList():Promise<Array<git.StashEntry>>;
 
 export function GetGitStatus():Promise<main.GitStatus>;
-export function GetBackupStatus():Promise<main.BackupStatus>;
 
 export function GetHistory():Promise<Array<models.HistoryEntry>>;
 
@@ -275,6 +277,8 @@ export function GetMCPTraffic():Promise<Array<mcp.TrafficEntry>>;
 export function GetMCPTrafficEntry(arg1:string):Promise<mcp.TrafficEntry>;
 
 export function GetMaskingRules():Promise<string>;
+
+export function GetMockRules():Promise<Array<mock.Rule>>;
 
 export function GetMockStatus():Promise<main.MockStatus>;
 
@@ -531,6 +535,8 @@ export function SetDiscordURL(arg1:string):Promise<void>;
 export function SetEncryptionPassphrase(arg1:string):Promise<void>;
 
 export function SetEnvVar(arg1:string,arg2:string):Promise<void>;
+
+export function SetMockRules(arg1:Array<mock.Rule>):Promise<void>;
 
 export function SetProxyConfig(arg1:string):Promise<void>;
 

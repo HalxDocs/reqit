@@ -410,6 +410,10 @@ export function GetAutoSync() {
   return window['go']['main']['App']['GetAutoSync']();
 }
 
+export function GetBackupStatus() {
+  return window['go']['main']['App']['GetBackupStatus']();
+}
+
 export function GetBadges() {
   return window['go']['main']['App']['GetBadges']();
 }
@@ -477,9 +481,6 @@ export function GetGitStashList() {
 export function GetGitStatus() {
   return window['go']['main']['App']['GetGitStatus']();
 }
-export function GetBackupStatus() {
-  return window['go']['main']['App']['GetBackupStatus']();
-}
 
 export function GetHistory() {
   return window['go']['main']['App']['GetHistory']();
@@ -511,6 +512,10 @@ export function GetMCPTrafficEntry(arg1) {
 
 export function GetMaskingRules() {
   return window['go']['main']['App']['GetMaskingRules']();
+}
+
+export function GetMockRules() {
+  return window['go']['main']['App']['GetMockRules']();
 }
 
 export function GetMockStatus() {
@@ -1023,6 +1028,10 @@ export function SetEncryptionPassphrase(arg1) {
 
 export function SetEnvVar(arg1, arg2) {
   return window['go']['main']['App']['SetEnvVar'](arg1, arg2);
+}
+
+export function SetMockRules(arg1) {
+  return window['go']['main']['App']['SetMockRules'](arg1);
 }
 
 export function SetProxyConfig(arg1) {

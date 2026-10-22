@@ -3,23 +3,24 @@ package mock
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
 // Condition defines a predicate evaluated against an incoming request.
 type Condition struct {
-	Field    string // "header", "query", "method", "path"
-	Key      string // header name, query param name, or "" for method/path
-	Operator string // "eq", "neq", "contains", "matches", "exists"
-	Value    string
+	Field    string `json:"field"`    // "header", "query", "method", "path"
+	Key      string `json:"key"`      // header name, query param name, or "" for method/path
+	Operator string `json:"operator"` // "eq", "neq", "contains", "matches", "exists"
+	Value    string `json:"value"`
 }
 
 // Rule couples one or more conditions with a response.
 type Rule struct {
-	Name       string
-	Priority   int // higher = evaluated first
-	Conditions []Condition
-	Response   MockResponse
+	Name       string       `json:"name"`
+	Priority   int          `json:"priority"` // higher = evaluated first
+	Conditions []Condition  `json:"conditions"`
+	Response   MockResponse `json:"response"`
 }
 
 // RulesEngine evaluates rules in priority order and returns the first match.
@@ -28,7 +29,14 @@ type RulesEngine struct {
 }
 
 func NewRulesEngine(rules []Rule) *RulesEngine {
-	return &RulesEngine{rules: rules}
+	// Evaluate the highest priority first. The sort is stable, so rules that
+	// share a priority keep the order they were given in.
+	ordered := make([]Rule, len(rules))
+	copy(ordered, rules)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		return ordered[i].Priority > ordered[j].Priority
+	})
+	return &RulesEngine{rules: ordered}
 }
 
 func (re *RulesEngine) Evaluate(method, path string, headers map[string]string, queryParams map[string]string) (MockResponse, bool) {

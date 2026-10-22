@@ -12,10 +12,10 @@ import (
 
 // MockResponse is what the server returns for a matched route.
 type MockResponse struct {
-	StatusCode int
-	Headers    map[string]string
-	Body       interface{}
-	DelayMs    int
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Body       interface{}       `json:"body,omitempty"`
+	DelayMs    int               `json:"delayMs,omitempty"`
 }
 
 // RouteKey identifies a mock route.
@@ -94,7 +94,6 @@ func matchPath(pattern, actual string) bool {
 type MockServer struct {
 	registry  *Registry
 	rules     *RulesEngine
-	state     *StateStore
 	recording *RecordingSink
 	server    *http.Server
 	Port      int
@@ -104,7 +103,6 @@ func NewMockServer(r *Registry, port int) *MockServer {
 	ms := &MockServer{
 		registry:  r,
 		rules:     NewRulesEngine(nil),
-		state:     NewStateStore(),
 		recording: NewRecordingSink(r),
 		Port:      port,
 	}
@@ -121,8 +119,12 @@ func (ms *MockServer) SetRules(rules []Rule) {
 	ms.rules = NewRulesEngine(rules)
 }
 
+// Rules returns the rules the server is currently evaluating.
+func (ms *MockServer) Rules() []Rule {
+	return ms.rules.rules
+}
+
 func (ms *MockServer) Recording() *RecordingSink { return ms.recording }
-func (ms *MockServer) State() *StateStore        { return ms.state }
 
 func (ms *MockServer) Start() {
 	go func() { _ = ms.server.ListenAndServe() }()

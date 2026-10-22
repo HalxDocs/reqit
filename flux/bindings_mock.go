@@ -21,6 +21,32 @@ type MockStatus struct {
 	Recording  bool     `json:"recording"`
 }
 
+// SetMockRules replaces the rules the running mock server evaluates before it
+// falls back to the static route registry.
+//
+// A rule matches on the method, path, a header or a query parameter and
+// returns its own response, so the same path can answer differently depending
+// on the request.
+func (a *App) SetMockRules(rules []mock.Rule) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.mockServer == nil {
+		return errors.New("mock server is not running")
+	}
+	a.mockServer.SetRules(rules)
+	return nil
+}
+
+// GetMockRules returns the rules the running mock server is using.
+func (a *App) GetMockRules() []mock.Rule {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.mockServer == nil {
+		return []mock.Rule{}
+	}
+	return a.mockServer.Rules()
+}
+
 func (a *App) StartMockServer(port int) (MockStatus, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
