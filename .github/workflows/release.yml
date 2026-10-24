@@ -26,6 +26,9 @@ jobs:
 
       - name: Set the bundle version from the tag
         working-directory: flux
+        # Bash syntax (~/${VAR#v}). Required on Windows, whose default shell
+        # is PowerShell and which rejected the version step at v2.5.0.
+        shell: bash
         run: |
           # wails.json pins productVersion, and it feeds the macOS bundle's
           # Info.plist and the Windows NSIS installer. Without this the app
@@ -79,6 +82,9 @@ jobs:
 
       - name: Set the bundle version from the tag
         working-directory: flux
+        # Bash syntax (~/${VAR#v}). Required on Windows, whose default shell
+        # is PowerShell and which rejected the version step at v2.5.0.
+        shell: bash
         run: |
           # wails.json pins productVersion, and it feeds the macOS bundle's
           # Info.plist and the Windows NSIS installer. Without this the app
@@ -133,6 +139,9 @@ jobs:
 
       - name: Set the bundle version from the tag
         working-directory: flux
+        # Bash syntax (~/${VAR#v}). Required on Windows, whose default shell
+        # is PowerShell and which rejected the version step at v2.5.0.
+        shell: bash
         run: |
           # wails.json pins productVersion, and it feeds the macOS bundle's
           # Info.plist and the Windows NSIS installer. Without this the app
