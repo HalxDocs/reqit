@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.5.0] - 2026-10-22 — Secrets Stay Out of Git, Conditional Mock Rules, Vault References
+
+### New
+- Environment values no longer reach git — reqit's data moved into `.reqit/` and the ignore rules now cover the files that actually exist
+- Environment files are encrypted at rest with AES-256-GCM, using the key held in your OS keychain
+- Existing workspaces migrate their data into `.reqit/` automatically on first launch
+- `{{VAULT_NAME}}` references are resolved at request time from 1Password, HashiCorp Vault or AWS — the secret is never written to disk
+- Mock server rules — match on method, path, header or query and answer with your own status, body and delay
+- Backup health in the Git panel: reqit now tells you whether your collections have actually left your machine
+- CI runs the Go and frontend suites on every push, plus the OAuth 2.0 suite against a real Keycloak
+
+### Fixed
+- Ctrl+S did nothing — two commands claimed the shortcut and the wrong one won
+- Ctrl+Z was swallowed in text fields, so undo never worked; the URL field now has its own history
+- The macOS update could not be applied — the release is a zip and the updater only handled gzip
+- The app reported 2.0.0 in About on every release; the bundle version now comes from the tag
+- The What's New panel was empty for every release since v1.1.0, and showed the wrong version's notes
+- Deleting a stored secret failed on any machine without a keyring daemon
+
+### Under the hood
+- One implementation of `{{variable}}` substitution — the CLI, runner and MCP had drifted apart
+- cURL parsing follows POSIX quoting, so nested JSON in a body is no longer corrupted
+- app.go and the MCP tools split into focused files; a dead OAuth 2.0 engine and an unreachable mock rules engine were removed
+
 ## [2.4.0] - 2026-10-13 — Backup health, crash + timing fixes, hermetic test suite
 
 ### Fixes

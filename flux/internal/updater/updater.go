@@ -86,6 +86,20 @@ func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
 		}
 	}
 
+	// macOS ships as a zip containing an application bundle. A zip is not an
+	// executable, so it has to be unpacked before selfupdate can be given
+	// anything to apply.
+	if isZip(data) {
+		if runtime.GOOS != "darwin" {
+			return fmt.Errorf("unexpected zip update archive on %s", runtime.GOOS)
+		}
+		exe, err := extractAppFromZip(data, macBundleTempDir())
+		if err != nil {
+			return fmt.Errorf("unpack update archive: %w", err)
+		}
+		data = exe
+	}
+
 	// On Windows, try selfupdate first; fall back to NSIS installer.
 	if runtime.GOOS == "windows" {
 		if err := selfupdate.Apply(bytes.NewReader(data), selfupdate.Options{}); err != nil {
@@ -103,6 +117,12 @@ func (u *Updater) Apply(ctx context.Context, manifest UpdateManifest) error {
 // isGzip reports whether data starts with the gzip magic header.
 func isGzip(data []byte) bool {
 	return len(data) > 2 && data[0] == 0x1f && data[1] == 0x8b
+}
+
+// macBundleTempDir is where an unpacked macOS application bundle is staged
+// before it replaces the running one.
+func macBundleTempDir() string {
+	return filepath.Join(os.TempDir(), "reqit-update")
 }
 
 // preferredBinaryNames are matched (by base name) when unpacking a .tar.gz

@@ -140,7 +140,6 @@ export const allFeatures: FeatureCategory[] = [
       { label: "In-memory mock HTTP server with dynamic route registry", nav: "view:mockpanel" },
       { label: "Condition-based response rules (header, query, method, path matching)", nav: "view:mockpanel" },
       { label: "Traffic recording — capture real requests and replay as mocks", nav: "view:mockpanel" },
-      { label: "Stateful mock behavior — per-route/session counters", nav: "view:mockpanel" },
     ],
   },
   {
@@ -161,12 +160,24 @@ export const allFeatures: FeatureCategory[] = [
     category: "Security & Compliance",
     items: [
       { label: "AES-256-GCM encryption with Argon2 key derivation", nav: "view:security" },
-      { label: "Secrets vault — 1Password CLI and local encrypted file providers", nav: "view:security" },
+      { label: "Environment values encrypted at rest — the key stays in your OS keychain", nav: "view:security" },
+      { label: "Secrets vault — 1Password, HashiCorp Vault and AWS Secrets Manager", nav: "view:security" },
+      { label: "{{VAULT_NAME}} references — a secret is fetched at request time, never written to disk", nav: "view:http" },
+      { label: "Environment files excluded from git — your API keys never reach a commit", nav: "view:http" },
       { label: "Enterprise SSO — SAML 2.0 and OIDC provider management", nav: "view:security" },
       { label: "Data masking engine with configurable regex rules", nav: "view:security" },
       { label: "Audit trail — all operations logged and filterable", nav: "view:security" },
       { label: "Role-based access control (RBAC)", nav: "view:security" },
       { label: "Path traversal and URL safety validation", nav: "view:security" },
+    ],
+  },
+  {
+    category: "Git-Native Storage",
+    items: [
+      { label: "Collections and environments as plain JSON in your repository", nav: "view:http" },
+      { label: "Backup health — reqit tells you whether your data has actually been pushed", nav: "view:http" },
+      { label: "Auto-sync with a debounced commit, so an import makes one commit", nav: "view:http" },
+      { label: "Per-workspace data in .reqit/, migrated automatically from older layouts", nav: "view:http" },
     ],
   },
 ];
@@ -179,6 +190,157 @@ interface ReleaseNote {
 }
 
 export const releaseHistory: ReleaseNote[] = [
+  {
+    version: "v2.5.0",
+    date: "2026-10-22",
+    title: "Secrets Stay Out of Git, Conditional Mock Rules, Vault References",
+    highlights: [
+      {
+        category: "Security",
+        items: [
+          "Environment values no longer reach git — reqit's data moved into .reqit/ and the ignore rules now cover the files that actually exist",
+          "Environment files are encrypted at rest with AES-256-GCM, using the key held in your OS keychain",
+          "Existing workspaces migrate their data into .reqit/ automatically on first launch",
+          "{{VAULT_NAME}} references are resolved at request time from 1Password, HashiCorp Vault or AWS — the secret is never written to disk",
+        ],
+      },
+      {
+        category: "New",
+        items: [
+          "Mock server rules — match on method, path, header or query and answer with your own status, body and delay",
+          "Backup health in the Git panel: reqit now tells you whether your collections have actually left your machine",
+          "CI runs the Go and frontend suites on every push, plus the OAuth 2.0 suite against a real Keycloak",
+        ],
+      },
+      {
+        category: "Fixed",
+        items: [
+          "Ctrl+S did nothing — two commands claimed the shortcut and the wrong one won",
+          "Ctrl+Z was swallowed in text fields, so undo never worked; the URL field now has its own history",
+          "The macOS update could not be applied — the release is a zip and the updater only handled gzip",
+          "The app reported 2.0.0 in About on every release; the bundle version now comes from the tag",
+          "The What's New panel was empty for every release since v1.1.0, and showed the wrong version's notes",
+          "Deleting a stored secret failed on any machine without a keyring daemon",
+        ],
+      },
+      {
+        category: "Under the hood",
+        items: [
+          "One implementation of {{variable}} substitution — the CLI, runner and MCP had drifted apart",
+          "cURL parsing follows POSIX quoting, so nested JSON in a body is no longer corrupted",
+          "app.go and the MCP tools split into focused files; a dead OAuth 2.0 engine and an unreachable mock rules engine were removed",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.4.0",
+    date: "2026-10-13",
+    title: "Backup Health, Crash Fixes, Hermetic Tests",
+    highlights: [
+      {
+        category: "New",
+        items: [
+          "Backup health: reqit now reports whether your data has actually been pushed, and what is missing when it has not",
+          "Auto-sync is debounced, so importing a collection makes one commit instead of one per request",
+        ],
+      },
+      {
+        category: "Fixed",
+        items: [
+          "The webhook listener could panic and take the app down when it was stopped right after starting",
+          "Requests finishing in under a millisecond reported 0ms across every timing field",
+          "Long URLs were cut off in the URL bar instead of scrolling with the caret",
+          "The test suite no longer hangs — the Keycloak tests booted a container on every run",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.3.0",
+    date: "2026-09-19",
+    title: "Republish of v2.2.1",
+    highlights: [
+      {
+        category: "Note",
+        items: [
+          "This release contains the same code as v2.2.1 — it was republished with a corrected version number",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.2.1",
+    date: "2026-09-19",
+    title: "URL Bar Sizing and Linux Download Fixes",
+    highlights: [
+      {
+        category: "Fixed",
+        items: [
+          "The invalid-URL banner no longer squeezed the URL field into a sliver",
+          "The Linux download no longer 404s — it looks for the tarball first, then the legacy raw binary",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.2.0",
+    date: "2026-09-18",
+    title: "URL Bar Rework, Linux Tarball Packaging, Crash Fix",
+    highlights: [
+      {
+        category: "New",
+        items: [
+          "Linux releases ship as a tarball with a desktop entry, and the updater unpacks it",
+          "Postman-style auto-save for new requests, with automatic Content-Type detection",
+        ],
+      },
+      {
+        category: "Fixed",
+        items: [
+          "Editing a URL could crash the app — a hook ran after an early return in the URL preview",
+          "The variable button no longer steals width from the URL field",
+          "URL-named requests stay flat in the collections tree",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.1.0",
+    date: "2026-09-02",
+    title: "Response Diff Ignore Patterns",
+    highlights: [
+      {
+        category: "New",
+        items: [
+          "Ignore patterns for response diffs — exclude timestamps, request ids and other volatile values",
+          "Global defaults, per-request overrides and header patterns, with a settings dialog",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.0.0",
+    date: "2026-09-02",
+    title: "OAuth 2.0 Engine, Event Inspector, MCP Universal",
+    highlights: [
+      {
+        category: "New",
+        items: [
+          "OAuth 2.0 engine rebuilt on RFC 8252 — loopback redirect, PKCE S256 always on, tokens in the OS keychain",
+          "Event Inspector — capture and verify webhooks, then replay them",
+          "MCP universal — 24 tools over stdio and HTTP, so agents can drive reqit directly",
+          "Seven inspector features: MCP traffic inspector, tool-poisoning scanner, response diffing, flaky detection, adversarial assertions, custom visualizers and tool drift snapshots",
+        ],
+      },
+      {
+        category: "Platform",
+        items: [
+          "Fedora and Linux support — keyring fallback, browser launcher fallback, cross-platform MCP paths",
+        ],
+      },
+    ],
+  },
   {
     version: "v1.1.0",
     date: "2026-07-24",

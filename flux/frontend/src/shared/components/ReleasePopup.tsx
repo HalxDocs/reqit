@@ -3,7 +3,7 @@ import { X, ArrowUpRight, Sparkles } from "lucide-react";
 import { useUpdater } from "@/app/hooks/useUpdater";
 import { GetVersion } from "../../../wailsjs/go/main/App";
 
-export function ReleasePopup({ onWhatsNew }: { onWhatsNew: () => void }) {
+export function ReleasePopup({ onWhatsNew }: { onWhatsNew: (version: string) => void }) {
   const { update, dismiss: dismissUpdate } = useUpdater();
   const [dismissed, setDismissed] = useState(false);
   const [currentVer, setCurrentVer] = useState("");
@@ -22,7 +22,9 @@ export function ReleasePopup({ onWhatsNew }: { onWhatsNew: () => void }) {
 
   const handleWhatsNew = () => {
     setDismissed(true);
-    onWhatsNew();
+    // Pass the version being offered so the notes describe the update, not
+    // the version the user is running now.
+    onWhatsNew(update.version);
   };
 
   return (

@@ -208,6 +208,9 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   const openWhatsNew = useUIStore((s) => s.openWhatsNewModal);
   const closeWhatsNew = useUIStore((s) => s.closeWhatsNewModal);
+  // The release the notes should describe: the one being offered, when there
+  // is an update, otherwise the running version.
+  const [whatsNewVersion, setWhatsNewVersion] = useState<string>("");
 
   const handleNavTarget = useCallback((target: NavTarget) => {
     if (target.startsWith("view:")) {
@@ -561,8 +564,14 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
           GetVersion().then((v) => localStorage.setItem("flux:seen-version", v)).catch(() => {});
         }}
         onNavigate={handleNavTarget}
+        version={whatsNewVersion}
       />
-      <ReleasePopup onWhatsNew={openWhatsNew} />
+      <ReleasePopup
+        onWhatsNew={(version) => {
+          setWhatsNewVersion(version);
+          openWhatsNew();
+        }}
+      />
       <AssistantBot onNavigate={handleNavTarget} />
       <ToastHost />
       <ConfirmModal />

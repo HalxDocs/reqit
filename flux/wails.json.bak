@@ -1,0 +1,32 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "reqit",
+  "outputfilename": "reqit",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "HalxDocs",
+    "email": "kamsyejindu@gmail.com"
+  },
+  "info": {
+    "companyName": "HalxDocs",
+    "productName": "reqit",
+    "productVersion": "2.0.0",
+    "copyright": "© 2026 HalxDocs",
+    "comments": "Modern API client"
+  },
+  "nsisType": "installer",
+  "windows": {
+    "webviewInstallMode": "embed",
+    "windowsVersion": "10.0.17763.0"
+  },
+  "mac": {
+    "minimumSystemVersion": "11.0",
+    "appearance": "default"
+  },
+  "linux": {
+    "categories": "Development"
+  }
+}

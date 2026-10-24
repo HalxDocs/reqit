@@ -10,10 +10,17 @@ export function WhatsNewModal({
   open,
   onClose,
   onNavigate,
+  version,
 }: {
   open: boolean;
   onClose: () => void;
   onNavigate: (target: NavTarget) => void;
+  /**
+   * The release to describe. When an update is available this is the version
+   * being offered, so the notes are for what the user is about to get. It
+   * falls back to the running version when there is no update.
+   */
+  version?: string;
 }) {
   const [tab, setTab] = useState<Tab>("whatsnew");
   const [currentVersion, setCurrentVersion] = useState("");
@@ -25,8 +32,10 @@ export function WhatsNewModal({
     }
   }, [open]);
 
+  // The notes to show: the release being offered, otherwise the running one.
+  const targetVersion = version || currentVersion;
   const currentNote = releaseHistory.find(
-    (r) => r.version === currentVersion || (currentVersion && r.version.startsWith("Sprint")),
+    (r) => r.version === targetVersion || (targetVersion && r.version.startsWith("Sprint")),
   );
 
   const toggleExpand = (key: string) => {
