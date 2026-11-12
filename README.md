@@ -303,8 +303,6 @@ Collections commit to Git like any other file. No cloud sync. No proprietary for
 
 ---
 
-[![Fund my work on FLOSSAfrica](https://flossafrica.com/badge.svg?theme=dark)](https://flossafrica.com/m/halxdocs?p=reqit)
-
 ## Security
 
 See [SECURITY.md](SECURITY.md) for supported versions, private reporting (`kamsyejindu@gmail.com` or GitHub Private Advisory), and secure-use notes (keyring fallback at `~/.config/flux/keyring-fallback.json`, visualizer HTML sandbox). Please **do not** open a public issue for security reports.
