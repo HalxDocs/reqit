@@ -10,7 +10,7 @@ describe("release notes", () => {
   it("has notes for every release since v1.1.0", () => {
     // The versions the app has shipped. A release with no entry showed an
     // empty What's New panel, which is what users kept reporting.
-    const shipped = ["v2.0.0", "v2.1.0", "v2.2.0", "v2.2.1", "v2.3.0", "v2.4.0", "v2.5.0"];
+    const shipped = ["v2.0.0", "v2.1.0", "v2.2.0", "v2.2.1", "v2.3.0", "v2.4.0", "v2.5.0", "v2.6.0"];
 
     for (const version of shipped) {
       const note = releaseHistory.find((r) => r.version === version);
