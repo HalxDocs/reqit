@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 )
 
 func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTestResult {
@@ -99,7 +99,10 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 					payload.AuthValue = doReplace(payload.AuthValue, sharedReplacer)
 				}
 
-				result := requester.Execute(context.Background(), payload, jar)
+				// A load test can issue thousands of calls a minute. Recording
+				// each one would bury the history that receipts exist to make
+				// reviewable, so it executes without writing.
+				result, _ := trust.Execute(context.Background(), payload, jar, trust.Options{Skip: true})
 
 				sampleCh <- models.LoadTestSample{
 					TimestampMs: time.Since(start).Milliseconds(),
@@ -143,7 +146,7 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 
 	avg, p50, p95, p99 := computePercentiles(samples)
 
-	return models.LoadTestResult{
+	result := models.LoadTestResult{
 		Config:      config,
 		Samples:     samples,
 		TotalReqs:   len(samples),
@@ -155,6 +158,9 @@ func RunLoadTest(config models.LoadTestConfig, jar http.CookieJar) models.LoadTe
 		P99TimingMs: p99,
 		DurationMs:  elapsed,
 	}
+	// One summary receipt per test, not one per request.
+	trust.RecordLoadTest(trust.DefaultStore(), config.Request, result, trust.Options{})
+	return result
 }
 
 func computePercentiles(samples []models.LoadTestSample) (avg, p50, p95, p99 float64) {
