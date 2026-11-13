@@ -18,7 +18,7 @@ func main() {
 	// If the first arg is a CLI command, run headlessly.
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "run", "list", "help", "--help", "-h":
+		case "run", "list", "runs", "help", "--help", "-h":
 			os.Exit(cli.Run(os.Args[1:]))
 		case "mcp":
 			os.Exit(cli.RunMCP(os.Args[2:]))

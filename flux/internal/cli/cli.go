@@ -42,6 +42,8 @@ func Run(args []string) int {
 		return runCollection(args[1:])
 	case "list":
 		return listResources(args[1:])
+	case "runs":
+		return runsCommand(args[1:])
 	case "help", "--help", "-h":
 		printUsage()
 		return 0
@@ -59,6 +61,10 @@ Usage:
   reqit run <collection> [--env <name>] [--output <format>]
   reqit list collections
   reqit list environments
+  reqit runs list [--limit <n>] [--json]
+  reqit runs show <id> [--json]
+  reqit runs diff <id> <id>
+  reqit runs verify
   reqit mcp [--http] [--port 7247]
   reqit help
 
