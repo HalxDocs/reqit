@@ -44,6 +44,7 @@ import (
 	"flux/internal/telemetry"
 	"flux/internal/testbuilder"
 	traypkg "flux/internal/tray"
+	"flux/internal/trust"
 	"flux/internal/updater"
 	"flux/internal/vault"
 	"flux/internal/watcher"
@@ -95,6 +96,7 @@ type App struct {
 	oauthMu         sync.Mutex
 	schedulerStor   *schedpkg.Store
 	schedulerExec   *schedpkg.Executor
+	trustStore      *trust.Store
 	autoSyncOn      bool
 	autoSyncMu      sync.Mutex
 	syncState       gitSyncState
@@ -275,6 +277,12 @@ func (a *App) mountWorkspace(dir string) {
 	a.locks = locks.New(dir)
 	a.cookies = cookiestore.New(dir)
 	a.testSuites = testbuilder.NewStore(dir)
+
+	// Every execution writes a receipt under .reqit/runs/. The store is set as
+	// the process default so callers without a workspace handle (runner,
+	// scheduler, load test) record against the mounted workspace.
+	a.trustStore = trust.NewStore(dir)
+	trust.SetDefaultStore(a.trustStore)
 
 	// Event Inspector: workspace-scoped event store + shared secret/listener.
 	a.eventInspector = eventinspector.NewStore(dir)
