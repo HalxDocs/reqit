@@ -13,7 +13,7 @@ import (
 
 	"flux/internal/assertions"
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 	"flux/internal/vars"
 	"github.com/dop251/goja"
 )
@@ -260,8 +260,9 @@ func executeRequestWithRetries(ctx context.Context, req models.RunnerRequest, as
 
 	for attempt := 0; attempt <= retries; attempt++ {
 		payload := resolvePayload(req.Payload, env)
+		payload.Origin = trust.OriginFrom(req.Payload, "environment")
 
-		resp := requester.Execute(ctx, payload, nil)
+		resp, _ := trust.Execute(ctx, payload, nil, trust.Options{Source: trust.SourceRunner})
 
 		lastRes = models.RequestRunResult{
 			RequestID:   req.ID,
