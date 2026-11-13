@@ -33,3 +33,16 @@ func (a *App) GetRun(id string) (trust.Receipt, error) {
 	}
 	return *r, nil
 }
+
+// VerifyRuns checks the hash chain and signatures of every receipt in the
+// mounted workspace.
+func (a *App) VerifyRuns() (trust.VerifyReport, error) {
+	if a.trustStore == nil {
+		return trust.VerifyReport{}, fmt.Errorf("no workspace is open")
+	}
+	report, err := a.trustStore.VerifyChainReport()
+	if err != nil {
+		return report, err
+	}
+	return report, nil
+}
