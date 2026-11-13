@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"flux/internal/models"
-	"flux/internal/requester"
 	"flux/internal/security"
+	"flux/internal/trust"
 	"fmt"
 	"strings"
 )
 
-func handleSendRequest() ToolHandler {
+func handleSendRequest(wsDir string) ToolHandler {
 	return func(args json.RawMessage) (string, error) {
 		var p struct {
 			Method  string `json:"method"`
@@ -49,7 +49,10 @@ func handleSendRequest() ToolHandler {
 			}
 		}
 
-		res := requester.Execute(context.Background(), payload, nil)
+		res, _ := trust.Execute(context.Background(), payload, nil, trust.Options{
+			Store:  trust.NewStore(wsDir),
+			Source: trust.SourceMCP,
+		})
 
 		var sb strings.Builder
 		fmt.Fprintf(&sb, "**%s %s** → %d %s (%dms, %dB)\n\n", p.Method, p.URL, res.StatusCode, res.Status, res.TimingMs, res.SizeBytes)
