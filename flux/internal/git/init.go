@@ -29,6 +29,7 @@ func ReqitInit(repoRoot string) error {
 		".reqit/environments.json\n" +
 		".reqit/cookies.json\n" +
 		".reqit/locks/\n" +
+		".reqit/runs/\n" +
 		".reqit/**/*.secrets.json\n" +
 		".reqit/**/local.json\n"
 	return appendIfMissing(gitignorePath, entry)
