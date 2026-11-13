@@ -1,5 +1,6 @@
 import type { KeyValue, RequestState } from "@/features/request/types/request";
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
+import { vaultRefName } from "@/features/env/lib/vaultRefs";
 
 export interface WirePayload {
   method: string;
@@ -26,6 +27,21 @@ export interface WirePayload {
   soapVersion?: string;
   clientCert?: string;
   clientKey?: string;
+  /**
+   * The request as the user wrote it, before variable substitution, plus the
+   * source of each placeholder. The backend records this in the run receipt so
+   * the receipt describes the request without holding a resolved secret.
+   */
+  origin?: WireOrigin;
+}
+
+export interface WireOrigin {
+  url: string;
+  headers: { key: string; value: string; enabled: boolean }[];
+  params: { key: string; value: string; enabled: boolean }[];
+  body: string;
+  bodyForm: { key: string; value: string; enabled: boolean }[];
+  varSources?: Record<string, string>;
 }
 
 const stripId = (kv: KeyValue) => ({
@@ -148,5 +164,54 @@ export function buildPayloadLiteral(s: RequestState): WirePayload {
     soapVersion: s.bodyType === "soap" ? s.soapVersion : undefined,
     clientCert: s.clientCert ?? "",
     clientKey: s.clientKey ?? "",
+  };
+}
+
+const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g;
+
+function collectVarNames(text: string, into: Set<string>) {
+  for (const match of text.matchAll(VAR_PATTERN)) into.add(match[1]);
+}
+
+/**
+ * buildOrigin returns the request before substitution plus the source of every
+ * placeholder. The values are deliberately absent: the backend stores the
+ * names and their origin, never the resolved secret.
+ */
+export function buildOrigin(
+  requestState: RequestState,
+  collVars: Map<string, string> | undefined,
+): WireOrigin {
+  const literal = buildPayloadLiteral(requestState);
+  const envVars = useEnvStore.getState().activeVars();
+  const names = new Set<string>();
+  collectVarNames(literal.url, names);
+  collectVarNames(literal.body, names);
+  for (const h of literal.headers) collectVarNames(h.value, names);
+  for (const p of literal.params) collectVarNames(p.value, names);
+  for (const f of literal.bodyForm) collectVarNames(f.value, names);
+
+  // Same precedence as payloadForSend/mergeVars: a collection variable wins
+  // over a vault reference, which wins over a plain environment variable.
+  const varSources: Record<string, string> = {};
+  for (const name of names) {
+    if (collVars?.has(name)) {
+      varSources[name] = "collection";
+    } else if (vaultRefName(envVars.get(name))) {
+      varSources[name] = "vault";
+    } else if (envVars.has(name)) {
+      varSources[name] = "environment";
+    } else {
+      varSources[name] = "unresolved";
+    }
+  }
+
+  return {
+    url: literal.url,
+    headers: literal.headers,
+    params: literal.params,
+    body: literal.body,
+    bodyForm: literal.bodyForm,
+    varSources,
   };
 }
