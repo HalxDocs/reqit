@@ -11,7 +11,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 )
 
 // --- Event Inspector: capture / verify ---
@@ -173,7 +173,10 @@ func (a *App) EventInspectorReplay(id, targetURL string, preserveSvix bool) (mod
 		payload.Headers = append(payload.Headers, models.Header{Key: "Content-Type", Value: rec.ContentType, Enabled: true})
 	}
 
-	result := requester.Execute(context.Background(), payload, a.cookies)
+	result, _ := trust.Execute(context.Background(), payload, a.cookies, trust.Options{
+		Store:  a.trustStore,
+		Source: trust.SourceReplay,
+	})
 
 	replay := models.EventReplay{
 		ID:        uuid.NewString(),
