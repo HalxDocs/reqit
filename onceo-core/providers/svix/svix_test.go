@@ -83,7 +83,7 @@ func TestNewDecodesBase64Secret(t *testing.T) {
 }
 
 func TestVerifySignatureValid(t *testing.T) {
-	secret := "whsec_2rhuScZ1mQYt9wKx9mS0T2q5zZ3mY0dVc0gZ2v8UBUo="
+	secret := "whsec_dGVzdC1zZWNyZXQtbm90LXJlYWwtMDAwMDAwMDAwMDA="
 	body := loadFixture(t, "payment_succeeded.json")
 	p, err := New(secret)
 	if err != nil {
