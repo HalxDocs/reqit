@@ -38,6 +38,24 @@ type RequestPayload struct {
 	// IPs and internal hostnames.  Default false allows localhost (the normal case
 	// for a local API tool).  Set true for imported/shared/runner-originated requests.
 	ValidateURL bool `json:"validateUrl,omitempty"`
+	// Origin, when set, is the request as the user wrote it — before variable
+	// substitution. The trust layer records this instead of the expanded
+	// payload, so a receipt documents the request without holding any secret
+	// value. Callers that resolve variables fill it in; the app bridge always
+	// does, so every surface gets the same receipt shape.
+	Origin *RequestOrigin `json:"origin,omitempty"`
+}
+
+// RequestOrigin is a request before variable substitution. VarSources names
+// the place each {{placeholder}} came from ("environment", "collection" or
+// "vault") without carrying its value.
+type RequestOrigin struct {
+	URL        string            `json:"url,omitempty"`
+	Headers    []Header          `json:"headers,omitempty"`
+	Params     []Header          `json:"params,omitempty"`
+	Body       string            `json:"body,omitempty"`
+	BodyForm   []Header          `json:"bodyForm,omitempty"`
+	VarSources map[string]string `json:"varSources,omitempty"`
 }
 
 // OAuth2Config stored as JSON in AuthValue when AuthType=="oauth2"
