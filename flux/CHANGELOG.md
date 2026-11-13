@@ -1,5 +1,43 @@
 # Changelog
 
+## [2.6.0] - 2026-11-13 — Signed Run Receipts
+
+### New
+- Every execution now leaves a **run receipt** in `.reqit/runs/`: the request as
+  written (`{{variables}}` plus where each came from), response status, headers,
+  timing, body hash and optional contract validation
+- Receipts are redacted by construction — every query value outside a safe
+  allowlist is masked, as are secret-shaped URL path segments, and unknown
+  header values are hidden; bodies are stored only as SHA-256 plus byte count,
+  so a receipt can be shared or committed without leaking a secret
+- Receipts are hash-chained and signed with an HMAC key held in the OS keychain,
+  so an edit that recomputes the hash still fails verification
+- `reqit runs verify` reports signed and unsigned receipts separately
+- Load tests write one summary receipt (virtual users, requests, failures and
+  latency percentiles) instead of one receipt per request
+- The desktop app has a **Trust → Run receipts** panel listing, inspecting and
+  verifying the same history as the CLI
+- `reqit runs list` — newest first, with source, status, URL and timing
+- `reqit runs show <id>` — the full receipt; a unique prefix is enough
+- `reqit runs diff <id> <id>` — compares two executions and exits non-zero when
+  they differ
+- `reqit runs verify` — checks every receipt hash, its link to the one before
+  it, and its signature
+- The app, CLI, runner, scheduler, MCP server and event replay all record
+  through one `internal/trust` boundary
+
+### Under the hood
+- `internal/requester` is now pure transport; a single `trust.Execute` call site
+  replaces eight direct call sites across the product
+- Receipts are signed with a key held in the OS keychain, so a receipt
+  committed to a repository cannot be rewritten without detection
+- The cross-process lock is a real advisory OS lock (`flock` / `LockFileEx`),
+  released by the kernel if a writer dies; the portable fallback only applies
+  to platforms without either
+- A receipt failure is still non-fatal, but it is logged instead of disappearing
+- `.reqit/runs/` is gitignored by default and existing workspaces pick up the
+  new rule on launch
+
 ## [2.5.0] - 2026-10-22 — Secrets Stay Out of Git, Conditional Mock Rules, Vault References
 
 ### New
