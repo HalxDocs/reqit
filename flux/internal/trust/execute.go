@@ -98,6 +98,38 @@ func record(payload models.RequestPayload, res models.ResponseResult, opts Optio
 	return r.ID
 }
 
+// RecordLoadTest writes one summary receipt for a load test. A test can issue
+// thousands of requests; recording each one would bury the history that
+// receipts exist to make reviewable, so the run is summarized instead.
+func RecordLoadTest(store *Store, payload models.RequestPayload, result models.LoadTestResult, opts Options) string {
+	if opts.Skip || store == nil {
+		return ""
+	}
+	opts.Source = SourceLoadTest
+
+	r := buildReceipt(payload, models.ResponseResult{Error: result.Error}, opts)
+	r.Kind = "loadtest"
+	r.LoadTest = &LoadTestRecord{
+		VUs:         result.Config.VUs,
+		DurationSec: result.Config.DurationSec,
+		Iterations:  result.Config.Iterations,
+		TotalReqs:   result.TotalReqs,
+		Passed:      result.Passed,
+		Failed:      result.Failed,
+		AvgMs:       result.AvgTimingMs,
+		P50Ms:       result.P50TimingMs,
+		P95Ms:       result.P95TimingMs,
+		P99Ms:       result.P99TimingMs,
+		DurationMs:  result.DurationMs,
+		Error:       result.Error,
+	}
+	if err := store.Write(r); err != nil {
+		log.Printf("reqit: could not record load test receipt: %v", err)
+		return ""
+	}
+	return r.ID
+}
+
 // buildReceipt turns one payload and result into a record that is safe to
 // write to disk.
 func buildReceipt(payload models.RequestPayload, res models.ResponseResult, opts Options) *Receipt {
