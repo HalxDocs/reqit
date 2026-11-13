@@ -362,6 +362,39 @@ JSON-RPC 2.0 MCP server over stdio for AI agent integration.
 |---|---|
 | `requester.go` | HTTP/HTTPS request execution with auth (Basic, Bearer, OAuth2), mTLS, OpenTelemetry tracing, multipart, cookie jar |
 
+#### trust/ — Execution Boundary and Run Receipts
+Every API call in the product passes through this package, so a run leaves a
+record without each surface re-implementing one. `requester/` stays pure
+transport; `trust/` decides what is safe to remember.
+
+| File | Purpose |
+|---|---|
+| `execute.go` | `Execute` / `ExecuteStream` wrappers, `Options` (source, session, skip), `OriginFrom` builds a pre-substitution request, `RecordLoadTest` writes one summary per load test, `Annotate` updates a receipt after post-processing |
+| `receipt.go` | Receipt schema, `Store` under `.reqit/runs/`, chronological IDs with prefix lookup, SHA-256 hash chain, chain repair after annotation, `VerifyChainReport` (hash + signature), atomic writes |
+| `sign.go` | HMAC-SHA256 signing over each receipt hash; the key lives in the OS keychain (`reqit-receipts`), never in the workspace |
+| `redact.go` | URL userinfo removal, query value masking with a safe allowlist, secret-shaped path detection, header allowlist, `«redacted»` marker; bodies are stored only as a hash and size |
+| `lock_unix.go`, `lock_windows.go`, `lock_other.go` | Cross-process write lock using `flock` / `LockFileEx`, with a portable fallback |
+| `trust_test.go` | Security tests, including a sentinel secret that must never appear in any file under the runs directory, rehashed-edit detection, and concurrent writers |
+
+A receipt records the request as written (templated `{{variables}}` plus each
+variable's source — environment, collection or vault), the response status,
+headers, timing and body hash, and optional contract validation. It never
+stores a resolved secret: header values outside a small allowlist are masked,
+every query value outside a safe allowlist is masked, secret-shaped path
+segments are masked, and request/response bodies are reduced to a SHA-256 hash
+and byte count. Receipts are written by the app, CLI, runner, scheduler, MCP
+server and event replay. A load test writes one summary receipt rather than one
+per request. `.reqit/runs/` is gitignored by default; promote a receipt to a
+fixture when you want it reviewed.
+
+Receipts are hash-chained and signed. The signature is an HMAC over the
+receipt hash using a key in the OS keychain, so rewriting a receipt and
+recomputing its hash still fails verification without the key. This is tamper
+evidence, not tamper proof: anyone who can read the signing key can sign
+anything, but an edit made on another machine or committed to a repository is
+detectable. The desktop app shows the same history under **Trust → Run
+receipts**, including a **Verify** action; the CLI exposes it as `reqit runs`.
+
 #### runner/ — Collection Runner
 | File | Purpose |
 |---|---|
