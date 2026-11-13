@@ -223,8 +223,9 @@ func (a *App) SendRequest(payload models.RequestPayload) models.ResponseResult {
 
 	a.runPreScript(&payload)
 
-	result := requester.Execute(ctx, payload, a.cookies)
+	result, receiptID := trust.Execute(ctx, payload, a.cookies, a.trustOptions(trust.SourceApp, ""))
 	result = a.finishRequest(&payload, result)
+	a.annotateReceipt(receiptID, result)
 
 	a.mu.Lock()
 	if a.inflight != nil {
