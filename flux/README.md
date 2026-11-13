@@ -605,6 +605,8 @@ receipts**, including a **Verify** action; the CLI exposes it as `reqit runs`.
 | `response/components/SecurityWarnings.tsx` | Security warnings display |
 | `response/components/StatusBar.tsx` | Response status bar — status code, time, size |
 | `response/components/TimelineView.tsx` | Request timeline visualization |
+| `runs/components/RunsPanel.tsx` | Run receipt list, detail and verification panel |
+| `runs/lib/runsApi.ts` | Wails bridge and types for run receipts, with a safe browser fallback |
 | `scheduler/components/SchedulerPanel.tsx` | Scheduled runs panel |
 | `scripts/components/ScriptsPanel.tsx` | Pre/post-request script editor |
 | `security/components/SecurityPanel.tsx` | Security settings — E2EE, vault, SSO, masking, audit trail, RBAC, air-gap |
