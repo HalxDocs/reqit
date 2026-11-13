@@ -17,6 +17,7 @@ export type NavTarget =
   | "view:plugins"
   | "view:loadtest"
   | "view:mockpanel"
+  | "view:runs"
   | "modal:settings"
   | "modal:shortcuts"
   | "modal:env"
