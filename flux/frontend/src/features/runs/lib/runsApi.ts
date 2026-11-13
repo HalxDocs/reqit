@@ -130,3 +130,23 @@ export async function verifyRuns(): Promise<RunVerifyReport | null> {
   if (!b) return null;
   return b.VerifyRuns();
 }
+
+export function runKind(r: RunReceipt): string {
+  return r.kind || "run";
+}
+
+export function runTimingMs(r: RunReceipt): number {
+  if (r.loadTest) return Math.round(r.loadTest.avgMs);
+  return Math.round(r.timing?.totalMs ?? 0);
+}
+
+export function formatRunTime(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
+}
+
+export function truncateURL(url: string, max = 72): string {
+  if (url.length <= max) return url;
+  return url.slice(0, max - 1) + "…";
+}
