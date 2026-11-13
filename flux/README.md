@@ -92,6 +92,7 @@ Output: `build/bin/reqit` (or `reqit.exe` on Windows).
 | `bindings_mock.go` | Mock server lifecycle, recording, route overrides, captured responses |
 | `bindings_protocols.go` | HTTP request execution, WebSocket, Socket.IO, gRPC, GraphQL, MQTT, SOAP |
 | `bindings_runner.go` | Collection runner, load tests, test suites, report generation, external test generation |
+| `bindings_runs.go` | Run receipt list, detail and chain verification for the desktop UI |
 | `bindings_security.go` | Encryption keys, vault, SSO, data masking, audit log, RBAC, air-gap config |
 
 ---
