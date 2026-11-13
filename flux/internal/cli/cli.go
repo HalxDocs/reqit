@@ -12,7 +12,7 @@ import (
 	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 	"flux/internal/vars"
 	"flux/internal/workspaces"
 )
@@ -239,8 +239,13 @@ func runCollection(args []string) int {
 
 	for _, req := range coll.Requests {
 		payload := resolvePayload(req.Payload, envMap)
+		payload.Origin = trust.OriginFrom(req.Payload, "environment")
 
-		res := requester.Execute(context.Background(), payload, nil)
+		res, _ := trust.Execute(context.Background(), payload, nil, trust.Options{
+			Store:       trust.NewStore(wsDir),
+			Source:      trust.SourceCLI,
+			Environment: envName(env),
+		})
 
 		r := requestResult{
 			Name:       req.Name,
@@ -375,6 +380,14 @@ func getWorkspaceDir(wsID string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("workspace not found: %s", wsID)
+}
+
+// envName returns the environment name, or "" when none is selected.
+func envName(env *models.Environment) string {
+	if env == nil {
+		return ""
+	}
+	return env.Name
 }
 
 func formatTiming(ms int64) string {
