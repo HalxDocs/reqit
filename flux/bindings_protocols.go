@@ -18,10 +18,10 @@ import (
 	"flux/internal/grpc"
 	"flux/internal/models"
 	"flux/internal/mqtt"
-	"flux/internal/requester"
 	"flux/internal/scripting"
 	"flux/internal/security"
 	"flux/internal/soap"
+	"flux/internal/trust"
 )
 
 // --- WebSocket / SSE ---
@@ -251,6 +251,22 @@ func (a *App) runPreScript(payload *models.RequestPayload) {
 
 // finishRequest runs post-response handling (post-script, contract validation,
 // history, audit, profile counter) and returns the final response.
+// trustOptions describes the provenance of a run for the receipt store.
+func (a *App) trustOptions(source, session string) trust.Options {
+	return trust.Options{Store: a.trustStore, Source: source, Session: session}
+}
+
+// annotateReceipt attaches the result of post-processing that only exists
+// after the request completes, such as OpenAPI contract validation.
+func (a *App) annotateReceipt(id string, result models.ResponseResult) {
+	if id == "" || result.Validation == nil {
+		return
+	}
+	trust.Annotate(a.trustStore, id, func(r *trust.Receipt) {
+		r.Validation = result.Validation
+	})
+}
+
 func (a *App) finishRequest(payload *models.RequestPayload, result models.ResponseResult) models.ResponseResult {
 	vars2, logs2, pass2, fail2, err2 := scripting.RunPostScript(payload.PostScript, payload, &result)
 	if err2 != nil {
