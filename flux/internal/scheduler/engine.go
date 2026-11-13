@@ -6,7 +6,7 @@ import (
 
 	"flux/internal/collections"
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 )
 
 type Executor struct {
@@ -94,7 +94,9 @@ func (e *Executor) tick() {
 		}
 
 		for _, rr := range reqs {
-			resp := requester.Execute(context.Background(), rr.Payload, nil)
+			payload := rr.Payload
+			payload.Origin = trust.OriginFrom(rr.Payload, "environment")
+			resp, _ := trust.Execute(context.Background(), payload, nil, trust.Options{Source: trust.SourceScheduler})
 			passed := resp.StatusCode >= 200 && resp.StatusCode < 300
 			if passed {
 				result.Passed++
