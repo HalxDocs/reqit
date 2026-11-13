@@ -354,39 +354,81 @@ func (a *App) mountWorkspace(dir string) {
 	a.schedulerExec.Start(a.ctx)
 }
 
-// ensureWorkspaceGitignore creates a .gitignore in the workspace root that
-// excludes sensitive files from being committed to git.
+// ensureWorkspaceGitignore makes sure the workspace .gitignore excludes
+// sensitive files. It appends only the patterns that are missing, so a
+// workspace created by an older version picks up new rules (such as run
+// receipts) without losing custom entries.
 func (a *App) ensureWorkspaceGitignore(dir string) {
 	gitignorePath := filepath.Join(dir, ".gitignore")
-	secretPatterns := []byte(
-		"# Protect secrets from being committed\n" +
-			"*.env\n" +
-			"*.env.*\n" +
-			"*.key\n" +
-			"*.pem\n" +
-			"*.p12\n" +
-			"*.pfx\n" +
-			"*.cert\n" +
-			"*.crt\n" +
-			"**/secrets.json\n" +
-			"**/credentials.json\n" +
-			// Environment values hold API keys, so they stay local. The
-			// environment structure itself is not secret and is kept so the
-			// names of the variables are shared.
-			".reqit/environments.json\n" +
-			// Session cookies and captured traffic are credentials.
-			".reqit/cookies.json\n" +
-			".reqit/interceptor/\n" +
-			// AI provider keys and agent-lens configuration.
-			".reqit/ai.json\n" +
-			// Lock files are runtime state.
-			".reqit/locks/\n" +
-			"*.log\n",
-	)
-	// Only write if file doesn't exist — don't overwrite user's custom gitignore.
-	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
-		_ = os.WriteFile(gitignorePath, secretPatterns, 0644)
+	patterns := []string{
+		"# Protect secrets from being committed",
+		"*.env",
+		"*.env.*",
+		"*.key",
+		"*.pem",
+		"*.p12",
+		"*.pfx",
+		"*.cert",
+		"*.crt",
+		"**/secrets.json",
+		"**/credentials.json",
+		// Environment values hold API keys, so they stay local. The
+		// environment structure itself is not secret and is kept so the
+		// names of the variables are shared.
+		".reqit/environments.json",
+		// Session cookies and captured traffic are credentials.
+		".reqit/cookies.json",
+		".reqit/interceptor/",
+		// AI provider keys and agent-lens configuration.
+		".reqit/ai.json",
+		// Lock files are runtime state.
+		".reqit/locks/",
+		// Run receipts are local history. They are safe to read, but writing
+		// one per request would bloat the repository; a run can be promoted
+		// to a fixture deliberately.
+		".reqit/runs/",
+		"*.log",
 	}
+	_ = appendMissingLines(gitignorePath, patterns)
+}
+
+// appendMissingLines appends the lines of text that are not already present in
+// the file. It creates the file when it does not exist.
+func appendMissingLines(path string, lines []string) error {
+	existing := ""
+	if data, err := os.ReadFile(path); err == nil {
+		existing = string(data)
+	}
+	present := make(map[string]bool)
+	for _, line := range strings.Split(existing, "\n") {
+		present[strings.TrimSpace(line)] = true
+	}
+
+	var missing []string
+	for _, line := range lines {
+		if !present[strings.TrimSpace(line)] {
+			missing = append(missing, line)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if existing != "" && !strings.HasSuffix(existing, "\n") {
+		if _, err := f.WriteString("\n"); err != nil {
+			return err
+		}
+	}
+	if _, err := f.WriteString("\n" + strings.Join(missing, "\n") + "\n"); err != nil {
+		return err
+	}
+	return nil
 }
 
 // --- Workspaces ---
