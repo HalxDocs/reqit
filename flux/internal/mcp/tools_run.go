@@ -7,7 +7,7 @@ import (
 	"flux/internal/crypto"
 	"flux/internal/environments"
 	"flux/internal/models"
-	"flux/internal/requester"
+	"flux/internal/trust"
 	"fmt"
 	"strings"
 	"time"
@@ -89,7 +89,11 @@ func handleRunCollection(wsDir string) ToolHandler {
 				break
 			}
 			payload := resolvePayloadMCP(req.Payload, envMap)
-			res := requester.Execute(ctx, payload, nil)
+			payload.Origin = trust.OriginFrom(req.Payload, "environment")
+			res, _ := trust.Execute(ctx, payload, nil, trust.Options{
+				Store:  trust.NewStore(wsDir),
+				Source: trust.SourceMCP,
+			})
 
 			if res.Error != "" {
 				failed++
