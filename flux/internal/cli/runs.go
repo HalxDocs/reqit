@@ -14,7 +14,7 @@ import (
 // runsCommand implements `reqit runs ...`.
 func runsCommand(args []string) int {
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "Usage: reqit runs list|show")
+		fmt.Fprintln(os.Stderr, "Usage: reqit runs list|show|diff|verify")
 		return 1
 	}
 	switch args[0] {
@@ -22,9 +22,13 @@ func runsCommand(args []string) int {
 		return runsList(args[1:])
 	case "show":
 		return runsShow(args[1:])
+	case "diff":
+		return runsDiff(args[1:])
+	case "verify":
+		return runsVerify(args[1:])
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown runs command: %s\n", args[0])
-		fmt.Fprintln(os.Stderr, "Usage: reqit runs list|show")
+		fmt.Fprintln(os.Stderr, "Usage: reqit runs list|show|diff|verify")
 		return 1
 	}
 }
@@ -203,6 +207,127 @@ func runsShow(args []string) int {
 				fmt.Printf("  skipped: %s\n", r.Validation.SkipReason)
 			}
 		}
+	}
+	return 0
+}
+
+func runsDiff(args []string) int {
+	wsID := ""
+	var ids []string
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--workspace", "-w":
+			if i+1 < len(args) {
+				i++
+				wsID = args[i]
+			}
+		default:
+			if !strings.HasPrefix(args[i], "-") {
+				ids = append(ids, args[i])
+			}
+		}
+	}
+	if len(ids) != 2 {
+		fmt.Fprintln(os.Stderr, "Usage: reqit runs diff <id> <id>")
+		return 1
+	}
+
+	store, code := receiptStore(wsID)
+	if code != 0 {
+		return code
+	}
+	a, err := store.Get(ids[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return 1
+	}
+	b, err := store.Get(ids[1])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return 1
+	}
+
+	changed := false
+	same := func(label, a, b string) {
+		if a == b {
+			fmt.Printf("  %-12s unchanged\n", label)
+			return
+		}
+		changed = true
+		fmt.Printf("  %-12s %s\n  %-12s %s\n", label+":", a, "", b)
+	}
+
+	fmt.Printf("Comparing %s → %s\n\n", a.ID, b.ID)
+	if a.LoadTest != nil || b.LoadTest != nil {
+		la, lb := a.LoadTest, b.LoadTest
+		if la == nil {
+			la = &trust.LoadTestRecord{}
+		}
+		if lb == nil {
+			lb = &trust.LoadTestRecord{}
+		}
+		same("kind", a.Kind, b.Kind)
+		same("vus", fmt.Sprintf("%d", la.VUs), fmt.Sprintf("%d", lb.VUs))
+		same("requests", fmt.Sprintf("%d", la.TotalReqs), fmt.Sprintf("%d", lb.TotalReqs))
+		same("failed", fmt.Sprintf("%d", la.Failed), fmt.Sprintf("%d", lb.Failed))
+		same("p95", fmt.Sprintf("%.0fms", la.P95Ms), fmt.Sprintf("%.0fms", lb.P95Ms))
+		if changed {
+			return 2
+		}
+		return 0
+	}
+
+	same("request", a.Request.Method+" "+a.Request.URL, b.Request.Method+" "+b.Request.URL)
+	same("status", fmt.Sprintf("%d", a.Response.StatusCode), fmt.Sprintf("%d", b.Response.StatusCode))
+	same("timing", timingOf(*a), timingOf(*b))
+	same("body", shortHash(a.Response.BodySHA256), shortHash(b.Response.BodySHA256))
+	same("size", humanBytes(a.Response.BodyBytes), humanBytes(b.Response.BodyBytes))
+
+	av, bv := "none", "none"
+	if a.Validation != nil {
+		av = validity(a.Validation.Valid)
+	}
+	if b.Validation != nil {
+		bv = validity(b.Validation.Valid)
+	}
+	same("validation", av, bv)
+
+	if changed {
+		return 2
+	}
+	return 0
+}
+
+func runsVerify(args []string) int {
+	wsID := ""
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--workspace", "-w":
+			if i+1 < len(args) {
+				i++
+				wsID = args[i]
+			}
+		}
+	}
+
+	store, code := receiptStore(wsID)
+	if code != 0 {
+		return code
+	}
+	report, err := store.VerifyChainReport()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "✕ %v\n", err)
+		return 1
+	}
+	if report.Checked == 0 {
+		fmt.Println("No runs recorded yet.")
+		return 0
+	}
+	if report.Unsigned == 0 {
+		fmt.Printf("✓ %d receipt%s verified — hashes, chain and signatures intact\n", report.Checked, plural(report.Checked))
+	} else {
+		fmt.Printf("✓ %d receipt%s verified — hashes and chain intact (%d signed, %d unsigned)\n",
+			report.Checked, plural(report.Checked), report.Signed, report.Unsigned)
 	}
 	return 0
 }
