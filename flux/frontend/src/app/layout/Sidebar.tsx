@@ -233,6 +233,15 @@ export function Sidebar({ onGoHome }: { onGoHome: () => void }) {
         <Section icon={<HistoryIcon size={12} />} label="History">
           <HistoryList />
         </Section>
+
+        <Section icon={<Shield size={12} />} label="Trust">
+          <NavItem
+            icon={<Shield size={13} />}
+            label="Run receipts"
+            active={view === "runs"}
+            onClick={() => setView(view === "runs" ? "http" : "runs")}
+          />
+        </Section>
       </nav>
 
       {/* ===== FIXED TOOLS (ALWAYS VISIBLE) ===== */}
