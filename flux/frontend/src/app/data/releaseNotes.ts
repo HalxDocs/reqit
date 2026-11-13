@@ -192,6 +192,48 @@ interface ReleaseNote {
 
 export const releaseHistory: ReleaseNote[] = [
   {
+    version: "v2.6.0",
+    date: "2026-11-13",
+    title: "Signed Run Receipts",
+    highlights: [
+      {
+        category: "New",
+        items: [
+          "Every request leaves a run receipt in .reqit/runs/ — the templated request, response status, timing, body hash and optional contract validation",
+          "Inspect, diff and verify receipts from the terminal with reqit runs list, show, diff and verify",
+          "The desktop app gains Trust → Run receipts, with the same history, receipt detail and one-click verification",
+          "Load tests write one summary receipt with virtual users, requests, failures and latency percentiles",
+        ],
+      },
+      {
+        category: "Security",
+        items: [
+          "Receipts are redacted by construction — query values outside a safe allowlist, secret-shaped path segments and unknown header values are masked",
+          "Request and response bodies are stored only as SHA-256 and byte count",
+          "Each receipt is hash-chained and signed with an HMAC key held in your OS keychain, so an edit that recomputes the hash still fails verification",
+          "reqit runs verify reports signed and unsigned receipts separately",
+        ],
+      },
+      {
+        category: "Limitations",
+        items: [
+          "Redaction is defense in depth, not a guarantee — a low-entropy secret in an innocuously named path segment cannot be distinguished from a resource ID",
+          "Receipts are tamper-evident, not tamper-proof; anyone who can read your keychain signing key can sign a forged receipt",
+          "Recording is best-effort: a failed write is logged and never fails the request",
+          "Advisory locks rely on the filesystem honouring them; unusual network filesystems can still allow two writers",
+        ],
+      },
+      {
+        category: "Under the hood",
+        items: [
+          "One internal/trust execution boundary replaces eight direct requester call sites across the app, CLI, runner, scheduler, MCP server and event replay",
+          "Cross-process writes use real advisory OS locks (flock / LockFileEx) instead of an O_EXCL lock file",
+          "Receipt writes are atomic and existing workspaces pick up the .reqit/runs/ ignore rule on launch",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.0",
     date: "2026-10-22",
     title: "Secrets Stay Out of Git, Conditional Mock Rules, Vault References",
