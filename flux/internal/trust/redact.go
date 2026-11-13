@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"flux/internal/models"
 )
 
 // Redaction rules. The receipt must be safe to commit to a repository, so the
@@ -176,4 +178,59 @@ func redactURL(raw string) string {
 	out = strings.ReplaceAll(out, "%7B%7B", "{{")
 	out = strings.ReplaceAll(out, "%7D%7D", "}}")
 	return out
+}
+
+// redactHeaders records every header name and only the values that cannot be
+// credentials. A custom header's value is masked because its meaning is
+// unknown.
+func redactHeaders(headers []models.Header) []HeaderRecord {
+	out := make([]HeaderRecord, 0, len(headers))
+	for _, h := range headers {
+		if h.Key == "" {
+			continue
+		}
+		rec := HeaderRecord{Name: h.Key}
+		if h.Enabled && safeHeaderValue[strings.ToLower(h.Key)] {
+			rec.Value = h.Value
+		} else if h.Enabled {
+			rec.Value = redactedValue
+			rec.Redacted = true
+		}
+		out = append(out, rec)
+	}
+	return out
+}
+
+// redactResponseHeaders applies the same allowlist to a response, where the
+// risk is a reflected credential in a header such as Set-Cookie.
+func redactResponseHeaders(headers map[string]string) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(headers))
+	for name, value := range headers {
+		lower := strings.ToLower(name)
+		switch {
+		case safeHeaderValue[lower]:
+			out[name] = value
+		case sensitiveName.MatchString(lower):
+			out[name] = redactedValue
+		default:
+			// Unknown header: keep the name so the receipt is still useful
+			// for debugging, but not the value.
+			out[name] = redactedValue
+		}
+	}
+	return out
+}
+
+// preview returns at most limit bytes of s, with a marker when truncated.
+func preview(s string, limit int) string {
+	if limit <= 0 || s == "" {
+		return ""
+	}
+	if len(s) <= limit {
+		return s
+	}
+	return s[:limit] + "…"
 }
