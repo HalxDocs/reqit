@@ -139,7 +139,8 @@ Run collections from the terminal without the Wails desktop UI.
 
 | File | Purpose |
 |---|---|
-| `cli.go` | CLI dispatcher: `run`, `list`, `help` commands |
+| `cli.go` | CLI dispatcher: `run`, `list`, `runs`, `help` commands |
+| `runs.go` | `reqit runs list\|show\|diff\|verify` — reads and verifies run receipts from `.reqit/runs/` |
 | `mcp.go` | MCP server CLI entrypoint |
 
 #### collections/ — Collection Persistence
