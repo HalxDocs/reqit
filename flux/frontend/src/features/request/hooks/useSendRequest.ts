@@ -8,7 +8,7 @@ import { useCollectionStore } from "@/features/collections/stores/useCollectionS
 import { useEnvStore } from "@/features/env/stores/useEnvStore";
 import { useUIStore } from "@/app/stores/useUIStore";
 import { useTabsStore } from "@/features/tabs/stores/useTabsStore";
-import { buildPayload, buildPayloadLiteral } from "@/features/request/lib/buildPayload";
+import { buildPayload, buildOrigin, buildPayloadLiteral } from "@/features/request/lib/buildPayload";
 import { runSecurityChecks } from "@/features/request/lib/securityCheck";
 import { setEndpointCache } from "@/features/request/stores/useEndpointCache";
 import { vaultRefName, containsVaultRef } from "@/features/env/lib/vaultRefs";
@@ -235,25 +235,28 @@ function payloadForSend(vaultVars: Map<string, string>): unknown {
   const requestState = useRequestStore.getState();
   const loadedID = useUIStore.getState().loadedRequestID;
   let collVars: Map<string, string> | undefined;
+  let col: ReturnType<typeof useCollectionStore.getState>["collections"][number] | undefined;
   if (loadedID) {
     const colls = useCollectionStore.getState().collections;
-    for (const col of colls) {
-      if (col.requests.some((r) => r.id === loadedID)) {
-        if (col.variables?.length) {
-          collVars = new Map();
-          for (const v of col.variables) {
-            if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
-          }
-        }
-        const payload = buildPayload(requestState, mergeVars(collVars, vaultVars));
-        if (col.preScript) payload.preScript = col.preScript + "\n\n" + (payload.preScript ?? "");
-        if (col.postScript) payload.postScript = col.postScript + "\n\n" + (payload.postScript ?? "");
-        if (col.spec) (payload as typeof payload & { specPath: string }).specPath = col.spec;
-        return payload;
+    col = colls.find((c) => c.requests.some((r) => r.id === loadedID));
+    if (col?.variables?.length) {
+      collVars = new Map();
+      for (const v of col.variables) {
+        if (v.enabled !== false && v.key) collVars.set(v.key, v.value ?? "");
       }
     }
   }
-  return buildPayload(requestState, mergeVars(collVars, vaultVars));
+
+  const payload = buildPayload(requestState, mergeVars(collVars, vaultVars));
+  if (col) {
+    if (col.preScript) payload.preScript = col.preScript + "\n\n" + (payload.preScript ?? "");
+    if (col.postScript) payload.postScript = col.postScript + "\n\n" + (payload.postScript ?? "");
+    if (col.spec) (payload as typeof payload & { specPath: string }).specPath = col.spec;
+  }
+  // The receipt records this instead of the resolved payload, so it can show
+  // what was asked for without holding a secret.
+  payload.origin = buildOrigin(requestState, collVars);
+  return payload;
 }
 
 // mergeVars combines the collection variables with the vault values. The
