@@ -378,6 +378,7 @@ function WorkspaceApp({ onGoHome }: { onGoHome: () => void }) {
       { id: "view.socket", label: "View: WebSocket", category: "View", scope: "global", defaultKeys: [], action: () => setView("socket") },
       { id: "view.sse", label: "View: SSE Viewer", category: "View", scope: "global", defaultKeys: [], action: () => setView("sse") },
       { id: "view.eventinspector", label: "View: Event Inspector", category: "View", scope: "global", defaultKeys: [], action: () => setView("eventinspector") },
+      { id: "view.runs", label: "View: Run Receipts", category: "View", scope: "global", defaultKeys: [], action: () => setView("runs") },
       { id: "view.mcp", label: "View: MCP Bridge", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
       { id: "view.mqtt", label: "View: MQTT Client", category: "View", scope: "global", defaultKeys: [], action: () => setView("mqtt") },
       { id: "view.mcptraffic", label: "View: MCP Traffic", category: "View", scope: "global", defaultKeys: [], action: () => setView("mcp") },
