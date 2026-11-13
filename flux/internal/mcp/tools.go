@@ -37,7 +37,7 @@ func makeHandler(name, wsDir string) ToolHandler {
 	case "switch_environment":
 		return handleSwitchEnvironment(wsDir)
 	case "send_request":
-		return handleSendRequest()
+		return handleSendRequest(wsDir)
 	case "diagnose_response":
 		return handleDiagnoseResponse(wsDir)
 	case "generate_assertions":
