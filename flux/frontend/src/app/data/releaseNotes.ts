@@ -168,6 +168,7 @@ export const allFeatures: FeatureCategory[] = [
       { label: "Enterprise SSO — SAML 2.0 and OIDC provider management", nav: "view:security" },
       { label: "Data masking engine with configurable regex rules", nav: "view:security" },
       { label: "Audit trail — all operations logged and filterable", nav: "view:security" },
+      { label: "Signed run receipts — every request leaves a redacted, hash-chained record you can verify", nav: "view:runs" },
       { label: "Role-based access control (RBAC)", nav: "view:security" },
       { label: "Path traversal and URL safety validation", nav: "view:security" },
     ],
