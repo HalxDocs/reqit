@@ -208,3 +208,51 @@ func headerText(headers []models.Header) string {
 	}
 	return b.String()
 }
+
+// OriginFrom builds a RequestOrigin from a payload. When the payload already
+// carries an origin (the app saves one with every request), that templated
+// request is preserved rather than replaced by the possibly-resolved URL.
+// Placeholders without a recorded source are attributed to source.
+func OriginFrom(templated models.RequestPayload, source string) *models.RequestOrigin {
+	var o *models.RequestOrigin
+	if templated.Origin != nil {
+		clone := *templated.Origin
+		if clone.VarSources != nil {
+			// Copy the map: OriginFrom adds any unresolved placeholders, and
+			// it must not mutate the caller's payload.
+			sources := make(map[string]string, len(clone.VarSources))
+			for name, source := range clone.VarSources {
+				sources[name] = source
+			}
+			clone.VarSources = sources
+		}
+		o = &clone
+	} else {
+		o = &models.RequestOrigin{
+			URL:      templated.URL,
+			Headers:  templated.Headers,
+			Params:   templated.Params,
+			Body:     templated.Body,
+			BodyForm: templated.BodyForm,
+		}
+	}
+	if o.URL == "" {
+		o.URL = templated.URL
+	}
+	if o.URL == "" && o.Body == "" && len(o.Headers) == 0 && len(o.Params) == 0 && len(o.BodyForm) == 0 {
+		return o
+	}
+
+	names := placeholders(o.URL + " " + o.Body + headerText(o.Headers) + headerText(o.Params) + headerText(o.BodyForm))
+	if len(names) > 0 {
+		if o.VarSources == nil {
+			o.VarSources = make(map[string]string, len(names))
+		}
+		for _, name := range names {
+			if _, ok := o.VarSources[name]; !ok {
+				o.VarSources[name] = source
+			}
+		}
+	}
+	return o
+}
