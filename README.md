@@ -154,6 +154,7 @@ sudo dnf install webkit2gtk4.1 libsecret gnome-keyring
 | CI/CD generation | GitHub Actions, GitLab CI, Jenkins pipeline YAML |
 | Test generation | Playwright and Jest (JS/TS) from collections |
 | CLI mode | Headless collection execution for CI/CD pipelines |
+| Run receipts | Every execution leaves a redacted, signed, hash-chained record in `.reqit/runs/`; inspect or verify it in the app's **Trust → Run receipts** panel or with `reqit runs list\|show\|diff\|verify` |
 
 #### Running the tests
 
