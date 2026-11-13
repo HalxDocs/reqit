@@ -38,6 +38,24 @@
 - `.reqit/runs/` is gitignored by default and existing workspaces pick up the
   new rule on launch
 
+### Limitations
+- Redaction is defense in depth, not a guarantee. Query values and
+  credential-shaped path segments are masked, but a low-entropy secret in an
+  innocuously named path segment cannot be distinguished from a resource ID.
+  Do not place secrets in URL paths.
+- Receipts are tamper-evident, not tamper-proof. A local attacker who can read
+  the signing key stored in the OS keychain can sign a forged receipt. The
+  signature makes edits made elsewhere, or receipts committed to a repository,
+  detectable without that key.
+- Recording is best-effort by design: a failed write is logged and never fails
+  the request. Use `reqit runs verify` and the runs panel to confirm that
+  history was written.
+- Advisory locks depend on the filesystem honouring them. They are reliable on
+  local disks, but a network filesystem with broken lock semantics can still
+  allow two writers to fork the chain.
+- A load test records one summary receipt, not one receipt per request, so
+  individual load-test requests are intentionally not replayable.
+
 ## [2.5.0] - 2026-10-22 — Secrets Stay Out of Git, Conditional Mock Rules, Vault References
 
 ### New
