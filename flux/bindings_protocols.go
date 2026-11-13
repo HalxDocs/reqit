@@ -354,10 +354,11 @@ func (a *App) SendRequestStream(sessionID string, payload models.RequestPayload)
 
 		a.runPreScript(&payload)
 
-		result := requester.ExecuteStream(ctx, payload, a.cookies, func(ev models.SSEEvent) {
+		result, receiptID := trust.ExecuteStream(ctx, payload, a.cookies, func(ev models.SSEEvent) {
 			runtime.EventsEmit(a.ctx, "sse:event", map[string]interface{}{"sessionId": sessionID, "event": ev})
-		})
+		}, a.trustOptions(trust.SourceApp, sessionID))
 		result = a.finishRequest(&payload, result)
+		a.annotateReceipt(receiptID, result)
 		runtime.EventsEmit(a.ctx, "sse:done", map[string]interface{}{"sessionId": sessionID, "result": result})
 	}()
 
