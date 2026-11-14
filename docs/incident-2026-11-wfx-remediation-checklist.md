@@ -195,6 +195,22 @@ Legend: **wfx-docs cleaned** = verified decoy PR closed + `wfx-docs` branch dele
 
 **Action:** these are separate from the wfx exfil scripts but still exposed credentials. Restrict/rotate/regenerate the keys (apply API & referrer restrictions), remove them from source/history as appropriate, and resolve alerts. Audit each repo for any additional unauthorized changes.
 
+## 7) Newly discovered malicious scripts in default branches (critical)
+
+In addition to the dangling `.ci-wfx-*` commits in `reqit`, secret-scanning and manual verification found Telegram-token exfiltration scripts present in **default-branch history/current content** of other repositories:
+
+### HalxDocs/aegis-lab (5 open Telegram Bot Token alerts: #1–#5)
+- **File:** `.ci-7i8uv3.sh` (added), commit `58a5cb496ae425a356e8615aa28cc079cdd70b72` on `main` (publicly accessible). Commit is reachable from `main`/`origin/main`.
+- **Behavior:** same exfiltration pattern (`WF_TG_BOTS`/`WF_TG_CHAT`, env/credential/history/memory/cloud collection, dead-drop/callback logic). Alerts created 2026-11-12.
+- **Action:** revoke/rotate all exposed Telegram bot tokens and secure the chat; treat any CI/host that ran this script as compromised; remove the file from the repository and **rewrite/purge history** so the script/tokens are not fetchable; investigate Actions runs around the commit time; resolve alerts only after rotation and purge.
+
+### HalxDocs/dlq_inspector (5 open Telegram Bot Token alerts: #1–#5)
+- **File:** `scripts/test-installers.sh` — exfiltration payload appended after legitimate installer-test content (starts at the injected section around line ~192 in the flagged commit), commit `0cccb12ec2fbaf3f38147fdb5741e2dde3a0b02e` on `main` (publicly accessible, reachable from `main`).
+- **Behavior:** appended `# ci cache` / `WF_TG_BOTS` exfil block (same Telegram/credential-exfil pattern) inside an existing script, increasing chance of accidental execution.
+- **Action:** revoke/rotate exposed tokens and secure chat; remove the injected block, restore the script to its legitimate content, and **rewrite/purge history**; audit CI runs and any executions of `scripts/test-installers.sh` since the commit; resolve alerts after rotation and purge.
+
+> These two repos were not caught by name-only `.ci-wfx*` branch/file sweeps because of different naming/embedding. A broader indicator search (e.g. `WF_TG_BOTS`, exfil markers) is recommended across all repos and local clones.
+
 ## 5) Global actions still required
 
 1. **Credentials & account:** review GitHub **Security log** (not sessions only), revoke/rotate PATs/OAuth/SSH/GPG/deploy keys and `gh` tokens; rotate all potentially exposed cloud/CI/registry/DB/API secrets; revoke/regenerate Telegram bot tokens (#2–#6 and any others found).
