@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" role="img" aria-labelledby="title desc" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <title id="title">How reqit signed run receipts work</title>
+  <desc id="desc">A request is written with variables, passes through a trust boundary that redacts secrets, is sent to the API, and returns a sealed receipt that is hash-chained and signed with an OS keychain key. Receipts can be verified from the CLI or the desktop app.</desc>
+
+  <defs>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#CBD5E1" opacity="0.55"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0E7490"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="680" fill="#F7F9FC"/>
+  <rect width="1200" height="680" fill="url(#dots)"/>
+
+  <!-- Header -->
+  <text x="40" y="58" font-size="26" font-weight="700" fill="#0F172A">reqit 2.6.0</text>
+  <rect x="214" y="35" width="178" height="30" rx="15" fill="#E0F2FE" stroke="#BAE6FD"/>
+  <text x="303" y="55" font-size="13" font-weight="600" fill="#0369A1" text-anchor="middle">Signed Run Receipts</text>
+  <text x="40" y="90" font-size="15" fill="#475569">Every request leaves a receipt you can inspect, share and verify.</text>
+
+  <!-- Step 1: write -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="130" width="210" height="190" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <circle cx="70" cy="168" r="14" fill="#E0F2FE"/>
+  <text x="70" y="173" font-size="14" font-weight="700" fill="#0369A1" text-anchor="middle">1</text>
+  <text x="94" y="173" font-size="16" font-weight="700" fill="#0F172A">Write</text>
+  <text x="94" y="192" font-size="11" fill="#64748B">templated request</text>
+
+  <rect x="58" y="208" width="174" height="26" rx="6" fill="#F1F5F9" stroke="#E2E8F0"/>
+  <text x="68" y="225" font-size="10" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0F172A">GET /{{env}}/users</text>
+
+  <rect x="58" y="243" width="174" height="18" rx="4" fill="#F8FAFC"/>
+  <text x="68" y="256" font-size="9.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#475569">Authorization: {{token}}</text>
+
+  <rect x="58" y="267" width="174" height="18" rx="4" fill="#F8FAFC"/>
+  <text x="68" y="280" font-size="9.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#475569">X-Trace-Id: {{trace}}</text>
+
+  <rect x="58" y="291" width="174" height="18" rx="4" fill="#F8FAFC"/>
+  <text x="68" y="304" font-size="9.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#475569">body: {{payload}}</text>
+
+  <!-- Step 2: trust boundary -->
+  <g filter="url(#shadow)">
+    <rect x="290" y="130" width="250" height="190" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <circle cx="320" cy="168" r="14" fill="#E0F2FE"/>
+  <text x="320" y="173" font-size="14" font-weight="700" fill="#0369A1" text-anchor="middle">2</text>
+  <text x="344" y="173" font-size="16" font-weight="700" fill="#0F172A">Trust boundary</text>
+  <text x="344" y="192" font-size="11" fill="#64748B">redact, record, sign</text>
+
+  <path d="M310 216 L356 230 V256 C356 276 334 288 333 290 C332 288 310 276 310 256 Z" fill="#ECFEFF" stroke="#0E7490" stroke-width="2"/>
+  <path d="M322 250 l7 7 l14 -15" fill="none" stroke="#0E7490" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="372" y="222" width="120" height="12" rx="3" fill="#F43F5E" opacity="0.9"/>
+  <rect x="372" y="244" width="82" height="12" rx="3" fill="#F43F5E" opacity="0.9"/>
+  <rect x="372" y="266" width="142" height="12" rx="3" fill="#F43F5E" opacity="0.9"/>
+
+  <text x="308" y="308" font-size="10" fill="#64748B">secrets masked before anything hits disk</text>
+
+  <!-- Step 3: send -->
+  <g filter="url(#shadow)">
+    <rect x="580" y="130" width="190" height="190" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <circle cx="610" cy="168" r="14" fill="#E0F2FE"/>
+  <text x="610" y="173" font-size="14" font-weight="700" fill="#0369A1" text-anchor="middle">3</text>
+  <text x="634" y="173" font-size="16" font-weight="700" fill="#0F172A">Send</text>
+  <text x="634" y="192" font-size="11" fill="#64748B">the real request</text>
+
+  <rect x="650" y="212" width="82" height="18" rx="5" fill="#E0F2FE" stroke="#BAE6FD"/>
+  <circle cx="661" cy="221" r="3" fill="#0E7490"/>
+  <rect x="650" y="236" width="82" height="18" rx="5" fill="#E0F2FE" stroke="#BAE6FD"/>
+  <circle cx="661" cy="245" r="3" fill="#0E7490"/>
+  <rect x="650" y="260" width="82" height="18" rx="5" fill="#E0F2FE" stroke="#BAE6FD"/>
+  <circle cx="661" cy="269" r="3" fill="#0E7490"/>
+
+  <text x="650" y="298" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0F172A">200 OK · 142 ms</text>
+
+  <!-- Step 4: receipt -->
+  <g filter="url(#shadow)">
+    <rect x="810" y="130" width="350" height="190" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <circle cx="840" cy="168" r="14" fill="#E0F2FE"/>
+  <text x="840" y="173" font-size="14" font-weight="700" fill="#0369A1" text-anchor="middle">4</text>
+  <text x="864" y="173" font-size="16" font-weight="700" fill="#0F172A">Receipt</text>
+  <text x="864" y="192" font-size="11" fill="#64748B">written to .reqit/runs/</text>
+
+  <rect x="830" y="208" width="110" height="98" rx="6" fill="#FFFBEB" stroke="#F59E0B"/>
+  <rect x="842" y="222" width="70" height="7" rx="3" fill="#FCD34D"/>
+  <rect x="842" y="238" width="86" height="7" rx="3" fill="#FDE68A"/>
+  <rect x="842" y="254" width="58" height="7" rx="3" fill="#FDE68A"/>
+  <rect x="842" y="270" width="76" height="7" rx="3" fill="#FDE68A"/>
+
+  <circle cx="932" cy="298" r="17" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M924 298 l6 6 l12 -13" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <circle cx="962" cy="221" r="3.5" fill="#0E7490"/>
+  <text x="974" y="225" font-size="12" fill="#334155">templated request</text>
+  <circle cx="962" cy="243" r="3.5" fill="#0E7490"/>
+  <text x="974" y="247" font-size="12" fill="#334155">status and timing</text>
+  <circle cx="962" cy="265" r="3.5" fill="#0E7490"/>
+  <text x="974" y="269" font-size="12" fill="#334155">body SHA-256</text>
+  <circle cx="962" cy="287" r="3.5" fill="#0E7490"/>
+  <text x="974" y="291" font-size="12" fill="#334155">signature and chain</text>
+
+  <!-- Arrows -->
+  <line x1="256" y1="225" x2="282" y2="225" stroke="#0E7490" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="546" y1="225" x2="572" y2="225" stroke="#0E7490" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="776" y1="225" x2="802" y2="225" stroke="#0E7490" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Hash chain -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="360" width="360" height="280" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <text x="60" y="394" font-size="15" font-weight="700" fill="#0F172A">Hash chain</text>
+
+  <polygon points="144,478 127,507 93,507 76,478 93,449 127,449" fill="#ECFEFF" stroke="#0E7490" stroke-width="2"/>
+  <text x="110" y="483" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0E7490" text-anchor="middle">h1</text>
+  <polygon points="234,478 217,507 183,507 166,478 183,449 217,449" fill="#ECFEFF" stroke="#0E7490" stroke-width="2"/>
+  <text x="200" y="483" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0E7490" text-anchor="middle">h2</text>
+  <polygon points="324,478 307,507 273,507 256,478 273,449 307,449" fill="#ECFEFF" stroke="#0E7490" stroke-width="2"/>
+  <text x="290" y="483" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0E7490" text-anchor="middle">h3</text>
+
+  <line x1="145" y1="478" x2="165" y2="478" stroke="#0E7490" stroke-width="5" opacity="0.45"/>
+  <line x1="235" y1="478" x2="255" y2="478" stroke="#0E7490" stroke-width="5" opacity="0.45"/>
+
+  <text x="60" y="556" font-size="12" fill="#334155">Each receipt commits to the one before it.</text>
+  <text x="60" y="578" font-size="12" font-weight="600" fill="#E11D48">Edit one and the chain stops verifying.</text>
+  <text x="60" y="612" font-size="10" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#94A3B8">.reqit/runs/ · gitignored by default</text>
+
+  <!-- Verify -->
+  <g filter="url(#shadow)">
+    <rect x="430" y="360" width="360" height="280" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <text x="450" y="394" font-size="15" font-weight="700" fill="#0F172A">Verify anywhere</text>
+
+  <rect x="450" y="412" width="320" height="118" rx="8" fill="#0F172A"/>
+  <text x="466" y="438" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#94A3B8">$ reqit runs verify</text>
+  <text x="466" y="464" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#34D399">✓ 128 receipts checked</text>
+  <text x="466" y="488" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#34D399">✓ 128 signed · 0 unsigned</text>
+  <text x="466" y="512" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#34D399">✓ chain intact</text>
+
+  <rect x="450" y="544" width="320" height="78" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <circle cx="470" cy="563" r="7" fill="#DCFCE7"/>
+  <path d="M466 563 l3 3 l6 -6" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="486" y="558" width="150" height="9" rx="4" fill="#CBD5E1"/>
+
+  <circle cx="470" cy="583" r="7" fill="#DCFCE7"/>
+  <path d="M466 583 l3 3 l6 -6" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="486" y="578" width="196" height="9" rx="4" fill="#E2E8F0"/>
+
+  <circle cx="470" cy="603" r="7" fill="#DCFCE7"/>
+  <path d="M466 603 l3 3 l6 -6" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="486" y="598" width="120" height="9" rx="4" fill="#E2E8F0"/>
+
+  <!-- Signature -->
+  <g filter="url(#shadow)">
+    <rect x="824" y="360" width="336" height="280" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+  </g>
+  <text x="844" y="394" font-size="15" font-weight="700" fill="#0F172A">Signed, not just hashed</text>
+
+  <path d="M876 444 v-14 a18 18 0 0 1 36 0 v14" fill="none" stroke="#F59E0B" stroke-width="5" stroke-linecap="round"/>
+  <rect x="864" y="444" width="60" height="48" rx="7" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2"/>
+  <circle cx="894" cy="464" r="6" fill="#F59E0B"/>
+  <rect x="891" y="464" width="6" height="12" rx="3" fill="#F59E0B"/>
+
+  <text x="948" y="448" font-size="12" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0F172A">HMAC-SHA256</text>
+  <text x="948" y="468" font-size="11" fill="#64748B">over each receipt hash</text>
+
+  <circle cx="952" cy="496" r="3.5" fill="#0E7490"/>
+  <text x="964" y="500" font-size="11" fill="#334155">Key lives in the</text>
+  <text x="964" y="517" font-size="11" font-weight="600" fill="#334155">OS keychain</text>
+
+  <circle cx="952" cy="542" r="3.5" fill="#0E7490"/>
+  <text x="964" y="546" font-size="11" fill="#334155">Recomputed hashes</text>
+  <text x="964" y="563" font-size="11" font-weight="600" fill="#334155">still fail verification</text>
+
+  <rect x="844" y="590" width="150" height="28" rx="14" fill="#FEF3C7" stroke="#FCD34D"/>
+  <text x="919" y="609" font-size="11" font-weight="600" fill="#92400E" text-anchor="middle">tamper-evident</text>
+
+  <!-- Footer -->
+  <text x="40" y="668" font-size="10" fill="#94A3B8">reqit 2.6.0 · Signed Run Receipts</text>
+  <text x="1160" y="668" font-size="10" fill="#94A3B8" text-anchor="end">github.com/HalxDocs/reqit</text>
+</svg>
