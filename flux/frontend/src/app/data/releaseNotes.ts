@@ -193,6 +193,27 @@ interface ReleaseNote {
 
 export const releaseHistory: ReleaseNote[] = [
   {
+    version: "v2.6.1",
+    date: "2026-11-17",
+    title: "macOS Launch Fixes",
+    highlights: [
+      {
+        category: "Fixed",
+        items: [
+          "macOS now installs from a DMG — open it and drag reqit to Applications; the zip remains the in-app updater channel",
+          "First paint no longer waits on Google Fonts, so a restricted network can no longer leave a blank window",
+          "Updating from inside the app relaunches the .app bundle via LaunchServices instead of exec'ing the raw binary, which failed silently under App Translocation",
+        ],
+      },
+      {
+        category: "Limitations",
+        items: [
+          "The macOS bundle is still ad-hoc signed, so Gatekeeper may still ask for right-click → Open or System Settings → Open Anyway on first launch",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.6.0",
     date: "2026-11-13",
     title: "Signed Run Receipts",

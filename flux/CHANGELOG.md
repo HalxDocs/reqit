@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.6.1] - 2026-11-17 — macOS Launch Fixes
+
+### Fixed
+- **macOS install now ships as a DMG** — drag reqit to Applications, like any
+  other Mac app. The zip is still published for the in-app updater, which
+  unpacks it.
+- The window could stay blank on a machine with restricted internet: the
+  Google Fonts stylesheet blocked first paint, and is now loaded non-blocking.
+- Updating from inside the app could fail to relaunch on macOS: the updater
+  re-executed the raw binary, which dies silently under App Translocation.
+  It now reopens the .app bundle through LaunchServices (`open`).
+
+### Limitations
+- The macOS bundle is still ad-hoc signed (no Apple Developer ID), so
+  Gatekeeper may still require **right-click → Open** or
+  **System Settings → Privacy & Security → Open Anyway** on first launch. The
+  DMG makes the install familiar but does not remove that step.
+
 ## [2.6.0] - 2026-11-13 — Signed Run Receipts
 
 ### New
