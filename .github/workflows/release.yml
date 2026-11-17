@@ -71,6 +71,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The runner disk fills during the build (Xcode simulator platforms,
+      # caches); hdiutil then cannot write the DMG. Reclaim space up front.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /Applications/Xcode.app/Contents/Developer/Platforms/AppleTV*.platform \
+                      /Applications/Xcode.app/Contents/Developer/Platforms/Watch*.platform \
+                      /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform \
+                      ~/Library/Caches/Homebrew 2>/dev/null || true
+          xcrun simctl delete all 2>/dev/null || true
+          df -h /
+
       - uses: actions/setup-go@v5
         with:
           go-version: "stable"
@@ -111,6 +123,14 @@ jobs:
           mkdir -p release-artifacts
           cd flux/build/bin
           zip -r "../../../release-artifacts/reqit-macos-universal.zip" reqit.app
+
+      # Build caches are dead weight by this point; drop them so hdiutil
+      # reliably has room for the DMG.
+      - name: Reclaim space before packaging
+        run: |
+          rm -rf flux/frontend/node_modules
+          go clean -cache -modcache
+          df -h /
 
       - name: Package DMG (drag-to-Applications install)
         run: |
