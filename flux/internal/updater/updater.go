@@ -247,7 +247,24 @@ func (u *Updater) FetchManifest(ctx context.Context) (*UpdateManifest, error) {
 }
 
 // RestartApp spawns a new instance of the current executable and exits.
+//
+// On macOS the app runs from inside an .app bundle and, when downloaded, is
+// under App Translocation: os.Executable() then points into a randomized
+// read-only mount, and exec'ing the raw binary skips LaunchServices. Both
+// make a direct exec fail silently, so the bundle is relaunched through
+// `open` instead.
 func RestartApp() error {
+	if runtime.GOOS == "darwin" {
+		if bundle, err := macAppBundlePath(); err == nil {
+			cmd := exec.Command("open", bundle)
+			if err := cmd.Start(); err == nil {
+				os.Exit(0)
+				return nil
+			}
+			// `open` unavailable/failed — fall through to the raw exec.
+		}
+	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("get executable: %w", err)
@@ -260,6 +277,23 @@ func RestartApp() error {
 	}
 	os.Exit(0)
 	return nil
+}
+
+// macAppBundlePath walks up from the running executable to the enclosing
+// .app bundle, so the app can be relaunched via LaunchServices.
+func macAppBundlePath() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("get executable: %w", err)
+	}
+	cur := exe
+	for i := 0; i < 5; i++ {
+		cur = filepath.Dir(cur)
+		if strings.HasSuffix(cur, ".app") {
+			return cur, nil
+		}
+	}
+	return "", fmt.Errorf("not inside an .app bundle: %s", exe)
 }
 
 func isPermissionError(err error) bool {

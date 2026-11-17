@@ -40,6 +40,9 @@ Latest release: [github.com/HalxDocs/reqit/releases/latest](https://github.com/H
 
 ### macOS — First Launch
 
+Install: download `reqit-macos-universal.dmg`, open it, drag **reqit** to **Applications**.
+(The `.zip` is still published for the in-app updater.)
+
 macOS blocks unsigned apps. To open reqit:
 
 1. Right-click `reqit.app` → **Open** → **Open** in the dialog

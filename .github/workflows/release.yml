@@ -112,6 +112,15 @@ jobs:
           cd flux/build/bin
           zip -r "../../../release-artifacts/reqit-macos-universal.zip" reqit.app
 
+      - name: Package DMG (drag-to-Applications install)
+        run: |
+          mkdir -p dmg-stage release-artifacts
+          cp -R flux/build/bin/reqit.app dmg-stage/reqit.app
+          ln -s /Applications dmg-stage/Applications
+          hdiutil create -volname "reqit" -srcfolder dmg-stage -ov -format UDZO \
+            "release-artifacts/reqit-macos-universal.dmg"
+          hdiutil verify "release-artifacts/reqit-macos-universal.dmg"
+
       - uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
